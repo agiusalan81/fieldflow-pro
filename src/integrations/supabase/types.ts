@@ -304,6 +304,8 @@ export type Database = {
           is_overtime: boolean
           notes: string | null
           overtime_rate: number | null
+          photo_paths: Json
+          signature_data: string | null
           status: Database["public"]["Enums"]["job_status"]
           travel_start_time: string | null
           work_end_time: string | null
@@ -320,6 +322,8 @@ export type Database = {
           is_overtime?: boolean
           notes?: string | null
           overtime_rate?: number | null
+          photo_paths?: Json
+          signature_data?: string | null
           status?: Database["public"]["Enums"]["job_status"]
           travel_start_time?: string | null
           work_end_time?: string | null
@@ -336,6 +340,8 @@ export type Database = {
           is_overtime?: boolean
           notes?: string | null
           overtime_rate?: number | null
+          photo_paths?: Json
+          signature_data?: string | null
           status?: Database["public"]["Enums"]["job_status"]
           travel_start_time?: string | null
           work_end_time?: string | null
@@ -456,6 +462,112 @@ export type Database = {
           {
             foreignKeyName: "lookup_options_created_by_user_id_fkey"
             columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      overtime_logs: {
+        Row: {
+          call_type: string
+          company_id: string
+          created_at: string
+          id: string
+          job_sheet_id: string | null
+          log_date: string
+          notes: string | null
+          travel_hours: number
+          user_id: string
+          work_hours: number
+        }
+        Insert: {
+          call_type: string
+          company_id: string
+          created_at?: string
+          id?: string
+          job_sheet_id?: string | null
+          log_date?: string
+          notes?: string | null
+          travel_hours?: number
+          user_id: string
+          work_hours?: number
+        }
+        Update: {
+          call_type?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          job_sheet_id?: string | null
+          log_date?: string
+          notes?: string | null
+          travel_hours?: number
+          user_id?: string
+          work_hours?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "overtime_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "overtime_logs_job_sheet_id_fkey"
+            columns: ["job_sheet_id"]
+            isOneToOne: false
+            referencedRelation: "job_sheets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "overtime_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shifts: {
+        Row: {
+          company_id: string
+          created_at: string
+          ended_at: string | null
+          id: string
+          shift_type: string
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          shift_type?: string
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          shift_type?: string
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shifts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shifts_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]

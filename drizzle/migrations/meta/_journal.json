@@ -15,6 +15,13 @@
       "when": 1792128936924,
       "tag": "0001_signup_creates_company_admin",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792129503994,
+      "tag": "0002_shifts_overtime_job_media",
+      "breakpoints": true
     }
   ]
 }
