@@ -291,6 +291,7 @@ export type Database = {
           company_id: string
           emergency_phone: string | null
           holiday_rate: number
+          idle_timeout_minutes: number
           industry: string | null
           note_presets: Json
           office_phone: string | null
@@ -314,6 +315,7 @@ export type Database = {
           company_id: string
           emergency_phone?: string | null
           holiday_rate?: number
+          idle_timeout_minutes?: number
           industry?: string | null
           note_presets?: Json
           office_phone?: string | null
@@ -337,6 +339,7 @@ export type Database = {
           company_id?: string
           emergency_phone?: string | null
           holiday_rate?: number
+          idle_timeout_minutes?: number
           industry?: string | null
           note_presets?: Json
           office_phone?: string | null

@@ -1,0 +1,1 @@
+ALTER TABLE public.company_settings ADD COLUMN IF NOT EXISTS idle_timeout_minutes integer NOT NULL DEFAULT 30 CHECK (idle_timeout_minutes >= 0 AND idle_timeout_minutes <= 180);
