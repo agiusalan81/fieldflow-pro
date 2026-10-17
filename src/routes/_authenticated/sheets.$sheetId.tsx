@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Car, Lock, MapPin, Plus, Save, Send, Trash2, ShieldAlert, PenLine } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, useCompanyUsers, initialsOf, isManager } from "@/lib/profile";
-import { hoursFromTimes, missingSignOff, roundTo15, shiftTime, parsePhotos, type JobPhoto } from "@/lib/jobsheets";
+import { hoursFromTimes, missingSignOff, missingChecklist, roundTo15, shiftTime, parsePhotos, type JobPhoto } from "@/lib/jobsheets";
 import { JobPhotos } from "@/components/job-photos";
 import { sendJobSheetEmail } from "@/lib/sendJobSheetEmail";
 import { SearchSelect } from "@/components/search-select";
@@ -121,6 +121,11 @@ function SheetForm() {
   const [signOpen, setSignOpen] = useState(false);
   const [handOff, setHandOff] = useState(false);
   const [photos, setPhotos] = useState<JobPhoto[]>([]);
+  const [checks, setChecks] = useState<Record<string, boolean>>({});
+  const { data: checklists = [] } = useQuery({
+    queryKey: ["checklists"],
+    queryFn: async () => (await supabase.from("checklist_templates").select("*")).data ?? [],
+  });
 
   useEffect(() => {
     if (!data?.sheet || form) return;
@@ -128,6 +133,7 @@ function SheetForm() {
     for (const k of FIELDS) f[k] = (data.sheet as Record<string, unknown>)[k] as never;
     setForm(f);
     setPhotos(parsePhotos(data.sheet.photo_paths));
+    setChecks((data.sheet.checklist_values ?? {}) as Record<string, boolean>);
     setLogs(data.logs.map((l) => ({
       log_date: l.log_date, time_in: l.time_in?.slice(0, 5) ?? "", time_out: l.time_out?.slice(0, 5) ?? "",
       latitude_in: l.latitude_in, longitude_in: l.longitude_in, latitude_out: l.latitude_out, longitude_out: l.longitude_out,
@@ -143,6 +149,8 @@ function SheetForm() {
   const readOnly = sheet.status === "completed";
   const set = (patch: Partial<Form>) => setForm({ ...form, ...patch });
   const client = refs?.clients.find((c) => c.id === form.client_id);
+  const checkCat = form.asset_type === "Escalator" ? "Escalator" : form.asset_type === "Lift" ? "Elevator" : "Custom";
+  const checklistItems = form.is_maintenance ? ((checklists.find((c) => c.equipment_category === checkCat)?.items as string[] | undefined) ?? []) : [];
   const sites = refs?.sites.filter((s) => s.client_id === form.client_id) ?? [];
   const site = sites.find((s) => s.id === form.site_id);
   const assets = refs?.assets.filter((a) => a.client_id === form.client_id && (!form.site_id || !a.site_id || a.site_id === form.site_id)) ?? [];
@@ -174,7 +182,7 @@ function SheetForm() {
     setBusy(true);
     try {
       const repairs = logs.map((l) => l.daily_work_description.trim()).filter(Boolean).join("\n") || (form.repairs_performed as string | null);
-      const { error } = await supabase.from("job_sheets").update({ ...form, repairs_performed: repairs, ...(status ? { status } : {}) } as never).eq("id", sheetId);
+      const { error } = await supabase.from("job_sheets").update({ ...form, checklist_values: checks, repairs_performed: repairs, ...(status ? { status } : {}) } as never).eq("id", sheetId);
       if (error) throw error;
       await supabase.from("jobsheet_time_logs").delete().eq("jobsheet_id", sheetId);
       await supabase.from("jobsheet_parts").delete().eq("jobsheet_id", sheetId);
@@ -212,6 +220,8 @@ function SheetForm() {
   const submit = async () => {
     const missing = missingSignOff({ client_full_name: form.client_full_name as string, client_id_card_no: form.client_id_card_no as string, signature: form.signature_data as string });
     if (missing.length) { toast.error(`Can't submit — missing: ${missing.join(", ")}`); return; }
+    const unticked = missingChecklist(checklistItems, checks);
+    if (unticked.length) { toast.error(`Can't submit — maintenance checklist not complete (${unticked.length} item${unticked.length > 1 ? "s" : ""} left)`); return; }
     if (await persist("completed")) {
       await supabase.from("job_sheets").update({ work_end_time: new Date().toISOString() }).eq("id", sheetId);
       try {
@@ -353,6 +363,19 @@ function SheetForm() {
             )}
           </div>
         </Section>
+
+        {checklistItems.length > 0 && (
+          <Section n={3} title={`${checkCat} maintenance checklist · ${checklistItems.length - missingChecklist(checklistItems, checks).length}/${checklistItems.length}`}>
+            <p className="mb-3 text-xs text-muted-foreground">Required for maintenance visits — tick every item before submitting.</p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {checklistItems.map((it) => (
+                <label key={it} className="flex min-h-11 items-center gap-3 rounded-md border px-3 py-2 text-sm">
+                  <Checkbox disabled={readOnly} checked={!!checks[it]} onCheckedChange={(c) => setChecks({ ...checks, [it]: !!c })} />{it}
+                </label>
+              ))}
+            </div>
+          </Section>
+        )}
 
         <Section n={4} title={`Work log · ${totalHours.toFixed(2)} h total`}>
           <div className="mb-4 space-y-1.5">
