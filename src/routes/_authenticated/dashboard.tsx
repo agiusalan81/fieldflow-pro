@@ -14,6 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { splitHours, addSplits, DEFAULT_RULES } from "@/lib/jobsheets";
 import { AssetHistory, LiftHistoryButton, PriorityBadge, timeWindow } from "@/components/job-card";
+import { fileDailyReport, emailDwr, downloadDwr } from "@/lib/dwr-report";
+import { InternalWorkCard, OvertimeCard } from "@/components/work-extras";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -50,6 +52,7 @@ function useTick() {
 export function ShiftTracker({ profile }: { profile: Profile }) {
   useTick();
   const qc = useQueryClient();
+  const { data: company } = useCompanyRules();
   const { data: open = [] } = useQuery({
     queryKey: ["open-shifts", profile.id],
     queryFn: async () => {
@@ -61,14 +64,27 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
   const shift = open.find((s) => s.shift_type === "shift");
   const travel = open.find((s) => s.shift_type === "travel");
 
-  const toggle = async (type: "shift" | "travel", current?: { id: string }) => {
+  const toggle = async (type: "shift" | "travel", current?: { id: string; started_at: string }) => {
+    const endedAt = new Date().toISOString();
     const res = current
-      ? await supabase.from("shifts").update({ ended_at: new Date().toISOString() }).eq("id", current.id)
+      ? await supabase.from("shifts").update({ ended_at: endedAt }).eq("id", current.id)
       : await supabase.from("shifts").insert({ shift_type: type, company_id: profile.company_id, user_id: profile.id });
     if (res.error) { toast.error(res.error.message); return; }
-    if (type === "shift" && current && travel) await supabase.from("shifts").update({ ended_at: new Date().toISOString() }).eq("id", travel.id);
+    if (type === "shift" && current && travel) await supabase.from("shifts").update({ ended_at: endedAt }).eq("id", travel.id);
     qc.invalidateQueries({ queryKey: ["open-shifts", profile.id] });
     toast.success(current ? (type === "shift" ? "Clocked out" : "Travel stopped") : type === "shift" ? "Clocked in" : "Travel started");
+    if (type === "shift" && current && company) {
+      try {
+        const id = await fileDailyReport({ userId: profile.id, companyId: profile.company_id, shiftId: current.id, startedAt: current.started_at, endedAt, rules: company.rules, breaks: company.breaks });
+        const { data: r } = await supabase.from("daily_work_reports").select("*, users(full_name, employee_id)").eq("id", id).single();
+        qc.invalidateQueries({ queryKey: ["dwr"] });
+        if (r) {
+          const name = profile.companies?.name ?? "";
+          const mail = await emailDwr(r, name).catch(() => ({ sent: false }));
+          toast.success(mail.sent ? "Daily works report emailed to you" : "Daily works report saved", { action: { label: "Download PDF", onClick: () => downloadDwr(r, name) }, duration: 10000 });
+        }
+      } catch (e) { toast.error(`Couldn't file the daily works report: ${(e as Error).message}`); }
+    }
   };
 
   return (
