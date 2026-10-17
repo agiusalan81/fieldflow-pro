@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { CalendarDays, Check, FileText, List, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, FileText, List, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/lib/profile";
 import { AppShell, EmptyState } from "@/components/app-shell";
@@ -52,19 +52,18 @@ function Schedule() {
     },
   });
 
-  const ack = async (j: Job) => {
-    const { error } = await supabase.from("jobs").update({ acknowledged_at: new Date().toISOString() }).eq("id", j.id);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Schedule acknowledged");
-    qc.invalidateQueries({ queryKey: ["schedule"] });
-    setDetail(null);
+  /** Starting a job counts as acknowledging it — no separate step for routine work. */
+  const autoAck = (j: Job) => {
+    if (j.acknowledged_at) return;
+    void supabase.from("jobs").update({ acknowledged_at: new Date().toISOString() }).eq("id", j.id).then(({ error }) => {
+      if (error) toast.error(error.message); else qc.invalidateQueries({ queryKey: ["schedule"] });
+    });
   };
 
   const Actions = ({ j }: { j: Job }) => (
-    <div className="grid grid-cols-3 gap-2">
+    <div className="grid grid-cols-2 gap-2">
       <Button variant="outline" className="h-10" onClick={() => setDetail(j)}>Details</Button>
-      <Button variant="outline" className="h-10" disabled={!!j.acknowledged_at} onClick={() => ack(j)}><Check className="mr-1 h-4 w-4" />{j.acknowledged_at ? "Acked" : "Acknowledge"}</Button>
-      <Button asChild className="h-10"><Link to="/sheets/new" search={{ jobId: j.id }}><FileText className="mr-1 h-4 w-4" />Convert</Link></Button>
+      <Button asChild className="h-10"><Link to="/sheets/new" search={{ jobId: j.id }} onClick={() => autoAck(j)}><FileText className="mr-1 h-4 w-4" />Start job</Link></Button>
     </div>
   );
 
