@@ -77,3 +77,19 @@ export function missingSignOff(s: { client_full_name?: string | null; client_id_
   if (!s.signature) missing.push("Client signature");
   return missing;
 }
+
+/** Rounds an HH:MM time to the nearest 15 minutes (wraps past midnight). */
+export function roundTo15(t?: string | null) {
+  if (!t) return "";
+  const [h = 0, m = 0] = t.split(":").map(Number);
+  const total = (Math.round((h * 60 + m) / 15) * 15) % (24 * 60);
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+}
+
+/** Shifts an HH:MM time by a number of minutes, snapped to 15. */
+export function shiftTime(t: string | null | undefined, delta: number) {
+  const base = roundTo15(t || "08:00");
+  const [h = 0, m = 0] = base.split(":").map(Number);
+  const total = (((h * 60 + m + delta) % 1440) + 1440) % 1440;
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+}

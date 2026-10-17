@@ -17,3 +17,16 @@ describe("job sheet & leave rules", () => {
     expect(hoursFromTimes("08:00", "12:30")).toBe(4.5);
   });
 });
+
+import { roundTo15, shiftTime } from "./jobsheets";
+describe("15-minute time rounding", () => {
+  it("rounds to the nearest quarter hour", () => {
+    expect(roundTo15("08:07")).toBe("08:00");
+    expect(roundTo15("08:08")).toBe("08:15");
+    expect(roundTo15("23:53")).toBe("00:00");
+  });
+  it("+/- buttons move by 15 minutes", () => {
+    expect(shiftTime("08:00", 15)).toBe("08:15");
+    expect(shiftTime("00:00", -15)).toBe("23:45");
+  });
+});
