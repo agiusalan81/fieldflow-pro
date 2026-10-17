@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -6,6 +6,9 @@ import { DoorClosed, LogOut, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { createDraftSheet } from "@/lib/jobsheets";
 import { sendClientNotice } from "@/lib/client-notices.functions";
+import { parseIntegrations, type EventKey } from "@/lib/integrations";
+import { RETURN_FEE_MIN_HOURS } from "@/lib/billing";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { Profile } from "@/lib/profile";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,6 +23,45 @@ function report(r: Result) {
   if (!r.length) toast.warning("No channel is ticked for this message in Company settings.");
 }
 
+/** Whether a field notice is switched on in Company settings → Messages & emails. */
+export function useNoticeEnabled(event: EventKey) {
+  const { data } = useQuery({
+    queryKey: ["notice-settings"], staleTime: 60000,
+    queryFn: async () => parseIntegrations((await supabase.from("company_settings").select("integrations").maybeSingle()).data?.integrations),
+  });
+  return data ? data.templates[event].enabled : false;
+}
+
+const seen = new Set<string>();
+/** Live alert for the technician when a manager decides on their request to leave an unsigned site. */
+export function DepartureAlerts({ userId }: { userId: string }) {
+  const [msg, setMsg] = useState<{ text: string; ok: boolean; sheetId: string } | null>(null);
+  useEffect(() => {
+    const ch = supabase.channel(`departure-${userId}`).on("postgres_changes", { event: "UPDATE", schema: "public", table: "job_sheets", filter: `assigned_technician_id=eq.${userId}` }, (p) => {
+      const n = p.new as { id: string; jobsheet_number: number; departure_status: string }; const o = p.old as { departure_status?: string };
+      const key = `${n.id}:${n.departure_status}`;
+      if (o.departure_status === n.departure_status || !["approved", "rejected"].includes(n.departure_status) || seen.has(key)) return;
+      seen.add(key);
+      const ok = n.departure_status === "approved";
+      const text = ok ? `Job sheet- ${n.jobsheet_number}: you may leave site. The client has been notified.` : `Job sheet- ${n.jobsheet_number}: leaving was declined — please wait for the client.`;
+      setMsg({ text, ok, sheetId: n.id });
+      if (typeof Notification !== "undefined" && Notification.permission === "granted") new Notification(ok ? "Departure approved" : "Departure declined", { body: text });
+      if (navigator.vibrate) navigator.vibrate(300);
+    }).subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [userId]);
+  if (!msg) return null;
+  return (
+    <div className={`rounded-xl border p-4 ${msg.ok ? "border-success bg-success/10" : "border-destructive bg-destructive/10"}`}>
+      <p className="text-sm font-medium text-foreground">{msg.text}</p>
+      <div className="mt-2 flex gap-2">
+        <Button size="sm" variant="outline" asChild><Link to="/sheets/$sheetId" params={{ sheetId: msg.sheetId }}>Open job sheet</Link></Button>
+        <Button size="sm" variant="ghost" onClick={() => setMsg(null)}>Dismiss</Button>
+      </div>
+    </div>
+  );
+}
+
 /** Dashboard button: record an attended visit where nobody opened, then notify the client. */
 export function NoAccessButton({ profile, jobs }: { profile: Profile; jobs: { id: string; job_number: number; clients: { name: string } | null; sites: { name: string } | null }[] }) {
   const [open, setOpen] = useState(false);
@@ -27,6 +69,7 @@ export function NoAccessButton({ profile, jobs }: { profile: Profile; jobs: { id
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const qc = useQueryClient();
+  const enabled = useNoticeEnabled("no_access");
   const go = async () => {
     if (!jobId) { toast.error("Pick the job you attended"); return; }
     setBusy(true);
@@ -48,6 +91,7 @@ export function NoAccessButton({ profile, jobs }: { profile: Profile; jobs: { id
       setOpen(false); setJobId(null); setNote("");
     } catch (e) { toast.error((e as Error).message); } finally { setBusy(false); }
   };
+  if (!enabled) return null;
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild><Button variant="outline" className="h-12 w-full"><DoorClosed className="mr-2 h-5 w-5" />Attended — no one to open</Button></DialogTrigger>
@@ -70,13 +114,15 @@ export function NoAccessButton({ profile, jobs }: { profile: Profile; jobs: { id
   );
 }
 
-type Sheet = { id: string; departure_status: string; departure_note: string | null; signature_data: string | null };
+type Sheet = { id: string; departure_status: string; departure_note: string | null; signature_data: string | null; return_fee_waived?: boolean };
 
 /** Inside an unsigned job sheet: technician asks to leave, manager approves and the client is told the lift is left off. */
 export function DepartureRequest({ sheet, manager, onChange }: { sheet: Sheet; manager: boolean; onChange: () => void }) {
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
-  if (sheet.signature_data) return null;
+  const [waive, setWaive] = useState(false);
+  const enabled = useNoticeEnabled("unsigned_left");
+  if (sheet.signature_data || (!enabled && sheet.departure_status === "none")) return null;
   const set = async (departure_status: string, extra: Record<string, unknown> = {}) => {
     const { error } = await supabase.from("job_sheets").update({ departure_status, ...extra }).eq("id", sheet.id);
     if (error) throw error;
@@ -85,9 +131,10 @@ export function DepartureRequest({ sheet, manager, onChange }: { sheet: Sheet; m
   const request = run(async () => {
     if (!note.trim()) throw new Error("Say why you are leaving (e.g. client left, lift switched off at isolator)");
     await set("requested", { departure_note: note.trim() });
+    if (typeof Notification !== "undefined" && Notification.permission === "default") Notification.requestPermission().catch(() => {});
     toast.success("Approval requested — wait on site for a supervisor or office admin");
   });
-  const approve = run(async () => { await set("approved"); report((await sendClientNotice({ data: { sheetId: sheet.id, event: "unsigned_left" } })).result); });
+  const approve = run(async () => { await set("approved", { return_fee_waived: waive, return_fee_hours: waive ? 0 : RETURN_FEE_MIN_HOURS }); report((await sendClientNotice({ data: { sheetId: sheet.id, event: "unsigned_left" } })).result); });
   const reject = run(async () => { await set("rejected"); toast.success("Request declined — technician will wait for the client"); });
 
   const s = sheet.departure_status;
@@ -96,12 +143,14 @@ export function DepartureRequest({ sheet, manager, onChange }: { sheet: Sheet; m
       <p className="flex items-center gap-1.5 text-sm font-medium text-foreground"><LogOut className="h-4 w-4" />Client left before signing?</p>
       {s === "requested" && <>
         <p className="text-sm text-muted-foreground">Waiting for approval to leave. Reason: {sheet.departure_note}</p>
+        {manager && <label className="flex items-center gap-2 text-sm text-foreground"><Checkbox checked={waive} onCheckedChange={(b) => setWaive(!!b)} />Waive the 1 h return-visit charge</label>}
         {manager && <div className="flex flex-wrap gap-2">
           <Button size="sm" disabled={busy} onClick={approve}><Check className="mr-1 h-4 w-4" />Approve & notify client</Button>
           <Button size="sm" variant="outline" disabled={busy} onClick={reject}><X className="mr-1 h-4 w-4" />Decline — wait on site</Button>
         </div>}
       </>}
       {s === "approved" && <p className="text-sm text-success">Departure approved — the client was asked to call to sign and restore the lift.</p>}
+      {s === "approved" && <p className="text-xs text-muted-foreground">{sheet.return_fee_waived ? "Return-visit charge waived." : "A 1 h return-visit charge was added for billing."}</p>}
       {(s === "none" || s === "rejected") && <>
         {s === "rejected" && <p className="text-sm text-destructive">Last request was declined — please wait for the client.</p>}
         <p className="text-xs text-muted-foreground">A supervisor or office admin must approve before you leave. Once approved, the client gets the "left unsigned" message.</p>

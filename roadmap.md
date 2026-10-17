@@ -73,3 +73,7 @@
 - [x] "Client left unsigned" request inside job sheet; supervisor/office admin approves before client is notified lift is left off
 - [x] Company settings → Messages & emails tab (all message wording + channels + WhatsApp studio); Accounting tab separate
 - [ ] Meta approval of the two new WhatsApp wordings (office staff submit via "Get Meta approval")
+- [x] Departure decision alert to technician (live banner + phone notification)
+- [x] 1 h return-visit charge on approved unsigned departures unless waived
+- [x] On/off switches for "no one to open" and "unsigned departure" (Messages & emails → On)
+- [x] Travel hours multiplied by technician count

@@ -17,7 +17,7 @@ import { AssetHistory, LiftHistoryButton, PriorityBadge, timeWindow } from "@/co
 import { fileDailyReport, emailDwr, downloadDwr } from "@/lib/dwr-report";
 import { InternalWorkCard } from "@/components/work-extras";
 import { BillingReview } from "@/components/billing-review";
-import { NoAccessButton, DepartureRequests } from "@/components/client-notices";
+import { NoAccessButton, DepartureRequests, DepartureAlerts } from "@/components/client-notices";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -133,6 +133,7 @@ function TechToday({ profile }: { profile: Profile }) {
         <ShiftTracker profile={profile} />
         <InternalWorkCard profile={profile} />
         <ScanQr />
+        <DepartureAlerts userId={profile.id} />
         <NoAccessButton profile={profile} jobs={jobs} />
         <section>
           <h2 className="mb-3 font-medium text-foreground">Today's jobs ({jobs.length})</h2>

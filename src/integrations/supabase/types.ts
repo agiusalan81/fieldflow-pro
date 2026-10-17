@@ -804,6 +804,8 @@ export type Database = {
           repairs_performed: string | null
           reported_fault: string | null
           requires_admin_approval: boolean
+          return_fee_hours: number
+          return_fee_waived: boolean
           serial_number: string | null
           signature_data: string | null
           site_id: string | null
@@ -862,6 +864,8 @@ export type Database = {
           repairs_performed?: string | null
           reported_fault?: string | null
           requires_admin_approval?: boolean
+          return_fee_hours?: number
+          return_fee_waived?: boolean
           serial_number?: string | null
           signature_data?: string | null
           site_id?: string | null
@@ -920,6 +924,8 @@ export type Database = {
           repairs_performed?: string | null
           reported_fault?: string | null
           requires_admin_approval?: boolean
+          return_fee_hours?: number
+          return_fee_waived?: boolean
           serial_number?: string | null
           signature_data?: string | null
           site_id?: string | null

@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { clientPhotos, parsePhotos, labourHours, technicianCount, validateCombinedSheets } from "@/lib/jobsheets";
+import { clientPhotos, parsePhotos, labourHours, technicianCount, validateCombinedSheets, dayLabourHours } from "@/lib/jobsheets";
 import { parseTemplate, parseTerms, termsFor, visibleBlocks, type PdfTemplate } from "@/lib/documents";
 import { sheetTitle } from "@/lib/dwr";
 
@@ -182,7 +182,7 @@ async function prepareSheet(supabase: AuthClient, sheetId: string, recipients?: 
       signedBy: sheet.client_full_name ?? "", idCard: sheet.client_id_card_no ?? "", signature: sheet.signature_data,
       logs: (logs ?? []).map((l) => {
         const travel = Number(l.traveling_time_hours) || 0;
-        return { date: l.log_date, in: l.time_in?.slice(0, 5) ?? "", out: l.time_out?.slice(0, 5) ?? "", travel, total: labourHours(l.time_in, l.time_out, l.technician_count, l.technician_initials), count: technicianCount(l.technician_count, l.technician_initials), techs: l.technician_initials.join(", ") };
+        return { date: l.log_date, in: l.time_in?.slice(0, 5) ?? "", out: l.time_out?.slice(0, 5) ?? "", travel, total: dayLabourHours(l.time_in, l.time_out, travel, l.technician_count, l.technician_initials), count: technicianCount(l.technician_count, l.technician_initials), techs: l.technician_initials.join(", ") };
       }),
       parts: (parts ?? []).map((p) => ({ desc: p.part_description, unit: p.unit ?? "", qty: Number(p.quantity) })),
       notes: sheet.special_notes_in_pdf ? notes : null,

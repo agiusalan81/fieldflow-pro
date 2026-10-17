@@ -43,3 +43,9 @@ describe("message templates", () => {
     expect(parseIntegrations({}).accounting.require_review).toBe(true);
   });
 });
+
+import { returnFeeLine } from "./billing";
+describe("return-visit fee", () => {
+  it("charges 1 h at the standard rate when not waived", () => expect(returnFeeLine(1, { standard: 40, ot15: 60, ot20: 80, callout: 0 })).toMatchObject({ qty: 1, unit_price: 40 }));
+  it("waived fee adds no line", () => expect(returnFeeLine(0, { standard: 40, ot15: 60, ot20: 80, callout: 0 })).toBeNull());
+});

@@ -30,3 +30,8 @@ describe("15-minute time rounding", () => {
     expect(shiftTime("00:00", -15)).toBe("23:45");
   });
 });
+
+import { dayLabourHours } from "./jobsheets";
+describe("travel with several technicians", () => {
+  it("travel is multiplied by technician count like site hours", () => expect(dayLabourHours("08:00", "10:00", 1, 2)).toBe(6));
+});
