@@ -774,9 +774,15 @@ export type Database = {
           client_full_name: string | null
           client_id: string
           client_id_card_no: string | null
+          client_notices: Json
           company_id: string
           created_at: string
           custom_values: Json
+          departure_decided_at: string | null
+          departure_decided_by: string | null
+          departure_note: string | null
+          departure_requested_at: string | null
+          departure_status: string
           estimate_id: string | null
           id: string
           internal_comments_admin_only: string | null
@@ -808,6 +814,7 @@ export type Database = {
           technician_name: string | null
           travel_start_time: string | null
           updated_at: string
+          visit_outcome: string
           work_end_time: string | null
           work_start_time: string | null
         }
@@ -825,9 +832,15 @@ export type Database = {
           client_full_name?: string | null
           client_id: string
           client_id_card_no?: string | null
+          client_notices?: Json
           company_id: string
           created_at?: string
           custom_values?: Json
+          departure_decided_at?: string | null
+          departure_decided_by?: string | null
+          departure_note?: string | null
+          departure_requested_at?: string | null
+          departure_status?: string
           estimate_id?: string | null
           id?: string
           internal_comments_admin_only?: string | null
@@ -859,6 +872,7 @@ export type Database = {
           technician_name?: string | null
           travel_start_time?: string | null
           updated_at?: string
+          visit_outcome?: string
           work_end_time?: string | null
           work_start_time?: string | null
         }
@@ -876,9 +890,15 @@ export type Database = {
           client_full_name?: string | null
           client_id?: string
           client_id_card_no?: string | null
+          client_notices?: Json
           company_id?: string
           created_at?: string
           custom_values?: Json
+          departure_decided_at?: string | null
+          departure_decided_by?: string | null
+          departure_note?: string | null
+          departure_requested_at?: string | null
+          departure_status?: string
           estimate_id?: string | null
           id?: string
           internal_comments_admin_only?: string | null
@@ -910,6 +930,7 @@ export type Database = {
           technician_name?: string | null
           travel_start_time?: string | null
           updated_at?: string
+          visit_outcome?: string
           work_end_time?: string | null
           work_start_time?: string | null
         }
@@ -940,6 +961,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_sheets_departure_decided_by_fkey"
+            columns: ["departure_decided_by"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
