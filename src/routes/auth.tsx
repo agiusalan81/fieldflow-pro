@@ -44,10 +44,21 @@ function AuthPage() {
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm({ ...form, [k]: e.target.value });
 
+  const [resetSent, setResetSent] = useState(false);
+  const forgot = async () => {
+    const email = form.email.trim().toLowerCase();
+    if (!email) { setError("Enter your work email first, then tap Forgot password."); return; }
+    setBusy(true); setError(null);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password` });
+    setBusy(false);
+    if (error) setError(error.message); else setResetSent(true);
+  };
+
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setBusy(true);
     setError(null);
+    form.email = form.email.trim().toLowerCase();
     if (mode === "signup") {
       const { data, error } = await supabase.auth.signUp({
         email: form.email,
@@ -110,7 +121,7 @@ function AuthPage() {
               </>
             )}
             <Field id="email" label="Work email">
-              <Input id="email" type="email" autoFocus autoComplete="email" required value={form.email} onChange={set("email")} />
+              <Input id="email" type="email" autoFocus autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} required value={form.email} onChange={set("email")} />
             </Field>
             <Field id="password" label="Password">
               <div className="relative">
@@ -135,11 +146,17 @@ function AuthPage() {
               </div>
             </Field>
             {mode === "signin" && (
-              <label htmlFor="remember" className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
-                <Checkbox id="remember" checked={remember} onCheckedChange={(v) => setRemember(v === true)} />
-                Remember me on this device
-              </label>
+              <div className="flex items-center justify-between gap-2">
+                <label htmlFor="remember" className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+                  <Checkbox id="remember" checked={remember} onCheckedChange={(v) => setRemember(v === true)} />
+                  Remember me on this device
+                </label>
+                <button type="button" onClick={forgot} disabled={busy} className="text-sm text-primary underline-offset-4 hover:underline">
+                  Forgot password?
+                </button>
+              </div>
             )}
+            {resetSent && mode === "signin" && <p className="rounded-lg border bg-muted p-3 text-sm text-muted-foreground">If an account exists for {form.email}, a reset link is on its way. Check your inbox.</p>}
             {error && <p className="text-sm text-destructive">{error}</p>}
             <Button type="submit" className="w-full" size="lg" disabled={busy}>
               {busy ? "Please wait…" : mode === "signup" ? "Create company" : "Sign in"}
