@@ -11,7 +11,9 @@ import { sendJobSheetEmail } from "@/lib/sendJobSheetEmail";
 import { SearchSelect } from "@/components/search-select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { AppShell, StatusBadge } from "@/components/app-shell";
+import { AppShell, StatusBadge, BackButton } from "@/components/app-shell";
+import { createDraftSheet } from "@/lib/jobsheets";
+import type { Profile } from "@/lib/profile";
 import { SignaturePad } from "@/components/signature-pad";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -120,6 +122,7 @@ function SheetForm() {
   const [busy, setBusy] = useState(false);
   const [signOpen, setSignOpen] = useState(false);
   const [handOff, setHandOff] = useState(false);
+  const [nextStop, setNextStop] = useState<NextJob | null>(null);
   const [photos, setPhotos] = useState<JobPhoto[]>([]);
   const [checks, setChecks] = useState<Record<string, boolean>>({});
   const { data: checklists = [] } = useQuery({
@@ -232,7 +235,8 @@ function SheetForm() {
       } catch (e) {
         toast.error(`Submitted, but the email failed: ${(e as Error).message}`);
       }
-      navigate({ to: "/sheets" });
+      const next = await findNextJob(profile.id, sheet.job_id);
+      if (next) setNextStop(next); else navigate({ to: "/sheets" });
     }
   };
   const discard = async () => {
@@ -278,7 +282,7 @@ function SheetForm() {
   return (
     <AppShell
       title={`Job sheet ${sheet.jobsheet_number}`}
-      actions={<Button asChild variant="ghost" size="sm"><Link to="/sheets"><ArrowLeft className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Sheets</span></Link></Button>}
+      actions={<BackButton fallback="/sheets" />}
     >
       <fieldset disabled={readOnly || busy} className="mx-auto max-w-5xl space-y-4 pb-24">
         <div className="flex flex-wrap items-center gap-2">
@@ -569,6 +573,53 @@ function SheetForm() {
         </div>
       )}
       {readOnly && isManager(profile) && <p className="mx-auto max-w-5xl text-xs text-muted-foreground">Status can be changed from the Job sheets admin page.</p>}
+      <NextStopDialog job={nextStop} profile={profile} onDone={() => { setNextStop(null); navigate({ to: "/dashboard" }); }} />
     </AppShell>
+  );
+}
+
+type NextJob = { id: string; job_number: number; window_start: string | null; clients: { name: string } | null; sites: { name: string; address: string | null } | null; whatsapp: string[] };
+
+/** Next of today's jobs for this technician that hasn't been started yet. */
+async function findNextJob(userId: string, currentJobId: string | null): Promise<NextJob | null> {
+  const today = new Date().toISOString().slice(0, 10);
+  const { data } = await supabase.from("jobs").select("id, job_number, client_id, window_start, acknowledged_at, clients(name), sites(name, address)")
+    .eq("assigned_technician_id", userId).eq("scheduled_date", today).is("acknowledged_at", null).order("window_start");
+  const job = (data ?? []).find((j) => j.id !== currentJobId);
+  if (!job) return null;
+  const { data: cs } = await supabase.from("client_contacts").select("first_name, phone").eq("client_id", job.client_id).eq("has_whatsapp", true);
+  return { ...job, whatsapp: (cs ?? []).map((c) => `${c.first_name} (${c.phone})`) };
+}
+
+function NextStopDialog({ job, profile, onDone }: { job: NextJob | null; profile: Profile; onDone: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const go = async () => {
+    if (!job) return;
+    setBusy(true);
+    try {
+      const id = await createDraftSheet(profile, job.id);
+      await supabase.from("job_sheets").update({ status: "in_transit", travel_start_time: new Date().toISOString() }).eq("id", id);
+      await supabase.from("jobs").update({ acknowledged_at: new Date().toISOString() }).eq("id", job.id);
+      toast.success(job.whatsapp.length
+        ? `On the way to ${job.clients?.name}. WhatsApp message to ${job.whatsapp.join(", ")} is ready — sending starts once the WhatsApp Business account is connected.`
+        : `On the way to ${job.clients?.name}. No WhatsApp contact on file for this client.`);
+      onDone();
+    } catch (e) { toast.error((e as Error).message); } finally { setBusy(false); }
+  };
+  return (
+    <Dialog open={!!job} onOpenChange={(o) => !o && onDone()}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Job done — next stop</DialogTitle></DialogHeader>
+        <div className="space-y-1 text-sm">
+          <p className="font-medium text-foreground">#{job?.job_number} · {job?.clients?.name}</p>
+          <p className="text-muted-foreground">{job?.sites?.name}{job?.sites?.address ? ` · ${job.sites.address}` : ""}{job?.window_start ? ` · from ${job.window_start.slice(0, 5)}` : ""}</p>
+          <p className="pt-2 text-muted-foreground">{job?.whatsapp.length ? `WhatsApp contact: ${job.whatsapp.join(", ")}` : "No WhatsApp contact for this client."}</p>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Button variant="outline" className="h-11" onClick={onDone}>Not now</Button>
+          <Button className="h-11" disabled={busy} onClick={go}><Car className="mr-1 h-4 w-4" />{job?.whatsapp.length ? "On my way — notify client" : "On my way"}</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
