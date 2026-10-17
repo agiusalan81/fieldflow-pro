@@ -242,32 +242,38 @@ function SheetForm() {
             <div className="space-y-1.5"><Label>Job sheet no.</Label><Input value={sheet.jobsheet_number} readOnly className="h-11 font-mono" /></div>
             <div className="space-y-1.5">
               <Label>Client</Label>
-              <Select value={(form.client_id as string) ?? ""} onValueChange={(v) => set({ client_id: v, site_id: null, asset_id: null })}>
-                <SelectTrigger className="h-11"><SelectValue placeholder="Choose client" /></SelectTrigger>
-                <SelectContent>{refs?.clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-              </Select>
+              <SearchSelect value={form.client_id as string} placeholder="Choose client" disabled={readOnly}
+                options={(refs?.clients ?? []).map((c) => ({ value: c.id, label: c.name, hint: c.billing_address ?? undefined }))}
+                onChange={(v) => set({ client_id: v, site_id: null, asset_id: null })} />
             </div>
             <div className="space-y-1.5">
               <Label>Site</Label>
-              <Select value={(form.site_id as string) ?? "none"} onValueChange={(v) => set({ site_id: v === "none" ? null : v, asset_id: null })}>
-                <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="none">No site</SelectItem>{sites.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
-              </Select>
+              <SearchSelect value={form.site_id as string} placeholder="Choose site" disabled={readOnly}
+                options={sites.map((s) => ({ value: s.id, label: s.name, hint: s.address ?? undefined }))}
+                onChange={pickSite} />
             </div>
             <div className="space-y-1.5">
               <Label>Lift / asset</Label>
-              <Select value={(form.asset_id as string) ?? "none"} onValueChange={pickAsset}>
-                <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="none">Not listed</SelectItem>{assets.map((a) => <SelectItem key={a.id} value={a.id}>{a.reference_number} · {a.asset_category}</SelectItem>)}</SelectContent>
-              </Select>
+              <SearchSelect value={form.asset_id as string} placeholder="Type reference, type or serial…" disabled={readOnly}
+                options={assets.map((a) => ({ value: a.id, label: `${a.reference_number} · ${a.asset_category}`, hint: a.serial_number ?? undefined }))}
+                onChange={pickAsset} />
             </div>
             <div className="space-y-1.5"><Label>Technician</Label><Input className="h-11" value={(form.technician_name as string) ?? ""} onChange={(e) => set({ technician_name: e.target.value })} /></div>
             <div className="space-y-1.5"><Label>Date</Label><Input className="h-11" readOnly value={new Date(sheet.created_at).toLocaleDateString()} /></div>
           </div>
-          <p className="mt-3 flex items-start gap-1.5 text-sm text-muted-foreground">
-            <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
-            {site?.address || asset?.location_details || client?.billing_address || "No address on file"}
-          </p>
+          {address ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button type="button" className="mt-3 flex items-start gap-1.5 text-left text-sm text-primary underline-offset-2 hover:underline">
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0" />{address}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem asChild><a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`} target="_blank" rel="noreferrer">Open in Google Maps</a></DropdownMenuItem>
+                <DropdownMenuItem asChild><a href={`https://waze.com/ul?q=${encodeURIComponent(address)}&navigate=yes`} target="_blank" rel="noreferrer">Open in Waze</a></DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : <p className="mt-3 flex items-start gap-1.5 text-sm text-muted-foreground"><MapPin className="mt-0.5 h-4 w-4 shrink-0" />No address on file</p>}
         </Section>
 
         <Section n={2} title="Asset">
@@ -283,7 +289,7 @@ function SheetForm() {
             <div className="space-y-1.5"><Label>Model</Label><Input className="h-11" value={(form.lift_model as string) ?? ""} onChange={(e) => set({ lift_model: e.target.value, requires_admin_approval: true })} /></div>
             <div className="space-y-1.5"><Label>Serial number</Label><Input className="h-11" value={(form.serial_number as string) ?? ""} onChange={(e) => set({ serial_number: e.target.value, requires_admin_approval: true })} /></div>
           </div>
-          <p className="mt-2 text-xs text-muted-foreground">Changing the model or serial number sends this sheet to an admin for approval.</p>
+          <p className="mt-2 text-xs text-muted-foreground">Filled in automatically from the chosen lift. Changing the model or serial number sends this sheet to an admin for approval.</p>
         </Section>
 
         <Section n={3} title="Work classification">
@@ -296,34 +302,52 @@ function SheetForm() {
           </div>
           <div className="mt-3 grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5"><Label>Other job type</Label><Input className="h-11" value={(form.job_type_other as string) ?? ""} onChange={(e) => set({ job_type_other: e.target.value })} /></div>
-            <div className="space-y-1.5">
-              <Label>Maintenance agreement</Label>
-              <Select value={(form.maintenance_agreement_type as string) ?? "none"} onValueChange={(v) => set({ maintenance_agreement_type: v === "none" ? null : v })}>
-                <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                <SelectContent>{["none", "Comprehensive", "Standard", "Call-out only", "Warranty"].map((t) => <SelectItem key={t} value={t}>{t === "none" ? "None" : t}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
+            {manager && (
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1.5"><Lock className="h-3.5 w-3.5" />Maintenance agreement (office only)</Label>
+                <Select value={(form.maintenance_agreement_type as string) ?? "none"} onValueChange={(v) => set({ maintenance_agreement_type: v === "none" ? null : v })}>
+                  <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                  <SelectContent>{["none", "Comprehensive", "Standard", "Call-out only", "Warranty"].map((t) => <SelectItem key={t} value={t}>{t === "none" ? "None" : t}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
         </Section>
 
-        <Section n={4} title={`Time sheet · ${totalHours.toFixed(2)} h total`}>
+        <Section n={4} title={`Work log · ${totalHours.toFixed(2)} h total`}>
+          <div className="mb-4 space-y-1.5">
+            <Label>Reported fault</Label>
+            {sheet.job_id && <p className="text-xs text-muted-foreground">Filled in from the assigned job card.</p>}
+            <Textarea rows={2} value={(form.reported_fault as string) ?? ""} onChange={(e) => set({ reported_fault: e.target.value })} />
+          </div>
           <div className="space-y-3">
             {logs.map((l, i) => {
               const day = hoursFromTimes(l.time_in, l.time_out) + Number(l.traveling_time_hours || 0);
+              const dayParts = parts.map((p, j) => ({ p, j })).filter(({ p }) => p.log_sort_order === i);
               return (
                 <div key={i} className="rounded-lg border p-3">
-                  <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-sm font-medium">Day {i + 1} · <span className="tabular-nums text-muted-foreground">{day.toFixed(2)} h</span></span>
+                    <Button type="button" size="icon" variant="ghost" aria-label="Remove day" onClick={() => removeDay(i)}><Trash2 className="h-4 w-4" /></Button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                     <div className="col-span-2 space-y-1 md:col-span-1"><Label className="text-xs">Date</Label><Input type="date" className="h-11" value={l.log_date} onChange={(e) => setLog(i, { log_date: e.target.value })} /></div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Time in</Label>
-                      <Input type="time" className="h-11" value={l.time_in} onChange={(e) => { setLog(i, { time_in: e.target.value }); if (l.latitude_in == null) gps(i, "in"); }} />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Time out</Label>
-                      <Input type="time" className="h-11" value={l.time_out} onChange={(e) => { setLog(i, { time_out: e.target.value }); if (l.latitude_out == null) gps(i, "out"); }} />
-                    </div>
+                    {(["in", "out"] as const).map((w) => {
+                      const k = w === "in" ? "time_in" : "time_out";
+                      const setT = (v: string) => { setLog(i, { [k]: v }); if ((w === "in" ? l.latitude_in : l.latitude_out) == null) gps(i, w); };
+                      return (
+                        <div key={w} className="space-y-1">
+                          <Label className="text-xs">Time {w}</Label>
+                          <div className="flex gap-1">
+                            <Button type="button" size="icon" variant="outline" className="h-11 w-9 shrink-0" aria-label="minus 15 minutes" onClick={() => setT(shiftTime(l[k], -15))}>−</Button>
+                            <Input type="time" step={900} className="h-11 min-w-0 px-2" value={l[k]} onChange={(e) => setLog(i, { [k]: e.target.value })} onBlur={(e) => e.target.value && setT(roundTo15(e.target.value))} />
+                            <Button type="button" size="icon" variant="outline" className="h-11 w-9 shrink-0" aria-label="plus 15 minutes" onClick={() => setT(shiftTime(l[k] || nowHM(), l[k] ? 15 : 0))}>+</Button>
+                          </div>
+                          {!l[k] && <button type="button" className="text-xs text-primary" onClick={() => setT(roundTo15(nowHM()))}>Stamp now</button>}
+                        </div>
+                      );
+                    })}
                     <div className="space-y-1"><Label className="text-xs">Travel h</Label><Input type="number" step="0.25" min="0" inputMode="decimal" className="h-11" value={l.traveling_time_hours} onChange={(e) => setLog(i, { traveling_time_hours: Number(e.target.value) })} /></div>
-                    <div className="space-y-1"><Label className="text-xs">Day total</Label><Input readOnly className="h-11 tabular-nums" value={`${day.toFixed(2)} h`} /></div>
                   </div>
                   <p className="mt-2 text-[11px] text-muted-foreground">
                     GPS in: {l.latitude_in != null ? `${l.latitude_in.toFixed(4)}, ${l.longitude_in?.toFixed(4)}` : "—"} · out: {l.latitude_out != null ? `${l.latitude_out.toFixed(4)}, ${l.longitude_out?.toFixed(4)}` : "—"}
@@ -337,68 +361,104 @@ function SheetForm() {
                       );
                     })}
                   </div>
-                  <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] gap-2">
-                    <Textarea rows={2} placeholder="Work carried out this day" value={l.daily_work_description} onChange={(e) => setLog(i, { daily_work_description: e.target.value })} />
-                    <Button type="button" size="icon" variant="ghost" aria-label="Remove day" onClick={() => setLogs(logs.filter((_, j) => j !== i))}><Trash2 className="h-4 w-4" /></Button>
+                  <div className="mt-3 space-y-1"><Label className="text-xs">Repairs done this day</Label>
+                    <Textarea rows={2} value={l.daily_work_description} onChange={(e) => setLog(i, { daily_work_description: e.target.value })} />
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    <Label className="text-xs">Parts used</Label>
+                    {dayParts.map(({ p, j }) => (
+                      <div key={j} className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 md:grid-cols-[minmax(0,1fr)_80px_80px_110px_auto]">
+                        <Input className="col-span-2 h-10 md:col-span-1" placeholder="Part description" value={p.part_description} onChange={(e) => setPart(j, { part_description: e.target.value })} />
+                        <div className="grid grid-cols-3 gap-2 md:contents">
+                          <Input className="h-10" placeholder="Unit" value={p.unit} onChange={(e) => setPart(j, { unit: e.target.value })} />
+                          <Input className="h-10" type="number" min="0" placeholder="Qty" value={p.quantity} onChange={(e) => setPart(j, { quantity: Number(e.target.value) })} />
+                          <Input className="h-10" type="number" step="0.25" min="0" placeholder="Fetch h" title="Time acquiring parts (hours)" value={p.time_acquiring_parts_hours} onChange={(e) => setPart(j, { time_acquiring_parts_hours: Number(e.target.value) })} />
+                        </div>
+                        <Button type="button" size="icon" variant="ghost" aria-label="Remove part" onClick={() => setParts(parts.filter((_, x) => x !== j))}><Trash2 className="h-4 w-4" /></Button>
+                      </div>
+                    ))}
+                    {dayParts.length > 0 && <p className="text-[11px] text-muted-foreground">description · unit · qty · hours spent acquiring parts</p>}
+                    {!readOnly && <Button type="button" size="sm" variant="ghost" onClick={() => setParts([...parts, { ...emptyPart(), log_sort_order: i }])}><Plus className="mr-1 h-4 w-4" />Add part</Button>}
                   </div>
                 </div>
               );
             })}
-            {!readOnly && <Button type="button" variant="outline" className="h-11 w-full" onClick={() => setLogs([...logs, emptyLog()])}><Plus className="mr-1 h-4 w-4" />Add day</Button>}
+            {parts.some((p) => p.log_sort_order == null) && (
+              <div className="rounded-lg border border-dashed p-3 text-sm">
+                <p className="mb-1 text-muted-foreground">Parts not linked to a day:</p>
+                {parts.filter((p) => p.log_sort_order == null).map((p, k) => <p key={k}>{p.quantity} {p.unit} · {p.part_description}</p>)}
+              </div>
+            )}
+            {!readOnly && <Button type="button" variant="outline" className="h-11 w-full" onClick={() => setLogs([...logs, { ...emptyLog(), time_in: roundTo15(nowHM()) }])}><Plus className="mr-1 h-4 w-4" />Add day</Button>}
           </div>
         </Section>
 
-        <Section n={5} title="Diagnosis & notes">
+        <Section n={5} title="Internal only — never shown to client" priv>
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-1.5"><Label>Reported fault</Label><Textarea rows={3} value={(form.reported_fault as string) ?? ""} onChange={(e) => set({ reported_fault: e.target.value })} /></div>
-            <div className="space-y-1.5"><Label>Repairs performed</Label><Textarea rows={3} value={(form.repairs_performed as string) ?? ""} onChange={(e) => set({ repairs_performed: e.target.value })} /></div>
-            <div className="space-y-1.5 rounded-lg border border-dashed p-3">
-              <Label className="flex items-center gap-1.5"><Lock className="h-3.5 w-3.5" />Pending works / future jobs</Label>
-              <p className="text-xs text-muted-foreground">Private — not on the client copy; goes to the admin pending queue.</p>
+            <div className="space-y-1.5">
+              <Label>Pending works / future jobs</Label>
+              <p className="text-xs text-muted-foreground">Goes to the admin pending queue.</p>
               <Textarea rows={3} value={(form.pending_works_future_jobs as string) ?? ""} onChange={(e) => set({ pending_works_future_jobs: e.target.value })} />
             </div>
-            <div className="space-y-1.5 rounded-lg border border-dashed p-3">
-              <Label className="flex items-center gap-1.5"><Lock className="h-3.5 w-3.5" />Internal comments (admin only)</Label>
-              <p className="text-xs text-muted-foreground">Private — never shown to the client.</p>
+            <div className="space-y-1.5">
+              <Label>Internal comments (admin only)</Label>
+              <p className="text-xs text-muted-foreground">For the office team.</p>
               <Textarea rows={3} value={(form.internal_comments_admin_only as string) ?? ""} onChange={(e) => set({ internal_comments_admin_only: e.target.value })} />
             </div>
           </div>
         </Section>
 
-        <Section n={6} title="Parts used">
-          <div className="space-y-2">
-            {parts.map((p, i) => (
-              <div key={i} className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 rounded-lg border p-2 md:grid-cols-[minmax(0,1fr)_100px_100px_120px_auto] md:border-0 md:p-0">
-                <Input className="col-span-2 h-11 md:col-span-1" placeholder="Part description" value={p.part_description} onChange={(e) => setPart(i, { part_description: e.target.value })} />
-                <div className="col-span-2 grid grid-cols-3 gap-2 md:contents">
-                  <Input className="h-11" placeholder="Unit" value={p.unit} onChange={(e) => setPart(i, { unit: e.target.value })} />
-                  <Input className="h-11" type="number" min="0" placeholder="Qty" value={p.quantity} onChange={(e) => setPart(i, { quantity: Number(e.target.value) })} />
-                  <Input className="h-11" type="number" step="0.25" min="0" placeholder="Fetch h" title="Time acquiring parts (hours)" value={p.time_acquiring_parts_hours} onChange={(e) => setPart(i, { time_acquiring_parts_hours: Number(e.target.value) })} />
-                </div>
-                <Button type="button" size="icon" variant="ghost" className="col-start-2 row-start-1 md:col-start-auto md:row-start-auto" aria-label="Remove part" onClick={() => setParts(parts.filter((_, j) => j !== i))}><Trash2 className="h-4 w-4" /></Button>
-              </div>
-            ))}
-            <p className="hidden text-xs text-muted-foreground md:block">Columns: description · unit · quantity · hours spent acquiring parts</p>
-            {!readOnly && <Button type="button" variant="outline" className="h-11 w-full" onClick={() => setParts([...parts, emptyPart()])}><Plus className="mr-1 h-4 w-4" />Add part</Button>}
-          </div>
-        </Section>
-
-        <Section n={7} title="Client sign-off">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-1.5"><Label>Client full name *</Label><Input className="h-11" value={(form.client_full_name as string) ?? ""} onChange={(e) => set({ client_full_name: e.target.value })} /></div>
-            <div className="space-y-1.5"><Label>Client ID card no. *</Label><Input className="h-11" value={(form.client_id_card_no as string) ?? ""} onChange={(e) => set({ client_id_card_no: e.target.value })} /></div>
-          </div>
-          <div className="mt-4">
-            <Label>Client signature *</Label>
-            <div className="mt-1.5">
-              {readOnly ? (
-                form.signature_data ? <img src={form.signature_data as string} alt="Client signature" className="h-40 rounded-lg border bg-card" /> : <p className="text-sm text-muted-foreground">No signature</p>
-              ) : (
-                <SignaturePad key={sigKey} value={form.signature_data as string | null} onChange={(v) => set({ signature_data: v })} />
-              )}
+        <Section n={6} title="Client sign-off">
+          {form.signature_data ? (
+            <div className="flex flex-wrap items-center gap-4">
+              <img src={form.signature_data as string} alt="Client signature" className="h-24 rounded-lg border bg-card" />
+              <div className="text-sm"><p className="font-medium">{form.client_full_name as string}</p><p className="text-muted-foreground">ID {form.client_id_card_no as string}</p></div>
             </div>
-          </div>
+          ) : <p className="text-sm text-muted-foreground">Not signed yet.</p>}
+          {!readOnly && (
+            <Button type="button" className="mt-4 h-11 w-full sm:w-auto" onClick={() => setSignOpen(true)}>
+              <PenLine className="mr-1 h-4 w-4" />{form.signature_data ? "Re-open client sign-off" : "Present to client for sign-off"}
+            </Button>
+          )}
         </Section>
+      </fieldset>
+
+      <Dialog open={signOpen} onOpenChange={setSignOpen}>
+        <DialogContent className="max-h-[100dvh] max-w-3xl overflow-y-auto sm:max-h-[95vh]">
+          <DialogHeader><DialogTitle>Job sheet {sheet.jobsheet_number} — client copy</DialogTitle></DialogHeader>
+          <div className="space-y-4 text-sm">
+            <div className="grid gap-2 rounded-lg bg-muted/50 p-3 sm:grid-cols-2">
+              <p><span className="text-muted-foreground">Client:</span> {client?.name ?? "—"}</p>
+              <p><span className="text-muted-foreground">Date:</span> {new Date(sheet.created_at).toLocaleDateString()}</p>
+              <p className="sm:col-span-2"><span className="text-muted-foreground">Address:</span> {address || "—"}</p>
+              <p><span className="text-muted-foreground">Equipment:</span> {asset ? `${asset.reference_number} · ${asset.asset_category}` : (form.asset_type as string)}</p>
+              <p><span className="text-muted-foreground">Serial:</span> {(form.serial_number as string) || "—"}</p>
+            </div>
+            {form.reported_fault && <div><p className="font-medium">Reported fault</p><p className="whitespace-pre-wrap text-muted-foreground">{form.reported_fault as string}</p></div>}
+            <div>
+              <p className="font-medium">Work carried out</p>
+              {logs.length === 0 ? <p className="text-muted-foreground">—</p> : logs.map((l, i) => (
+                <p key={i} className="text-muted-foreground"><span className="text-foreground">{l.log_date} {l.time_in}–{l.time_out}:</span> {l.daily_work_description || "—"}</p>
+              ))}
+            </div>
+            {parts.filter((p) => p.part_description.trim()).length > 0 && (
+              <div><p className="font-medium">Parts replaced</p>
+                <ul className="list-inside list-disc text-muted-foreground">{parts.filter((p) => p.part_description.trim()).map((p, i) => <li key={i}>{p.quantity} {p.unit} · {p.part_description}</li>)}</ul>
+              </div>
+            )}
+            <div className="grid gap-3 border-t pt-4 md:grid-cols-2">
+              <div className="space-y-1.5"><Label>Full name *</Label><Input className="h-11" value={(form.client_full_name as string) ?? ""} onChange={(e) => set({ client_full_name: e.target.value })} /></div>
+              <div className="space-y-1.5"><Label>ID card no. *</Label><Input className="h-11" value={(form.client_id_card_no as string) ?? ""} onChange={(e) => set({ client_id_card_no: e.target.value })} /></div>
+            </div>
+            <div><Label>Signature *</Label><div className="mt-1.5"><SignaturePad key={sigKey} value={form.signature_data as string | null} onChange={(v) => set({ signature_data: v })} /></div></div>
+            <Button className="h-11 w-full" onClick={() => {
+              const missing = missingSignOff({ client_full_name: form.client_full_name as string, client_id_card_no: form.client_id_card_no as string, signature: form.signature_data as string });
+              if (missing.length) { toast.error(`Missing: ${missing.join(", ")}`); return; }
+              setSignOpen(false); toast.success("Signed — hand the device back to the technician");
+            }}>Confirm & sign</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
       </fieldset>
 
       {!readOnly && (
