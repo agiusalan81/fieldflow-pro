@@ -116,6 +116,7 @@ function SheetForm() {
   const [parts, setParts] = useState<Part[]>([]);
   const [sigKey, setSigKey] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [signOpen, setSignOpen] = useState(false);
 
   useEffect(() => {
     if (!data?.sheet || form) return;
