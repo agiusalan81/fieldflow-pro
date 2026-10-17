@@ -78,6 +78,13 @@
       "when": 1792233004607,
       "tag": "0010_idle_timeout",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792236636299,
+      "tag": "0011_contract_category",
+      "breakpoints": true
     }
   ]
 }

@@ -370,6 +370,7 @@ export type Database = {
         Row: {
           annual_price: number
           company_id: string
+          contract_category: string | null
           created_at: string
           equipment_category: string
           id: string
@@ -382,6 +383,7 @@ export type Database = {
         Insert: {
           annual_price?: number
           company_id: string
+          contract_category?: string | null
           created_at?: string
           equipment_category?: string
           id?: string
@@ -394,6 +396,7 @@ export type Database = {
         Update: {
           annual_price?: number
           company_id?: string
+          contract_category?: string | null
           created_at?: string
           equipment_category?: string
           id?: string
