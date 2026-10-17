@@ -59,3 +59,4 @@
 
 - [x] AI WhatsApp template drafter + Meta submission (Company Settings → Integrations)
 - [ ] WhatsApp live sends + delivery webhook (needs approved templates)
+- [x] Prompt for Meta approval when any message event uses WhatsApp
