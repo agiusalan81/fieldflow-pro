@@ -109,15 +109,6 @@ function TechToday({ profile }: { profile: Profile }) {
     },
   });
 
-  const inTransit = async (j: (typeof jobs)[number]) => {
-    try {
-      const id = await createDraftSheet(profile, j.id);
-      await supabase.from("job_sheets").update({ status: "in_transit", travel_start_time: new Date().toISOString() }).eq("id", id);
-      await supabase.from("jobs").update({ acknowledged_at: new Date().toISOString() }).eq("id", j.id);
-      qc.invalidateQueries({ queryKey: ["today-jobs"] });
-      toast.success(`SMS / WhatsApp sent to ${j.clients?.name}: “Your technician is on the way.” (simulated)`);
-    } catch (e) { toast.error((e as Error).message); }
-  };
 
   return (
     <AppShell title={`Hi, ${profile.full_name.split(" ")[0]}`}>
