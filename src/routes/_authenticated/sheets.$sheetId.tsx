@@ -193,7 +193,9 @@ function SheetForm() {
     if (missing.length) { toast.error(`Can't submit — missing: ${missing.join(", ")}`); return; }
     if (await persist("completed")) {
       await supabase.from("job_sheets").update({ work_end_time: new Date().toISOString() }).eq("id", sheetId);
-      toast.success(`Job sheet ${sheet.jobsheet_number} submitted and emailed to ${client?.name ?? "client"} (simulated)`);
+      const { data: rec } = await supabase.from("client_contacts").select("email").eq("client_id", sheet.client_id).eq("receives_job_sheets", true);
+      const emails = (rec ?? []).map((r) => r.email).filter(Boolean);
+      toast.success(`Job sheet ${sheet.jobsheet_number} submitted and emailed to ${emails.length ? emails.join(", ") : "no recipients (none ticked)"} (simulated)`);
       navigate({ to: "/sheets" });
     }
   };

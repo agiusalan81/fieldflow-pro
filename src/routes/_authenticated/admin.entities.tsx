@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Pencil } from "lucide-react";
+import { ContactsManager, EquipmentManager, PhoneInput } from "@/components/client-manager";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/lib/profile";
 import { AppShell, EmptyState } from "@/components/app-shell";
@@ -67,41 +68,80 @@ function ClientsTab({ q }: { q: string }) {
   const { data: profile } = useProfile();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [f, setF] = useState({ name: "", billing_address: "" });
-  const refresh = () => { qc.invalidateQueries({ queryKey: ["clients-full"] }); qc.invalidateQueries({ queryKey: ["clients"] }); };
+  const [step, setStep] = useState<1 | 2>(1);
+  const [clientId, setClientId] = useState<string | null>(null);
+  const [manage, setManage] = useState<{ id: string; name: string } | null>(null);
+  const emptyF = { name: "", property_name: "", street_name: "", location: "", first_name: "", last_name: "", email: "", code: "+356", number: "" };
+  const [f, setF] = useState(emptyF);
+  const refresh = () => { qc.invalidateQueries({ queryKey: ["clients-full"] }); qc.invalidateQueries({ queryKey: ["clients"] }); qc.invalidateQueries({ queryKey: ["contacts"] }); };
+  const reset = (o: boolean) => { setOpen(o); if (!o) { setStep(1); setClientId(null); setF(emptyF); } };
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { error } = await supabase.from("clients").insert({ ...f, company_id: profile!.company_id });
-    if (error) { toast.error(error.message); return; }
-    setOpen(false); setF({ name: "", billing_address: "" }); refresh();
+    const company_id = profile!.company_id;
+    const billing_address = [f.property_name, f.street_name, f.location].filter(Boolean).join(", ");
+    const { data: c, error } = await supabase.from("clients").insert({ name: f.name, property_name: f.property_name, street_name: f.street_name, location: f.location, billing_address, company_id }).select("id").single();
+    if (error || !c) { toast.error(error?.message ?? "Could not save"); return; }
+    const { error: ce } = await supabase.from("client_contacts").insert({ client_id: c.id, company_id, first_name: f.first_name, last_name: f.last_name, email: f.email, phone: `${f.code} ${f.number}`, is_primary_contact: true, receives_job_sheets: true });
+    if (ce) { toast.error(ce.message); return; }
+    refresh(); setClientId(c.id); setStep(2); toast.success("Client saved — now add equipment");
   };
   const list = clients.filter((c) => match(q, c.name, c.billing_address));
   return (
     <>
       <div className="mb-3 flex justify-end">
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={reset}>
           <DialogTrigger asChild><Button size="sm"><Plus className="mr-1 h-4 w-4" />Add client</Button></DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>New client</DialogTitle></DialogHeader>
-            <form onSubmit={save} className="space-y-3">
-              <div className="space-y-1.5"><Label>Name</Label><Input required value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
-              <div className="space-y-1.5"><Label>Billing address</Label><Input value={f.billing_address} onChange={(e) => setF({ ...f, billing_address: e.target.value })} /></div>
-              <Button type="submit" className="w-full">Save</Button>
-            </form>
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
+            <DialogHeader><DialogTitle>{step === 1 ? "New client" : `Equipment for ${f.name}`}</DialogTitle></DialogHeader>
+            {step === 1 ? (
+              <form onSubmit={save} className="space-y-3">
+                <div className="space-y-1.5"><Label>Client name *</Label><Input required value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
+                <div className="space-y-1.5"><Label>Property name / number</Label><Input value={f.property_name} onChange={(e) => setF({ ...f, property_name: e.target.value })} /></div>
+                <div className="space-y-1.5"><Label>Street name</Label><Input value={f.street_name} onChange={(e) => setF({ ...f, street_name: e.target.value })} /></div>
+                <div className="space-y-1.5"><Label>Location</Label><Input value={f.location} onChange={(e) => setF({ ...f, location: e.target.value })} /></div>
+                <h3 className="pt-2 font-medium">Primary contact</h3>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Input required placeholder="Name *" value={f.first_name} onChange={(e) => setF({ ...f, first_name: e.target.value })} />
+                  <Input required placeholder="Surname *" value={f.last_name} onChange={(e) => setF({ ...f, last_name: e.target.value })} />
+                </div>
+                <Input required type="email" placeholder="Contact email *" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
+                <PhoneInput required code={f.code} number={f.number} onChange={(code, number) => setF({ ...f, code, number })} />
+                <Button type="submit" className="w-full">Save & continue</Button>
+              </form>
+            ) : clientId && profile ? (
+              <div className="space-y-4">
+                <EquipmentManager clientId={clientId} companyId={profile.company_id} />
+                <Button className="w-full" onClick={() => reset(false)}>Finish</Button>
+              </div>
+            ) : null}
+          </DialogContent>
+        </Dialog>
+        <Dialog open={!!manage} onOpenChange={(o) => !o && setManage(null)}>
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
+            <DialogHeader><DialogTitle>{manage?.name}</DialogTitle></DialogHeader>
+            {manage && profile && (
+              <div className="space-y-6">
+                <ContactsManager clientId={manage.id} companyId={profile.company_id} />
+                <EquipmentManager clientId={manage.id} companyId={profile.company_id} />
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>
       {list.length === 0 ? <EmptyState>No clients yet.</EmptyState> : (
         <div className="overflow-x-auto rounded-xl border bg-card">
           <Table>
-            <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Billing address</TableHead><TableHead>Added</TableHead><TableHead /></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Address</TableHead><TableHead>Added</TableHead><TableHead /></TableRow></TableHeader>
             <TableBody>
               {list.map((c) => (
                 <TableRow key={c.id}>
                   <TableCell className="font-medium">{c.name}</TableCell>
-                  <TableCell className="text-muted-foreground">{c.billing_address ?? "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">{c.billing_address || "—"}</TableCell>
                   <TableCell className="whitespace-nowrap text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</TableCell>
-                  <TableCell className="text-right"><Button size="icon" variant="ghost" aria-label="Delete" onClick={() => del("clients", c.id, refresh)}><Trash2 className="h-4 w-4" /></Button></TableCell>
+                  <TableCell className="whitespace-nowrap text-right">
+                    <Button size="sm" variant="outline" onClick={() => setManage({ id: c.id, name: c.name })}><Pencil className="mr-1 h-4 w-4" />Contacts & equipment</Button>
+                    <Button size="icon" variant="ghost" aria-label="Delete" onClick={() => del("clients", c.id, refresh)}><Trash2 className="h-4 w-4" /></Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
