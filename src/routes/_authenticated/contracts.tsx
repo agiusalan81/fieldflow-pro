@@ -9,6 +9,8 @@ import { useCompanyRules, EQUIPMENT_CATEGORIES } from "@/lib/company";
 import { daysUntil, visitsForTier, contractName } from "@/lib/jobsheets";
 import { LookupInput, learnLookup, CONTRACT_CATEGORY } from "@/components/role-combobox";
 import { RenewalList, useAgreements } from "@/components/renewals";
+import { LibraryImport } from "@/components/library-import";
+import { extractChecklistItems, extractContractDetails } from "@/lib/document-library.functions";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -97,6 +99,20 @@ function Agreements({ office, companyId }: { office: boolean; companyId?: string
           <div className="space-y-1.5"><Label>Start</Label><Input className="h-11" type="date" value={f.start_date} onChange={(e) => setF({ ...f, start_date: e.target.value })} /></div>
           <div className="space-y-1.5"><Label>End</Label><Input className="h-11" type="date" value={f.end_date} onChange={(e) => setF({ ...f, end_date: e.target.value })} /></div>
           <div className="space-y-1.5"><Label>€ / year</Label><div className="flex gap-2"><Input className="h-11" type="number" value={f.annual_price} onChange={(e) => setF({ ...f, annual_price: e.target.value })} /><Button className="h-11" onClick={add}>Add</Button></div></div>
+          <div className="md:col-span-6">
+            <LibraryImport label="Import agreement from document library" onPick={async (id) => {
+              const d = await extractContractDetails({ data: { documentId: id } });
+              const client = opts?.clients.find((c) => d.client_name && c.name.toLowerCase().includes(d.client_name.toLowerCase()));
+              setF({
+                ...f,
+                client_id: client?.id ?? f.client_id,
+                start_date: d.start_date || f.start_date,
+                end_date: d.end_date || f.end_date,
+                annual_price: d.annual_price ? String(d.annual_price) : f.annual_price,
+              });
+              toast.success(client ? `Details read — client matched to ${client.name}. Review and tap Add.` : "Details read — choose the client, review and tap Add.");
+            }} />
+          </div>
         </section>
       )}
       {!data.length ? <EmptyState>No client agreements yet.</EmptyState> : (
@@ -145,6 +161,25 @@ function Types({ office, companyId }: { office: boolean; companyId?: string | un
           <div className="space-y-1.5"><Label>€ / year</Label><Input className="h-11" type="number" value={f.annual_price} onChange={(e) => setF({ ...f, annual_price: e.target.value })} /></div>
           <div className="space-y-1.5"><Label>Labour % off</Label><Input className="h-11" type="number" value={f.labour_discount_pct} onChange={(e) => setF({ ...f, labour_discount_pct: e.target.value })} /></div>
           <div className="space-y-1.5"><Label>Parts % off</Label><div className="flex gap-2"><Input className="h-11" type="number" value={f.parts_discount_pct} onChange={(e) => setF({ ...f, parts_discount_pct: e.target.value })} /><Button className="h-11" onClick={add}>Add</Button></div></div>
+          <div className="md:col-span-9">
+            <LibraryImport label="Import contract type from document library" onPick={async (id) => {
+              const d = await extractContractDetails({ data: { documentId: id } });
+              const known = ["Residential", "Commercial"].some((c) => c.toLowerCase() === d.contract_category.toLowerCase());
+              const tier = ["Bronze", "Silver", "Gold", "Custom"].find((t) => t.toLowerCase() === d.tier.toLowerCase()) ?? "";
+              setF({
+                ...f,
+                name: d.name || f.name,
+                category: known ? d.contract_category : d.contract_category ? "Other" : f.category,
+                other: known || !d.contract_category ? f.other : d.contract_category,
+                tier,
+                visits_per_year: d.visits_per_year ? String(d.visits_per_year) : f.visits_per_year,
+                annual_price: d.annual_price ? String(d.annual_price) : f.annual_price,
+                labour_discount_pct: d.labour_discount_pct ? String(d.labour_discount_pct) : f.labour_discount_pct,
+                parts_discount_pct: d.parts_discount_pct ? String(d.parts_discount_pct) : f.parts_discount_pct,
+              });
+              toast.success("Details read from the document — review and tap Add.");
+            }} />
+          </div>
         </section>
       )}
       {!data.length ? <EmptyState>No contract types yet. Add e.g. Residential Bronze, Silver, Gold.</EmptyState> : (
@@ -192,7 +227,15 @@ function Checklists({ office, companyId }: { office: boolean; companyId?: string
             <Input className="h-11" placeholder="Checklist name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
           </div>
           <Textarea rows={10} placeholder={"One item per line, e.g.\nCheck door operation\nTest emergency alarm\nInspect brakes"} value={f.items} onChange={(e) => setF({ ...f, items: e.target.value })} />
-          <Button className="h-11" onClick={save}>Save checklist</Button>
+          <div className="flex flex-wrap gap-2">
+            <Button className="h-11" onClick={save}>Save checklist</Button>
+            <LibraryImport label="Import checklist from document library" onPick={async (id) => {
+              const d = await extractChecklistItems({ data: { documentId: id } });
+              if (!d.items.length) throw new Error("No checklist items could be read from that document.");
+              setF({ ...f, name: d.name || f.name, items: d.items.join("\n") });
+              toast.success(`${d.items.length} items read — review and tap Save checklist.`);
+            }} />
+          </div>
         </section>
       ) : <div />}
       <aside className="space-y-3">
