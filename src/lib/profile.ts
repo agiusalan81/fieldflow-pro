@@ -8,7 +8,17 @@ export type Profile = {
   email: string;
   role: "admin" | "technician" | "supervisor";
   companies: { name: string } | null;
+  phone_number: string | null;
+  home_address: string | null;
+  next_of_kin_1: Kin;
+  next_of_kin_2: Kin;
+  app_theme_preference: "light" | "dark";
+  language_preference: string;
+  employee_id: string | null;
+  technician_initials: string | null;
+  signature_on_file: string | null;
 };
+export type Kin = { name?: string; relationship?: string; phone?: string; email?: string };
 
 export function useProfile() {
   return useQuery({
@@ -18,11 +28,11 @@ export function useProfile() {
       if (!auth.user) return null;
       const { data, error } = await supabase
         .from("users")
-        .select("id, company_id, full_name, email, role, companies(name)")
+        .select("id, company_id, full_name, email, role, companies(name), phone_number, home_address, next_of_kin_1, next_of_kin_2, app_theme_preference, language_preference, employee_id, technician_initials, signature_on_file")
         .eq("id", auth.user.id)
         .maybeSingle();
       if (error) throw error;
-      return data as Profile | null;
+      return data as unknown as Profile | null;
     },
     staleTime: 60_000,
   });
@@ -34,7 +44,7 @@ export function useCompanyUsers() {
   return useQuery({
     queryKey: ["company-users"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("users").select("id, full_name, role").order("full_name");
+      const { data, error } = await supabase.from("users").select("id, full_name, role, technician_initials").order("full_name");
       if (error) throw error;
       return data;
     },
@@ -56,8 +66,12 @@ export function formatDuration(ms: number) {
 }
 
 export const STATUS_LABEL: Record<string, string> = {
+  draft: "Draft",
   pending: "Pending",
   in_transit: "In transit",
   in_progress: "In progress",
   completed: "Completed",
 };
+
+export const initialsOf = (u: { full_name: string; technician_initials?: string | null }) =>
+  u.technician_initials || u.full_name.split(/\s+/).map((w) => w[0]).join("").slice(0, 3).toUpperCase();
