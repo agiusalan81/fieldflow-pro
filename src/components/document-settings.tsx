@@ -17,7 +17,7 @@ export function DocumentSettings({ companyId }: { companyId: string }) {
   const qc = useQueryClient();
   const { data } = useQuery({
     queryKey: ["doc-settings"],
-    queryFn: async () => (await supabase.from("company_settings").select("pdf_template, terms, note_presets").maybeSingle()).data,
+    queryFn: async () => (await supabase.from("company_settings").select("pdf_template, terms, note_presets, logo_data").maybeSingle()).data,
   });
   const [t, setT] = useState<PdfTemplate | null>(null);
   const [terms, setTerms] = useState<Terms | null>(null);
