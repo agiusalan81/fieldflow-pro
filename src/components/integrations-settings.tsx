@@ -14,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { WhatsAppTemplateStudio, type StudioPrefill } from "@/components/whatsapp-template-studio";
 
-const WA_TYPE: Record<string, string> = { on_my_way: "on_my_way", job_completed: "job_completed", renewal_notice: "renewal", estimate_sent: "estimate" };
+const WA_TYPE: Record<string, string> = { on_my_way: "on_my_way", job_completed: "job_completed", renewal_notice: "renewal", estimate_sent: "estimate", no_access: "custom_update", unsigned_left: "custom_update" };
 
 export function RatesFields({ value, onChange }: { value: Rates; onChange: (r: Rates) => void }) {
   const f = (k: keyof Rates, l: string) => (
@@ -23,7 +23,7 @@ export function RatesFields({ value, onChange }: { value: Rates; onChange: (r: R
   return <div className="grid gap-3 sm:grid-cols-4">{f("standard", "Standard 1.0× / h")}{f("ot15", "Overtime 1.5× / h")}{f("ot20", "Overtime 2.0× / h")}{f("callout", "Call-out fee")}</div>;
 }
 
-export function IntegrationsSettings({ companyId }: { companyId: string }) {
+export function IntegrationsSettings({ companyId, part }: { companyId: string; part: "messaging" | "accounting" }) {
   const qc = useQueryClient();
   const { data } = useQuery({
     queryKey: ["integrations", companyId],
@@ -55,6 +55,7 @@ export function IntegrationsSettings({ companyId }: { companyId: string }) {
 
   return (
     <div className="space-y-5">
+      {part === "messaging" && <>
       <WhatsAppTemplateStudio prefill={prefill} />
       <section className="space-y-4 rounded-xl border bg-card p-5">
         <div><h2 className="font-medium text-foreground">Messaging channels</h2><p className="text-sm text-muted-foreground">All optional. Turn on the channels your company uses. Live sending starts once each provider account is connected.</p></div>
@@ -111,6 +112,8 @@ export function IntegrationsSettings({ companyId }: { companyId: string }) {
         })}
       </section>
 
+      </>}
+      {part === "accounting" && <>
       <section className="space-y-4 rounded-xl border bg-card p-5">
         <div><h2 className="font-medium text-foreground">Default labour rates</h2><p className="text-sm text-muted-foreground">Used when a client has no rate card of its own and no fixed estimate or contract applies.</p></div>
         <RatesFields value={rates} onChange={setRates} />
@@ -155,7 +158,8 @@ export function IntegrationsSettings({ companyId }: { companyId: string }) {
           <p className="text-xs text-muted-foreground">Status: not connected yet — exports are prepared and marked in the app until the account is linked.</p>
         </>)}
       </section>
-      <Button onClick={save}>Save integrations</Button>
+      </>}
+      <Button onClick={save}>{part === "messaging" ? "Save messages" : "Save accounting"}</Button>
     </div>
   );
 }

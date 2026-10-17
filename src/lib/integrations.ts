@@ -21,16 +21,18 @@ export const EVENTS = [
   { key: "job_completed", label: "Job sheet completed", body: "Hi {{contact_name}}, {{technician_name}} has completed the service for {{asset_reference}} at {{site_name}}. Job sheet- {{jobsheet_number}} is attached. Questions? Call {{company_phone}}." },
   { key: "emergency_dispatch", label: "Emergency dispatch (in-app team chat)", body: "Urgent: job #{{job_number}} at {{site_address}} is assigned to you. Priority {{priority}}." },
   { key: "renewal_notice", label: "Contract renewal reminder", body: "Dear {{contact_name}}, your maintenance agreement for {{site_name}} expires on {{expiry_date}}. Your current contract and checklist are attached for renewal. Please review and sign digitally. Questions? Call {{company_phone}}." },
+  { key: "no_access", label: "Attended — no one to open", body: "Hi {{contact_name}}, technician {{technician_name}} attended {{site_name}} for {{asset_reference}} at {{arrival_time}}, but no one was available to open. Please call {{company_phone}} to arrange access or a new visit." },
+  { key: "unsigned_left", label: "Client left — job sheet unsigned", body: "Dear {{contact_name}}, technician {{technician_name}} completed works on {{asset_reference}} at {{site_name}}, but nobody was on site to sign Job sheet- {{jobsheet_number}}. The lift has been left switched off pending your signature to approve the works done. Please call {{company_phone}} so we can return and restore service." },
   { key: "estimate_sent", label: "Estimate sent", body: "Hello {{contact_name}}, please find estimate {{estimate_title}} for {{site_name}}. Total {{amount}}." },
 ] as const;
 export type EventKey = (typeof EVENTS)[number]["key"];
 
-export const MERGE_TAGS = ["client_name", "contact_name", "site_name", "site_address", "technician_name", "asset_reference", "jobsheet_number", "job_number", "priority", "eta_window", "expiry_date", "estimate_title", "amount", "company_name", "company_phone"] as const;
+export const MERGE_TAGS = ["client_name", "contact_name", "site_name", "site_address", "technician_name", "asset_reference", "jobsheet_number", "job_number", "priority", "eta_window", "arrival_time", "expiry_date", "estimate_title", "amount", "company_name", "company_phone"] as const;
 
 /** Everyday labels office staff see instead of {{tags}}. */
 export const TAG_LABELS: Record<(typeof MERGE_TAGS)[number], string> = {
   client_name: "Client", contact_name: "Contact Person", site_name: "Site", site_address: "Site Address", technician_name: "Technician",
-  asset_reference: "Equipment", jobsheet_number: "Job Sheet #", job_number: "Job #", priority: "Priority", eta_window: "Arrival Time",
+  asset_reference: "Equipment", jobsheet_number: "Job Sheet #", job_number: "Job #", priority: "Priority", eta_window: "Arrival Time", arrival_time: "Attended At",
   expiry_date: "Expiry Date", estimate_title: "Estimate", amount: "Amount", company_name: "Company Name", company_phone: "Office Phone",
 };
 /** Stored {{tag}} to editable "[Contact Person]". */
@@ -46,7 +48,7 @@ export function fromFriendly(text: string): string {
 export const SAMPLE: Record<string, string> = {
   client_name: "Grand Hotel Ltd", contact_name: "Sarah", site_name: "Tower Block A", site_address: "42 Marina Road, Sliema",
   technician_name: "Alan Agius", asset_reference: "Lift 2", jobsheet_number: "007611", job_number: "104", priority: "high",
-  eta_window: "30 mins", expiry_date: "30/11/2026", estimate_title: "Door operator replacement", amount: "€450.00",
+  eta_window: "30 mins", arrival_time: "14:30", expiry_date: "30/11/2026", estimate_title: "Door operator replacement", amount: "€450.00",
   company_name: "Your company", company_phone: "+356 2134 5678",
 };
 
@@ -64,7 +66,7 @@ export type Integrations = {
 
 /** Default channels per event; only fixed ones cannot be changed by tenants. */
 export const FIXED_CHANNELS: Partial<Record<EventKey, ChannelKey[]>> = { emergency_dispatch: [] };
-const DEFAULT_CHANNELS: Record<EventKey, ChannelKey[]> = { on_my_way: ["whatsapp"], job_completed: ["email"], emergency_dispatch: [], renewal_notice: ["whatsapp", "email"], estimate_sent: ["whatsapp", "email"] };
+const DEFAULT_CHANNELS: Record<EventKey, ChannelKey[]> = { on_my_way: ["whatsapp"], job_completed: ["email"], emergency_dispatch: [], renewal_notice: ["whatsapp", "email"], estimate_sent: ["whatsapp", "email"], no_access: ["whatsapp", "email"], unsigned_left: ["whatsapp", "email"] };
 
 export function parseIntegrations(v: unknown): Integrations {
   const o = (v && typeof v === "object" ? v : {}) as Partial<Integrations>;
