@@ -2,14 +2,17 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { QrCode, Car, Play, Square, AlertTriangle, CalendarDays, ClipboardList } from "lucide-react";
+import { QrCode, Car, Play, Square, AlertTriangle, CalendarDays, ClipboardList, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useProfile, isManager, formatDuration, type Profile } from "@/lib/profile";
+import { useProfile, isManager, isOffice, formatDuration, type Profile } from "@/lib/profile";
+import { useCan } from "@/lib/permissions";
+import { useCompanyRules } from "@/lib/company";
+import { RenewalList } from "@/components/renewals";
 import { AppShell, StatusBadge, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { createDraftSheet } from "@/lib/jobsheets";
+import { createDraftSheet, splitHours, addSplits, DEFAULT_RULES } from "@/lib/jobsheets";
 import { AssetHistory, LiftHistoryButton, PriorityBadge, timeWindow } from "@/components/job-card";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -179,72 +182,155 @@ function ScanQr() {
   );
 }
 
-function ManagerOverview({ profile }: { profile: Profile }) {
-  const { data } = useQuery({
-    queryKey: ["overview"],
+function Card({ to, title, icon: Icon, sub, value }: { to: string; title: string; icon: typeof Car; sub: string; value: string | number }) {
+  return (
+    <Link to={to} className="rounded-xl border bg-card p-4">
+      <p className="flex items-center gap-2 text-sm font-medium text-foreground"><Icon className="h-4 w-4 text-primary" />{title}</p>
+      <p className="mt-2 font-display text-3xl text-foreground">{value}</p>
+      <p className="text-xs text-muted-foreground">{sub}</p>
+    </Link>
+  );
+}
+
+function useOpsData() {
+  const today = new Date().toISOString().slice(0, 10);
+  return useQuery({
+    queryKey: ["overview", today],
     queryFn: async () => {
-      const [jobs, inv, leave] = await Promise.all([
-        supabase.from("job_sheets").select("id, status, is_overtime, created_at, clients(name), users(full_name)").order("created_at", { ascending: false }),
+      const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
+      const [sheets, inv, leave, shifts, jobs, users] = await Promise.all([
+        supabase.from("job_sheets").select("id, jobsheet_number, status, requires_admin_approval, pending_works_future_jobs, pending_status, assigned_technician_id, updated_at, clients(name), sites(name), users(full_name), jobsheet_time_logs(log_date, time_in, time_out)").gte("updated_at", since).order("updated_at", { ascending: false }),
         supabase.from("inventory_items").select("id, part_name, current_stock, min_stock_level"),
         supabase.from("leave_requests").select("id").eq("status", "pending"),
+        supabase.from("shifts").select("user_id, shift_type, started_at").is("ended_at", null),
+        supabase.from("jobs").select("id, job_number, window_start, window_end, priority, assigned_technician_id, clients(name), sites(name)").eq("scheduled_date", today).order("window_start"),
+        supabase.from("users").select("id, full_name"),
       ]);
-      return { jobs: jobs.data ?? [], inv: inv.data ?? [], pendingLeave: leave.data?.length ?? 0 };
+      return { sheets: sheets.data ?? [], inv: inv.data ?? [], pendingLeave: leave.data?.length ?? 0, shifts: shifts.data ?? [], jobs: jobs.data ?? [], users: users.data ?? [] };
     },
   });
-  const jobs = data?.jobs ?? [];
+}
+
+function ManagerOverview({ profile }: { profile: Profile }) {
+  return isOffice(profile) ? <OfficeOverview profile={profile} /> : <SupervisorOverview profile={profile} />;
+}
+
+function OfficeOverview({ profile }: { profile: Profile }) {
+  const can = useCan(profile);
+  const navigate = useNavigate();
+  const { data } = useOpsData();
+  const { data: c } = useCompanyRules();
+  const rules = c?.rules ?? DEFAULT_RULES;
+  const completed = (data?.sheets ?? []).filter((s) => s.status === "completed");
+  const billing = completed.map((s) => ({ s, h: s.jobsheet_time_logs.reduce((a, l) => addSplits(a, splitHours(l.log_date, l.time_in, l.time_out, rules)), { standard: 0, ot15: 0, ot20: 0 }) }));
+  const tot = billing.reduce((a, b) => addSplits(a, b.h), { standard: 0, ot15: 0, ot20: 0 });
   const low = (data?.inv ?? []).filter((i) => i.current_stock <= i.min_stock_level);
-  const count = (s: string) => jobs.filter((j) => j.status === s).length;
-  const stats = [
-    { label: "Pending", v: count("pending") },
-    { label: "In transit", v: count("in_transit") },
-    { label: "In progress", v: count("in_progress") },
-    { label: "Completed", v: count("completed") },
-  ];
   return (
-    <AppShell title={profile.companies?.name ?? "Overview"} actions={<Button asChild size="sm"><Link to="/admin/jobs">New job</Link></Button>}>
+    <AppShell title={profile.companies?.name ?? "Overview"} actions={<Button asChild size="sm" variant="outline"><Link to="/company">Company settings</Link></Button>}>
       <div className="space-y-6">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          {stats.map((s) => (
-            <div key={s.label} className="rounded-xl border bg-card p-4">
-              <p className="text-sm text-muted-foreground">{s.label}</p>
-              <p className="font-display text-3xl text-foreground">{s.v}</p>
-            </div>
-          ))}
+          {can("billing") && <Card to="/admin/jobs" title="Completed (30 days)" icon={ClipboardList} value={completed.length} sub={`${tot.standard} h std · ${tot.ot15} h 1.5× · ${tot.ot20} h 2×`} />}
+          {can("billing") && <Card to="/admin/jobs" title="Overtime hours" icon={Clock} value={(tot.ot15 + tot.ot20).toFixed(2)} sub="1.5× and 2× in the last 30 days" />}
+          {can("leave_approvals") && <Card to="/leave" title="Leave requests" icon={CalendarDays} value={data?.pendingLeave ?? 0} sub="Waiting for approval" />}
+          {can("inventory") && <Card to="/admin/inventory" title="Low stock" icon={AlertTriangle} value={low.length} sub={low.slice(0, 2).map((i) => i.part_name).join(", ") || "All parts above minimum"} />}
         </div>
-        <div className="grid gap-4 lg:grid-cols-3">
-          <Link to="/admin/inventory" className="rounded-xl border bg-card p-5">
-            <p className="flex items-center gap-2 font-medium text-foreground"><AlertTriangle className="h-4 w-4 text-destructive" /> Low stock</p>
-            <p className="mt-1 text-sm text-muted-foreground">{low.length ? low.slice(0, 3).map((i) => i.part_name).join(", ") : "All parts above minimum"}</p>
-            <p className="mt-3 font-display text-2xl text-foreground">{low.length} items</p>
-          </Link>
-          <Link to="/leave" className="rounded-xl border bg-card p-5">
-            <p className="flex items-center gap-2 font-medium text-foreground"><CalendarDays className="h-4 w-4 text-primary" /> Leave requests</p>
-            <p className="mt-1 text-sm text-muted-foreground">Waiting for approval</p>
-            <p className="mt-3 font-display text-2xl text-foreground">{data?.pendingLeave ?? 0} pending</p>
-          </Link>
-          <Link to="/admin/jobs" className="rounded-xl border bg-card p-5">
-            <p className="flex items-center gap-2 font-medium text-foreground"><ClipboardList className="h-4 w-4 text-primary" /> Overtime jobs</p>
-            <p className="mt-1 text-sm text-muted-foreground">Flagged as overtime</p>
-            <p className="mt-3 font-display text-2xl text-foreground">{jobs.filter((j) => j.is_overtime).length}</p>
-          </Link>
+        {can("contracts") && (
+          <section className="space-y-3">
+            <div className="flex items-center justify-between"><h2 className="font-medium text-foreground">Contracts due for renewal</h2><Link to="/contracts" className="text-sm text-primary">All contracts</Link></div>
+            <RenewalList office limit={5} />
+          </section>
+        )}
+        {can("billing") && (
+          <section className="rounded-xl border bg-card">
+            <h2 className="border-b px-5 py-3 font-medium text-foreground">Ready for billing</h2>
+            {!billing.length ? <p className="p-5 text-sm text-muted-foreground">No completed job sheets in the last 30 days.</p> : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead><tr className="border-b text-left text-muted-foreground"><th className="px-5 py-2 font-medium">Sheet</th><th className="px-3 py-2 font-medium">Client</th><th className="px-3 py-2 font-medium">Technician</th><th className="px-3 py-2 text-right font-medium">Std</th><th className="px-3 py-2 text-right font-medium">1.5×</th><th className="px-3 py-2 text-right font-medium">2×</th></tr></thead>
+                  <tbody className="divide-y">
+                    {billing.slice(0, 10).map(({ s, h }) => (
+                      <tr key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate({ to: "/sheets/$sheetId", params: { sheetId: s.id } })}>
+                        <td className="px-5 py-2.5 font-mono text-primary">#{s.jobsheet_number}</td><td className="px-3 py-2.5 text-foreground">{s.clients?.name}</td><td className="px-3 py-2.5 text-muted-foreground">{s.users?.full_name ?? "—"}</td>
+                        <td className="px-3 py-2.5 text-right tabular-nums">{h.standard}</td><td className="px-3 py-2.5 text-right tabular-nums">{h.ot15}</td><td className="px-3 py-2.5 text-right tabular-nums">{h.ot20}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        )}
+      </div>
+    </AppShell>
+  );
+}
+
+function SupervisorOverview({ profile }: { profile: Profile }) {
+  const can = useCan(profile);
+  const navigate = useNavigate();
+  const { data } = useOpsData();
+  const sheets = data?.sheets ?? [];
+  const approvals = sheets.filter((s) => s.requires_admin_approval).length;
+  const pending = sheets.filter((s) => (s.pending_works_future_jobs ?? "").trim() && s.pending_status !== "done").length;
+  const name = (id: string | null) => data?.users.find((u) => u.id === id)?.full_name ?? "Unassigned";
+  const techs = (data?.users ?? []).map((u) => {
+    const sh = data!.shifts.filter((x) => x.user_id === u.id);
+    const active = sheets.find((s) => s.assigned_technician_id === u.id && (s.status === "in_transit" || s.status === "in_progress"));
+    const status = active?.status === "in_progress" ? `On site · ${active.clients?.name}` : active?.status === "in_transit" || sh.some((x) => x.shift_type === "travel") ? `Travelling${active ? ` · ${active.clients?.name}` : ""}` : sh.some((x) => x.shift_type === "shift") ? "On shift · available" : "Off shift";
+    return { u, status, on: sh.length > 0 || !!active };
+  }).sort((a, b) => Number(b.on) - Number(a.on));
+  const done = sheets.filter((s) => s.status === "completed" && s.updated_at.slice(0, 10) === new Date().toISOString().slice(0, 10)).length;
+  return (
+    <AppShell title="Field command" actions={<Button asChild size="sm" variant="outline"><Link to="/admin/jobs">Dispatch job</Link></Button>}>
+      <div className="space-y-6">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {can("live_status") && <Card to="/dashboard" title="Technicians active" icon={Play} value={techs.filter((t) => t.on).length} sub={`of ${techs.length} team members`} />}
+          {can("dispatch") && <Card to="/admin/jobs" title="Today's jobs" icon={CalendarDays} value={data?.jobs.length ?? 0} sub={`${done} sheets completed today`} />}
+          {can("approvals") && <Card to="/admin/jobs" title="Asset approvals" icon={AlertTriangle} value={approvals} sub="Model / serial changes to check" />}
+          {can("pending_works") && <Card to="/pending-works" title="Pending works" icon={ClipboardList} value={pending} sub="Follow-ups to schedule or quote" />}
+        </div>
+        <div className="grid gap-4 lg:grid-cols-2">
+          {can("live_status") && (
+            <section className="rounded-xl border bg-card">
+              <h2 className="border-b px-5 py-3 font-medium text-foreground">Live technician status</h2>
+              <ul className="divide-y">
+                {techs.map(({ u, status, on }) => (
+                  <li key={u.id} className="flex items-center gap-3 px-5 py-2.5 text-sm">
+                    <span className={`h-2 w-2 shrink-0 rounded-full ${on ? "bg-success" : "bg-muted-foreground"}`} />
+                    <span className="min-w-0 flex-1 truncate text-foreground">{u.full_name}</span>
+                    <span className="truncate text-muted-foreground">{status}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+          {can("dispatch") && (
+            <section className="rounded-xl border bg-card">
+              <h2 className="border-b px-5 py-3 font-medium text-foreground">Today's dispatch</h2>
+              {!data?.jobs.length ? <p className="p-5 text-sm text-muted-foreground">No jobs scheduled today.</p> : (
+                <ul className="divide-y">
+                  {data.jobs.map((j) => (
+                    <li key={j.id} className="grid cursor-pointer grid-cols-[90px_minmax(0,1fr)_auto] items-center gap-3 px-5 py-2.5 text-sm hover:bg-muted/50" onClick={() => navigate({ to: "/admin/jobs" })}>
+                      <span className="tabular-nums text-muted-foreground">{timeWindow(j.window_start, j.window_end)}</span>
+                      <span className="min-w-0 truncate text-foreground">#{j.job_number} · {j.clients?.name}{j.sites?.name ? ` · ${j.sites.name}` : ""}<span className="block truncate text-xs text-muted-foreground">{name(j.assigned_technician_id)}</span></span>
+                      <PriorityBadge p={j.priority} />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
         </div>
         <section className="rounded-xl border bg-card">
           <h2 className="border-b px-5 py-3 font-medium text-foreground">Recent job sheets</h2>
-          {jobs.length === 0 ? (
-            <p className="p-5 text-sm text-muted-foreground">No job sheets yet.</p>
-          ) : (
-            <ul className="divide-y">
-              {jobs.slice(0, 8).map((j) => (
-                <li key={j.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-5 py-3">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-foreground">{j.clients?.name}</p>
-                    <p className="truncate text-xs text-muted-foreground">{j.users?.full_name ?? "Unassigned"}</p>
-                  </div>
-                  <StatusBadge status={j.status} />
-                </li>
-              ))}
-            </ul>
-          )}
+          <ul className="divide-y">
+            {sheets.slice(0, 8).map((j) => (
+              <li key={j.id} className="grid cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-5 py-3 hover:bg-muted/50" onClick={() => navigate({ to: "/sheets/$sheetId", params: { sheetId: j.id } })}>
+                <div className="min-w-0"><p className="truncate text-sm font-medium text-foreground">#{j.jobsheet_number} · {j.clients?.name}</p><p className="truncate text-xs text-muted-foreground">{j.users?.full_name ?? "Unassigned"}</p></div>
+                <StatusBadge status={j.status} />
+              </li>
+            ))}
+          </ul>
         </section>
       </div>
     </AppShell>

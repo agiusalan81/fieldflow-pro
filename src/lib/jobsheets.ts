@@ -116,3 +116,64 @@ export function matchesSheetFilter(j: SheetFilterRow, filter: string) {
   if (filter === "admin_queue") return approval || pending;
   return j.status === filter;
 }
+
+/** Company hours & overtime rules used to split logged time into pay/billing buckets. */
+export type OvertimeRules = {
+  work_days: number[]; // 0=Sun … 6=Sat
+  work_start: string; // HH:MM
+  work_end: string;
+  after_hours_rate: number;
+  saturday_rate: number;
+  sunday_rate: number;
+  holiday_rate: number;
+  public_holidays: string[]; // YYYY-MM-DD
+};
+export const DEFAULT_RULES: OvertimeRules = {
+  work_days: [1, 2, 3, 4, 5], work_start: "07:30", work_end: "16:30",
+  after_hours_rate: 1.5, saturday_rate: 1.5, sunday_rate: 2, holiday_rate: 2, public_holidays: [],
+};
+export type HourSplit = { standard: number; ot15: number; ot20: number };
+
+const toMin = (t: string) => { const [h = 0, m = 0] = t.slice(0, 5).split(":").map(Number); return h * 60 + m; };
+
+/** Rate multiplier that applies to one minute of work on a date. */
+export function rateFor(date: string, minute: number, r: OvertimeRules) {
+  const wd = new Date(date + "T00:00:00Z").getUTCDay();
+  if (r.public_holidays.includes(date)) return r.holiday_rate;
+  if (wd === 0 && !r.work_days.includes(0)) return r.sunday_rate;
+  if (r.work_days.includes(wd)) return minute >= toMin(r.work_start) && minute < toMin(r.work_end) ? 1 : r.after_hours_rate;
+  if (wd === 6) return r.saturday_rate;
+  return r.after_hours_rate;
+}
+
+/** Splits a time-in/time-out on a date into standard, 1.5× and 2.0× hours (handles overnight). */
+export function splitHours(date: string, tin?: string | null, tout?: string | null, r: OvertimeRules = DEFAULT_RULES): HourSplit {
+  const out: HourSplit = { standard: 0, ot15: 0, ot20: 0 };
+  if (!date || !tin || !tout) return out;
+  const start = toMin(tin);
+  let end = toMin(tout);
+  if (end <= start) end += 1440;
+  const next = new Date(date + "T00:00:00Z"); next.setUTCDate(next.getUTCDate() + 1);
+  const nextDate = next.toISOString().slice(0, 10);
+  for (let m = start; m < end; m++) {
+    const rate = m < 1440 ? rateFor(date, m, r) : rateFor(nextDate, m - 1440, r);
+    if (rate >= 2) out.ot20++; else if (rate > 1) out.ot15++; else out.standard++;
+  }
+  const h = (n: number) => Math.round((n / 60) * 100) / 100;
+  return { standard: h(out.standard), ot15: h(out.ot15), ot20: h(out.ot20) };
+}
+
+export function addSplits(a: HourSplit, b: HourSplit): HourSplit {
+  return { standard: +(a.standard + b.standard).toFixed(2), ot15: +(a.ot15 + b.ot15).toFixed(2), ot20: +(a.ot20 + b.ot20).toFixed(2) };
+}
+
+/** Checklist items still unticked. */
+export function missingChecklist(items: string[], values: Record<string, boolean> | null | undefined) {
+  return items.filter((i) => !values?.[i]);
+}
+
+/** Days from today until a contract end date (negative = expired). */
+export function daysUntil(end: string, today = new Date().toISOString().slice(0, 10)) {
+  return Math.round((new Date(end + "T00:00:00Z").getTime() - new Date(today + "T00:00:00Z").getTime()) / 86_400_000);
+}
+export const dueForRenewal = (end: string, noticeDays = 30, today?: string) => { const d = daysUntil(end, today); return d >= 0 && d <= noticeDays; };

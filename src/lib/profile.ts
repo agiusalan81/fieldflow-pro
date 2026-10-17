@@ -2,7 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useSyncExternalStore } from "react";
 
 /** UI-only "View As" mode. Data access is still enforced by the real role on the server. */
-export type ViewAs = "technician" | "supervisor" | "admin";
+export type Role = "superuser" | "admin" | "supervisor" | "technician";
+export type ViewAs = Role;
+export const ROLE_LABEL: Record<Role, string> = { superuser: "Company Superuser", admin: "Office Admin", supervisor: "Supervisor", technician: "Technician" };
 const VIEW_KEY = "fieldops:view-as";
 const listeners = new Set<() => void>();
 export function setViewAs(v: ViewAs | null) {
@@ -23,7 +25,7 @@ export type Profile = {
   company_id: string;
   full_name: string;
   email: string;
-  role: "admin" | "technician" | "supervisor";
+  role: Role;
   companies: { name: string } | null;
   phone_number: string | null;
   home_address: string | null;
@@ -35,7 +37,7 @@ export type Profile = {
   technician_initials: string | null;
   signature_on_file: string | null;
   /** The account's real role; `role` reflects the active View As mode. */
-  real_role: "admin" | "technician" | "supervisor";
+  real_role: Role;
 };
 export type Kin = { name?: string; relationship?: string; phone?: string; email?: string };
 
@@ -58,13 +60,18 @@ function useRealProfile() {
         .eq("id", auth.user.id)
         .maybeSingle();
       if (error) throw error;
-      return data ? ({ ...data, real_role: data.role } as unknown as Profile) : null;
+      if (!data) return null;
+      const { data: r } = await supabase.from("user_roles").select("role").eq("user_id", auth.user.id).maybeSingle();
+      const real = (r?.role ?? "technician") as Role;
+      return { ...data, role: real, real_role: real } as unknown as Profile;
     },
     staleTime: 60_000,
   });
 }
 
-export const isManager = (p?: Profile | null) => p?.role === "admin" || p?.role === "supervisor";
+export const isManager = (p?: Profile | null) => !!p && p.role !== "technician";
+/** Superuser or Office Admin (the commercial side). */
+export const isOffice = (p?: Profile | null) => p?.role === "admin" || p?.role === "superuser";
 
 export function useCompanyUsers() {
   return useQuery({

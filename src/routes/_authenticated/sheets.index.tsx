@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -29,6 +29,7 @@ export const Route = createFileRoute("/_authenticated/sheets/")({
 function SheetsPage() {
   const { data: profile } = useProfile();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [client, setClient] = useState("all");
   const [from, setFrom] = useState("");
@@ -64,7 +65,7 @@ function SheetsPage() {
   };
 
   const Card = ({ s, completed }: { s: (typeof sheets)[number]; completed?: boolean }) => (
-    <li className="grid gap-3 rounded-xl border bg-card p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+    <li className="grid cursor-pointer gap-3 rounded-xl border bg-card p-4 transition-colors hover:bg-muted/40 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center" onClick={() => navigate({ to: "/sheets/$sheetId", params: { sheetId: s.id } })}>
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <span className="font-mono text-sm text-primary">#{s.jobsheet_number}</span>
@@ -73,7 +74,7 @@ function SheetsPage() {
         <p className="mt-1 truncate font-medium text-foreground">{s.clients?.name}{s.sites?.name ? ` · ${s.sites.name}` : ""}</p>
         <p className="truncate text-xs text-muted-foreground">{s.assets?.reference_number ?? "No lift"} · {s.reported_fault || "No fault noted"} · {new Date(s.created_at).toLocaleDateString()}</p>
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
         {completed ? (
           <Button asChild variant="outline" className="h-10 flex-1 sm:flex-none"><Link to="/sheets/$sheetId" params={{ sheetId: s.id }}><Eye className="mr-1 h-4 w-4" />View / Open Full Job Sheet</Link></Button>
         ) : (
