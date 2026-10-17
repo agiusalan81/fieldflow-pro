@@ -49,22 +49,9 @@ function Entities() {
   const { data: profile } = useProfile();
   const onOpen = (c: Open, tab: RecordTab) => setManage({ ...c, tab });
   return (
-    <AppShell title="Clients & assets">
-      <Tabs defaultValue="clients">
-        <div className="mb-4 grid gap-2 sm:grid-cols-[auto_minmax(0,1fr)]">
-          <TabsList>
-            <TabsTrigger value="clients">Clients</TabsTrigger>
-            <TabsTrigger value="sites">Sites</TabsTrigger>
-            <TabsTrigger value="contacts">Contacts</TabsTrigger>
-            <TabsTrigger value="assets">Assets</TabsTrigger>
-          </TabsList>
-          <Input placeholder="Filter…" value={q} onChange={(e) => setQ(e.target.value)} />
-        </div>
-        <TabsContent value="clients"><ClientsTab q={q} onOpen={onOpen} /></TabsContent>
-        <TabsContent value="sites"><SitesTab q={q} onOpen={onOpen} /></TabsContent>
-        <TabsContent value="contacts"><ContactsTab q={q} onOpen={onOpen} /></TabsContent>
-        <TabsContent value="assets"><AssetsTab q={q} onOpen={onOpen} /></TabsContent>
-      </Tabs>
+    <AppShell title="Clients, sites & assets">
+      <div className="mb-3"><Input placeholder="Search client, address, contact, lift reference or serial…" value={q} onChange={(e) => setQ(e.target.value)} /></div>
+      <ClientsTab q={q} onOpen={onOpen} />
       <Dialog open={!!manage} onOpenChange={(o) => !o && setManage(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader><DialogTitle>{manage?.name}</DialogTitle></DialogHeader>
@@ -181,25 +168,7 @@ function ClientsTab({ q, onOpen }: TabProps) {
           </DialogContent>
         </Dialog>
       </div>
-      {list.length === 0 ? <EmptyState>No clients yet.</EmptyState> : (
-        <div className="overflow-x-auto rounded-xl border bg-card">
-          <Table>
-            <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Address</TableHead><TableHead>Added</TableHead><TableHead /></TableRow></TableHeader>
-            <TableBody>
-              {list.map((c) => (
-                <TableRow key={c.id} className={ROW} onClick={() => onOpen({ id: c.id, name: c.name }, "sites")}>
-                  <TableCell className="font-medium">{c.name}</TableCell>
-                  <TableCell className="text-muted-foreground">{c.billing_address || "—"}</TableCell>
-                  <TableCell className="whitespace-nowrap text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</TableCell>
-                  <TableCell className="whitespace-nowrap text-right">
-                    <Button size="icon" variant="ghost" aria-label="Delete" onClick={(e) => { e.stopPropagation(); del("clients", c.id, refresh); }}><Trash2 className="h-4 w-4" /></Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+      <UnifiedTable q={q} onOpen={onOpen} clients={list} onDelete={(id) => del("clients", id, refresh)} />
     </>
   );
 }
