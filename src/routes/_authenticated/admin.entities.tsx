@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, Trash2, Pencil } from "lucide-react";
-import { ContactsManager, EquipmentManager, PhoneInput } from "@/components/client-manager";
+import { ContactsManager, EquipmentManager, PhoneInput, WhatsAppBadge } from "@/components/client-manager";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/lib/profile";
 import { AppShell, EmptyState } from "@/components/app-shell";
@@ -136,7 +136,7 @@ function ClientsTab({ q, onOpen }: TabProps) {
     }
     refresh(); setClientId(c.id); setStep(2); toast.success("Client and site saved — now add equipment");
   };
-  const list = clients.filter((c) => match(q, c.name, c.billing_address));
+  const list = clients;
   return (
     <>
       <div className="mb-3 flex justify-end">
@@ -169,6 +169,67 @@ function ClientsTab({ q, onOpen }: TabProps) {
         </Dialog>
       </div>
       <UnifiedTable q={q} onOpen={onOpen} clients={list} onDelete={(id) => del("clients", id, refresh)} />
+    </>
+  );
+}
+
+type Row = { key: string; clientId: string; client: string; contact: string; whatsapp: boolean; site: string; address: string; asset: string; category: string; serial: string };
+
+function UnifiedTable({ q, onOpen, clients, onDelete }: { q: string; onOpen: (c: Open, tab: RecordTab) => void; clients: { id: string; name: string; billing_address: string | null }[]; onDelete: (id: string) => void }) {
+  const [client, setClient] = useState("all");
+  const [cat, setCat] = useState("all");
+  const { data } = useQuery({
+    queryKey: ["entities-unified"],
+    queryFn: async () => {
+      const [s, c, a] = await Promise.all([
+        supabase.from("sites").select("id, client_id, name, address"),
+        supabase.from("client_contacts").select("client_id, first_name, last_name, phone, is_primary_contact, has_whatsapp"),
+        supabase.from("assets").select("id, client_id, site_id, reference_number, asset_category, serial_number"),
+      ]);
+      return { sites: s.data ?? [], contacts: c.data ?? [], assets: a.data ?? [] };
+    },
+  });
+  const rows: Row[] = clients.flatMap((c) => {
+    const contacts = (data?.contacts ?? []).filter((x) => x.client_id === c.id);
+    const pc = contacts.find((x) => x.is_primary_contact) ?? contacts[0];
+    const contact = pc ? `${pc.first_name} ${pc.last_name ?? ""} · ${pc.phone ?? ""}`.trim() : "—";
+    const sites = (data?.sites ?? []).filter((x) => x.client_id === c.id);
+    const assets = (data?.assets ?? []).filter((x) => x.client_id === c.id);
+    const base = { clientId: c.id, client: c.name, contact, whatsapp: !!pc?.has_whatsapp };
+    if (!assets.length) return [{ ...base, key: c.id, site: sites[0]?.name ?? "—", address: sites[0]?.address ?? c.billing_address ?? "", asset: "", category: "", serial: "" }];
+    return assets.map((a) => {
+      const st = sites.find((x) => x.id === a.site_id) ?? sites[0];
+      return { ...base, key: a.id, site: st?.name ?? "—", address: st?.address ?? c.billing_address ?? "", asset: a.reference_number, category: a.asset_category, serial: a.serial_number ?? "" };
+    });
+  });
+  const categories = Array.from(new Set((data?.assets ?? []).map((a) => a.asset_category))).sort();
+  const list = rows.filter((r) => (client === "all" || r.clientId === client) && (cat === "all" || r.category === cat) && match(q, r.client, r.contact, r.site, r.address, r.asset, r.category, r.serial));
+  return (
+    <>
+      <div className="mb-3 grid gap-2 sm:grid-cols-2">
+        <Select value={client} onValueChange={setClient}><SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent><SelectItem value="all">All clients</SelectItem>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select>
+        <Select value={cat} onValueChange={setCat}><SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent><SelectItem value="all">All equipment types</SelectItem>{categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select>
+      </div>
+      {list.length === 0 ? <EmptyState>Nothing matches these filters.</EmptyState> : (
+        <div className="overflow-x-auto rounded-xl border bg-card">
+          <Table>
+            <TableHeader><TableRow><TableHead>Client</TableHead><TableHead>Primary contact</TableHead><TableHead>Site / address</TableHead><TableHead>Equipment</TableHead><TableHead /></TableRow></TableHeader>
+            <TableBody>
+              {list.map((r) => (
+                <TableRow key={r.key} className={ROW} onClick={() => onOpen({ id: r.clientId, name: r.client }, r.asset ? "equipment" : "sites")}>
+                  <TableCell className="font-medium">{r.client}</TableCell>
+                  <TableCell className="text-sm">{r.contact}{r.whatsapp && <WhatsAppBadge />}</TableCell>
+                  <TableCell className="text-sm"><span className="text-foreground">{r.site}</span><span className="block text-xs text-muted-foreground">{r.address || "—"}</span></TableCell>
+                  <TableCell className="text-sm">{r.asset ? <><span className="font-mono">{r.asset}</span> <span className="rounded-full bg-secondary px-2 py-0.5 text-xs">{r.category}</span>{r.serial && <span className="block text-xs text-muted-foreground">S/N {r.serial}</span>}</> : <span className="text-muted-foreground">No equipment</span>}</TableCell>
+                  <TableCell className="text-right"><Button size="icon" variant="ghost" aria-label="Delete client" onClick={(e) => { e.stopPropagation(); onDelete(r.clientId); }}><Trash2 className="h-4 w-4" /></Button></TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </>
   );
 }
