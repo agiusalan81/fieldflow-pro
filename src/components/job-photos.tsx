@@ -49,7 +49,7 @@ export function JobPhotos({ companyId, sheetId, photos, scope, day, readOnly, on
     if (!missing.length) return;
     supabase.storage.from(BUCKET).createSignedUrls(missing, 3600).then(({ data }) => {
       if (!data) return;
-      setUrls((u) => ({ ...u, ...Object.fromEntries(data.filter((d) => d.signedUrl && d.path).map((d) => [d.path!, d.signedUrl])) }));
+      setUrls((u) => ({ ...u, ...Object.fromEntries(data.filter((d) => d.signedUrl && d.path).map((d) => [d.path!, d.signedUrl as string])) }));
     });
   }, [mine.map((p) => p.path).join("|")]); // eslint-disable-line react-hooks/exhaustive-deps
 
