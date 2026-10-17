@@ -6,7 +6,9 @@ import { Copy, Link2, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, isOffice, ROLE_LABEL, type Role } from "@/lib/profile";
 import { MODULES, ROLES, canSee, usePermRows, useCan, type ModuleKey } from "@/lib/permissions";
-import { useCompanyRules } from "@/lib/company";
+import { useCompanyRules, FONT_CHOICES, applyTypography, DEFAULT_THEME, type Typography, type TextStyle } from "@/lib/company";
+import { PhoneInput, splitPhone } from "@/components/client-manager";
+import { Checkbox } from "@/components/ui/checkbox";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,10 +46,12 @@ function CompanyPage() {
       <Tabs defaultValue={def} className="mx-auto max-w-5xl">
         <TabsList>
           {office && <TabsTrigger value="hours">Hours & overtime</TabsTrigger>}
+          {office && <TabsTrigger value="profile">Profile & branding</TabsTrigger>}
           {team && <TabsTrigger value="team">Team & invites</TabsTrigger>}
           {superuser && <TabsTrigger value="access">Role access</TabsTrigger>}
         </TabsList>
         {office && <TabsContent value="hours" className="mt-4"><HoursTab companyId={profile.company_id} /></TabsContent>}
+        {office && <TabsContent value="profile" className="mt-4"><ProfileTab companyId={profile.company_id} /></TabsContent>}
         {team && <TabsContent value="team" className="mt-4"><TeamTab role={profile.role} companyId={profile.company_id} meId={profile.id} /></TabsContent>}
         {superuser && <TabsContent value="access" className="mt-4"><AccessTab companyId={profile.company_id} /></TabsContent>}
       </Tabs>
@@ -110,6 +114,76 @@ function HoursTab({ companyId }: { companyId: string }) {
       </div>
       <Button className="h-11" onClick={save}>Save hours & rules</Button>
     </section>
+  );
+}
+
+type Phones = { office_phone: string; whatsapp_phone: string; emergency_phone: string; company_email: string; company_address: string };
+
+function ProfileTab({ companyId }: { companyId: string }) {
+  const { data } = useCompanyRules();
+  const qc = useQueryClient();
+  const [p, setP] = useState<Phones | null>(null);
+  const [t, setT] = useState<Typography | null>(null);
+  useEffect(() => { if (data && !p) { setP(data.phones); setT(data.theme); } }, [data, p]);
+  useEffect(() => { if (t) applyTypography(t); }, [t]);
+  if (!p || !t) return null;
+  const save = async () => {
+    const { error } = await supabase.from("company_settings").upsert({ company_id: companyId, ...p, theme: t as never });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Company profile saved");
+    qc.invalidateQueries({ queryKey: ["company-settings"] });
+  };
+  const phone = (k: "office_phone" | "whatsapp_phone" | "emergency_phone", l: string, hint?: string) => {
+    const sp = splitPhone(p[k]);
+    return (
+      <div className="space-y-1.5"><Label>{l}</Label>
+        <PhoneInput code={sp.code} number={sp.number} onChange={(c, n) => setP({ ...p, [k]: n.trim() ? `${c} ${n}` : "" })} />
+        {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+      </div>
+    );
+  };
+  const style = (k: keyof Typography, l: string) => {
+    const v = t[k];
+    const up = (patch: Partial<TextStyle>) => setT({ ...t, [k]: { ...v, ...patch } });
+    return (
+      <div className="space-y-3 rounded-lg border p-4">
+        <p className="font-medium text-foreground">{l}</p>
+        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+          <Select value={v.font} onValueChange={(f) => up({ font: f })}>
+            <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+            <SelectContent>{FONT_CHOICES.map((f) => <SelectItem key={f.value} value={f.value}><span style={{ fontFamily: f.css || undefined }}>{f.label}</span></SelectItem>)}</SelectContent>
+          </Select>
+          <div className="flex items-center gap-2">
+            <Input type="color" aria-label={`${l} colour`} className="h-11 w-14 p-1" value={v.color || "#000000"} onChange={(e) => up({ color: e.target.value })} />
+            <Button type="button" size="sm" variant="ghost" onClick={() => up({ color: "" })}>Default colour</Button>
+          </div>
+        </div>
+        <div className="flex gap-4 text-sm">
+          <label className="flex items-center gap-2"><Checkbox checked={v.bold} onCheckedChange={(c) => up({ bold: !!c })} /><b>Bold</b></label>
+          <label className="flex items-center gap-2"><Checkbox checked={v.italic} onCheckedChange={(c) => up({ italic: !!c })} /><i>Italic</i></label>
+        </div>
+      </div>
+    );
+  };
+  return (
+    <div className="space-y-4">
+      <section className="space-y-4 rounded-xl border bg-card p-5">
+        <div><h2 className="font-medium text-foreground">Company contact details</h2><p className="text-sm text-muted-foreground">Shown to clients on job sheets and in "on the way" messages.</p></div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {phone("office_phone", "Office phone")}
+          {phone("whatsapp_phone", "WhatsApp dispatch number", "Clients see this number on WhatsApp updates.")}
+          {phone("emergency_phone", "24/7 emergency line")}
+          <div className="space-y-1.5"><Label>Company email</Label><Input className="h-11" type="email" value={p.company_email} onChange={(e) => setP({ ...p, company_email: e.target.value })} /></div>
+        </div>
+        <div className="space-y-1.5"><Label>Office address</Label><Input className="h-11" value={p.company_address} onChange={(e) => setP({ ...p, company_address: e.target.value })} /></div>
+      </section>
+      <section className="space-y-4 rounded-xl border bg-card p-5">
+        <div><h2 className="font-medium text-foreground">Fonts</h2><p className="text-sm text-muted-foreground">Changes preview live across the app. Save to apply for everyone in your company.</p></div>
+        <div className="grid gap-4 md:grid-cols-2">{style("headers", "Headers & titles")}{style("fields", "Field labels")}</div>
+        <Button type="button" variant="outline" size="sm" onClick={() => setT(DEFAULT_THEME)}>Reset fonts</Button>
+      </section>
+      <Button className="h-11" onClick={save}>Save profile & branding</Button>
+    </div>
   );
 }
 
