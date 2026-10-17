@@ -270,7 +270,7 @@ function SupervisorOverview({ profile }: { profile: Profile }) {
   }).sort((a, b) => Number(b.on) - Number(a.on));
   const done = sheets.filter((s) => s.status === "completed" && s.updated_at.slice(0, 10) === new Date().toISOString().slice(0, 10)).length;
   return (
-    <AppShell title="Field command" actions={<Button asChild size="sm" variant="outline"><Link to="/admin/jobs">Dispatch job</Link></Button>}>
+    <AppShell title="Field command" actions={<Button asChild size="sm" variant="outline"><Link to="/admin/jobs" search={{ new: true }}>Dispatch job</Link></Button>}>
       <div className="space-y-6">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {can("live_status") && <Card to="/dashboard" title="Technicians active" icon={Play} value={techs.filter((t) => t.on).length} sub={`of ${techs.length} team members`} />}

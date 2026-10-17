@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/admin/jobs")({
+  validateSearch: (s: Record<string, unknown>): { new?: boolean | undefined } => ({ new: s["new"] === true || s["new"] === "true" ? true : undefined }),
   head: () => ({
     meta: [
       { title: "Job sheets — FieldOps" },
@@ -195,7 +196,10 @@ function NewJobDialog() {
   const { data: profile } = useProfile();
   const { data: users = [] } = useCompanyUsers();
   const qc = useQueryClient();
-  const [open, setOpen] = useState(false);
+  const search = Route.useSearch();
+  const navigate = useNavigate();
+  const [open, setOpenRaw] = useState(!!search.new);
+  const setOpen = (o: boolean) => { setOpenRaw(o); if (!o && search.new) navigate({ to: "/admin/jobs", search: {}, replace: true }); };
   const empty = { client_id: "", site_id: "none", asset_id: "none", tech: "none", scheduled_date: new Date().toISOString().slice(0, 10), window_start: "", window_end: "", priority: "normal", problem_summary: "" };
   const [f, setF] = useState(empty);
   const { data: clients = [] } = useQuery({ queryKey: ["clients"], queryFn: async () => (await supabase.from("clients").select("id, name").order("name")).data ?? [] });
