@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { clientPhotos, hoursFromTimes, parsePhotos } from "@/lib/jobsheets";
+import { parseTemplate, parseTerms, termsFor, visibleBlocks, type PdfTemplate } from "@/lib/documents";
 
 const b64 = (s: string) =>
   btoa(Array.from(new TextEncoder().encode(s), (b) => String.fromCharCode(b)).join(""));
@@ -51,6 +52,7 @@ async function buildPdf(d: {
   fault: string; repairs: string; technician: string; signedBy: string; idCard: string; signature: string | null;
   logs: { date: string; in: string; out: string; travel: number; total: number }[];
   parts: { desc: string; unit: string; qty: number }[];
+  notes: string | null; terms: string | null; template: PdfTemplate;
 }) {
   const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
   const doc = await PDFDocument.create();
@@ -81,42 +83,56 @@ async function buildPdf(d: {
   y -= 16; text("Job sheet - client copy", M, 10, font, grey); text(d.date, W - M - font.widthOfTextAtSize(safe(d.date), 10), 10, font, grey);
   y -= 12; page.drawLine({ start: { x: M, y }, end: { x: W - M, y }, thickness: 0.5, color: grey }); y -= 10;
 
-  label("Client"); para(d.client);
-  label("Site address"); para(d.address);
-  label("Equipment"); para(d.asset);
-  label("Reported fault"); para(d.fault);
-  label("Work carried out"); para(d.repairs);
-
-  if (d.logs.length) {
-    label("Time sheet");
-    const cols = [M, M + 110, M + 180, M + 250, M + 330];
-    ["Date", "In", "Out", "Travel h", "Total h"].forEach((h, i) => text(h, cols[i]!, 9, bold)); y -= 14;
-    for (const l of d.logs) { need(14); [l.date, l.in, l.out, String(l.travel), l.total.toFixed(2)].forEach((v, i) => text(v, cols[i]!, 9)); y -= 14; }
-  }
-  if (d.parts.length) {
-    label("Parts used");
-    text("Description", M, 9, bold); text("Unit", M + 360, 9, bold); text("Qty", M + 430, 9, bold); y -= 14;
-    for (const p of d.parts) {
-      const lines = wrap(p.desc, 9, 340);
-      need(lines.length * 12 + 2);
-      text(p.unit, M + 360, 9); text(String(p.qty), M + 430, 9);
-      for (const l of lines) { text(l, M, 9); y -= 12; }
-      y -= 2;
+  if (d.template.header) { text(d.template.header, M, 9, font, grey); y -= 14; }
+  const signoff = async () => {
+    need(130);
+    y -= 10; page.drawLine({ start: { x: M, y }, end: { x: W - M, y }, thickness: 0.5, color: grey }); y -= 18;
+    text("TECHNICIAN", M, 8, bold, grey); text("CLIENT SIGN-OFF", W / 2, 8, bold, grey); y -= 14;
+    text(d.technician || "-", M); text(`${d.signedBy || "-"}  -  ID ${d.idCard || "-"}`, W / 2); y -= 8;
+    if (d.signature?.startsWith("data:image/png")) {
+      try {
+        const img = await doc.embedPng(d.signature);
+        const h = 60, w = Math.min(200, (img.width / img.height) * h);
+        page.drawImage(img, { x: W / 2, y: y - h, width: w, height: h });
+        y -= h;
+      } catch { /* ignore bad signature image */ }
     }
+    y -= 10;
+  };
+  for (const b of visibleBlocks(d.template)) {
+    if (b === "client") { label("Client"); para(d.client); }
+    else if (b === "address") { label("Site address"); para(d.address); }
+    else if (b === "equipment") { label("Equipment"); para(d.asset); }
+    else if (b === "fault") { label("Reported fault"); para(d.fault); }
+    else if (b === "work") { label("Work carried out"); para(d.repairs); }
+    else if (b === "notes" && d.notes) { label("Special notes"); para(d.notes); }
+    else if (b === "timesheet" && d.logs.length) {
+      label("Time sheet");
+      const showT = d.template.showTravel;
+      const heads = showT ? ["Date", "In", "Out", "Travel h", "Total h"] : ["Date", "In", "Out", "Total h"];
+      const cols = [M, M + 110, M + 180, M + 250, M + 330];
+      heads.forEach((h, i) => text(h, cols[i]!, 9, bold)); y -= 14;
+      for (const l of d.logs) {
+        need(14);
+        const vals = showT ? [l.date, l.in, l.out, String(l.travel), l.total.toFixed(2)] : [l.date, l.in, l.out, (l.total - l.travel).toFixed(2)];
+        vals.forEach((v, i) => text(v, cols[i]!, 9)); y -= 14;
+      }
+    }
+    else if (b === "parts" && d.parts.length) {
+      label("Parts used");
+      text("Description", M, 9, bold); text("Unit", M + 360, 9, bold); text("Qty", M + 430, 9, bold); y -= 14;
+      for (const p of d.parts) {
+        const lines = wrap(p.desc, 9, 340);
+        need(lines.length * 12 + 2);
+        text(p.unit, M + 360, 9); text(String(p.qty), M + 430, 9);
+        for (const l of lines) { text(l, M, 9); y -= 12; }
+        y -= 2;
+      }
+    }
+    else if (b === "signoff") await signoff();
   }
-
-  need(130);
-  y -= 10; page.drawLine({ start: { x: M, y }, end: { x: W - M, y }, thickness: 0.5, color: grey }); y -= 18;
-  text("TECHNICIAN", M, 8, bold, grey); text("CLIENT SIGN-OFF", W / 2, 8, bold, grey); y -= 14;
-  text(d.technician || "-", M); text(`${d.signedBy || "-"}  ·  ID ${d.idCard || "-"}`.replace("·", "-"), W / 2); y -= 8;
-  if (d.signature?.startsWith("data:image/png")) {
-    try {
-      const img = await doc.embedPng(d.signature);
-      const h = 60, w = Math.min(200, (img.width / img.height) * h);
-      page.drawImage(img, { x: W / 2, y: y - h, width: w, height: h });
-      y -= h;
-    } catch { /* ignore bad signature image */ }
-  }
+  if (d.terms) { label("Terms & conditions"); for (const l of wrap(d.terms, 8, W - 2 * M)) { need(11); text(l, M, 8, font, grey); y -= 11; } }
+  if (d.template.footer) { need(20); y -= 8; text(d.template.footer, M, 9, font, grey); }
   return doc.save();
 }
 
@@ -128,15 +144,17 @@ export const sendJobSheetEmail = createServerFn({ method: "POST" })
     const { supabase } = context;
     const { data: sheet, error } = await supabase
       .from("job_sheets")
-      .select("client_id, jobsheet_number, status, reported_fault, repairs_performed, technician_name, client_full_name, client_id_card_no, signature_data, photo_paths, asset_type, asset_type_other, lift_model, serial_number, created_at, clients(name, billing_address, property_name, street_name, location), sites(name, address), assets(reference_number, serial_number), companies(name)")
+      .select("client_id, site_id, company_id, special_notes, special_notes_in_pdf, special_notes_in_email, jobsheet_number, status, reported_fault, repairs_performed, technician_name, client_full_name, client_id_card_no, signature_data, photo_paths, asset_type, asset_type_other, lift_model, serial_number, created_at, clients(name, billing_address, property_name, street_name, location), sites(name, address), assets(reference_number, serial_number), companies(name)")
       .eq("id", data.sheetId)
       .single();
     if (error || !sheet) throw new Error("Job sheet not found");
     if (sheet.status !== "completed") throw new Error("Job sheet must be completed before emailing");
 
     const { data: contacts } = await supabase
-      .from("client_contacts").select("email").eq("client_id", sheet.client_id).eq("receives_job_sheets", true);
-    const emails = (contacts ?? []).map((c) => c.email).filter((e): e is string => !!e);
+      .from("client_contacts").select("email, site_id").eq("client_id", sheet.client_id).eq("receives_job_sheets", true);
+    const { data: settings } = await supabase.from("company_settings").select("pdf_template, terms").eq("company_id", sheet.company_id).maybeSingle();
+    const notes = sheet.special_notes?.trim() || null;
+    const emails = (contacts ?? []).filter((c) => !c.site_id || !sheet.site_id || c.site_id === sheet.site_id).map((c) => c.email).filter((e): e is string => !!e);
     if (!emails.length) return { sent: false as const, recipients: [] as string[], reason: "no_recipients" };
 
     const client = sheet.clients as { name: string; billing_address: string | null } | null;
@@ -162,6 +180,9 @@ export const sendJobSheetEmail = createServerFn({ method: "POST" })
         return { date: l.log_date, in: l.time_in?.slice(0, 5) ?? "", out: l.time_out?.slice(0, 5) ?? "", travel, total: hoursFromTimes(l.time_in, l.time_out) + travel };
       }),
       parts: (parts ?? []).map((p) => ({ desc: p.part_description, unit: p.unit ?? "", qty: Number(p.quantity) })),
+      notes: sheet.special_notes_in_pdf ? notes : null,
+      terms: termsFor(parseTerms(settings?.terms), "job_sheet"),
+      template: parseTemplate(settings?.pdf_template),
     });
 
     const attachments: Attachment[] = [{ filename: `JobSheet_${sheet.jobsheet_number}.pdf`, mime: "application/pdf", data: pdf }];
@@ -179,6 +200,7 @@ export const sendJobSheetEmail = createServerFn({ method: "POST" })
       `Dear ${client?.name ?? "customer"},`,
       "",
       `Please find attached the completed job sheet #${sheet.jobsheet_number} for work carried out${address ? ` at ${address}` : ""} on ${date}.`,
+      sheet.special_notes_in_email && notes ? `\n${notes}\n` : null,
       photoCount ? `${photoCount} photo${photoCount > 1 ? "s" : ""} of the work are also attached.` : null,
       "",
       "Thank you for your business.",
