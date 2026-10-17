@@ -177,3 +177,9 @@ export function daysUntil(end: string, today = new Date().toISOString().slice(0,
   return Math.round((new Date(end + "T00:00:00Z").getTime() - new Date(today + "T00:00:00Z").getTime()) / 86_400_000);
 }
 export const dueForRenewal = (end: string, noticeDays = 30, today?: string) => { const d = daysUntil(end, today); return d >= 0 && d <= noticeDays; };
+
+/** Default maintenance visits per year by contract tier (Custom stays manual). */
+export const TIER_VISITS: Record<string, number> = { Bronze: 4, Silver: 6, Gold: 12 };
+export const visitsForTier = (tier: string, current: number) => TIER_VISITS[tier] ?? current;
+/** Suggested contract type name from category + tier, e.g. "Residential Gold". */
+export const contractName = (category: string, tier: string) => [category, tier === "Custom" ? "" : tier].filter(Boolean).join(" ");
