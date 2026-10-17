@@ -56,3 +56,6 @@
 - [x] Contract renewal pack (same contract + checklist) with client digital signature
 - [x] Signed job sheets never ask for another signature
 - [x] Resend job sheet to client from the job sheets list
+
+- [x] AI WhatsApp template drafter + Meta submission (Company Settings → Integrations)
+- [ ] WhatsApp live sends + delivery webhook (needs approved templates)
