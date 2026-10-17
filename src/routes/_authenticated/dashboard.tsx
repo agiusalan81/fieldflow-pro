@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useProfile, isManager, isOffice, formatDuration, type Profile } from "@/lib/profile";
 import { useCan } from "@/lib/permissions";
 import { useCompanyRules } from "@/lib/company";
-import { RenewalList } from "./contracts";
+import { RenewalList } from "@/components/renewals";
 import { AppShell, StatusBadge, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -217,6 +217,7 @@ function ManagerOverview({ profile }: { profile: Profile }) {
 
 function OfficeOverview({ profile }: { profile: Profile }) {
   const can = useCan(profile);
+  const navigate = useNavigate();
   const { data } = useOpsData();
   const { data: c } = useCompanyRules();
   const rules = c?.rules ?? DEFAULT_RULES;
@@ -248,7 +249,7 @@ function OfficeOverview({ profile }: { profile: Profile }) {
                   <thead><tr className="border-b text-left text-muted-foreground"><th className="px-5 py-2 font-medium">Sheet</th><th className="px-3 py-2 font-medium">Client</th><th className="px-3 py-2 font-medium">Technician</th><th className="px-3 py-2 text-right font-medium">Std</th><th className="px-3 py-2 text-right font-medium">1.5×</th><th className="px-3 py-2 text-right font-medium">2×</th></tr></thead>
                   <tbody className="divide-y">
                     {billing.slice(0, 10).map(({ s, h }) => (
-                      <tr key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => window.location.assign(`/sheets/${s.id}`)}>
+                      <tr key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate({ to: "/sheets/$sheetId", params: { sheetId: s.id } })}>
                         <td className="px-5 py-2.5 font-mono text-primary">#{s.jobsheet_number}</td><td className="px-3 py-2.5 text-foreground">{s.clients?.name}</td><td className="px-3 py-2.5 text-muted-foreground">{s.users?.full_name ?? "—"}</td>
                         <td className="px-3 py-2.5 text-right tabular-nums">{h.standard}</td><td className="px-3 py-2.5 text-right tabular-nums">{h.ot15}</td><td className="px-3 py-2.5 text-right tabular-nums">{h.ot20}</td>
                       </tr>
