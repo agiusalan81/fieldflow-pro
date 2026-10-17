@@ -12,7 +12,7 @@ import { AppShell, StatusBadge, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { createDraftSheet, splitHours, addSplits, DEFAULT_RULES } from "@/lib/jobsheets";
+import { splitHours, addSplits, DEFAULT_RULES } from "@/lib/jobsheets";
 import { AssetHistory, LiftHistoryButton, PriorityBadge, timeWindow } from "@/components/job-card";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -93,7 +93,6 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
 
 function TechToday({ profile }: { profile: Profile }) {
   const navigate = useNavigate();
-  const qc = useQueryClient();
   const today = new Date().toISOString().slice(0, 10);
   const { data: jobs = [] } = useQuery({
     queryKey: ["today-jobs", profile.id, today],
