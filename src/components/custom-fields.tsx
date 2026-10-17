@@ -60,7 +60,7 @@ function CreatableSelect({ def, value, onChange }: { def: FieldDef; value: strin
     const { error } = await supabase.from("lookup_options").insert({
       category: cat, label_value: typed, company_id: profile.company_id, created_by_user_id: profile.id, is_global: false, usage_count: 1,
     });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     qc.invalidateQueries({ queryKey: ["lookups", cat] });
     onChange(typed);
     setSearch("");

@@ -58,7 +58,7 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
     const res = current
       ? await supabase.from("shifts").update({ ended_at: new Date().toISOString() }).eq("id", current.id)
       : await supabase.from("shifts").insert({ shift_type: type, company_id: profile.company_id, user_id: profile.id });
-    if (res.error) return toast.error(res.error.message);
+    if (res.error) { toast.error(res.error.message); return; }
     if (type === "shift" && current && travel) await supabase.from("shifts").update({ ended_at: new Date().toISOString() }).eq("id", travel.id);
     qc.invalidateQueries({ queryKey: ["open-shifts", profile.id] });
     toast.success(current ? (type === "shift" ? "Clocked out" : "Travel stopped") : type === "shift" ? "Clocked in" : "Travel started");

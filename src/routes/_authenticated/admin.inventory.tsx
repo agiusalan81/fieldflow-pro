@@ -38,7 +38,7 @@ function Inventory() {
 
   const adjust = async (id: string, value: number) => {
     const { error } = await supabase.from("inventory_items").update({ current_stock: Math.max(0, value) }).eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     refresh();
   };
   const save = async (e: React.FormEvent) => {
@@ -47,13 +47,13 @@ function Inventory() {
       company_id: profile!.company_id, part_name: f.part_name, sku: f.sku || null,
       min_stock_level: Number(f.min_stock_level), current_stock: Number(f.current_stock), requires_approval: f.requires_approval,
     });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     setOpen(false); setF(empty); refresh();
   };
   const remove = async (id: string) => {
     if (!confirm("Delete this part?")) return;
     const { error } = await supabase.from("inventory_items").delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     refresh();
   };
 

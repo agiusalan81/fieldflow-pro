@@ -34,7 +34,7 @@ function useClients() {
 
 function del(table: "clients" | "client_contacts" | "assets", id: string, done: () => void) {
   if (!confirm("Delete this record?")) return;
-  supabase.from(table).delete().eq("id", id).then(({ error }) => (error ? toast.error(error.message) : done()));
+  supabase.from(table).delete().eq("id", id).then(({ error }) => { if (error) toast.error(error.message); else done(); });
 }
 
 function Entities() {
@@ -70,7 +70,7 @@ function ClientsTab({ q }: { q: string }) {
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     const { error } = await supabase.from("clients").insert({ ...f, company_id: profile!.company_id });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     setOpen(false); setF({ name: "", billing_address: "" }); refresh();
   };
   const list = clients.filter((c) => match(q, c.name, c.billing_address));
@@ -121,9 +121,9 @@ function ContactsTab({ q }: { q: string }) {
   const refresh = () => qc.invalidateQueries({ queryKey: ["contacts"] });
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!f.client_id) return toast.error("Pick a client");
+    if (!f.client_id) { toast.error("Pick a client"); return; }
     const { error } = await supabase.from("client_contacts").insert({ ...f, company_id: profile!.company_id });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     setOpen(false); setF(empty); refresh();
   };
   const list = contacts.filter((c) => match(q, c.first_name, c.last_name, c.email, c.clients?.name));
@@ -190,9 +190,9 @@ function AssetsTab({ q }: { q: string }) {
   const categories = Array.from(new Set(assets.map((a) => a.asset_category))).sort();
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!f.client_id) return toast.error("Pick a client");
+    if (!f.client_id) { toast.error("Pick a client"); return; }
     const { error } = await supabase.from("assets").insert({ ...f, custom_attributes: attrs as never, company_id: profile!.company_id });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     setOpen(false); setF(empty); setAttrs({}); refresh();
   };
   const list = assets.filter((a) => (cat === "all" || a.asset_category === cat) && match(q, a.reference_number, a.asset_category, a.location_details, a.clients?.name));

@@ -56,7 +56,7 @@ function OvertimePage() {
       travel_hours: Number(form.travel_hours || 0), work_hours: Number(form.work_hours || 0),
       job_sheet_id: form.job_sheet_id === "none" ? null : form.job_sheet_id, notes: form.notes || null,
     });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Overtime logged");
     setForm({ ...form, travel_hours: "", work_hours: "", notes: "" });
     qc.invalidateQueries({ queryKey: ["overtime"] });
@@ -64,7 +64,7 @@ function OvertimePage() {
 
   const remove = async (id: string) => {
     const { error } = await supabase.from("overtime_logs").delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     qc.invalidateQueries({ queryKey: ["overtime"] });
   };
 

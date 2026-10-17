@@ -55,7 +55,7 @@ function FieldsPage() {
     const { error } = await supabase.from("custom_field_definitions").insert({
       company_id: profile!.company_id, target_entity: f.target_entity as never, field_label: f.field_label, field_type: f.field_type as never, options_list: options,
     });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Field added");
     setF({ ...f, field_label: "", options: "" });
     refresh();
@@ -63,7 +63,7 @@ function FieldsPage() {
   const removeDef = async (id: string) => {
     if (!confirm("Delete this field? Saved values stay on records but won't show.")) return;
     const { error } = await supabase.from("custom_field_definitions").delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     if (selected === id) setSelected(null);
     refresh();
   };
@@ -78,22 +78,22 @@ function FieldsPage() {
     const { error } = await supabase.from("lookup_options").insert({
       category: lookupCategory(sel.id), label_value: newOpt.trim(), company_id: profile!.company_id, created_by_user_id: profile!.id, is_global: false,
     });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     setNewOpt(""); refresh();
   };
   const removeLookup = async (id: string) => {
     const { error } = await supabase.from("lookup_options").delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     refresh();
   };
   const removeBase = async (opt: string) => {
     const { error } = await supabase.from("custom_field_definitions").update({ options_list: baseOpts.filter((o) => o !== opt) }).eq("id", sel!.id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     refresh();
   };
   const promote = async (l: { id: string; label_value: string }) => {
     const { error } = await supabase.from("custom_field_definitions").update({ options_list: [...baseOpts, l.label_value] }).eq("id", sel!.id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     await supabase.from("lookup_options").delete().eq("id", l.id);
     refresh();
   };

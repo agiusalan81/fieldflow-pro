@@ -47,8 +47,8 @@ function AdminJobs() {
     },
   });
   const update = async (id: string, patch: Record<string, unknown>) => {
-    const { error } = await supabase.from("job_sheets").update(patch).eq("id", id);
-    if (error) return toast.error(error.message);
+    const { error } = await supabase.from("job_sheets").update(patch as never).eq("id", id);
+    if (error) { toast.error(error.message); return; }
     qc.invalidateQueries({ queryKey: ["admin-jobs"] });
   };
   const list = jobs.filter((j) => (filter === "all" || j.status === filter) && `${j.clients?.name} ${j.users?.full_name} ${j.assets?.reference_number}`.toLowerCase().includes(q.toLowerCase()));
@@ -126,14 +126,14 @@ function NewJobDialog() {
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profile || !f.client_id) return toast.error("Pick a client");
+    if (!profile || !f.client_id) { toast.error("Pick a client"); return; }
     const { error } = await supabase.from("job_sheets").insert({
       company_id: profile.company_id, client_id: f.client_id,
       asset_id: f.asset_id === "none" ? null : f.asset_id,
       assigned_technician_id: f.tech === "none" ? null : f.tech,
       notes: f.notes || null, is_overtime: f.is_overtime, overtime_rate: f.overtime_rate ? Number(f.overtime_rate) : null,
     });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Job sheet created");
     setOpen(false);
     setF({ client_id: "", asset_id: "none", tech: "none", notes: "", is_overtime: false, overtime_rate: "" });
