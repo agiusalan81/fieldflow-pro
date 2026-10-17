@@ -5,7 +5,8 @@ import { toast } from "sonner";
 import { ArrowLeft, Car, Lock, MapPin, Plus, Save, Send, Trash2, ShieldAlert, PenLine } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, useCompanyUsers, initialsOf, isManager } from "@/lib/profile";
-import { hoursFromTimes, missingSignOff, roundTo15, shiftTime } from "@/lib/jobsheets";
+import { hoursFromTimes, missingSignOff, roundTo15, shiftTime, parsePhotos, type JobPhoto } from "@/lib/jobsheets";
+import { JobPhotos } from "@/components/job-photos";
 import { sendJobSheetEmail } from "@/lib/sendJobSheetEmail";
 import { SearchSelect } from "@/components/search-select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -118,12 +119,14 @@ function SheetForm() {
   const [sigKey, setSigKey] = useState(0);
   const [busy, setBusy] = useState(false);
   const [signOpen, setSignOpen] = useState(false);
+  const [photos, setPhotos] = useState<JobPhoto[]>([]);
 
   useEffect(() => {
     if (!data?.sheet || form) return;
     const f = {} as Form;
     for (const k of FIELDS) f[k] = (data.sheet as Record<string, unknown>)[k] as never;
     setForm(f);
+    setPhotos(parsePhotos(data.sheet.photo_paths));
     setLogs(data.logs.map((l) => ({
       log_date: l.log_date, time_in: l.time_in?.slice(0, 5) ?? "", time_out: l.time_out?.slice(0, 5) ?? "",
       latitude_in: l.latitude_in, longitude_in: l.longitude_in, latitude_out: l.latitude_out, longitude_out: l.longitude_out,
@@ -239,7 +242,15 @@ function SheetForm() {
 
   const setLog = (i: number, patch: Partial<Log>) => setLogs((ls) => ls.map((l, j) => (j === i ? { ...l, ...patch } : l)));
   const setPart = (i: number, patch: Partial<Part>) => setParts(parts.map((p, j) => (j === i ? { ...p, ...patch } : p)));
+  const savePhotos = async (next: JobPhoto[]) => {
+    setPhotos(next);
+    const { error } = await supabase.from("job_sheets").update({ photo_paths: next as never }).eq("id", sheetId);
+    if (error) toast.error(error.message);
+  };
+  const photoProps = { companyId: profile.company_id, sheetId, photos, readOnly, onChange: savePhotos };
   const removeDay = (i: number) => {
+    const shifted = photos.filter((p) => !(p.scope === "work" && p.day === i)).map((p) => (p.scope === "work" && p.day != null && p.day > i ? { ...p, day: p.day - 1 } : p));
+    if (shifted.length !== photos.length || shifted.some((p, k) => p !== photos[k])) savePhotos(shifted);
     setLogs(logs.filter((_, j) => j !== i));
     setParts(parts.filter((p) => p.log_sort_order !== i).map((p) => (p.log_sort_order != null && p.log_sort_order > i ? { ...p, log_sort_order: p.log_sort_order - 1 } : p)));
   };
@@ -408,6 +419,10 @@ function SheetForm() {
                     {dayParts.length > 0 && <p className="text-[11px] text-muted-foreground">description · unit · qty</p>}
                     {!readOnly && <Button type="button" size="sm" variant="ghost" onClick={() => setParts([...parts, { ...emptyPart(), log_sort_order: i }])}><Plus className="mr-1 h-4 w-4" />Add part</Button>}
                   </div>
+                  <div className="mt-3 space-y-1">
+                    <Label className="text-xs">Photos — damage found / parts replaced (sent to client)</Label>
+                    <JobPhotos {...photoProps} scope="work" day={i} />
+                  </div>
                 </div>
               );
             })}
@@ -427,6 +442,7 @@ function SheetForm() {
               <Label>Pending works / future jobs</Label>
               <p className="text-xs text-muted-foreground">Goes to the admin pending queue.</p>
               <Textarea rows={3} value={(form.pending_works_future_jobs as string) ?? ""} onChange={(e) => set({ pending_works_future_jobs: e.target.value })} />
+              <JobPhotos {...photoProps} scope="pending" day={null} />
             </div>
             <div className="space-y-1.5">
               <Label>Internal comments (admin only)</Label>

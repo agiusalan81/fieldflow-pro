@@ -93,3 +93,14 @@ export function shiftTime(t: string | null | undefined, delta: number) {
   const total = (((h * 60 + m + delta) % 1440) + 1440) % 1440;
   return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
 }
+
+/** A job sheet photo. "work" photos go to the client email; "pending" photos stay internal. */
+export type JobPhoto = { path: string; scope: "work" | "pending"; kind: "damage" | "part" | "other"; day: number | null };
+
+export function parsePhotos(v: unknown): JobPhoto[] {
+  if (!Array.isArray(v)) return [];
+  return v.filter((p): p is JobPhoto => !!p && typeof p === "object" && typeof (p as JobPhoto).path === "string" && ((p as JobPhoto).scope === "work" || (p as JobPhoto).scope === "pending"));
+}
+
+/** Only work-log photos may ever be sent to a client. */
+export const clientPhotos = (photos: JobPhoto[]) => photos.filter((p) => p.scope === "work");
