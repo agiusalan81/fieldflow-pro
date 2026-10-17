@@ -141,8 +141,7 @@ function TechToday({ profile }: { profile: Profile }) {
                     <PriorityBadge p={j.priority} />
                   </div>
                   <p className="line-clamp-2 text-sm text-foreground">{j.problem_summary || "No problem summary"}</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    <Button variant="outline" className="h-11" onClick={() => inTransit(j)}><Car className="mr-1 h-4 w-4" />In Transit</Button>
+                  <div className="grid grid-cols-2 gap-2">
                     <Button className="h-11" onClick={() => navigate({ to: "/sheets/new", search: { jobId: j.id } })}><Play className="mr-1 h-4 w-4" />Start</Button>
                     <LiftHistoryButton assetId={j.asset_id} label={`${j.assets?.reference_number ?? ""} · ${j.sites?.name ?? j.clients?.name ?? ""}`} />
                   </div>
