@@ -25,3 +25,5 @@
 - Billing pricing rules (estimate > contract > client rate card > company default) live in src/lib/billing.ts; integrations config and message templates are parsed only through src/lib/integrations.ts. Why: review screen, settings and future exports must price and render identically.
 - Only office admins may change job-sheet billing review fields, enforced by the job_sheets_guard_billing trigger. Why: UI checks alone can be bypassed.
 - WhatsApp template rules (placeholders, samples, naming) live in src/lib/whatsapp-templates.ts with tests; AI drafting and Meta calls run only in whatsapp-templates.functions.ts for managers. Why: drafter UI and submit validate identically.
+- Daily time logs store technician_count separately from initials; shared staffing helpers calculate labour while DWR retains elapsed personal time. Why: headcount and named assisting staff serve different purposes.
+- Combined job-sheet download/email uses the shared email PDF builder and authenticated RLS reads; only office roles can combine completed sheets for one client. Why: prevent cross-client disclosure and inconsistent client copies.

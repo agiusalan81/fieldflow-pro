@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { clientPhotos, hoursFromTimes, parsePhotos, labourHours, technicianCount, validateCombinedSheets } from "@/lib/jobsheets";
+import { clientPhotos, parsePhotos, labourHours, technicianCount, validateCombinedSheets } from "@/lib/jobsheets";
 import { parseTemplate, parseTerms, termsFor, visibleBlocks, type PdfTemplate } from "@/lib/documents";
 import { sheetTitle } from "@/lib/dwr";
 
@@ -239,6 +239,7 @@ export const sendJobSheetEmail = createServerFn({ method: "POST" }).middleware([
   .inputValidator((d: { sheetId: string; recipients?: string[] }) => { validateRecipients(d.recipients); return d; })
   .handler(async ({ data, context }) => {
     const pack = await prepareSheet(context.supabase, data.sheetId, data.recipients);
+    if (!pack.emails.length) return { sent: false as const, recipients: [] as string[] };
     await sendMail(pack.emails, `${sheetTitle(pack.sheet.jobsheet_number)} — ${pack.clientName}`, pack.body, pack.attachments);
     return { sent: true as const, recipients: pack.emails };
   });

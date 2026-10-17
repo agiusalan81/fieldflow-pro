@@ -127,7 +127,7 @@ export function labourHours(tin: string | null | undefined, tout: string | null 
   return +(hoursFromTimes(tin, tout) * technicianCount(count, initials)).toFixed(2);
 }
 
-export function matchesSheetDetails(j: { created_at: string; client_id: string; assigned_technician_id: string | null; jobsheet_time_logs?: { technician_initials?: string[] }[] }, f: { from: string; to: string; client: string; technician: string; initials?: string }) {
+export function matchesSheetDetails(j: { created_at: string; client_id: string; assigned_technician_id: string | null; jobsheet_time_logs?: { technician_initials?: string[] }[] }, f: { from: string; to: string; client: string; technician: string; initials?: string | undefined }) {
   const date = j.created_at.slice(0, 10);
   return (!f.from || date >= f.from) && (!f.to || date <= f.to) &&
     (f.client === "all" || j.client_id === f.client) &&
