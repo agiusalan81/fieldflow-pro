@@ -14,14 +14,15 @@
 - [x] Contract types, client agreements, renewals queue, checklists (required on maintenance sheets)
 - [x] Pending works screen, Lift estimates & supplier quote tracking
 - [x] Completed sheet cards clickable
-- [ ] Single "Job sheets" menu item (drop "My job sheets")
-- [ ] Customisable header/field fonts (family, bold, italic, colour) app-wide
-- [ ] Clients/Sites/Assets in one table with filters
-- [ ] Company phones (office, WhatsApp, emergency) in Company settings
-- [ ] Contact "Available on WhatsApp" checkbox
-- [ ] Back button = browser history; sheets tab in URL
-- [ ] Pending works: quote→estimate, review dialog, auto-done on follow-up completion
-- [ ] "On my way" next-stop prompt after submitting a sheet (WhatsApp send needs a WhatsApp Business API account)
+- [x] Single "Job sheets" menu item (drop "My job sheets")
+- [x] Customisable header/field fonts (family, bold, italic, colour) app-wide
+- [x] Clients/Sites/Assets in one table with filters
+- [x] Company phones (office, WhatsApp, emergency) in Company settings
+- [x] Contact "Available on WhatsApp" checkbox
+- [x] Back button = browser history; sheets tab in URL
+- [x] Pending works: quote→estimate, review dialog, auto-done on follow-up completion
+- [x] "On my way" next-stop prompt after submitting a sheet
+- [ ] Automatic WhatsApp sending (needs a WhatsApp Business API account)
 - [ ] Later: renewal/agreement emails + client e-signature, daily push alerts (needs email/push setup)
 - [ ] Later: Zoho Books estimates, billing and labour rates
 - [ ] Later: per-tenant industry customisation (labels, equipment types)
