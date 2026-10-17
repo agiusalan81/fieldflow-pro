@@ -12,7 +12,9 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { WhatsAppTemplateStudio } from "@/components/whatsapp-template-studio";
+import { WhatsAppTemplateStudio, type StudioPrefill } from "@/components/whatsapp-template-studio";
+
+const WA_TYPE: Record<string, string> = { on_my_way: "on_my_way", job_completed: "job_completed", renewal_notice: "renewal", estimate_sent: "estimate" };
 
 export function RatesFields({ value, onChange }: { value: Rates; onChange: (r: Rates) => void }) {
   const f = (k: keyof Rates, l: string) => (
@@ -32,6 +34,7 @@ export function IntegrationsSettings({ companyId }: { companyId: string }) {
   const [cf, setCf] = useState<string[]>([]);
   useEffect(() => { if (data !== undefined && !s) { setS(parseIntegrations(data?.integrations)); setRates(parseRates(data?.default_rates) ?? ZERO_RATES); } }, [data, s]);
   useEffect(() => { supabase.from("custom_field_definitions").select("field_label").then(({ data }) => setCf((data ?? []).map((d) => d.field_label))); }, []);
+  const [prefill, setPrefill] = useState<StudioPrefill | null>(null);
   const refs = useRef<Record<string, HTMLTextAreaElement | null>>({});
   if (!s) return null;
 
@@ -52,7 +55,7 @@ export function IntegrationsSettings({ companyId }: { companyId: string }) {
 
   return (
     <div className="space-y-5">
-      <WhatsAppTemplateStudio />
+      <WhatsAppTemplateStudio prefill={prefill} />
       <section className="space-y-4 rounded-xl border bg-card p-5">
         <div><h2 className="font-medium text-foreground">Messaging channels</h2><p className="text-sm text-muted-foreground">All optional. Turn on the channels your company uses. Live sending starts once each provider account is connected.</p></div>
         <div className="grid gap-3 md:grid-cols-2">
@@ -89,6 +92,12 @@ export function IntegrationsSettings({ companyId }: { companyId: string }) {
                   <label key={c.key} className="flex items-center gap-1.5"><Checkbox checked={t.channels.includes(c.key)} onCheckedChange={(b) => set({ channels: b ? [...t.channels, c.key] : t.channels.filter((x: ChannelKey) => x !== c.key) })} />{c.label.split(" ")[0]}</label>
                 ))}
               </div>}
+              {e.key !== "emergency_dispatch" && t.channels.includes("whatsapp") && (
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+                  <span>WhatsApp needs Meta to approve this wording before it can be sent to clients.</span>
+                  <Button type="button" size="sm" variant="outline" className="h-7 text-xs" onClick={() => setPrefill({ type: WA_TYPE[e.key] ?? "custom_update", wording: renderTemplate(t.body, SAMPLE), nonce: Date.now() })}>Get Meta approval</Button>
+                </div>
+              )}
               <div className="grid gap-3 md:grid-cols-2">
                 <Textarea ref={(el) => { refs.current[e.key] = el; }} rows={4} value={toFriendly(t.body)} onChange={(ev) => set({ body: fromFriendly(ev.target.value) })} />
                 <div className="rounded-lg bg-muted/50 p-3 text-sm text-foreground"><p className="mb-1 text-xs text-muted-foreground">What the client sees</p><p className="whitespace-pre-wrap rounded-2xl rounded-tl-sm bg-card p-3 shadow-sm">{renderTemplate(t.body, SAMPLE)}</p></div>
