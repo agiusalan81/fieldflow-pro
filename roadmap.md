@@ -22,6 +22,10 @@
 - [x] Back button = browser history; sheets tab in URL
 - [x] Pending works: quote→estimate, review dialog, auto-done on follow-up completion
 - [x] "On my way" next-stop prompt after submitting a sheet
+- [x] Client → Sites → site contacts (copy between sites) → site equipment
+- [x] Self-learning contact roles with admin approve/rename/merge
+- [x] Schedule: Details + Start job (auto-acknowledge)
+- [x] PDF layout designer, Terms & Conditions, special note presets
 - [ ] Automatic WhatsApp sending (needs a WhatsApp Business API account)
 - [ ] Later: renewal/agreement emails + client e-signature, daily push alerts (needs email/push setup)
 - [ ] Later: Zoho Books estimates, billing and labour rates

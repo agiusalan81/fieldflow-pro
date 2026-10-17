@@ -2,8 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Trash2, Pencil } from "lucide-react";
-import { ContactsManager, EquipmentManager, PhoneInput, WhatsAppBadge } from "@/components/client-manager";
+import { Plus, Trash2 } from "lucide-react";
+import { EquipmentManager, PhoneInput, WhatsAppBadge } from "@/components/client-manager";
+import { SiteHierarchy } from "@/components/site-hierarchy";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/lib/profile";
 import { AppShell, EmptyState } from "@/components/app-shell";
@@ -56,56 +57,18 @@ function Entities() {
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader><DialogTitle>{manage?.name}</DialogTitle></DialogHeader>
           {manage && profile && (
-            <Tabs defaultValue={manage.tab}>
+            <Tabs defaultValue={manage.tab === "equipment" ? "equipment" : "sites"}>
               <TabsList className="mb-3">
-                <TabsTrigger value="sites">Sites</TabsTrigger>
-                <TabsTrigger value="contacts">Contacts</TabsTrigger>
-                <TabsTrigger value="equipment">Equipment</TabsTrigger>
+                <TabsTrigger value="sites">Sites & contacts</TabsTrigger>
+                <TabsTrigger value="equipment">All equipment</TabsTrigger>
               </TabsList>
-              <TabsContent value="sites"><SitesManager clientId={manage.id} companyId={profile.company_id} /></TabsContent>
-              <TabsContent value="contacts"><ContactsManager clientId={manage.id} companyId={profile.company_id} /></TabsContent>
+              <TabsContent value="sites"><SiteHierarchy clientId={manage.id} companyId={profile.company_id} /></TabsContent>
               <TabsContent value="equipment"><EquipmentManager clientId={manage.id} companyId={profile.company_id} /></TabsContent>
             </Tabs>
           )}
         </DialogContent>
       </Dialog>
     </AppShell>
-  );
-}
-
-function SitesManager({ clientId, companyId }: { clientId: string; companyId: string }) {
-  const qc = useQueryClient();
-  const key = ["client-sites", clientId];
-  const { data: sites = [] } = useQuery({ queryKey: key, queryFn: async () => (await supabase.from("sites").select("*").eq("client_id", clientId).order("name")).data ?? [] });
-  const [edit, setEdit] = useState<{ id?: string; name: string; address: string } | null>(null);
-  const refresh = () => { qc.invalidateQueries({ queryKey: key }); qc.invalidateQueries({ queryKey: ["sites-full"] }); qc.invalidateQueries({ queryKey: ["sheet-refs"] }); };
-  const save = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!edit) return;
-    const res = edit.id
-      ? await supabase.from("sites").update({ name: edit.name, address: edit.address }).eq("id", edit.id)
-      : await supabase.from("sites").insert({ name: edit.name, address: edit.address, client_id: clientId, company_id: companyId });
-    if (res.error) { toast.error(res.error.message); return; }
-    setEdit(null); refresh();
-  };
-  return (
-    <div className="space-y-2">
-      {sites.length === 0 && <p className="text-sm text-muted-foreground">No sites yet.</p>}
-      {sites.map((s) => (
-        <div key={s.id} className={`flex items-center gap-2 rounded-lg border p-3 ${ROW}`} onClick={() => setEdit({ id: s.id, name: s.name, address: s.address ?? "" })}>
-          <div className="min-w-0 flex-1"><p className="font-medium">{s.name}</p><p className="truncate text-sm text-muted-foreground">{s.address || "—"}</p></div>
-          <Button size="icon" variant="ghost" aria-label="Edit"><Pencil className="h-4 w-4" /></Button>
-          <Button size="icon" variant="ghost" aria-label="Delete" onClick={(e) => { e.stopPropagation(); del("sites", s.id, refresh); }}><Trash2 className="h-4 w-4" /></Button>
-        </div>
-      ))}
-      {edit ? (
-        <form onSubmit={save} className="space-y-2 rounded-lg border p-3">
-          <Input required placeholder="Site name" value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} />
-          <Input placeholder="Address" value={edit.address} onChange={(e) => setEdit({ ...edit, address: e.target.value })} />
-          <div className="flex gap-2"><Button type="submit" size="sm">Save</Button><Button type="button" size="sm" variant="ghost" onClick={() => setEdit(null)}>Cancel</Button></div>
-        </form>
-      ) : <Button variant="outline" size="sm" className="w-full" onClick={() => setEdit({ name: "", address: "" })}><Plus className="mr-1 h-4 w-4" />Add site</Button>}
-    </div>
   );
 }
 
@@ -134,7 +97,7 @@ function ClientsTab({ q, onOpen }: TabProps) {
       const { error: se } = await supabase.from("sites").insert({ client_id: c.id, company_id, name: f.property_name || "Main site", address: billing_address });
       if (se) toast.error(se.message);
     }
-    refresh(); setClientId(c.id); setStep(2); toast.success("Client and site saved — now add equipment");
+    refresh(); setClientId(c.id); setStep(2); toast.success("Client saved — now add sites, contacts and equipment");
   };
   const list = clients;
   return (
@@ -143,7 +106,7 @@ function ClientsTab({ q, onOpen }: TabProps) {
         <Dialog open={open} onOpenChange={reset}>
           <DialogTrigger asChild><Button size="sm"><Plus className="mr-1 h-4 w-4" />Add client</Button></DialogTrigger>
           <DialogContent className="max-h-[90vh] overflow-y-auto">
-            <DialogHeader><DialogTitle>{step === 1 ? "New client" : `Equipment for ${f.name}`}</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{step === 1 ? "New client" : `Sites, contacts & equipment for ${f.name}`}</DialogTitle></DialogHeader>
             {step === 1 ? (
               <form onSubmit={save} className="space-y-3">
                 <div className="space-y-1.5"><Label>Client name *</Label><Input required value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
@@ -162,7 +125,7 @@ function ClientsTab({ q, onOpen }: TabProps) {
               </form>
             ) : clientId && profile ? (
               <div className="space-y-4">
-                <EquipmentManager clientId={clientId} companyId={profile.company_id} />
+                <SiteHierarchy clientId={clientId} companyId={profile.company_id} />
                 <Button className="w-full" onClick={() => reset(false)}>Finish</Button>
               </div>
             ) : null}

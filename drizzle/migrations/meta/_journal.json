@@ -64,6 +64,13 @@
       "when": 1792227494728,
       "tag": "0008_whatsapp_phones_theme_pending_autodone",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792229618542,
+      "tag": "0009_hierarchy_roles_pdf_templates",
+      "breakpoints": true
     }
   ]
 }

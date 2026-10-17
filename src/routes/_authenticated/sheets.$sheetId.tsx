@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useProfile, useCompanyUsers, initialsOf, isManager } from "@/lib/profile";
 import { hoursFromTimes, missingSignOff, missingChecklist, roundTo15, shiftTime, parsePhotos, createDraftSheet, type JobPhoto } from "@/lib/jobsheets";
 import { JobPhotos } from "@/components/job-photos";
+import { SpecialNotes } from "@/components/special-notes";
 import { sendJobSheetEmail } from "@/lib/sendJobSheetEmail";
 import { SearchSelect } from "@/components/search-select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -56,6 +57,7 @@ const FIELDS = [
   "is_tech_assistance", "is_maintenance", "is_installation", "job_type_other", "maintenance_agreement_type",
   "reported_fault", "repairs_performed", "pending_works_future_jobs", "internal_comments_admin_only",
   "technician_name", "client_full_name", "client_id_card_no", "signature_data",
+  "special_notes", "special_notes_in_pdf", "special_notes_in_email",
 ] as const;
 type Form = Record<(typeof FIELDS)[number], string | boolean | null>;
 
@@ -485,6 +487,8 @@ function SheetForm() {
             </div>
           </div>
         </Section>
+
+        <SpecialNotes form={form} set={set} readOnly={readOnly} />
 
         <Section n={6} title="Client sign-off">
           {form.signature_data ? (
