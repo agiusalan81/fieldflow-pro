@@ -1,15 +1,18 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowDown, ArrowUp, Download, GripVertical, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Download, FileUp, GripVertical, Loader2, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BLOCKS, DOC_TYPES, moveBlock, parsePresets, parseTemplate, parseTerms, termsFor, visibleBlocks, type NotePreset, type PdfTemplate, type Terms } from "@/lib/documents";
 import { buildPdf } from "@/lib/sendJobSheetEmail";
+import { extractDocumentText } from "@/lib/document-library.functions";
+import { DOC_CATEGORIES, type DocCategory } from "@/components/document-library";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const label = (k: string) => BLOCKS.find((b) => b.key === k)?.label ?? k;
 
@@ -23,6 +26,27 @@ export function DocumentSettings({ companyId }: { companyId: string }) {
   const [terms, setTerms] = useState<Terms | null>(null);
   const [presets, setPresets] = useState<NotePreset[]>([]);
   const [drag, setDrag] = useState<number | null>(null);
+  const [importFor, setImportFor] = useState<"job_sheet" | "estimate" | "agreement" | null>(null);
+  const [importing, setImporting] = useState(false);
+  const { data: libraryDocs = [] } = useQuery({
+    queryKey: ["company-documents"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("company_documents").select("id, name, category").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as { id: string; name: string; category: DocCategory }[];
+    },
+  });
+  const importDoc = async (id: string) => {
+    if (!importFor) return;
+    setImporting(true);
+    try {
+      const { text, name } = await extractDocumentText({ data: { documentId: id } });
+      setTerms((cur) => cur ? { ...cur, [importFor]: { ...cur[importFor], text } } : cur);
+      toast.success(`Imported text from “${name}” — review it below, then save.`);
+      setImportFor(null);
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Could not read that document"); }
+    setImporting(false);
+  };
   useEffect(() => {
     if (data !== undefined && !t) { setT(parseTemplate(data?.pdf_template)); setTerms(parseTerms(data?.terms)); setPresets(parsePresets(data?.note_presets)); }
   }, [data, t]);
@@ -145,15 +169,42 @@ export function DocumentSettings({ companyId }: { companyId: string }) {
       </div>
 
       <section className="space-y-4 rounded-xl border bg-card p-5">
-        <div><h2 className="font-medium text-foreground">Terms & conditions</h2><p className="text-sm text-muted-foreground">Printed at the end of the client PDF when switched on.</p></div>
+        <div><h2 className="font-medium text-foreground">Terms & conditions</h2><p className="text-sm text-muted-foreground">Printed at the end of the client PDF when switched on. Write your own text, or import it from a document in the library.</p></div>
         {DOC_TYPES.map((d) => (
           <div key={d.key} className="space-y-2 rounded-lg border p-3">
             <label className="flex items-center justify-between text-sm font-medium">{d.label}<Switch checked={terms[d.key].enabled} onCheckedChange={(c) => setTerms({ ...terms, [d.key]: { ...terms[d.key], enabled: c } })} /></label>
-            {terms[d.key].enabled && <Textarea rows={4} value={terms[d.key].text} onChange={(e) => setTerms({ ...terms, [d.key]: { ...terms[d.key], text: e.target.value } })} />}
+            {terms[d.key].enabled && (
+              <>
+                <Textarea rows={4} placeholder="Write your own terms here…" value={terms[d.key].text} onChange={(e) => setTerms({ ...terms, [d.key]: { ...terms[d.key], text: e.target.value } })} />
+                <Button type="button" size="sm" variant="outline" onClick={() => setImportFor(d.key)}>
+                  <FileUp className="mr-1 h-4 w-4" />Import from document library
+                </Button>
+              </>
+            )}
           </div>
         ))}
         <p className="text-xs text-muted-foreground">Estimates and agreements will use these once their PDFs are generated.</p>
       </section>
+
+      <Dialog open={!!importFor} onOpenChange={(o) => { if (!o && !importing) setImportFor(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Import terms from the document library</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">Pick a document — its text will be read and placed in the editor so you can review and adjust it before saving.</p>
+          <div className="max-h-80 space-y-2 overflow-y-auto">
+            {libraryDocs.length === 0 && <p className="text-sm text-muted-foreground">No documents in the library yet. Upload one in the Document library tab first.</p>}
+            {libraryDocs.map((doc) => (
+              <button key={doc.id} type="button" disabled={importing} onClick={() => void importDoc(doc.id)}
+                className="flex w-full items-center gap-3 rounded-lg border p-3 text-left hover:bg-accent disabled:opacity-50">
+                {importing ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" /> : <FileUp className="h-4 w-4 shrink-0 text-muted-foreground" />}
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium">{doc.name}</span>
+                  <span className="block text-xs text-muted-foreground">{DOC_CATEGORIES.find((c) => c.value === doc.category)?.label ?? doc.category}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <section className="space-y-3 rounded-xl border bg-card p-5">
         <div><h2 className="font-medium text-foreground">Special note presets</h2><p className="text-sm text-muted-foreground">Quick notes technicians can add to a job sheet before sending it.</p></div>
