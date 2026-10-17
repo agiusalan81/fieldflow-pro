@@ -141,7 +141,12 @@ export const extractContractDetails = createServerFn({ method: "POST" })
       "This document is a maintenance agreement or contract. Extract its key details. Use 0 for numbers and empty strings for text you cannot find. Dates must be ISO YYYY-MM-DD.",
       { name: "contract", schema: CONTRACT_SCHEMA },
     );
-    const j = JSON.parse(text) as Record<string, string | number>;
+    type ContractJson = {
+      name: string; client_name: string; contract_category: string; tier: string;
+      visits_per_year: number; annual_price: number; labour_discount_pct: number; parts_discount_pct: number;
+      start_date: string; end_date: string;
+    };
+    const j = JSON.parse(text) as ContractJson;
     const iso = (v: unknown) => (typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : "");
     const num = (v: unknown) => (Number.isFinite(Number(v)) ? Number(v) : 0);
     return {
