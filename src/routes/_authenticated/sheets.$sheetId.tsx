@@ -2,10 +2,13 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Car, Lock, MapPin, Plus, Save, Send, Trash2, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Car, Lock, MapPin, Plus, Save, Send, Trash2, ShieldAlert, PenLine } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, useCompanyUsers, initialsOf, isManager } from "@/lib/profile";
-import { hoursFromTimes, missingSignOff } from "@/lib/jobsheets";
+import { hoursFromTimes, missingSignOff, roundTo15, shiftTime } from "@/lib/jobsheets";
+import { SearchSelect } from "@/components/search-select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AppShell, StatusBadge } from "@/components/app-shell";
 import { SignaturePad } from "@/components/signature-pad";
 import { Button } from "@/components/ui/button";
@@ -35,14 +38,15 @@ type Log = {
   latitude_in: number | null; longitude_in: number | null; latitude_out: number | null; longitude_out: number | null;
   traveling_time_hours: number; technician_initials: string[]; daily_work_description: string;
 };
-type Part = { part_description: string; unit: string; quantity: number; time_acquiring_parts_hours: number };
+type Part = { part_description: string; unit: string; quantity: number; time_acquiring_parts_hours: number; log_sort_order: number | null };
 
 const emptyLog = (): Log => ({
   log_date: new Date().toISOString().slice(0, 10), time_in: "", time_out: "",
   latitude_in: null, longitude_in: null, latitude_out: null, longitude_out: null,
   traveling_time_hours: 0, technician_initials: [], daily_work_description: "",
 });
-const emptyPart = (): Part => ({ part_description: "", unit: "pcs", quantity: 1, time_acquiring_parts_hours: 0 });
+const emptyPart = (): Part => ({ part_description: "", unit: "pcs", quantity: 1, time_acquiring_parts_hours: 0, log_sort_order: null });
+const nowHM = () => new Date().toTimeString().slice(0, 5);
 
 const FIELDS = [
   "client_id", "site_id", "asset_id", "asset_type", "asset_type_other", "lift_model", "serial_number", "requires_admin_approval",
@@ -101,7 +105,7 @@ function SheetForm() {
       const [c, s, a] = await Promise.all([
         supabase.from("clients").select("id, name, billing_address").order("name"),
         supabase.from("sites").select("id, client_id, name, address").order("name"),
-        supabase.from("assets").select("id, client_id, site_id, reference_number, asset_category, location_details, custom_attributes"),
+        supabase.from("assets").select("id, client_id, site_id, reference_number, asset_category, location_details, custom_attributes, serial_number"),
       ]);
       return { clients: c.data ?? [], sites: s.data ?? [], assets: a.data ?? [] };
     },
@@ -123,7 +127,7 @@ function SheetForm() {
       latitude_in: l.latitude_in, longitude_in: l.longitude_in, latitude_out: l.latitude_out, longitude_out: l.longitude_out,
       traveling_time_hours: Number(l.traveling_time_hours), technician_initials: l.technician_initials ?? [], daily_work_description: l.daily_work_description ?? "",
     })));
-    setParts(data.parts.map((p) => ({ part_description: p.part_description, unit: p.unit ?? "", quantity: Number(p.quantity), time_acquiring_parts_hours: Number(p.time_acquiring_parts_hours) })));
+    setParts(data.parts.map((p) => ({ part_description: p.part_description, unit: p.unit ?? "", quantity: Number(p.quantity), time_acquiring_parts_hours: Number(p.time_acquiring_parts_hours), log_sort_order: p.log_sort_order })));
   }, [data, form]);
 
   if (data && !data.sheet) return <AppShell title="Job sheet"><p className="text-muted-foreground">This job sheet doesn't exist or isn't yours.</p></AppShell>;
@@ -139,21 +143,30 @@ function SheetForm() {
   const asset = refs?.assets.find((a) => a.id === form.asset_id);
   const techs = users.map((u) => initialsOf(u));
 
-  const pickAsset = (id: string) => {
+  const assetPatch = (id: string | null): Partial<Form> => {
     const a = refs?.assets.find((x) => x.id === id);
-    const attrs = (a?.custom_attributes ?? {}) as Record<string, unknown>;
-    const cat = (a?.asset_category ?? "").toLowerCase();
-    set({
-      asset_id: id === "none" ? null : id,
-      asset_type: cat.includes("escalator") ? "Escalator" : cat.includes("lift") ? "Lift" : a ? "Other" : form.asset_type,
-      lift_model: (attrs["model"] as string) ?? form.lift_model, serial_number: (attrs["serial"] as string) ?? form.serial_number,
-    });
+    if (!a) return { asset_id: null };
+    const attrs = (a.custom_attributes ?? {}) as Record<string, unknown>;
+    const cat = (a.asset_category ?? "").toLowerCase();
+    return {
+      asset_id: a.id,
+      asset_type: cat.includes("escalator") ? "Escalator" : cat.includes("lift") ? "Lift" : "Other",
+      asset_type_other: cat.includes("lift") || cat.includes("escalator") ? null : a.asset_category,
+      lift_model: (attrs["model"] as string) ?? form.lift_model,
+      serial_number: a.serial_number ?? (attrs["serial"] as string) ?? form.serial_number,
+    };
+  };
+  const pickAsset = (id: string) => set(assetPatch(id));
+  const pickSite = (id: string) => {
+    const here = refs?.assets.filter((a) => a.client_id === form.client_id && a.site_id === id) ?? [];
+    set({ site_id: id, ...(here.length === 1 ? assetPatch(here[0]!.id) : { asset_id: null }) });
   };
 
   const persist = async (status?: string) => {
     setBusy(true);
     try {
-      const { error } = await supabase.from("job_sheets").update({ ...form, ...(status ? { status } : {}) } as never).eq("id", sheetId);
+      const repairs = logs.map((l) => l.daily_work_description.trim()).filter(Boolean).join("\n") || (form.repairs_performed as string | null);
+      const { error } = await supabase.from("job_sheets").update({ ...form, repairs_performed: repairs, ...(status ? { status } : {}) } as never).eq("id", sheetId);
       if (error) throw error;
       await supabase.from("jobsheet_time_logs").delete().eq("jobsheet_id", sheetId);
       await supabase.from("jobsheet_parts").delete().eq("jobsheet_id", sheetId);
@@ -215,14 +228,20 @@ function SheetForm() {
     toast.success("Form cleared — save to keep the change");
   };
 
-  const setLog = (i: number, patch: Partial<Log>) => setLogs(logs.map((l, j) => (j === i ? { ...l, ...patch } : l)));
+  const setLog = (i: number, patch: Partial<Log>) => setLogs((ls) => ls.map((l, j) => (j === i ? { ...l, ...patch } : l)));
   const setPart = (i: number, patch: Partial<Part>) => setParts(parts.map((p, j) => (j === i ? { ...p, ...patch } : p)));
+  const removeDay = (i: number) => {
+    setLogs(logs.filter((_, j) => j !== i));
+    setParts(parts.filter((p) => p.log_sort_order !== i).map((p) => (p.log_sort_order != null && p.log_sort_order > i ? { ...p, log_sort_order: p.log_sort_order - 1 } : p)));
+  };
   const gps = async (i: number, which: "in" | "out") => {
     const g = await captureGps();
     setLog(i, which === "in" ? { latitude_in: g.lat, longitude_in: g.lng } : { latitude_out: g.lat, longitude_out: g.lng });
     toast.success(`Location ${which === "in" ? "in" : "out"} captured${g.simulated ? " (simulated)" : ""}`);
   };
   const totalHours = logs.reduce((s, l) => s + hoursFromTimes(l.time_in, l.time_out) + Number(l.traveling_time_hours || 0), 0);
+  const manager = isManager(profile);
+  const address = site?.address || asset?.location_details || client?.billing_address || "";
 
 
   return (
@@ -459,7 +478,6 @@ function SheetForm() {
           </div>
         </DialogContent>
       </Dialog>
-      </fieldset>
 
       {!readOnly && (
         <div className="fixed inset-x-0 bottom-16 z-20 border-t bg-card/95 p-3 backdrop-blur lg:bottom-0 lg:left-[240px]">
