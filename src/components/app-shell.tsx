@@ -1,10 +1,12 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import {
-  LayoutDashboard, ClipboardList, Clock, MessageSquare, CalendarDays, Users, Wrench, SlidersHorizontal, Package, LogOut, Menu,
+  LayoutDashboard, ClipboardList, Clock, MessageSquare, CalendarDays, Users, Wrench, SlidersHorizontal, Package, LogOut, Menu, Plus, CalendarClock, Settings,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useProfile, isManager } from "@/lib/profile";
+import { useProfile, isManager, setViewAs, type ViewAs } from "@/lib/profile";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { useQueryClient } from "@tanstack/react-query";
@@ -13,10 +15,12 @@ type NavItem = { to: string; label: string; icon: typeof Clock };
 
 const techNav: NavItem[] = [
   { to: "/dashboard", label: "Today", icon: LayoutDashboard },
-  { to: "/jobs", label: "Jobs", icon: ClipboardList },
-  { to: "/overtime", label: "Overtime", icon: Clock },
-  { to: "/messages", label: "Chat", icon: MessageSquare },
+  { to: "/sheets", label: "Sheets", icon: ClipboardList },
+  { to: "/schedule", label: "Schedule", icon: CalendarClock },
   { to: "/leave", label: "Leave", icon: CalendarDays },
+  { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/messages", label: "Chat", icon: MessageSquare },
+  { to: "/overtime", label: "Overtime", icon: Clock },
 ];
 
 const adminNav: NavItem[] = [
@@ -27,7 +31,8 @@ const adminNav: NavItem[] = [
   { to: "/leave", label: "Leave", icon: CalendarDays },
   { to: "/messages", label: "Chat", icon: MessageSquare },
   { to: "/admin/fields", label: "Fields & lookups", icon: SlidersHorizontal },
-  { to: "/jobs", label: "My jobs", icon: Wrench },
+  { to: "/sheets", label: "My job sheets", icon: Wrench },
+  { to: "/settings", label: "Settings", icon: Settings },
 ];
 
 function NavLinks({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => void }) {
@@ -56,10 +61,17 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   const qc = useQueryClient();
   const manager = isManager(profile);
   const items = manager ? adminNav : techNav;
+  const canSwitch = profile && profile.real_role !== "technician";
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", profile?.app_theme_preference === "dark");
+  }, [profile?.app_theme_preference]);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    setViewAs(null);
+    await qc.cancelQueries();
     qc.clear();
+    await supabase.auth.signOut();
     navigate({ to: "/auth" });
   };
 
@@ -103,7 +115,22 @@ export function AppShell({ title, actions, children }: { title: string; actions?
             </SheetContent>
           </Sheet>
           <h1 className="truncate font-display text-xl text-foreground sm:text-2xl">{title}</h1>
-          <div className="flex shrink-0 items-center gap-2">{actions}</div>
+          <div className="flex shrink-0 items-center gap-2">
+            {canSwitch && (
+              <Select value={profile.role} onValueChange={(v) => { setViewAs(v === profile.real_role ? null : (v as ViewAs)); navigate({ to: "/dashboard" }); }}>
+                <SelectTrigger className="h-9 w-[150px] border-dashed text-xs" aria-label="View As mode"><span className="hidden text-muted-foreground xl:inline">View as:&nbsp;</span><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="technician">Technician</SelectItem>
+                  <SelectItem value="supervisor">Supervisor</SelectItem>
+                  <SelectItem value="admin">Office Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+            {actions}
+            <Button asChild size="sm" variant={actions ? "outline" : "default"}>
+              <Link to="/sheets/new" search={{}}><Plus className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Create New Job Sheet</span></Link>
+            </Button>
+          </div>
         </header>
         <main className="flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-8">{children}</main>
       </div>
@@ -128,12 +155,13 @@ export function AppShell({ title, actions, children }: { title: string; actions?
 
 export function StatusBadge({ status }: { status: string }) {
   const cls: Record<string, string> = {
+    draft: "border border-dashed text-muted-foreground",
     pending: "bg-muted text-muted-foreground",
     in_transit: "bg-warning/25 text-warning-foreground",
     in_progress: "bg-primary/15 text-primary",
     completed: "bg-success/15 text-success",
   };
-  const label: Record<string, string> = { pending: "Pending", in_transit: "In transit", in_progress: "In progress", completed: "Completed" };
+  const label: Record<string, string> = { draft: "Draft", pending: "Pending", in_transit: "In transit", in_progress: "In progress", completed: "Completed" };
   return <span className={`inline-flex shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${cls[status] ?? ""}`}>{label[status] ?? status}</span>;
 }
 

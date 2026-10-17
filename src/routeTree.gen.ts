@@ -16,12 +16,16 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedLeaveRouteImport } from './routes/_authenticated/leave'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
 import { Route as AuthenticatedOvertimeRouteImport } from './routes/_authenticated/overtime'
+import { Route as AuthenticatedScheduleRouteImport } from './routes/_authenticated/schedule'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedAdminEntitiesRouteImport } from './routes/_authenticated/admin.entities'
 import { Route as AuthenticatedAdminFieldsRouteImport } from './routes/_authenticated/admin.fields'
 import { Route as AuthenticatedAdminInventoryRouteImport } from './routes/_authenticated/admin.inventory'
 import { Route as AuthenticatedAdminJobsRouteImport } from './routes/_authenticated/admin.jobs'
-import { Route as AuthenticatedJobsIndexRouteImport } from './routes/_authenticated/jobs.index'
-import { Route as AuthenticatedJobsJobIdRouteImport } from './routes/_authenticated/jobs.$jobId'
+import { Route as AuthenticatedPrintSheetIdRouteImport } from './routes/_authenticated/print.$sheetId'
+import { Route as AuthenticatedSheetsIndexRouteImport } from './routes/_authenticated/sheets.index'
+import { Route as AuthenticatedSheetsSheetIdRouteImport } from './routes/_authenticated/sheets.$sheetId'
+import { Route as AuthenticatedSheetsNewRouteImport } from './routes/_authenticated/sheets.new'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -57,6 +61,16 @@ const AuthenticatedOvertimeRoute = AuthenticatedOvertimeRouteImport.update({
   path: '/overtime',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedScheduleRoute = AuthenticatedScheduleRouteImport.update({
+  id: '/schedule',
+  path: '/schedule',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminEntitiesRoute =
   AuthenticatedAdminEntitiesRouteImport.update({
     id: '/admin/entities',
@@ -80,14 +94,27 @@ const AuthenticatedAdminJobsRoute = AuthenticatedAdminJobsRouteImport.update({
   path: '/admin/jobs',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedJobsIndexRoute = AuthenticatedJobsIndexRouteImport.update({
-  id: '/jobs/',
-  path: '/jobs/',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedJobsJobIdRoute = AuthenticatedJobsJobIdRouteImport.update({
-  id: '/jobs/$jobId',
-  path: '/jobs/$jobId',
+const AuthenticatedPrintSheetIdRoute =
+  AuthenticatedPrintSheetIdRouteImport.update({
+    id: '/print/$sheetId',
+    path: '/print/$sheetId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSheetsIndexRoute =
+  AuthenticatedSheetsIndexRouteImport.update({
+    id: '/sheets/',
+    path: '/sheets/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSheetsSheetIdRoute =
+  AuthenticatedSheetsSheetIdRouteImport.update({
+    id: '/sheets/$sheetId',
+    path: '/sheets/$sheetId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSheetsNewRoute = AuthenticatedSheetsNewRouteImport.update({
+  id: '/sheets/new',
+  path: '/sheets/new',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 
@@ -98,12 +125,16 @@ export interface FileRoutesByFullPath {
   '/leave': typeof AuthenticatedLeaveRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/overtime': typeof AuthenticatedOvertimeRoute
+  '/schedule': typeof AuthenticatedScheduleRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/admin/entities': typeof AuthenticatedAdminEntitiesRoute
   '/admin/fields': typeof AuthenticatedAdminFieldsRoute
   '/admin/inventory': typeof AuthenticatedAdminInventoryRoute
   '/admin/jobs': typeof AuthenticatedAdminJobsRoute
-  '/jobs/$jobId': typeof AuthenticatedJobsJobIdRoute
-  '/jobs/': typeof AuthenticatedJobsIndexRoute
+  '/print/$sheetId': typeof AuthenticatedPrintSheetIdRoute
+  '/sheets/$sheetId': typeof AuthenticatedSheetsSheetIdRoute
+  '/sheets/new': typeof AuthenticatedSheetsNewRoute
+  '/sheets/': typeof AuthenticatedSheetsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -112,12 +143,16 @@ export interface FileRoutesByTo {
   '/leave': typeof AuthenticatedLeaveRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/overtime': typeof AuthenticatedOvertimeRoute
+  '/schedule': typeof AuthenticatedScheduleRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/admin/entities': typeof AuthenticatedAdminEntitiesRoute
   '/admin/fields': typeof AuthenticatedAdminFieldsRoute
   '/admin/inventory': typeof AuthenticatedAdminInventoryRoute
   '/admin/jobs': typeof AuthenticatedAdminJobsRoute
-  '/jobs/$jobId': typeof AuthenticatedJobsJobIdRoute
-  '/jobs': typeof AuthenticatedJobsIndexRoute
+  '/print/$sheetId': typeof AuthenticatedPrintSheetIdRoute
+  '/sheets/$sheetId': typeof AuthenticatedSheetsSheetIdRoute
+  '/sheets/new': typeof AuthenticatedSheetsNewRoute
+  '/sheets': typeof AuthenticatedSheetsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -128,12 +163,16 @@ export interface FileRoutesById {
   '/_authenticated/leave': typeof AuthenticatedLeaveRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/overtime': typeof AuthenticatedOvertimeRoute
+  '/_authenticated/schedule': typeof AuthenticatedScheduleRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/admin/entities': typeof AuthenticatedAdminEntitiesRoute
   '/_authenticated/admin/fields': typeof AuthenticatedAdminFieldsRoute
   '/_authenticated/admin/inventory': typeof AuthenticatedAdminInventoryRoute
   '/_authenticated/admin/jobs': typeof AuthenticatedAdminJobsRoute
-  '/_authenticated/jobs/$jobId': typeof AuthenticatedJobsJobIdRoute
-  '/_authenticated/jobs/': typeof AuthenticatedJobsIndexRoute
+  '/_authenticated/print/$sheetId': typeof AuthenticatedPrintSheetIdRoute
+  '/_authenticated/sheets/$sheetId': typeof AuthenticatedSheetsSheetIdRoute
+  '/_authenticated/sheets/new': typeof AuthenticatedSheetsNewRoute
+  '/_authenticated/sheets/': typeof AuthenticatedSheetsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -144,12 +183,16 @@ export interface FileRouteTypes {
     | '/leave'
     | '/messages'
     | '/overtime'
+    | '/schedule'
+    | '/settings'
     | '/admin/entities'
     | '/admin/fields'
     | '/admin/inventory'
     | '/admin/jobs'
-    | '/jobs/$jobId'
-    | '/jobs/'
+    | '/print/$sheetId'
+    | '/sheets/$sheetId'
+    | '/sheets/new'
+    | '/sheets/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -158,12 +201,16 @@ export interface FileRouteTypes {
     | '/leave'
     | '/messages'
     | '/overtime'
+    | '/schedule'
+    | '/settings'
     | '/admin/entities'
     | '/admin/fields'
     | '/admin/inventory'
     | '/admin/jobs'
-    | '/jobs/$jobId'
-    | '/jobs'
+    | '/print/$sheetId'
+    | '/sheets/$sheetId'
+    | '/sheets/new'
+    | '/sheets'
   id:
     | '__root__'
     | '/'
@@ -173,12 +220,16 @@ export interface FileRouteTypes {
     | '/_authenticated/leave'
     | '/_authenticated/messages'
     | '/_authenticated/overtime'
+    | '/_authenticated/schedule'
+    | '/_authenticated/settings'
     | '/_authenticated/admin/entities'
     | '/_authenticated/admin/fields'
     | '/_authenticated/admin/inventory'
     | '/_authenticated/admin/jobs'
-    | '/_authenticated/jobs/$jobId'
-    | '/_authenticated/jobs/'
+    | '/_authenticated/print/$sheetId'
+    | '/_authenticated/sheets/$sheetId'
+    | '/_authenticated/sheets/new'
+    | '/_authenticated/sheets/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -238,6 +289,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOvertimeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/schedule': {
+      id: '/_authenticated/schedule'
+      path: '/schedule'
+      fullPath: '/schedule'
+      preLoaderRoute: typeof AuthenticatedScheduleRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/entities': {
       id: '/_authenticated/admin/entities'
       path: '/admin/entities'
@@ -266,18 +331,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminJobsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/jobs/': {
-      id: '/_authenticated/jobs/'
-      path: '/jobs'
-      fullPath: '/jobs/'
-      preLoaderRoute: typeof AuthenticatedJobsIndexRouteImport
+    '/_authenticated/print/$sheetId': {
+      id: '/_authenticated/print/$sheetId'
+      path: '/print/$sheetId'
+      fullPath: '/print/$sheetId'
+      preLoaderRoute: typeof AuthenticatedPrintSheetIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/jobs/$jobId': {
-      id: '/_authenticated/jobs/$jobId'
-      path: '/jobs/$jobId'
-      fullPath: '/jobs/$jobId'
-      preLoaderRoute: typeof AuthenticatedJobsJobIdRouteImport
+    '/_authenticated/sheets/': {
+      id: '/_authenticated/sheets/'
+      path: '/sheets'
+      fullPath: '/sheets/'
+      preLoaderRoute: typeof AuthenticatedSheetsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/sheets/$sheetId': {
+      id: '/_authenticated/sheets/$sheetId'
+      path: '/sheets/$sheetId'
+      fullPath: '/sheets/$sheetId'
+      preLoaderRoute: typeof AuthenticatedSheetsSheetIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/sheets/new': {
+      id: '/_authenticated/sheets/new'
+      path: '/sheets/new'
+      fullPath: '/sheets/new'
+      preLoaderRoute: typeof AuthenticatedSheetsNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
   }
@@ -288,12 +367,16 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLeaveRoute: typeof AuthenticatedLeaveRoute
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedOvertimeRoute: typeof AuthenticatedOvertimeRoute
+  AuthenticatedScheduleRoute: typeof AuthenticatedScheduleRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedAdminEntitiesRoute: typeof AuthenticatedAdminEntitiesRoute
   AuthenticatedAdminFieldsRoute: typeof AuthenticatedAdminFieldsRoute
   AuthenticatedAdminInventoryRoute: typeof AuthenticatedAdminInventoryRoute
   AuthenticatedAdminJobsRoute: typeof AuthenticatedAdminJobsRoute
-  AuthenticatedJobsJobIdRoute: typeof AuthenticatedJobsJobIdRoute
-  AuthenticatedJobsIndexRoute: typeof AuthenticatedJobsIndexRoute
+  AuthenticatedPrintSheetIdRoute: typeof AuthenticatedPrintSheetIdRoute
+  AuthenticatedSheetsSheetIdRoute: typeof AuthenticatedSheetsSheetIdRoute
+  AuthenticatedSheetsNewRoute: typeof AuthenticatedSheetsNewRoute
+  AuthenticatedSheetsIndexRoute: typeof AuthenticatedSheetsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -301,12 +384,16 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLeaveRoute: AuthenticatedLeaveRoute,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedOvertimeRoute: AuthenticatedOvertimeRoute,
+  AuthenticatedScheduleRoute: AuthenticatedScheduleRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedAdminEntitiesRoute: AuthenticatedAdminEntitiesRoute,
   AuthenticatedAdminFieldsRoute: AuthenticatedAdminFieldsRoute,
   AuthenticatedAdminInventoryRoute: AuthenticatedAdminInventoryRoute,
   AuthenticatedAdminJobsRoute: AuthenticatedAdminJobsRoute,
-  AuthenticatedJobsJobIdRoute: AuthenticatedJobsJobIdRoute,
-  AuthenticatedJobsIndexRoute: AuthenticatedJobsIndexRoute,
+  AuthenticatedPrintSheetIdRoute: AuthenticatedPrintSheetIdRoute,
+  AuthenticatedSheetsSheetIdRoute: AuthenticatedSheetsSheetIdRoute,
+  AuthenticatedSheetsNewRoute: AuthenticatedSheetsNewRoute,
+  AuthenticatedSheetsIndexRoute: AuthenticatedSheetsIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

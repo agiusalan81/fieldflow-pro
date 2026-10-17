@@ -32,7 +32,7 @@ function useClients() {
   return useQuery({ queryKey: ["clients-full"], queryFn: async () => (await supabase.from("clients").select("*").order("name")).data ?? [] });
 }
 
-function del(table: "clients" | "client_contacts" | "assets", id: string, done: () => void) {
+function del(table: "sites" | "clients" | "client_contacts" | "assets", id: string, done: () => void) {
   if (!confirm("Delete this record?")) return;
   supabase.from(table).delete().eq("id", id).then(({ error }) => { if (error) toast.error(error.message); else done(); });
 }
@@ -45,12 +45,14 @@ function Entities() {
         <div className="mb-4 grid gap-2 sm:grid-cols-[auto_minmax(0,1fr)]">
           <TabsList>
             <TabsTrigger value="clients">Clients</TabsTrigger>
+            <TabsTrigger value="sites">Sites</TabsTrigger>
             <TabsTrigger value="contacts">Contacts</TabsTrigger>
             <TabsTrigger value="assets">Assets</TabsTrigger>
           </TabsList>
           <Input placeholder="Filter…" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
         <TabsContent value="clients"><ClientsTab q={q} /></TabsContent>
+        <TabsContent value="sites"><SitesTab q={q} /></TabsContent>
         <TabsContent value="contacts"><ContactsTab q={q} /></TabsContent>
         <TabsContent value="assets"><AssetsTab q={q} /></TabsContent>
       </Tabs>
@@ -240,6 +242,62 @@ function AssetsTab({ q }: { q: string }) {
                   <TableCell className="text-muted-foreground">{a.location_details ?? "—"}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">{renderCustomValues(defs, a.custom_attributes).join(" · ") || "—"}</TableCell>
                   <TableCell className="text-right"><Button size="icon" variant="ghost" aria-label="Delete" onClick={() => del("assets", a.id, refresh)}><Trash2 className="h-4 w-4" /></Button></TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+    </>
+  );
+}
+
+function SitesTab({ q }: { q: string }) {
+  const { data: clients = [] } = useClients();
+  const { data: profile } = useProfile();
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [f, setF] = useState({ client_id: "", name: "", address: "" });
+  const { data: sites = [] } = useQuery({ queryKey: ["sites-full"], queryFn: async () => (await supabase.from("sites").select("*, clients(name)").order("name")).data ?? [] });
+  const refresh = () => { qc.invalidateQueries({ queryKey: ["sites-full"] }); qc.invalidateQueries({ queryKey: ["sites"] }); };
+  const save = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!f.client_id) { toast.error("Pick a client"); return; }
+    const { error } = await supabase.from("sites").insert({ ...f, company_id: profile!.company_id });
+    if (error) { toast.error(error.message); return; }
+    setOpen(false); setF({ client_id: "", name: "", address: "" }); refresh();
+  };
+  const list = sites.filter((s) => match(q, s.name, s.address, s.clients?.name));
+  return (
+    <>
+      <div className="mb-3 flex justify-end">
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild><Button size="sm"><Plus className="mr-1 h-4 w-4" />Add site</Button></DialogTrigger>
+          <DialogContent>
+            <DialogHeader><DialogTitle>New site</DialogTitle></DialogHeader>
+            <form onSubmit={save} className="space-y-3">
+              <Select value={f.client_id} onValueChange={(v) => setF({ ...f, client_id: v })}>
+                <SelectTrigger><SelectValue placeholder="Client" /></SelectTrigger>
+                <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+              </Select>
+              <Input required placeholder="Site name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
+              <Input placeholder="Address" value={f.address} onChange={(e) => setF({ ...f, address: e.target.value })} />
+              <Button type="submit" className="w-full">Save</Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+      {list.length === 0 ? <EmptyState>No sites yet.</EmptyState> : (
+        <div className="overflow-x-auto rounded-xl border bg-card">
+          <Table>
+            <TableHeader><TableRow><TableHead>Site</TableHead><TableHead>Client</TableHead><TableHead>Address</TableHead><TableHead /></TableRow></TableHeader>
+            <TableBody>
+              {list.map((s) => (
+                <TableRow key={s.id}>
+                  <TableCell className="font-medium">{s.name}</TableCell>
+                  <TableCell>{s.clients?.name}</TableCell>
+                  <TableCell className="text-muted-foreground">{s.address ?? "—"}</TableCell>
+                  <TableCell className="text-right"><Button size="icon" variant="ghost" aria-label="Delete" onClick={() => del("sites", s.id, refresh)}><Trash2 className="h-4 w-4" /></Button></TableCell>
                 </TableRow>
               ))}
             </TableBody>
