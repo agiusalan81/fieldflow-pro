@@ -31,6 +31,16 @@
 - [x] Technicians must clock in to start a job sheet ("Clock in & start")
 - [x] Contract categories Residential/Commercial/Other (learnt); tier sets visits (Gold 12, Silver 6, Bronze 4)
 - [x] Dispatch job opens the schedule form; model & serial pre-filled from equipment (editable)
+- [ ] Clock-in required for every role before starting a job sheet
+- [ ] Job sheet search by partial number (all roles); PDF/email titled "Job sheet- {number}"
+- [ ] Internal work log (non-client hours) for technicians
+- [ ] Daily works report on clock-out: sites, sheets (incl. as assisting tech via initials), internal work, mandatory break (auto, shown on DWR), OT; archive for managers
+- [ ] Break settings in Company settings (on/off, number, minutes) + mid-shift reminder
+- [ ] Remove Overtime menu for technicians; OT summary card on dashboard for all
+- [ ] Team availability (clocked in / leave / sick / available) for supervisors & office admins
+- [ ] Standby roster: weekly calendar, rotation length, techs per shift, swap requests with peer approval
+- [ ] PDF preview, letterhead/background image, section backgrounds in Company settings
+- [ ] Upload PDF to digitise contracts, checklists, T&Cs
 - [ ] Contract document upload → auto-fill agreement + checklist (next)
 - [ ] T&C preset library (waiting for the user's reference document)
 - [ ] Automatic WhatsApp sending (needs a WhatsApp Business API account)
