@@ -148,8 +148,6 @@ function AdminJobs() {
                       <div className="mt-1 flex flex-wrap gap-1">
                         {j.requires_admin_approval && <span className="rounded bg-warning/25 px-1.5 text-[10px] text-warning-foreground">Asset edit needs approval</span>}
                         {j.pending_works_future_jobs?.trim() && <span className="rounded bg-muted px-1.5 text-[10px] text-muted-foreground">Pending works</span>}
-                        {j.status === "completed" && <Link to="/print/$sheetId" params={{ sheetId: j.id }} target="_blank" onClick={stop} className="rounded border px-1.5 text-[10px] text-primary">Client PDF</Link>}
-                        {j.status === "completed" && <button type="button" onClick={(e) => { stop(e); setResend(j); }} className="inline-flex items-center gap-1 rounded border px-1.5 text-[10px] text-primary"><Mail className="h-3 w-3" />Resend to client</button>}
                       </div>
                       <p className="text-xs text-muted-foreground">{j.assets?.reference_number ?? "—"} · {new Date(j.created_at).toLocaleDateString()}</p>
                     </TableCell>
