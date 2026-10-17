@@ -18,4 +18,9 @@ describe("plain-language templates", () => {
   it("keeps emergency dispatch off external channels", () => {
     expect(parseIntegrations({ templates: { emergency_dispatch: { enabled: true, channels: ["sms"], body: "x" } } }).templates.emergency_dispatch.channels).toEqual([]);
   });
+  it("sends job sheet completed by email only and on-the-way by WhatsApp only", () => {
+    const t = parseIntegrations({ templates: { job_completed: { enabled: true, channels: ["whatsapp", "email"], body: "x" }, on_my_way: { enabled: true, channels: ["sms", "email"], body: "y" } } }).templates;
+    expect(t.job_completed.channels).toEqual(["email"]);
+    expect(t.on_my_way.channels).toEqual(["whatsapp"]);
+  });
 });

@@ -62,10 +62,14 @@ export type Integrations = {
   accounting: { provider: AccountingKey | ""; require_review: boolean; income_account: string; labour_item: string; ot15_item: string; ot20_item: string; tax_rate: string; payment_terms: string; webhook_url: string; field_map: { from: string; to: string }[] };
 };
 
+/** Channels each event uses; fixed ones cannot be changed by tenants. */
+export const FIXED_CHANNELS: Partial<Record<EventKey, ChannelKey[]>> = { emergency_dispatch: [], job_completed: ["email"], on_my_way: ["whatsapp"] };
+const DEFAULT_CHANNELS: Record<EventKey, ChannelKey[]> = { on_my_way: ["whatsapp"], job_completed: ["email"], emergency_dispatch: [], renewal_notice: ["whatsapp", "email"], estimate_sent: ["whatsapp", "email"] };
+
 export function parseIntegrations(v: unknown): Integrations {
   const o = (v && typeof v === "object" ? v : {}) as Partial<Integrations>;
   const channels = Object.fromEntries(CHANNELS.map((c) => [c.key, { enabled: false, provider: c.providers[0], sender: "", ...(o.channels?.[c.key] ?? {}) }])) as Integrations["channels"];
-  const templates = Object.fromEntries(EVENTS.map((e) => [e.key, { enabled: true, channels: e.key === "emergency_dispatch" ? [] : ["whatsapp", "email"], body: e.body, ...(o.templates?.[e.key] ?? {}), ...(e.key === "emergency_dispatch" ? { channels: [] } : {}) }])) as Integrations["templates"];
+  const templates = Object.fromEntries(EVENTS.map((e) => [e.key, { enabled: true, channels: DEFAULT_CHANNELS[e.key], body: e.body, ...(o.templates?.[e.key] ?? {}), ...(e.key in FIXED_CHANNELS ? { channels: FIXED_CHANNELS[e.key as keyof typeof FIXED_CHANNELS] } : {}) }])) as Integrations["templates"];
   const accounting = { provider: "" as const, require_review: true, income_account: "", labour_item: "", ot15_item: "", ot20_item: "", tax_rate: "", payment_terms: "", webhook_url: "", field_map: [], ...(o.accounting ?? {}) };
   return { channels, templates, accounting };
 }
