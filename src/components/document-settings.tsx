@@ -37,6 +37,33 @@ export function DocumentSettings({ companyId }: { companyId: string }) {
   };
   const toggle = (k: PdfTemplate["order"][number]) => setT({ ...t, hidden: t.hidden.includes(k) ? t.hidden.filter((x) => x !== k) : [...t.hidden, k] });
 
+  const SAMPLE = {
+    company: "Your Company Ltd", number: "1042", date: new Date().toLocaleDateString("en-GB"),
+    client: "Plaza Hotel Ltd", address: "Tower Road, Sliema", asset: "Elevator - LFT-02 - Model XJ-500 - S/N 88412",
+    fault: "Lift stops between floors 2 and 3 with a loud grinding noise.",
+    repairs: "Replaced worn guide rollers on the car frame, re-aligned the door tracks and tested 20 full travel cycles. Operation is now smooth and quiet.",
+    technician: "Jorey Gloria", signedBy: "Mario Camilleri", idCard: "123456M",
+    logs: [
+      { date: new Date().toISOString().slice(0, 10), in: "08:30", out: "11:00", travel: 0.5, total: 5, techs: "JG, AA", count: 2 },
+    ],
+    parts: [{ desc: "Guide roller assembly 90mm", unit: "pcs", qty: 4 }],
+    notes: "Parking is at the rear of the building; ask reception for the service lift key.",
+  };
+
+  const downloadSample = async () => {
+    try {
+      const pdf = await buildPdf({
+        company: SAMPLE.company, logo: data?.logo_data ?? "", number: SAMPLE.number, date: SAMPLE.date, client: SAMPLE.client,
+        address: SAMPLE.address, asset: SAMPLE.asset, fault: SAMPLE.fault, repairs: SAMPLE.repairs, technician: SAMPLE.technician,
+        signedBy: SAMPLE.signedBy, idCard: SAMPLE.idCard, signature: null, logs: SAMPLE.logs, parts: SAMPLE.parts,
+        notes: SAMPLE.notes, terms: termsFor(terms, "job_sheet"), template: t,
+      });
+      const url = URL.createObjectURL(new Blob([pdf as unknown as BlobPart], { type: "application/pdf" }));
+      const a = document.createElement("a"); a.href = url; a.download = `Job_sheet-${SAMPLE.number}_Sample.pdf`; a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 30_000);
+    } catch { toast.error("Could not build the sample PDF"); }
+  };
+
   return (
     <div className="space-y-4">
       <div className="grid gap-4 lg:grid-cols-2">
