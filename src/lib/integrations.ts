@@ -62,8 +62,8 @@ export type Integrations = {
   accounting: { provider: AccountingKey | ""; require_review: boolean; income_account: string; labour_item: string; ot15_item: string; ot20_item: string; tax_rate: string; payment_terms: string; webhook_url: string; field_map: { from: string; to: string }[] };
 };
 
-/** Channels each event uses; fixed ones cannot be changed by tenants. */
-export const FIXED_CHANNELS: Partial<Record<EventKey, ChannelKey[]>> = { emergency_dispatch: [], job_completed: ["email"], on_my_way: ["whatsapp"] };
+/** Default channels per event; only fixed ones cannot be changed by tenants. */
+export const FIXED_CHANNELS: Partial<Record<EventKey, ChannelKey[]>> = { emergency_dispatch: [] };
 const DEFAULT_CHANNELS: Record<EventKey, ChannelKey[]> = { on_my_way: ["whatsapp"], job_completed: ["email"], emergency_dispatch: [], renewal_notice: ["whatsapp", "email"], estimate_sent: ["whatsapp", "email"] };
 
 export function parseIntegrations(v: unknown): Integrations {

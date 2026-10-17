@@ -84,7 +84,7 @@ export function IntegrationsSettings({ companyId }: { companyId: string }) {
                 <p className="text-sm font-medium text-foreground">{e.label}</p>
                 <div className="flex items-center gap-2 text-sm"><span className="text-muted-foreground">On</span><Switch checked={t.enabled} onCheckedChange={(b) => set({ enabled: b })} /></div>
               </div>
-              {e.key === "emergency_dispatch" ? <p className="text-xs text-muted-foreground">Sent only inside the app, to the assigned technician's Team Chat. Never by SMS or WhatsApp.</p> : e.key === "job_completed" ? <p className="text-xs text-muted-foreground">Sent by email only, with the job sheet PDF attached.</p> : e.key === "on_my_way" ? <p className="text-xs text-muted-foreground">Sent by WhatsApp only.</p> : <div className="flex flex-wrap gap-3 text-sm">
+              {e.key === "emergency_dispatch" ? <p className="text-xs text-muted-foreground">Sent only inside the app, to the assigned technician's Team Chat. Never by SMS or WhatsApp.</p> : <div className="flex flex-wrap gap-3 text-sm">
                 {CHANNELS.map((c) => (
                   <label key={c.key} className="flex items-center gap-1.5"><Checkbox checked={t.channels.includes(c.key)} onCheckedChange={(b) => set({ channels: b ? [...t.channels, c.key] : t.channels.filter((x: ChannelKey) => x !== c.key) })} />{c.label.split(" ")[0]}</label>
                 ))}
