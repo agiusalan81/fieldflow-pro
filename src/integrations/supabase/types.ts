@@ -301,6 +301,7 @@ export type Database = {
           idle_timeout_minutes: number
           industry: string | null
           integrations: Json
+          logo_data: string | null
           note_presets: Json
           office_phone: string | null
           pdf_template: Json
@@ -334,6 +335,7 @@ export type Database = {
           idle_timeout_minutes?: number
           industry?: string | null
           integrations?: Json
+          logo_data?: string | null
           note_presets?: Json
           office_phone?: string | null
           pdf_template?: Json
@@ -367,6 +369,7 @@ export type Database = {
           idle_timeout_minutes?: number
           industry?: string | null
           integrations?: Json
+          logo_data?: string | null
           note_presets?: Json
           office_phone?: string | null
           pdf_template?: Json

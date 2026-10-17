@@ -60,3 +60,6 @@
 - [x] AI WhatsApp template drafter + Meta submission (Company Settings → Integrations)
 - [ ] WhatsApp live sends + delivery webhook (needs approved templates)
 - [x] Prompt for Meta approval when any message event uses WhatsApp
+
+- [x] Collapsible menu groups, mobile quick-action dashboard (learns most-used), help guide per page, searchable country codes, superuser delete, company logo upload
+- [ ] Delete buttons on other record screens for superuser (database already allows it)
