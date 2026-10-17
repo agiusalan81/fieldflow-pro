@@ -50,7 +50,7 @@ export const sendClientNotice = createServerFn({ method: "POST" })
           body: JSON.stringify({ raw: rawEmail(emails, subject, `${text}\n\n${company?.name ?? ""}`, []) }),
         });
         if (!res.ok) console.error(`Notice email failed [${res.status}]: ${await res.text()}`);
-        result.push({ channel: "email", to: emails.join(", "), ok: res.ok, ...(res.ok ? {} : { error: "Email could not be sent" });
+        result.push({ channel: "email", to: emails.join(", "), ok: res.ok, ...(res.ok ? {} : { error: "Email could not be sent" }) });
       } else result.push({ channel: "email", to: "", ok: false, error: emails.length ? "Email not connected" : "No client email on file" });
     }
     if (tpl.channels.includes("whatsapp")) {
