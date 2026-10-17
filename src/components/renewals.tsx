@@ -5,6 +5,11 @@ import { useCompanyRules } from "@/lib/company";
 import { daysUntil, dueForRenewal } from "@/lib/jobsheets";
 import { EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { SignaturePad } from "@/components/signature-pad";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export function useAgreements() {
   return useQuery({
@@ -28,10 +33,12 @@ export function RenewalList({ office, limit }: { office: boolean; limit?: number
     toast.success(msg);
     qc.invalidateQueries({ queryKey: ["agreements"] });
   };
-  const renew = (a: (typeof data)[number]) => {
+  const [pack, setPack] = useState<(typeof data)[number] | null>(null);
+  const renew = (a: (typeof data)[number], sig: { signature: string; name: string }) => {
     const s = new Date(a.end_date + "T00:00:00Z"); s.setUTCDate(s.getUTCDate() + 1);
     const e = new Date(s); e.setUTCFullYear(e.getUTCFullYear() + 1); e.setUTCDate(e.getUTCDate() - 1);
-    act(a.id, { start_date: s.toISOString().slice(0, 10), end_date: e.toISOString().slice(0, 10), price_confirmed_at: null, renewal_sent_at: null }, "Agreement renewed for another year");
+    act(a.id, { start_date: s.toISOString().slice(0, 10), end_date: e.toISOString().slice(0, 10), price_confirmed_at: null, renewal_sent_at: null,
+      renewal_signature: sig.signature, renewal_signed_by: sig.name, renewal_signed_at: new Date().toISOString() }, "Signed — agreement renewed for another year");
   };
   if (!due.length) return <EmptyState>No contracts expiring in the next {c?.renewalDays ?? 30} days.</EmptyState>;
   return (
@@ -49,13 +56,47 @@ export function RenewalList({ office, limit }: { office: boolean; limit?: number
               <div className="flex flex-wrap gap-2">
                 {!a.price_confirmed_at && <Button size="sm" onClick={() => act(a.id, { price_confirmed_at: new Date().toISOString() }, "Price confirmed")}>Confirm price</Button>}
                 {a.price_confirmed_at && !a.renewal_sent_at && <Button size="sm" onClick={() => act(a.id, { renewal_sent_at: new Date().toISOString() }, "Marked as sent to client")}>Mark renewal sent</Button>}
-                <Button size="sm" variant="outline" onClick={() => renew(a)}>Client signed — renew</Button>
+                <Button size="sm" variant="outline" onClick={() => setPack(a)}>Renewal pack & signature</Button>
               </div>
             )}
           </li>
         );
       })}
+      {pack && <RenewalPack a={pack} onClose={() => setPack(null)} onSign={(sig) => { renew(pack, sig); setPack(null); }} />}
     </ul>
+  );
+}
+
+type Agreement = NonNullable<ReturnType<typeof useAgreements>["data"]>[number];
+/** Unchanged contract + equipment checklist shown to the client, who signs digitally to renew. */
+function RenewalPack({ a, onClose, onSign }: { a: Agreement; onClose: () => void; onSign: (s: { signature: string; name: string }) => void }) {
+  const cat = a.contract_types?.equipment_category;
+  const { data: lists = [] } = useQuery({ queryKey: ["renewal-checklist", cat], enabled: !!cat,
+    queryFn: async () => (await supabase.from("checklist_templates").select("name, items").eq("equipment_category", cat!)).data ?? [] });
+  const [sig, setSig] = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const items = (l: { items: unknown }) => (Array.isArray(l.items) ? l.items : []).map((i) => (typeof i === "string" ? i : (i as { label?: string })?.label ?? "")).filter(Boolean);
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Contract renewal — {a.clients?.name}</DialogTitle></DialogHeader>
+        <section className="space-y-1 rounded-lg border p-3 text-sm">
+          <p className="font-medium">Same terms as the current contract</p>
+          <p>{a.contract_types?.name ?? "Custom"}{a.contract_types?.tier ? ` · ${a.contract_types.tier}` : ""}{a.sites?.name ? ` · ${a.sites.name}` : ""}</p>
+          <p>€{Number(a.annual_price).toFixed(2)} per year · renews from {a.end_date} for 12 months</p>
+          {a.notes && <p className="whitespace-pre-wrap text-muted-foreground">{a.notes}</p>}
+        </section>
+        <section className="space-y-1 rounded-lg border p-3 text-sm">
+          <p className="font-medium">Maintenance checklist</p>
+          {lists.length === 0 ? <p className="text-muted-foreground">No checklist set up for this equipment type.</p> : lists.map((l) => (
+            <div key={l.name}><p className="text-muted-foreground">{l.name}</p><ul className="list-disc pl-5">{items(l).map((i) => <li key={i}>{i}</li>)}</ul></div>
+          ))}
+        </section>
+        <div className="space-y-1.5"><Label>Client full name *</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+        <div className="space-y-1.5"><Label>Client signature *</Label><SignaturePad value={sig} onChange={setSig} /></div>
+        <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button disabled={!sig || !name.trim()} onClick={() => onSign({ signature: sig!, name: name.trim() })}>Sign & renew</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
