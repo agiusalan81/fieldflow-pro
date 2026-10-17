@@ -1,0 +1,2 @@
+ALTER TABLE public.jobsheet_time_logs ADD COLUMN technician_count integer NOT NULL DEFAULT 1 CHECK (technician_count >= 1);
+UPDATE public.jobsheet_time_logs SET technician_count = GREATEST(1, cardinality(technician_initials));

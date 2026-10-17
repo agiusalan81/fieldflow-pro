@@ -1072,6 +1072,7 @@ export type Database = {
           longitude_in: number | null
           longitude_out: number | null
           sort_order: number
+          technician_count: number
           technician_initials: string[]
           time_in: string | null
           time_out: string | null
@@ -1089,6 +1090,7 @@ export type Database = {
           longitude_in?: number | null
           longitude_out?: number | null
           sort_order?: number
+          technician_count?: number
           technician_initials?: string[]
           time_in?: string | null
           time_out?: string | null
@@ -1106,6 +1108,7 @@ export type Database = {
           longitude_in?: number | null
           longitude_out?: number | null
           sort_order?: number
+          technician_count?: number
           technician_initials?: string[]
           time_in?: string | null
           time_out?: string | null
