@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Mail } from "lucide-react";
+import { Plus, Mail, FileText } from "lucide-react";
 import { sendJobSheetEmail } from "@/lib/sendJobSheetEmail";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EVENTS, parseIntegrations, renderTemplate } from "@/lib/integrations";
@@ -136,6 +136,7 @@ function AdminJobs() {
                 <TableHead className="text-right">Total h</TableHead>
                 <TableHead className="min-w-56">Custom fields</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -148,8 +149,6 @@ function AdminJobs() {
                       <div className="mt-1 flex flex-wrap gap-1">
                         {j.requires_admin_approval && <span className="rounded bg-warning/25 px-1.5 text-[10px] text-warning-foreground">Asset edit needs approval</span>}
                         {j.pending_works_future_jobs?.trim() && <span className="rounded bg-muted px-1.5 text-[10px] text-muted-foreground">Pending works</span>}
-                        {j.status === "completed" && <Link to="/print/$sheetId" params={{ sheetId: j.id }} target="_blank" onClick={stop} className="rounded border px-1.5 text-[10px] text-primary">Client PDF</Link>}
-                        {j.status === "completed" && <button type="button" onClick={(e) => { stop(e); setResend(j); }} className="inline-flex items-center gap-1 rounded border px-1.5 text-[10px] text-primary"><Mail className="h-3 w-3" />Resend to client</button>}
                       </div>
                       <p className="text-xs text-muted-foreground">{j.assets?.reference_number ?? "—"} · {new Date(j.created_at).toLocaleDateString()}</p>
                     </TableCell>
@@ -161,6 +160,14 @@ function AdminJobs() {
                         <SelectTrigger className="h-8 w-36"><SelectValue /></SelectTrigger>
                         <SelectContent>{STATUSES.map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}</SelectContent>
                       </Select>
+                    </TableCell>
+                    <TableCell onClick={stop}>
+                      {j.status === "completed" ? (
+                        <div className="flex gap-2">
+                          <Button asChild size="sm" variant="outline"><Link to="/print/$sheetId" params={{ sheetId: j.id }} target="_blank"><FileText className="mr-1 h-4 w-4" />Client PDF</Link></Button>
+                          <Button size="sm" onClick={() => setResend(j)}><Mail className="mr-1 h-4 w-4" />Resend</Button>
+                        </div>
+                      ) : <span className="text-xs text-muted-foreground">—</span>}
                     </TableCell>
                   </TableRow>
                 );

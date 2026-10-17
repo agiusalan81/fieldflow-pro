@@ -15,55 +15,61 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/s
 import { useQueryClient } from "@tanstack/react-query";
 import { IdleLogout } from "@/components/idle-logout";
 
-type NavItem = { to: string; label: string; icon: typeof Clock; module?: ModuleKey; office?: boolean };
+type NavItem = { to: string; label: string; icon: typeof Clock; module?: ModuleKey; office?: boolean; group: string };
 
 const techNav: NavItem[] = [
-  { to: "/dashboard", label: "Today", icon: LayoutDashboard },
-  { to: "/sheets", label: "Sheets", icon: ClipboardList },
-  { to: "/schedule", label: "Schedule", icon: CalendarClock },
-  { to: "/standby", label: "Standby", icon: PhoneCall },
-  { to: "/hours", label: "My hours", icon: Clock },
-  { to: "/dwr", label: "My daily reports", icon: FileText },
-  { to: "/leave", label: "Leave", icon: CalendarDays },
-  { to: "/settings", label: "Settings", icon: Settings },
-  { to: "/messages", label: "Chat", icon: MessageSquare },
+  { group: "Field work", to: "/dashboard", label: "Today", icon: LayoutDashboard },
+  { group: "Field work", to: "/sheets", label: "Sheets", icon: ClipboardList },
+  { group: "Field work", to: "/schedule", label: "Schedule", icon: CalendarClock },
+  { group: "Time & roster", to: "/hours", label: "My hours", icon: Clock },
+  { group: "Time & roster", to: "/dwr", label: "My daily reports", icon: FileText },
+  { group: "Time & roster", to: "/standby", label: "Standby", icon: PhoneCall },
+  { group: "Time & roster", to: "/leave", label: "Leave", icon: CalendarDays },
+  { group: "General", to: "/messages", label: "Team chat", icon: MessageSquare },
+  { group: "General", to: "/settings", label: "Settings", icon: Settings },
 ];
 
 const adminNav: NavItem[] = [
-  { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
-  { to: "/admin/jobs", label: "Job sheets", icon: ClipboardList },
-  { to: "/hours", label: "My hours", icon: Clock },
-  { to: "/dwr", label: "Daily works reports", icon: FileText },
-  { to: "/standby", label: "Standby roster", icon: PhoneCall },
-  { to: "/team", label: "Team availability", icon: UserCheck },
-  { to: "/pending-works", label: "Pending works", icon: Hammer, module: "pending_works" },
-  { to: "/admin/entities", label: "Clients & assets", icon: Users, module: "clients" },
-  { to: "/contracts", label: "Contracts", icon: FileSignature, module: "contracts" },
-  { to: "/estimates", label: "Lift estimates", icon: Calculator, module: "estimates" },
-  { to: "/admin/inventory", label: "Inventory", icon: Package, module: "inventory" },
-  { to: "/leave", label: "My leave", icon: CalendarDays },
-  { to: "/admin/leave", label: "Leave approvals", icon: CalendarDays, module: "leave_approvals" },
-  { to: "/messages", label: "Chat", icon: MessageSquare },
-  { to: "/admin/fields", label: "Fields & lookups", icon: SlidersHorizontal, module: "fields" },
-  { to: "/company", label: "Company", icon: Building2, module: "team" },
-  { to: "/settings", label: "Settings", icon: Settings },
+  { group: "Operations", to: "/dashboard", label: "Overview", icon: LayoutDashboard },
+  { group: "Operations", to: "/admin/jobs", label: "Job sheets", icon: ClipboardList },
+  { group: "Operations", to: "/pending-works", label: "Pending works", icon: Hammer, module: "pending_works" },
+  { group: "Operations", to: "/admin/inventory", label: "Inventory", icon: Package, module: "inventory" },
+  { group: "Team & roster", to: "/team", label: "Team availability", icon: UserCheck },
+  { group: "Team & roster", to: "/standby", label: "Standby roster", icon: PhoneCall },
+  { group: "Team & roster", to: "/dwr", label: "Daily works reports", icon: FileText },
+  { group: "Team & roster", to: "/admin/leave", label: "Leave approvals", icon: CalendarDays, module: "leave_approvals" },
+  { group: "Clients & commercial", to: "/admin/entities", label: "Clients & assets", icon: Users, module: "clients" },
+  { group: "Clients & commercial", to: "/contracts", label: "Contracts", icon: FileSignature, module: "contracts" },
+  { group: "Clients & commercial", to: "/estimates", label: "Lift estimates", icon: Calculator, module: "estimates" },
+  { group: "My workspace", to: "/hours", label: "My hours", icon: Clock },
+  { group: "My workspace", to: "/leave", label: "My leave", icon: CalendarDays },
+  { group: "My workspace", to: "/messages", label: "Team chat", icon: MessageSquare },
+  { group: "Administration", to: "/company", label: "Company", icon: Building2, module: "team" },
+  { group: "Administration", to: "/admin/fields", label: "Fields & lookups", icon: SlidersHorizontal, module: "fields" },
+  { group: "Administration", to: "/settings", label: "Settings", icon: Settings },
 ];
 
 function NavLinks({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => void }) {
+  const groups = [...new Set(items.map((i) => i.group))];
   return (
-    <nav className="flex flex-col gap-1">
-      {items.map((i) => (
-        <Link
-          key={i.to}
-          to={i.to}
-          onClick={onNavigate}
-          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
-          activeProps={{ className: "bg-sidebar-accent text-sidebar-foreground font-medium" }}
-          activeOptions={{ exact: i.to === "/dashboard" }}
-        >
-          <i.icon className="h-4 w-4 shrink-0" />
-          {i.label}
-        </Link>
+    <nav className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
+      {groups.map((g) => (
+        <div key={g} className="flex flex-col gap-0.5">
+          <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/50">{g}</p>
+          {items.filter((i) => i.group === g).map((i) => (
+            <Link
+              key={i.to}
+              to={i.to}
+              onClick={onNavigate}
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+              activeProps={{ className: "bg-sidebar-accent text-sidebar-foreground font-medium" }}
+              activeOptions={{ exact: i.to === "/dashboard" }}
+            >
+              <i.icon className="h-4 w-4 shrink-0" />
+              {i.label}
+            </Link>
+          ))}
+        </div>
       ))}
     </nav>
   );
