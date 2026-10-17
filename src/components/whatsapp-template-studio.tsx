@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -14,7 +14,9 @@ import { draftWhatsAppTemplate, listWhatsAppTemplates, submitWhatsAppTemplate } 
 
 const STATUS: Record<string, "default" | "secondary" | "destructive" | "outline"> = { APPROVED: "default", PENDING: "secondary", REJECTED: "destructive" };
 
-export function WhatsAppTemplateStudio() {
+export type StudioPrefill = { type: string; wording: string; nonce: number };
+
+export function WhatsAppTemplateStudio({ prefill }: { prefill?: StudioPrefill | null }) {
   const qc = useQueryClient();
   const draftFn = useServerFn(draftWhatsAppTemplate);
   const submitFn = useServerFn(submitWhatsAppTemplate);
@@ -25,6 +27,7 @@ export function WhatsAppTemplateStudio() {
   const [wording, setWording] = useState("");
   const [draft, setDraft] = useState<WaDraft | null>(null);
   const [busy, setBusy] = useState<"draft" | "submit" | null>(null);
+  useEffect(() => { if (prefill) { setType(prefill.type); setWording(prefill.wording); setDraft(null); document.getElementById("wa-studio")?.scrollIntoView({ behavior: "smooth" }); } }, [prefill]);
   const mt = MESSAGE_TYPES.find((m) => m.key === type) ?? MESSAGE_TYPES[0]!;
 
   const makeDraft = async () => {
@@ -45,7 +48,7 @@ export function WhatsAppTemplateStudio() {
   const setBody = (body: string) => draft && setDraft({ ...draft, body, examples: Array.from({ length: variableCount(body) }, (_, i) => draft.examples[i] ?? "") });
 
   return (
-    <section className="space-y-4 rounded-xl border bg-card p-5">
+    <section id="wa-studio" className="space-y-4 rounded-xl border bg-card p-5">
       <div><h2 className="font-medium text-foreground">WhatsApp message templates</h2>
         <p className="text-sm text-muted-foreground">Write the message in your own words. AI turns it into a template Meta accepts, then you review it and send it for approval.</p></div>
       <div className="grid gap-3 md:grid-cols-2">
