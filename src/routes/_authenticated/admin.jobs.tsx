@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, useCompanyUsers } from "@/lib/profile";
 import { matchesSheetFilter } from "@/lib/jobsheets";
+import { matchesSheetSearch } from "@/lib/dwr";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { useFieldDefs, renderCustomValues } from "@/components/custom-fields";
 import { Button } from "@/components/ui/button";

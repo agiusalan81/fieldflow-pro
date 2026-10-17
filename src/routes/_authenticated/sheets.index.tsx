@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/lib/profile";
+import { matchesSheetSearch } from "@/lib/dwr";
 import { AppShell, StatusBadge, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
