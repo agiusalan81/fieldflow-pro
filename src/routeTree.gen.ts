@@ -15,9 +15,11 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedCompanyRouteImport } from './routes/_authenticated/company'
 import { Route as AuthenticatedContractsRouteImport } from './routes/_authenticated/contracts'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedEstimatesRouteImport } from './routes/_authenticated/estimates'
 import { Route as AuthenticatedLeaveRouteImport } from './routes/_authenticated/leave'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
 import { Route as AuthenticatedOvertimeRouteImport } from './routes/_authenticated/overtime'
+import { Route as AuthenticatedPendingWorksRouteImport } from './routes/_authenticated/pending-works'
 import { Route as AuthenticatedScheduleRouteImport } from './routes/_authenticated/schedule'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
@@ -59,6 +61,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedEstimatesRoute = AuthenticatedEstimatesRouteImport.update({
+  id: '/estimates',
+  path: '/estimates',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedLeaveRoute = AuthenticatedLeaveRouteImport.update({
   id: '/leave',
   path: '/leave',
@@ -74,6 +81,12 @@ const AuthenticatedOvertimeRoute = AuthenticatedOvertimeRouteImport.update({
   path: '/overtime',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPendingWorksRoute =
+  AuthenticatedPendingWorksRouteImport.update({
+    id: '/pending-works',
+    path: '/pending-works',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedScheduleRoute = AuthenticatedScheduleRouteImport.update({
   id: '/schedule',
   path: '/schedule',
@@ -142,9 +155,11 @@ export interface FileRoutesByFullPath {
   '/company': typeof AuthenticatedCompanyRoute
   '/contracts': typeof AuthenticatedContractsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/estimates': typeof AuthenticatedEstimatesRoute
   '/leave': typeof AuthenticatedLeaveRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/overtime': typeof AuthenticatedOvertimeRoute
+  '/pending-works': typeof AuthenticatedPendingWorksRoute
   '/schedule': typeof AuthenticatedScheduleRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/join/$token': typeof JoinTokenRoute
@@ -163,9 +178,11 @@ export interface FileRoutesByTo {
   '/company': typeof AuthenticatedCompanyRoute
   '/contracts': typeof AuthenticatedContractsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/estimates': typeof AuthenticatedEstimatesRoute
   '/leave': typeof AuthenticatedLeaveRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/overtime': typeof AuthenticatedOvertimeRoute
+  '/pending-works': typeof AuthenticatedPendingWorksRoute
   '/schedule': typeof AuthenticatedScheduleRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/join/$token': typeof JoinTokenRoute
@@ -186,9 +203,11 @@ export interface FileRoutesById {
   '/_authenticated/company': typeof AuthenticatedCompanyRoute
   '/_authenticated/contracts': typeof AuthenticatedContractsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/estimates': typeof AuthenticatedEstimatesRoute
   '/_authenticated/leave': typeof AuthenticatedLeaveRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/overtime': typeof AuthenticatedOvertimeRoute
+  '/_authenticated/pending-works': typeof AuthenticatedPendingWorksRoute
   '/_authenticated/schedule': typeof AuthenticatedScheduleRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/join/$token': typeof JoinTokenRoute
@@ -209,9 +228,11 @@ export interface FileRouteTypes {
     | '/company'
     | '/contracts'
     | '/dashboard'
+    | '/estimates'
     | '/leave'
     | '/messages'
     | '/overtime'
+    | '/pending-works'
     | '/schedule'
     | '/settings'
     | '/join/$token'
@@ -230,9 +251,11 @@ export interface FileRouteTypes {
     | '/company'
     | '/contracts'
     | '/dashboard'
+    | '/estimates'
     | '/leave'
     | '/messages'
     | '/overtime'
+    | '/pending-works'
     | '/schedule'
     | '/settings'
     | '/join/$token'
@@ -252,9 +275,11 @@ export interface FileRouteTypes {
     | '/_authenticated/company'
     | '/_authenticated/contracts'
     | '/_authenticated/dashboard'
+    | '/_authenticated/estimates'
     | '/_authenticated/leave'
     | '/_authenticated/messages'
     | '/_authenticated/overtime'
+    | '/_authenticated/pending-works'
     | '/_authenticated/schedule'
     | '/_authenticated/settings'
     | '/join/$token'
@@ -319,6 +344,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/estimates': {
+      id: '/_authenticated/estimates'
+      path: '/estimates'
+      fullPath: '/estimates'
+      preLoaderRoute: typeof AuthenticatedEstimatesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/leave': {
       id: '/_authenticated/leave'
       path: '/leave'
@@ -338,6 +370,13 @@ declare module '@tanstack/react-router' {
       path: '/overtime'
       fullPath: '/overtime'
       preLoaderRoute: typeof AuthenticatedOvertimeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pending-works': {
+      id: '/_authenticated/pending-works'
+      path: '/pending-works'
+      fullPath: '/pending-works'
+      preLoaderRoute: typeof AuthenticatedPendingWorksRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/schedule': {
@@ -424,9 +463,11 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCompanyRoute: typeof AuthenticatedCompanyRoute
   AuthenticatedContractsRoute: typeof AuthenticatedContractsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedEstimatesRoute: typeof AuthenticatedEstimatesRoute
   AuthenticatedLeaveRoute: typeof AuthenticatedLeaveRoute
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedOvertimeRoute: typeof AuthenticatedOvertimeRoute
+  AuthenticatedPendingWorksRoute: typeof AuthenticatedPendingWorksRoute
   AuthenticatedScheduleRoute: typeof AuthenticatedScheduleRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedAdminEntitiesRoute: typeof AuthenticatedAdminEntitiesRoute
@@ -443,9 +484,11 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCompanyRoute: AuthenticatedCompanyRoute,
   AuthenticatedContractsRoute: AuthenticatedContractsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedEstimatesRoute: AuthenticatedEstimatesRoute,
   AuthenticatedLeaveRoute: AuthenticatedLeaveRoute,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedOvertimeRoute: AuthenticatedOvertimeRoute,
+  AuthenticatedPendingWorksRoute: AuthenticatedPendingWorksRoute,
   AuthenticatedScheduleRoute: AuthenticatedScheduleRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedAdminEntitiesRoute: AuthenticatedAdminEntitiesRoute,
