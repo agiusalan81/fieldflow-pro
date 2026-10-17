@@ -6,7 +6,8 @@ import { Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, isOffice } from "@/lib/profile";
 import { useCompanyRules, EQUIPMENT_CATEGORIES } from "@/lib/company";
-import { daysUntil } from "@/lib/jobsheets";
+import { daysUntil, visitsForTier, contractName } from "@/lib/jobsheets";
+import { LookupInput, learnLookup, CONTRACT_CATEGORY } from "@/components/role-combobox";
 import { RenewalList, useAgreements } from "@/components/renewals";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -118,12 +119,16 @@ function Types({ office, companyId }: { office: boolean; companyId?: string | un
     queryKey: ["contract-types"],
     queryFn: async () => { const { data, error } = await supabase.from("contract_types").select("*").order("equipment_category").order("name"); if (error) throw error; return data; },
   });
-  const empty = { name: "", equipment_category: "Elevator", tier: "", visits_per_year: "12", annual_price: "", labour_discount_pct: "0", parts_discount_pct: "0" };
+  const empty = { name: "", category: "Residential", other: "", equipment_category: "Elevator", tier: "", visits_per_year: "12", annual_price: "", labour_discount_pct: "0", parts_discount_pct: "0" };
   const [f, setF] = useState(empty);
   const add = async () => {
-    if (!f.name.trim()) { toast.error("Give the contract type a name, e.g. Residential Gold"); return; }
-    const { error } = await supabase.from("contract_types").insert({ company_id: companyId!, name: f.name.trim(), equipment_category: f.equipment_category, tier: f.tier || null, visits_per_year: Number(f.visits_per_year) || 0, annual_price: Number(f.annual_price) || 0, labour_discount_pct: Number(f.labour_discount_pct) || 0, parts_discount_pct: Number(f.parts_discount_pct) || 0 });
+    const cat = f.category === "Other" ? f.other.trim() : f.category;
+    if (!cat) { toast.error("Specify the contract category"); return; }
+    const name = f.name.trim() || contractName(cat, f.tier);
+    if (!name) { toast.error("Give the contract type a name, e.g. Residential Gold"); return; }
+    const { error } = await supabase.from("contract_types").insert({ company_id: companyId!, name, contract_category: cat, equipment_category: f.equipment_category, tier: f.tier || null, visits_per_year: Number(f.visits_per_year) || 0, annual_price: Number(f.annual_price) || 0, labour_discount_pct: Number(f.labour_discount_pct) || 0, parts_discount_pct: Number(f.parts_discount_pct) || 0 });
     if (error) { toast.error(error.message); return; }
+    if (f.category === "Other") { const { data: u } = await supabase.auth.getUser(); if (u.user) await learnLookup(CONTRACT_CATEGORY, cat, companyId!, u.user.id); }
     setF(empty);
     qc.invalidateQueries({ queryKey: ["contract-types"] });
   };
@@ -131,10 +136,11 @@ function Types({ office, companyId }: { office: boolean; companyId?: string | un
   return (
     <div className="space-y-4">
       {office && (
-        <section className="grid gap-2 rounded-xl border bg-card p-4 md:grid-cols-8 md:items-end">
-          <div className="space-y-1.5 md:col-span-2"><Label>Name</Label><Input className="h-11" placeholder="Residential Gold" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
+        <section className="grid gap-2 rounded-xl border bg-card p-4 md:grid-cols-9 md:items-end">
+          <div className="space-y-1.5"><Label>Category</Label><Select value={f.category} onValueChange={(v) => setF({ ...f, category: v })}><SelectTrigger className="h-11"><SelectValue /></SelectTrigger><SelectContent>{["Residential", "Commercial", "Other"].map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select>{f.category === "Other" && <LookupInput category={CONTRACT_CATEGORY} value={f.other} onChange={(v) => setF({ ...f, other: v })} placeholder="e.g. Industrial" />}</div>
+          <div className="space-y-1.5"><Label>Name</Label><Input className="h-11" placeholder={contractName(f.category === "Other" ? f.other : f.category, f.tier) || "Residential Gold"} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
           <div className="space-y-1.5"><Label>Equipment</Label><Select value={f.equipment_category} onValueChange={(v) => setF({ ...f, equipment_category: v })}><SelectTrigger className="h-11"><SelectValue /></SelectTrigger><SelectContent>{EQUIPMENT_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
-          <div className="space-y-1.5"><Label>Tier</Label><Select value={f.tier || "none"} onValueChange={(v) => setF({ ...f, tier: v === "none" ? "" : v })}><SelectTrigger className="h-11"><SelectValue /></SelectTrigger><SelectContent>{["none", "Bronze", "Silver", "Gold", "Custom"].map((t) => <SelectItem key={t} value={t}>{t === "none" ? "—" : t}</SelectItem>)}</SelectContent></Select></div>
+          <div className="space-y-1.5"><Label>Tier</Label><Select value={f.tier || "none"} onValueChange={(v) => { const tier = v === "none" ? "" : v; setF({ ...f, tier, visits_per_year: String(visitsForTier(tier, Number(f.visits_per_year) || 0)) }); }}><SelectTrigger className="h-11"><SelectValue /></SelectTrigger><SelectContent>{["none", "Bronze", "Silver", "Gold", "Custom"].map((t) => <SelectItem key={t} value={t}>{t === "none" ? "—" : t}</SelectItem>)}</SelectContent></Select></div>
           <div className="space-y-1.5"><Label>Visits / yr</Label><Input className="h-11" type="number" value={f.visits_per_year} onChange={(e) => setF({ ...f, visits_per_year: e.target.value })} /></div>
           <div className="space-y-1.5"><Label>€ / year</Label><Input className="h-11" type="number" value={f.annual_price} onChange={(e) => setF({ ...f, annual_price: e.target.value })} /></div>
           <div className="space-y-1.5"><Label>Labour % off</Label><Input className="h-11" type="number" value={f.labour_discount_pct} onChange={(e) => setF({ ...f, labour_discount_pct: e.target.value })} /></div>
@@ -145,7 +151,7 @@ function Types({ office, companyId }: { office: boolean; companyId?: string | un
         <ul className="divide-y rounded-xl border bg-card">
           {data.map((t) => (
             <li key={t.id} className="flex items-center gap-3 px-4 py-3 text-sm">
-              <div className="min-w-0 flex-1"><p className="font-medium text-foreground">{t.name}</p><p className="text-muted-foreground">{t.equipment_category}{t.tier ? ` · ${t.tier}` : ""} · {t.visits_per_year} visits/yr · €{Number(t.annual_price).toFixed(2)} · labour −{Number(t.labour_discount_pct)}% · parts −{Number(t.parts_discount_pct)}%</p></div>
+              <div className="min-w-0 flex-1"><p className="font-medium text-foreground">{t.name}</p><p className="text-muted-foreground">{t.contract_category ? `${t.contract_category} · ` : ""}{t.equipment_category}{t.tier ? ` · ${t.tier}` : ""} · {t.visits_per_year} visits/yr · €{Number(t.annual_price).toFixed(2)} · labour −{Number(t.labour_discount_pct)}% · parts −{Number(t.parts_discount_pct)}%</p></div>
               {office && <Button size="icon" variant="ghost" aria-label="Delete contract type" onClick={() => del(t.id)}><Trash2 className="h-4 w-4" /></Button>}
             </li>
           ))}

@@ -9,7 +9,7 @@ export async function createDraftSheet(profile: Profile, jobId?: string) {
     if (existing) return existing.id;
     const { data: job } = await supabase
       .from("jobs")
-      .select("id, client_id, site_id, asset_id, problem_summary, assets(asset_category, custom_attributes)")
+      .select("id, client_id, site_id, asset_id, problem_summary, assets(asset_category, custom_attributes, serial_number)")
       .eq("id", jobId)
       .maybeSingle();
     if (job) {
@@ -17,6 +17,8 @@ export async function createDraftSheet(profile: Profile, jobId?: string) {
       prefill = {
         job_id: job.id, client_id: job.client_id, site_id: job.site_id, asset_id: job.asset_id,
         reported_fault: job.problem_summary,
+        lift_model: ((job.assets?.custom_attributes as Record<string, unknown> | null)?.["model"] as string) ?? null,
+        serial_number: job.assets?.serial_number ?? ((job.assets?.custom_attributes as Record<string, unknown> | null)?.["serial"] as string) ?? null,
         asset_type: cat.includes("escalator") ? "Escalator" : cat.includes("lift") || !cat ? "Lift" : "Other",
         asset_type_other: cat && !cat.includes("lift") && !cat.includes("escalator") ? job.assets?.asset_category : null,
       };
@@ -177,3 +179,19 @@ export function daysUntil(end: string, today = new Date().toISOString().slice(0,
   return Math.round((new Date(end + "T00:00:00Z").getTime() - new Date(today + "T00:00:00Z").getTime()) / 86_400_000);
 }
 export const dueForRenewal = (end: string, noticeDays = 30, today?: string) => { const d = daysUntil(end, today); return d >= 0 && d <= noticeDays; };
+
+/** Default maintenance visits per year by contract tier (Custom stays manual). */
+export const TIER_VISITS: Record<string, number> = { Bronze: 4, Silver: 6, Gold: 12 };
+export const visitsForTier = (tier: string, current: number) => TIER_VISITS[tier] ?? current;
+/** Suggested contract type name from category + tier, e.g. "Residential Gold". */
+export const contractName = (category: string, tier: string) => [category, tier === "Custom" ? "" : tier].filter(Boolean).join(" ");
+
+/** Technicians must be clocked in (an open "shift") before creating a job sheet; office staff are exempt. */
+export const needsClockIn = (role: string, openShiftTypes: string[]) => role === "technician" && !openShiftTypes.includes("shift");
+
+/** Applicant balance before approving one pending Annual request (its hours are already counted in pending). */
+export function approvalBalance(b: { base: number; ph: number; taken: number; pending: number }, requestHours: number) {
+  const available = remainingBalance({ ...b, pending: b.pending - requestHours });
+  const after = available - requestHours;
+  return { available, after, exceedsBy: after < 0 ? -after : 0 };
+}
