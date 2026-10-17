@@ -198,7 +198,7 @@ function SheetForm() {
       if (logs.length) {
         const { error: e } = await supabase.from("jobsheet_time_logs").insert(logs.map((l, i) => ({
           ...l, time_in: l.time_in || null, time_out: l.time_out || null, jobsheet_id: sheetId, company_id: profile.company_id, sort_order: i,
-          daily_total_hours: hoursFromTimes(l.time_in, l.time_out) + Number(l.traveling_time_hours || 0),
+          daily_total_hours: dayLabourHours(l.time_in, l.time_out, l.traveling_time_hours, l.technician_count, l.technician_initials),
         })));
         if (e) throw e;
       }
@@ -396,7 +396,7 @@ function SheetForm() {
           </div>
           <div className="space-y-3">
             {logs.map((l, i) => {
-              const day = hoursFromTimes(l.time_in, l.time_out) + Number(l.traveling_time_hours || 0);
+              const day = dayLabourHours(l.time_in, l.time_out, l.traveling_time_hours, l.technician_count, l.technician_initials);
               const dayParts = parts.map((p, j) => ({ p, j })).filter(({ p }) => p.log_sort_order === i);
               return (
                 <div key={i} className="rounded-lg border p-3">
