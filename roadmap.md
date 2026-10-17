@@ -69,3 +69,7 @@
 - [x] Office job-sheet date range, customer and technician filters
 - [x] Highlighted bulk selection, combined client PDF download and email
 - [ ] Verify combined download/email with real signed-in office account (blocked: preview sign-in required)
+- [x] "Attended — no one to open" button on technician dashboard (records visit, emails/WhatsApps client)
+- [x] "Client left unsigned" request inside job sheet; supervisor/office admin approves before client is notified lift is left off
+- [x] Company settings → Messages & emails tab (all message wording + channels + WhatsApp studio); Accounting tab separate
+- [ ] Meta approval of the two new WhatsApp wordings (office staff submit via "Get Meta approval")

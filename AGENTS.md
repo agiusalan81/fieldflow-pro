@@ -27,3 +27,5 @@
 - WhatsApp template rules (placeholders, samples, naming) live in src/lib/whatsapp-templates.ts with tests; AI drafting and Meta calls run only in whatsapp-templates.functions.ts for managers. Why: drafter UI and submit validate identically.
 - Daily time logs store technician_count separately from initials; shared staffing helpers calculate labour while DWR retains elapsed personal time. Why: headcount and named assisting staff serve different purposes.
 - Combined job-sheet download/email uses the shared email PDF builder and authenticated RLS reads; only office roles can combine completed sheets for one client. Why: prevent cross-client disclosure and inconsistent client copies.
+- Field client notices (no access, left unsigned) are sent only via src/lib/client-notices.functions.ts; approval rules live in src/lib/client-notices.ts with tests, and the guard_departure trigger blocks technicians from approving their own departure. Why: technician accountability can't rely on UI.
+- job_sheets has two FKs to users; always embed as users!job_sheets_assigned_technician_id_fkey(...). Why: an unhinted embed fails.

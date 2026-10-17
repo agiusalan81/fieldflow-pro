@@ -18,6 +18,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AppShell, StatusBadge, BackButton } from "@/components/app-shell";
 import type { Profile } from "@/lib/profile";
 import { SignaturePad } from "@/components/signature-pad";
+import { DepartureRequest } from "@/components/client-notices";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -501,6 +502,7 @@ function SheetForm() {
               <PenLine className="mr-1 h-4 w-4" />Present to client for sign-off
             </Button>
           )}
+          {!form.signature_data && <DepartureRequest sheet={{ id: sheet.id, departure_status: sheet.departure_status, departure_note: sheet.departure_note, signature_data: null }} manager={manager} onChange={() => qc.invalidateQueries({ queryKey: ["sheet", sheetId] })} />}
         </Section>
       </fieldset>
 

@@ -134,6 +134,13 @@
       "when": 1792256982009,
       "tag": "0018_company_documents_library",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792258636055,
+      "tag": "0019_client_notices_departure",
+      "breakpoints": true
     }
   ]
 }

@@ -34,7 +34,7 @@ export function usePendingWorks() {
     queryKey: ["pending-works"],
     queryFn: async () => {
       const { data, error } = await supabase.from("job_sheets")
-        .select("id, jobsheet_number, client_id, site_id, asset_id, pending_works_future_jobs, pending_status, photo_paths, updated_at, reported_fault, repairs_performed, internal_comments_admin_only, lift_model, serial_number, clients(name), sites(name), assets(reference_number), users(full_name)")
+        .select("id, jobsheet_number, client_id, site_id, asset_id, pending_works_future_jobs, pending_status, photo_paths, updated_at, reported_fault, repairs_performed, internal_comments_admin_only, lift_model, serial_number, clients(name), sites(name), assets(reference_number), users!job_sheets_assigned_technician_id_fkey(full_name)")
         .not("pending_works_future_jobs", "is", null).neq("pending_works_future_jobs", "").order("updated_at", { ascending: false });
       if (error) throw error;
       return data;
