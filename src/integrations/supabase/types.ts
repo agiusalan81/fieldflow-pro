@@ -23,6 +23,7 @@ export type Database = {
           id: string
           location_details: string | null
           reference_number: string
+          site_id: string | null
         }
         Insert: {
           asset_category: string
@@ -32,6 +33,7 @@ export type Database = {
           id?: string
           location_details?: string | null
           reference_number: string
+          site_id?: string | null
         }
         Update: {
           asset_category?: string
@@ -41,6 +43,7 @@ export type Database = {
           id?: string
           location_details?: string | null
           reference_number?: string
+          site_id?: string | null
         }
         Relationships: [
           {
@@ -55,6 +58,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assets_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
             referencedColumns: ["id"]
           },
         ]
@@ -295,55 +305,118 @@ export type Database = {
       job_sheets: {
         Row: {
           asset_id: string | null
+          asset_type: string
+          asset_type_other: string | null
           assigned_technician_id: string | null
+          client_full_name: string | null
           client_id: string
+          client_id_card_no: string | null
           company_id: string
           created_at: string
           custom_values: Json
           id: string
+          internal_comments_admin_only: string | null
+          is_installation: boolean
+          is_maintenance: boolean
           is_overtime: boolean
+          is_tech_assistance: boolean
+          job_id: string | null
+          job_type_other: string | null
+          jobsheet_number: string
+          lift_model: string | null
+          maintenance_agreement_type: string | null
           notes: string | null
           overtime_rate: number | null
+          pending_works_future_jobs: string | null
           photo_paths: Json
+          repairs_performed: string | null
+          reported_fault: string | null
+          requires_admin_approval: boolean
+          serial_number: string | null
           signature_data: string | null
+          site_id: string | null
           status: Database["public"]["Enums"]["job_status"]
+          technician_name: string | null
           travel_start_time: string | null
+          updated_at: string
           work_end_time: string | null
           work_start_time: string | null
         }
         Insert: {
           asset_id?: string | null
+          asset_type?: string
+          asset_type_other?: string | null
           assigned_technician_id?: string | null
+          client_full_name?: string | null
           client_id: string
+          client_id_card_no?: string | null
           company_id: string
           created_at?: string
           custom_values?: Json
           id?: string
+          internal_comments_admin_only?: string | null
+          is_installation?: boolean
+          is_maintenance?: boolean
           is_overtime?: boolean
+          is_tech_assistance?: boolean
+          job_id?: string | null
+          job_type_other?: string | null
+          jobsheet_number?: string
+          lift_model?: string | null
+          maintenance_agreement_type?: string | null
           notes?: string | null
           overtime_rate?: number | null
+          pending_works_future_jobs?: string | null
           photo_paths?: Json
+          repairs_performed?: string | null
+          reported_fault?: string | null
+          requires_admin_approval?: boolean
+          serial_number?: string | null
           signature_data?: string | null
+          site_id?: string | null
           status?: Database["public"]["Enums"]["job_status"]
+          technician_name?: string | null
           travel_start_time?: string | null
+          updated_at?: string
           work_end_time?: string | null
           work_start_time?: string | null
         }
         Update: {
           asset_id?: string | null
+          asset_type?: string
+          asset_type_other?: string | null
           assigned_technician_id?: string | null
+          client_full_name?: string | null
           client_id?: string
+          client_id_card_no?: string | null
           company_id?: string
           created_at?: string
           custom_values?: Json
           id?: string
+          internal_comments_admin_only?: string | null
+          is_installation?: boolean
+          is_maintenance?: boolean
           is_overtime?: boolean
+          is_tech_assistance?: boolean
+          job_id?: string | null
+          job_type_other?: string | null
+          jobsheet_number?: string
+          lift_model?: string | null
+          maintenance_agreement_type?: string | null
           notes?: string | null
           overtime_rate?: number | null
+          pending_works_future_jobs?: string | null
           photo_paths?: Json
+          repairs_performed?: string | null
+          reported_fault?: string | null
+          requires_admin_approval?: boolean
+          serial_number?: string | null
           signature_data?: string | null
+          site_id?: string | null
           status?: Database["public"]["Enums"]["job_status"]
+          technician_name?: string | null
           travel_start_time?: string | null
+          updated_at?: string
           work_end_time?: string | null
           work_start_time?: string | null
         }
@@ -376,31 +449,264 @@ export type Database = {
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "job_sheets_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_sheets_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jobs: {
+        Row: {
+          acknowledged_at: string | null
+          asset_id: string | null
+          assigned_technician_id: string | null
+          client_id: string
+          company_id: string
+          created_at: string
+          id: string
+          job_number: number
+          priority: string
+          problem_summary: string | null
+          scheduled_date: string
+          site_id: string | null
+          window_end: string | null
+          window_start: string | null
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          asset_id?: string | null
+          assigned_technician_id?: string | null
+          client_id: string
+          company_id: string
+          created_at?: string
+          id?: string
+          job_number?: number
+          priority?: string
+          problem_summary?: string | null
+          scheduled_date?: string
+          site_id?: string | null
+          window_end?: string | null
+          window_start?: string | null
+        }
+        Update: {
+          acknowledged_at?: string | null
+          asset_id?: string | null
+          assigned_technician_id?: string | null
+          client_id?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          job_number?: number
+          priority?: string
+          problem_summary?: string | null
+          scheduled_date?: string
+          site_id?: string | null
+          window_end?: string | null
+          window_start?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobs_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_assigned_technician_id_fkey"
+            columns: ["assigned_technician_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jobsheet_parts: {
+        Row: {
+          company_id: string
+          id: string
+          jobsheet_id: string
+          part_description: string
+          quantity: number
+          sort_order: number
+          time_acquiring_parts_hours: number
+          unit: string | null
+        }
+        Insert: {
+          company_id: string
+          id?: string
+          jobsheet_id: string
+          part_description: string
+          quantity?: number
+          sort_order?: number
+          time_acquiring_parts_hours?: number
+          unit?: string | null
+        }
+        Update: {
+          company_id?: string
+          id?: string
+          jobsheet_id?: string
+          part_description?: string
+          quantity?: number
+          sort_order?: number
+          time_acquiring_parts_hours?: number
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobsheet_parts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobsheet_parts_jobsheet_id_fkey"
+            columns: ["jobsheet_id"]
+            isOneToOne: false
+            referencedRelation: "job_sheets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jobsheet_time_logs: {
+        Row: {
+          company_id: string
+          daily_total_hours: number
+          daily_work_description: string | null
+          id: string
+          jobsheet_id: string
+          latitude_in: number | null
+          latitude_out: number | null
+          log_date: string
+          longitude_in: number | null
+          longitude_out: number | null
+          sort_order: number
+          technician_initials: string[]
+          time_in: string | null
+          time_out: string | null
+          traveling_time_hours: number
+        }
+        Insert: {
+          company_id: string
+          daily_total_hours?: number
+          daily_work_description?: string | null
+          id?: string
+          jobsheet_id: string
+          latitude_in?: number | null
+          latitude_out?: number | null
+          log_date?: string
+          longitude_in?: number | null
+          longitude_out?: number | null
+          sort_order?: number
+          technician_initials?: string[]
+          time_in?: string | null
+          time_out?: string | null
+          traveling_time_hours?: number
+        }
+        Update: {
+          company_id?: string
+          daily_total_hours?: number
+          daily_work_description?: string | null
+          id?: string
+          jobsheet_id?: string
+          latitude_in?: number | null
+          latitude_out?: number | null
+          log_date?: string
+          longitude_in?: number | null
+          longitude_out?: number | null
+          sort_order?: number
+          technician_initials?: string[]
+          time_in?: string | null
+          time_out?: string | null
+          traveling_time_hours?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobsheet_time_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobsheet_time_logs_jobsheet_id_fkey"
+            columns: ["jobsheet_id"]
+            isOneToOne: false
+            referencedRelation: "job_sheets"
+            referencedColumns: ["id"]
+          },
         ]
       }
       leave_requests: {
         Row: {
           company_id: string
+          created_at: string
           end_date: string
           id: string
+          leave_type: string
+          medical_certificate_path: string | null
+          optional_notes: string | null
           start_date: string
           status: Database["public"]["Enums"]["leave_status"]
+          total_hours: number
           user_id: string
         }
         Insert: {
           company_id: string
+          created_at?: string
           end_date: string
           id?: string
+          leave_type?: string
+          medical_certificate_path?: string | null
+          optional_notes?: string | null
           start_date: string
           status?: Database["public"]["Enums"]["leave_status"]
+          total_hours?: number
           user_id: string
         }
         Update: {
           company_id?: string
+          created_at?: string
           end_date?: string
           id?: string
+          leave_type?: string
+          medical_certificate_path?: string | null
+          optional_notes?: string | null
           start_date?: string
           status?: Database["public"]["Enums"]["leave_status"]
+          total_hours?: number
           user_id?: string
         }
         Relationships: [
@@ -574,30 +880,141 @@ export type Database = {
           },
         ]
       }
+      sites: {
+        Row: {
+          address: string | null
+          client_id: string
+          company_id: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          address?: string | null
+          client_id: string
+          company_id: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          address?: string | null
+          client_id?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sites_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sites_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_leave_balances: {
+        Row: {
+          base_entitlement_hours: number
+          company_id: string
+          pending_hours: number
+          public_holiday_credit_hours: number
+          taken_hours: number
+          user_id: string
+        }
+        Insert: {
+          base_entitlement_hours?: number
+          company_id: string
+          pending_hours?: number
+          public_holiday_credit_hours?: number
+          taken_hours?: number
+          user_id: string
+        }
+        Update: {
+          base_entitlement_hours?: number
+          company_id?: string
+          pending_hours?: number
+          public_holiday_credit_hours?: number
+          taken_hours?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_leave_balances_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_leave_balances_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
+          app_theme_preference: string
           company_id: string
           created_at: string
           email: string
+          employee_id: string | null
           full_name: string
+          home_address: string | null
           id: string
+          language_preference: string
+          next_of_kin_1: Json
+          next_of_kin_2: Json
+          phone_number: string | null
           role: Database["public"]["Enums"]["user_role"]
+          signature_on_file: string | null
+          technician_initials: string | null
         }
         Insert: {
+          app_theme_preference?: string
           company_id: string
           created_at?: string
           email: string
+          employee_id?: string | null
           full_name: string
+          home_address?: string | null
           id: string
+          language_preference?: string
+          next_of_kin_1?: Json
+          next_of_kin_2?: Json
+          phone_number?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          signature_on_file?: string | null
+          technician_initials?: string | null
         }
         Update: {
+          app_theme_preference?: string
           company_id?: string
           created_at?: string
           email?: string
+          employee_id?: string | null
           full_name?: string
+          home_address?: string | null
           id?: string
+          language_preference?: string
+          next_of_kin_1?: Json
+          next_of_kin_2?: Json
+          phone_number?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          signature_on_file?: string | null
+          technician_initials?: string | null
         }
         Relationships: [
           {
@@ -624,7 +1041,12 @@ export type Database = {
     Enums: {
       custom_field_target: "asset" | "job_sheet" | "client"
       custom_field_type: "text" | "number" | "dropdown" | "date" | "checkbox"
-      job_status: "pending" | "in_transit" | "in_progress" | "completed"
+      job_status:
+        | "draft"
+        | "pending"
+        | "in_transit"
+        | "in_progress"
+        | "completed"
       leave_status: "pending" | "approved" | "rejected"
       user_role: "admin" | "technician" | "supervisor"
     }
@@ -756,7 +1178,13 @@ export const Constants = {
     Enums: {
       custom_field_target: ["asset", "job_sheet", "client"],
       custom_field_type: ["text", "number", "dropdown", "date", "checkbox"],
-      job_status: ["pending", "in_transit", "in_progress", "completed"],
+      job_status: [
+        "draft",
+        "pending",
+        "in_transit",
+        "in_progress",
+        "completed",
+      ],
       leave_status: ["pending", "approved", "rejected"],
       user_role: ["admin", "technician", "supervisor"],
     },
