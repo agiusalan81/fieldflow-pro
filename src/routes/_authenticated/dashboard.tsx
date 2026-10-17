@@ -17,6 +17,7 @@ import { AssetHistory, LiftHistoryButton, PriorityBadge, timeWindow } from "@/co
 import { fileDailyReport, emailDwr, downloadDwr } from "@/lib/dwr-report";
 import { InternalWorkCard } from "@/components/work-extras";
 import { BillingReview } from "@/components/billing-review";
+import { NoAccessButton, DepartureRequests } from "@/components/client-notices";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -132,6 +133,7 @@ function TechToday({ profile }: { profile: Profile }) {
         <ShiftTracker profile={profile} />
         <InternalWorkCard profile={profile} />
         <ScanQr />
+        <NoAccessButton profile={profile} jobs={jobs} />
         <section>
           <h2 className="mb-3 font-medium text-foreground">Today's jobs ({jobs.length})</h2>
           {jobs.length === 0 ? (
@@ -224,7 +226,7 @@ function ManagerOverview({ profile }: { profile: Profile }) {
 
 /** Shift clock shown on every manager overview; hours live on the My hours page. */
 function MyHours({ profile }: { profile: Profile }) {
-  return <ShiftTracker profile={profile} />;
+  return <><ShiftTracker profile={profile} /><DepartureRequests /></>;
 }
 
 function OfficeOverview({ profile }: { profile: Profile }) {
