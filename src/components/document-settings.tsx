@@ -169,15 +169,42 @@ export function DocumentSettings({ companyId }: { companyId: string }) {
       </div>
 
       <section className="space-y-4 rounded-xl border bg-card p-5">
-        <div><h2 className="font-medium text-foreground">Terms & conditions</h2><p className="text-sm text-muted-foreground">Printed at the end of the client PDF when switched on.</p></div>
+        <div><h2 className="font-medium text-foreground">Terms & conditions</h2><p className="text-sm text-muted-foreground">Printed at the end of the client PDF when switched on. Write your own text, or import it from a document in the library.</p></div>
         {DOC_TYPES.map((d) => (
           <div key={d.key} className="space-y-2 rounded-lg border p-3">
             <label className="flex items-center justify-between text-sm font-medium">{d.label}<Switch checked={terms[d.key].enabled} onCheckedChange={(c) => setTerms({ ...terms, [d.key]: { ...terms[d.key], enabled: c } })} /></label>
-            {terms[d.key].enabled && <Textarea rows={4} value={terms[d.key].text} onChange={(e) => setTerms({ ...terms, [d.key]: { ...terms[d.key], text: e.target.value } })} />}
+            {terms[d.key].enabled && (
+              <>
+                <Textarea rows={4} placeholder="Write your own terms here…" value={terms[d.key].text} onChange={(e) => setTerms({ ...terms, [d.key]: { ...terms[d.key], text: e.target.value } })} />
+                <Button type="button" size="sm" variant="outline" onClick={() => setImportFor(d.key)}>
+                  <FileUp className="mr-1 h-4 w-4" />Import from document library
+                </Button>
+              </>
+            )}
           </div>
         ))}
         <p className="text-xs text-muted-foreground">Estimates and agreements will use these once their PDFs are generated.</p>
       </section>
+
+      <Dialog open={!!importFor} onOpenChange={(o) => { if (!o && !importing) setImportFor(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Import terms from the document library</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">Pick a document — its text will be read and placed in the editor so you can review and adjust it before saving.</p>
+          <div className="max-h-80 space-y-2 overflow-y-auto">
+            {libraryDocs.length === 0 && <p className="text-sm text-muted-foreground">No documents in the library yet. Upload one in the Document library tab first.</p>}
+            {libraryDocs.map((doc) => (
+              <button key={doc.id} type="button" disabled={importing} onClick={() => void importDoc(doc.id)}
+                className="flex w-full items-center gap-3 rounded-lg border p-3 text-left hover:bg-accent disabled:opacity-50">
+                {importing ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" /> : <FileUp className="h-4 w-4 shrink-0 text-muted-foreground" />}
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium">{doc.name}</span>
+                  <span className="block text-xs text-muted-foreground">{DOC_CATEGORIES.find((c) => c.value === doc.category)?.label ?? doc.category}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <section className="space-y-3 rounded-xl border bg-card p-5">
         <div><h2 className="font-medium text-foreground">Special note presets</h2><p className="text-sm text-muted-foreground">Quick notes technicians can add to a job sheet before sending it.</p></div>
