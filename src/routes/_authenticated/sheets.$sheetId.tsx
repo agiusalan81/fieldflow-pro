@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useProfile, useCompanyUsers, initialsOf, isManager } from "@/lib/profile";
 import { hoursFromTimes, missingSignOff, missingChecklist, roundTo15, shiftTime, parsePhotos, createDraftSheet, type JobPhoto } from "@/lib/jobsheets";
 import { JobPhotos } from "@/components/job-photos";
+import { SpecialNotes } from "@/components/special-notes";
 import { sendJobSheetEmail } from "@/lib/sendJobSheetEmail";
 import { SearchSelect } from "@/components/search-select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
