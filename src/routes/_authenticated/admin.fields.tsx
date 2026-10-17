@@ -192,6 +192,8 @@ function FieldsPage() {
           )}
         </section>
         <ContactRolesAdmin />
+        <ContactRolesAdmin category="equipment_type" />
+        <ContactRolesAdmin category="contract_category" />
       </div>
     </AppShell>
   );

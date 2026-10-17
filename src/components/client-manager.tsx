@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Pencil, Plus, Trash2, Check, X, Copy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/lib/profile";
-import { RoleCombobox, learnContactRole } from "@/components/role-combobox";
+import { RoleCombobox, learnContactRole, LookupInput, learnLookup, useLookup, EQUIPMENT_TYPE } from "@/components/role-combobox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -139,16 +139,22 @@ export function EquipmentManager({ clientId, companyId, siteId }: { clientId: st
   const assets = siteId === undefined ? allAssets : allAssets.filter((a) => a.site_id === siteId);
   const [editing, setEditing] = useState<string | null>(null);
   const [f, setF] = useState<EqDraft>(emptyEq);
+  const [other, setOther] = useState("");
+  const { data: learnt = [] } = useLookup(EQUIPMENT_TYPE);
+  const types = [...EQUIPMENT_TYPES.filter((t) => t !== "Other"), ...learnt.filter((l) => l.is_approved && !EQUIPMENT_TYPES.includes(l.label_value)).map((l) => l.label_value), "Other"];
   const refresh = () => { qc.invalidateQueries({ queryKey: key }); qc.invalidateQueries({ queryKey: ["assets"] }); qc.invalidateQueries({ queryKey: ["assets-all"] }); qc.invalidateQueries({ queryKey: ["entities-unified"] }); };
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!f.asset_category) { toast.error("Pick an equipment type"); return; }
-    const row = { asset_category: f.asset_category, reference_number: f.reference_number, serial_number: f.serial_number || null };
+    const category = f.asset_category === "Other" ? other.trim() : f.asset_category;
+    if (!category) { toast.error("Specify the equipment type"); return; }
+    const row = { asset_category: category, reference_number: f.reference_number, serial_number: f.serial_number || null };
     const { error } = editing === "new"
       ? await supabase.from("assets").insert({ ...row, client_id: clientId, company_id: companyId, site_id: siteId ?? null })
       : await supabase.from("assets").update(row).eq("id", editing!);
     if (error) { toast.error(error.message); return; }
+    if (f.asset_category === "Other") { const { data: u } = await supabase.auth.getUser(); if (u.user) await learnLookup(EQUIPMENT_TYPE, category, companyId, u.user.id); setOther(""); }
     setEditing(null); refresh();
   };
   const remove = async (id: string) => {
@@ -162,8 +168,9 @@ export function EquipmentManager({ clientId, companyId, siteId }: { clientId: st
       <div className="space-y-1"><Label>Equipment type *</Label>
         <Select value={f.asset_category} onValueChange={(v) => setF({ ...f, asset_category: v })}>
           <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
-          <SelectContent>{EQUIPMENT_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+          <SelectContent>{types.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
         </Select>
+        {f.asset_category === "Other" && <LookupInput category={EQUIPMENT_TYPE} value={other} onChange={setOther} placeholder="Specify type (e.g. Car lift, Dock leveller)" />}
       </div>
       <div className="grid gap-2 sm:grid-cols-2">
         <div className="space-y-1"><Label>Reference *</Label><Input required value={f.reference_number} onChange={(e) => setF({ ...f, reference_number: e.target.value })} /></div>
@@ -187,7 +194,7 @@ export function EquipmentManager({ clientId, companyId, siteId }: { clientId: st
             <div className="font-medium">{a.asset_category}</div>
             <div className="text-muted-foreground">Ref {a.reference_number} · S/N {a.serial_number ?? "—"}</div>
           </div>
-          <Button size="icon" variant="ghost" aria-label="Edit" onClick={() => { setF({ asset_category: a.asset_category, reference_number: a.reference_number, serial_number: a.serial_number ?? "" }); setEditing(a.id); }}><Pencil className="h-4 w-4" /></Button>
+          <Button size="icon" variant="ghost" aria-label="Edit" onClick={() => { const known = types.includes(a.asset_category); setOther(known ? "" : a.asset_category); setF({ asset_category: known ? a.asset_category : "Other", reference_number: a.reference_number, serial_number: a.serial_number ?? "" }); setEditing(a.id); }}><Pencil className="h-4 w-4" /></Button>
           <Button size="icon" variant="ghost" aria-label="Delete" onClick={() => remove(a.id)}><Trash2 className="h-4 w-4" /></Button>
         </div>
       ))}
