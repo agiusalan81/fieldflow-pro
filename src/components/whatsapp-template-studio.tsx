@@ -20,12 +20,12 @@ export function WhatsAppTemplateStudio() {
   const submitFn = useServerFn(submitWhatsAppTemplate);
   const listFn = useServerFn(listWhatsAppTemplates);
   const list = useQuery({ queryKey: ["wa-templates"], queryFn: () => listFn(), retry: false });
-  const [type, setType] = useState(MESSAGE_TYPES[0].key);
+  const [type, setType] = useState<string>("on_my_way");
   const [language, setLanguage] = useState("en");
   const [wording, setWording] = useState("");
   const [draft, setDraft] = useState<WaDraft | null>(null);
   const [busy, setBusy] = useState<"draft" | "submit" | null>(null);
-  const mt = MESSAGE_TYPES.find((m) => m.key === type)!;
+  const mt = MESSAGE_TYPES.find((m) => m.key === type) ?? MESSAGE_TYPES[0]!;
 
   const makeDraft = async () => {
     setBusy("draft");

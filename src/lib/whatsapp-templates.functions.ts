@@ -11,7 +11,7 @@ async function assertManager(supabase: { rpc: (fn: "is_company_manager") => Prom
 }
 
 function waHeaders() {
-  const a = process.env.LOVABLE_API_KEY, w = process.env.WHATSAPP_API_KEY;
+  const a = process.env['LOVABLE_API_KEY'], w = process.env['WHATSAPP_API_KEY'];
   if (!a || !w) throw new Error("WhatsApp is not connected.");
   return { Authorization: `Bearer ${a}`, "X-Connection-Api-Key": w, "Content-Type": "application/json" };
 }
@@ -35,7 +35,7 @@ export const draftWhatsAppTemplate = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ wording: z.string().trim().min(5).max(2000), type: z.string().max(80), category: z.enum(["UTILITY", "MARKETING"]), language: z.string().max(10) }).parse(d))
   .handler(async ({ data, context }) => {
     await assertManager(context.supabase as never);
-    const key = process.env.LOVABLE_API_KEY;
+    const key = process.env['LOVABLE_API_KEY'];
     if (!key) throw new Error("AI is not configured.");
     const res = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
       method: "POST",
@@ -89,7 +89,7 @@ export const submitWhatsAppTemplate = createServerFn({ method: "POST" })
     const problems = validateDraft(data);
     if (problems.length) throw new Error(problems[0]);
     const comp: Record<string, unknown> = { type: "BODY", text: data.body };
-    if (data.examples.length) comp.example = { body_text: [data.examples] };
+    if (data.examples.length) comp['example'] = { body_text: [data.examples] };
     const res = await fetch(`${WA}/message_templates`, { method: "POST", headers: waHeaders(), body: JSON.stringify({ name: data.name, language: data.language, category: data.category, components: [comp] }) });
     const t = await res.text();
     if (!res.ok) {
