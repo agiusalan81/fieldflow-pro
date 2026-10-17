@@ -45,6 +45,7 @@
 - [ ] PDF preview, letterhead/background image, section backgrounds in Company settings
 - [ ] Upload PDF to digitise contracts, checklists, T&Cs
 - [x] Document library in Company settings (upload checklists, contracts, T&Cs — source for auto-fill)
+- [x] Terms & conditions: write your own or import text from a library document (AI reads PDF/image)
 - [ ] Contract document upload → auto-fill agreement + checklist (next: extraction from library docs)
 - [ ] T&C preset library (waiting for the user's reference document)
 - [ ] Automatic WhatsApp sending (needs a WhatsApp Business API account)
