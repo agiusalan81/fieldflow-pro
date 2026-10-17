@@ -369,6 +369,18 @@ function SheetForm() {
                     <span className="text-sm font-medium">Day {i + 1} · <span className="tabular-nums text-muted-foreground">{day.toFixed(2)} h</span></span>
                     <Button type="button" size="icon" variant="ghost" aria-label="Remove day" onClick={() => removeDay(i)}><Trash2 className="h-4 w-4" /></Button>
                   </div>
+                  {!readOnly && (!l.time_in || !l.time_out) && (
+                    <div className="mb-3 grid grid-cols-2 gap-2">
+                      <Button type="button" className="h-11" variant={l.time_in ? "outline" : "default"} disabled={!!l.time_in}
+                        onClick={() => { setLog(i, { time_in: roundTo15(nowHM()) }); gps(i, "in"); }}>
+                        <MapPin className="mr-1 h-4 w-4" />{l.time_in ? `Arrived ${l.time_in}` : "Arrive on site"}
+                      </Button>
+                      <Button type="button" className="h-11" variant={l.time_in ? "default" : "outline"} disabled={!l.time_in}
+                        onClick={() => { const t = roundTo15(nowHM()); setLog(i, { time_out: t < l.time_in ? l.time_in : t }); gps(i, "out"); }}>
+                        <MapPin className="mr-1 h-4 w-4" />Depart site
+                      </Button>
+                    </div>
+                  )}
                   <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                     <div className="col-span-2 space-y-1 md:col-span-1"><Label className="text-xs">Date</Label><Input type="date" className="h-11" value={l.log_date} onChange={(e) => setLog(i, { log_date: e.target.value })} /></div>
                     {(["in", "out"] as const).map((w) => {
