@@ -105,6 +105,13 @@ function Estimates() {
                       : <Button size="sm" onClick={() => move(e, next.key)}>Mark: {next.label}</Button>
                   )}
                   {e.status === "client_ready" && <Button size="sm" variant="outline" onClick={() => move(e, "lost")}>Mark lost</Button>}
+                  <Button size="sm" variant="outline" onClick={async () => {
+                    const v = window.prompt("Agreed client price (€) — used for billing", String(e.client_price ?? ""));
+                    if (v === null) return;
+                    const fixed = window.confirm("Does this price include labour? OK = fixed price (labour included), Cancel = labour billed from job sheet hours");
+                    const { error } = await supabase.from("lift_estimates").update({ client_price: Number(v) || null, fixed_labor: fixed }).eq("id", e.id);
+                    if (error) toast.error(error.message); else { toast.success("Client price saved"); qc.invalidateQueries({ queryKey: ["estimates"] }); }
+                  }}>{e.client_price ? `Client price €${Number(e.client_price).toFixed(2)}${e.fixed_labor ? " · labour incl." : ""}` : "Set client price"}</Button>
                 </div>
               </article>
             );

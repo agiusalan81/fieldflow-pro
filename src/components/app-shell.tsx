@@ -22,6 +22,7 @@ const techNav: NavItem[] = [
   { to: "/sheets", label: "Sheets", icon: ClipboardList },
   { to: "/schedule", label: "Schedule", icon: CalendarClock },
   { to: "/standby", label: "Standby", icon: PhoneCall },
+  { to: "/hours", label: "My hours", icon: Clock },
   { to: "/dwr", label: "My daily reports", icon: FileText },
   { to: "/leave", label: "Leave", icon: CalendarDays },
   { to: "/settings", label: "Settings", icon: Settings },
@@ -31,6 +32,7 @@ const techNav: NavItem[] = [
 const adminNav: NavItem[] = [
   { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { to: "/admin/jobs", label: "Job sheets", icon: ClipboardList },
+  { to: "/hours", label: "My hours", icon: Clock },
   { to: "/dwr", label: "Daily works reports", icon: FileText },
   { to: "/standby", label: "Standby roster", icon: PhoneCall },
   { to: "/team", label: "Team availability", icon: UserCheck },

@@ -1,3 +1,4 @@
+import { ClientRates } from "@/components/integrations-settings";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -6,7 +7,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { EquipmentManager, PhoneInput, WhatsAppBadge } from "@/components/client-manager";
 import { SiteHierarchy } from "@/components/site-hierarchy";
 import { supabase } from "@/integrations/supabase/client";
-import { useProfile } from "@/lib/profile";
+import { useProfile, isOffice } from "@/lib/profile";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { CustomFieldsForm, useFieldDefs, renderCustomValues } from "@/components/custom-fields";
 import { Button } from "@/components/ui/button";
@@ -61,9 +62,11 @@ function Entities() {
               <TabsList className="mb-3">
                 <TabsTrigger value="sites">Sites & contacts</TabsTrigger>
                 <TabsTrigger value="equipment">All equipment</TabsTrigger>
+                {isOffice(profile) && <TabsTrigger value="rates">Labour rates</TabsTrigger>}
               </TabsList>
               <TabsContent value="sites"><SiteHierarchy clientId={manage.id} companyId={profile.company_id} /></TabsContent>
               <TabsContent value="equipment"><EquipmentManager clientId={manage.id} companyId={profile.company_id} /></TabsContent>
+              {isOffice(profile) && <TabsContent value="rates"><ClientRates clientId={manage.id} /></TabsContent>}
             </Tabs>
           )}
         </DialogContent>

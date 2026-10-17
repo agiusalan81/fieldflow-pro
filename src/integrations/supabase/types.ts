@@ -180,6 +180,7 @@ export type Database = {
           company_id: string
           created_at: string
           id: string
+          labor_rates: Json | null
           location: string | null
           name: string
           property_name: string | null
@@ -190,6 +191,7 @@ export type Database = {
           company_id: string
           created_at?: string
           id?: string
+          labor_rates?: Json | null
           location?: string | null
           name: string
           property_name?: string | null
@@ -200,6 +202,7 @@ export type Database = {
           company_id?: string
           created_at?: string
           id?: string
+          labor_rates?: Json | null
           location?: string | null
           name?: string
           property_name?: string | null
@@ -292,10 +295,12 @@ export type Database = {
           company_address: string | null
           company_email: string | null
           company_id: string
+          default_rates: Json
           emergency_phone: string | null
           holiday_rate: number
           idle_timeout_minutes: number
           industry: string | null
+          integrations: Json
           note_presets: Json
           office_phone: string | null
           pdf_template: Json
@@ -323,10 +328,12 @@ export type Database = {
           company_address?: string | null
           company_email?: string | null
           company_id: string
+          default_rates?: Json
           emergency_phone?: string | null
           holiday_rate?: number
           idle_timeout_minutes?: number
           industry?: string | null
+          integrations?: Json
           note_presets?: Json
           office_phone?: string | null
           pdf_template?: Json
@@ -354,10 +361,12 @@ export type Database = {
           company_address?: string | null
           company_email?: string | null
           company_id?: string
+          default_rates?: Json
           emergency_phone?: string | null
           holiday_rate?: number
           idle_timeout_minutes?: number
           industry?: string | null
+          integrations?: Json
           note_presets?: Json
           office_phone?: string | null
           pdf_template?: Json
@@ -702,6 +711,11 @@ export type Database = {
           asset_type: string
           asset_type_other: string | null
           assigned_technician_id: string | null
+          billing_data: Json | null
+          billing_reviewed_at: string | null
+          billing_reviewed_by: string | null
+          billing_source: string | null
+          billing_status: string
           checklist_values: Json
           client_full_name: string | null
           client_id: string
@@ -709,6 +723,7 @@ export type Database = {
           company_id: string
           created_at: string
           custom_values: Json
+          estimate_id: string | null
           id: string
           internal_comments_admin_only: string | null
           is_installation: boolean
@@ -747,6 +762,11 @@ export type Database = {
           asset_type?: string
           asset_type_other?: string | null
           assigned_technician_id?: string | null
+          billing_data?: Json | null
+          billing_reviewed_at?: string | null
+          billing_reviewed_by?: string | null
+          billing_source?: string | null
+          billing_status?: string
           checklist_values?: Json
           client_full_name?: string | null
           client_id: string
@@ -754,6 +774,7 @@ export type Database = {
           company_id: string
           created_at?: string
           custom_values?: Json
+          estimate_id?: string | null
           id?: string
           internal_comments_admin_only?: string | null
           is_installation?: boolean
@@ -792,6 +813,11 @@ export type Database = {
           asset_type?: string
           asset_type_other?: string | null
           assigned_technician_id?: string | null
+          billing_data?: Json | null
+          billing_reviewed_at?: string | null
+          billing_reviewed_by?: string | null
+          billing_source?: string | null
+          billing_status?: string
           checklist_values?: Json
           client_full_name?: string | null
           client_id?: string
@@ -799,6 +825,7 @@ export type Database = {
           company_id?: string
           created_at?: string
           custom_values?: Json
+          estimate_id?: string | null
           id?: string
           internal_comments_admin_only?: string | null
           is_installation?: boolean
@@ -859,6 +886,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_sheets_estimate_id_fkey"
+            columns: ["estimate_id"]
+            isOneToOne: false
+            referencedRelation: "lift_estimates"
             referencedColumns: ["id"]
           },
           {
@@ -1151,10 +1185,12 @@ export type Database = {
       lift_estimates: {
         Row: {
           client_id: string | null
+          client_price: number | null
           company_id: string
           created_at: string
           created_by: string
           events: Json
+          fixed_labor: boolean
           id: string
           quoted_amount: number | null
           site_id: string | null
@@ -1167,10 +1203,12 @@ export type Database = {
         }
         Insert: {
           client_id?: string | null
+          client_price?: number | null
           company_id: string
           created_at?: string
           created_by?: string
           events?: Json
+          fixed_labor?: boolean
           id?: string
           quoted_amount?: number | null
           site_id?: string | null
@@ -1183,10 +1221,12 @@ export type Database = {
         }
         Update: {
           client_id?: string | null
+          client_price?: number | null
           company_id?: string
           created_at?: string
           created_by?: string
           events?: Json
+          fixed_labor?: boolean
           id?: string
           quoted_amount?: number | null
           site_id?: string | null

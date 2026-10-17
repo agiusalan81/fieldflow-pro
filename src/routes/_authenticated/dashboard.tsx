@@ -15,7 +15,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { splitHours, addSplits, DEFAULT_RULES } from "@/lib/jobsheets";
 import { AssetHistory, LiftHistoryButton, PriorityBadge, timeWindow } from "@/components/job-card";
 import { fileDailyReport, emailDwr, downloadDwr } from "@/lib/dwr-report";
-import { InternalWorkCard, OvertimeCard } from "@/components/work-extras";
+import { InternalWorkCard } from "@/components/work-extras";
+import { BillingReview } from "@/components/billing-review";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -129,7 +130,6 @@ function TechToday({ profile }: { profile: Profile }) {
     <AppShell title={`Hi, ${profile.full_name.split(" ")[0]}`}>
       <div className="mx-auto max-w-4xl space-y-6">
         <ShiftTracker profile={profile} />
-        <OvertimeCard userId={profile.id} />
         <InternalWorkCard profile={profile} />
         <ScanQr />
         <section>
@@ -206,7 +206,7 @@ function useOpsData() {
     queryFn: async () => {
       const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
       const [sheets, inv, leave, shifts, jobs, users] = await Promise.all([
-        supabase.from("job_sheets").select("id, jobsheet_number, status, requires_admin_approval, pending_works_future_jobs, pending_status, assigned_technician_id, updated_at, clients(name), sites(name), users(full_name), jobsheet_time_logs(log_date, time_in, time_out)").gte("updated_at", since).order("updated_at", { ascending: false }),
+        supabase.from("job_sheets").select("id, jobsheet_number, status, requires_admin_approval, pending_works_future_jobs, pending_status, assigned_technician_id, updated_at, clients(name), sites(name), users(full_name), billing_status, jobsheet_time_logs(log_date, time_in, time_out)").gte("updated_at", since).order("updated_at", { ascending: false }),
         supabase.from("inventory_items").select("id, part_name, current_stock, min_stock_level"),
         supabase.from("leave_requests").select("id").eq("status", "pending"),
         supabase.from("shifts").select("user_id, shift_type, started_at").is("ended_at", null),
@@ -222,9 +222,9 @@ function ManagerOverview({ profile }: { profile: Profile }) {
   return isOffice(profile) ? <OfficeOverview profile={profile} /> : <SupervisorOverview profile={profile} />;
 }
 
-/** "My shift & hours" strip shown on every manager overview. */
+/** Shift clock shown on every manager overview; hours live on the My hours page. */
 function MyHours({ profile }: { profile: Profile }) {
-  return <div className="grid gap-3 lg:grid-cols-2"><ShiftTracker profile={profile} /><OvertimeCard userId={profile.id} /></div>;
+  return <ShiftTracker profile={profile} />;
 }
 
 function OfficeOverview({ profile }: { profile: Profile }) {
@@ -237,6 +237,7 @@ function OfficeOverview({ profile }: { profile: Profile }) {
   const billing = completed.map((s) => ({ s, h: s.jobsheet_time_logs.reduce((a, l) => addSplits(a, splitHours(l.log_date, l.time_in, l.time_out, rules)), { standard: 0, ot15: 0, ot20: 0 }) }));
   const tot = billing.reduce((a, b) => addSplits(a, b.h), { standard: 0, ot15: 0, ot20: 0 });
   const low = (data?.inv ?? []).filter((i) => i.current_stock <= i.min_stock_level);
+  const [review, setReview] = useState<string | null>(null);
   return (
     <AppShell title={profile.companies?.name ?? "Overview"} actions={<Button asChild size="sm" variant="outline"><Link to="/company">Company settings</Link></Button>}>
       <div className="space-y-6">
@@ -255,16 +256,16 @@ function OfficeOverview({ profile }: { profile: Profile }) {
         )}
         {can("billing") && (
           <section className="rounded-xl border bg-card">
-            <h2 className="border-b px-5 py-3 font-medium text-foreground">Ready for billing</h2>
+            <h2 className="border-b px-5 py-3 font-medium text-foreground">Ready for billing <span className="text-xs font-normal text-muted-foreground">— tap a sheet to review before it goes to accounting</span></h2>
             {!billing.length ? <p className="p-5 text-sm text-muted-foreground">No completed job sheets in the last 30 days.</p> : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead><tr className="border-b text-left text-muted-foreground"><th className="px-5 py-2 font-medium">Sheet</th><th className="px-3 py-2 font-medium">Client</th><th className="px-3 py-2 font-medium">Technician</th><th className="px-3 py-2 text-right font-medium">Std</th><th className="px-3 py-2 text-right font-medium">1.5×</th><th className="px-3 py-2 text-right font-medium">2×</th></tr></thead>
+                  <thead><tr className="border-b text-left text-muted-foreground"><th className="px-5 py-2 font-medium">Sheet</th><th className="px-3 py-2 font-medium">Client</th><th className="px-3 py-2 font-medium">Technician</th><th className="px-3 py-2 text-right font-medium">Std</th><th className="px-3 py-2 text-right font-medium">1.5×</th><th className="px-3 py-2 text-right font-medium">2×</th><th className="px-3 py-2 font-medium">Billing</th></tr></thead>
                   <tbody className="divide-y">
                     {billing.slice(0, 10).map(({ s, h }) => (
-                      <tr key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate({ to: "/sheets/$sheetId", params: { sheetId: s.id } })}>
+                      <tr key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setReview(s.id)}>
                         <td className="px-5 py-2.5 font-mono text-primary">#{s.jobsheet_number}</td><td className="px-3 py-2.5 text-foreground">{s.clients?.name}</td><td className="px-3 py-2.5 text-muted-foreground">{s.users?.full_name ?? "—"}</td>
-                        <td className="px-3 py-2.5 text-right tabular-nums">{h.standard}</td><td className="px-3 py-2.5 text-right tabular-nums">{h.ot15}</td><td className="px-3 py-2.5 text-right tabular-nums">{h.ot20}</td>
+                        <td className="px-3 py-2.5 text-right tabular-nums">{h.standard}</td><td className="px-3 py-2.5 text-right tabular-nums">{h.ot15}</td><td className="px-3 py-2.5 text-right tabular-nums">{h.ot20}</td><td className="px-3 py-2.5 text-xs capitalize text-muted-foreground">{s.billing_status === "unreviewed" ? "To review" : s.billing_status}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -274,6 +275,7 @@ function OfficeOverview({ profile }: { profile: Profile }) {
           </section>
         )}
       </div>
+      <BillingReview sheetId={review} onClose={() => setReview(null)} />
     </AppShell>
   );
 }

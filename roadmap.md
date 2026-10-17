@@ -39,6 +39,9 @@
 - [x] Remove Overtime menu for technicians; OT summary card on dashboard for all
 - [x] Team availability (clocked in / leave / sick / available) for supervisors & office admins
 - [x] Standby roster: weekly calendar, rotation length, techs per shift, swap requests with peer approval
+- [x] My hours moved to its own menu page for every role
+- [x] Integrations tab: optional WhatsApp/SMS/email/staff channels, editable message templates, accounting (Zoho, QuickBooks, Xero, Sage, webhook) with account picks + custom field mapping
+- [x] Labour rates: company defaults + per-client rate cards; fixed-price estimates; office admin billing review before export
 - [ ] PDF preview, letterhead/background image, section backgrounds in Company settings
 - [ ] Upload PDF to digitise contracts, checklists, T&Cs
 - [ ] Contract document upload → auto-fill agreement + checklist (next)
