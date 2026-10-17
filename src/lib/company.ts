@@ -17,6 +17,7 @@ export function useCompanyRules() {
         breaks: { enabled: data?.break_enabled ?? true, count: data?.breaks_per_shift ?? 1, minutes: data?.break_minutes ?? 30 },
         standby: { start: data?.standby_start ?? new Date().toISOString().slice(0, 10), rotationDays: data?.standby_rotation_days ?? 7, perShift: data?.standby_per_shift ?? 1, order: data?.standby_order ?? [] },
         theme: { ...DEFAULT_THEME, ...((data?.theme ?? {}) as Partial<Typography>) },
+        logo: data?.logo_data ?? "",
         phones: { office_phone: data?.office_phone ?? "", whatsapp_phone: data?.whatsapp_phone ?? "", emergency_phone: data?.emergency_phone ?? "", company_email: data?.company_email ?? "", company_address: data?.company_address ?? "" },
       };
     },
