@@ -161,6 +161,14 @@ function AdminJobs() {
                         <SelectContent>{STATUSES.map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}</SelectContent>
                       </Select>
                     </TableCell>
+                    <TableCell onClick={stop}>
+                      {j.status === "completed" ? (
+                        <div className="flex gap-2">
+                          <Button asChild size="sm" variant="outline"><Link to="/print/$sheetId" params={{ sheetId: j.id }} target="_blank"><FileText className="mr-1 h-4 w-4" />Client PDF</Link></Button>
+                          <Button size="sm" onClick={() => setResend(j)}><Mail className="mr-1 h-4 w-4" />Resend</Button>
+                        </div>
+                      ) : <span className="text-xs text-muted-foreground">—</span>}
+                    </TableCell>
                   </TableRow>
                 );
               })}
