@@ -120,6 +120,13 @@
       "when": 1792251288300,
       "tag": "0016_logo_superuser_delete",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792252200447,
+      "tag": "0017_time_log_technician_count",
+      "breakpoints": true
     }
   ]
 }

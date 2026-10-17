@@ -63,3 +63,7 @@
 
 - [x] Collapsible menu groups, mobile quick-action dashboard (learns most-used), help guide per page, searchable country codes, superuser delete, company logo upload
 - [ ] Delete buttons on other record screens for superuser (database already allows it)
+- [x] Per-day technician count and searchable/manual initials with correct labour totals
+- [x] Office job-sheet date range, customer and technician filters
+- [x] Highlighted bulk selection, combined client PDF download and email
+- [ ] Verify combined download/email with real signed-in office account (blocked: preview sign-in required)

@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompanyRules } from "@/lib/company";
-import { splitHours, addSplits, DEFAULT_RULES } from "@/lib/jobsheets";
+import { splitHours, addSplits, DEFAULT_RULES, technicianCount } from "@/lib/jobsheets";
 import { draftLines, lineTotal, linesTotal, parseRates, pickSource, ZERO_RATES, type Line, type PriceSource } from "@/lib/billing";
 import { parseIntegrations, ACCOUNTING } from "@/lib/integrations";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,8 @@ export function BillingReview({ sheetId, onClose }: { sheetId: string | null; on
     queryKey: ["billing-review", sheetId],
     enabled: !!sheetId,
     queryFn: async () => {
-      const { data: s, error } = await supabase.from("job_sheets").select("id, jobsheet_number, client_id, site_id, estimate_id, billing_status, billing_source, billing_data, created_at, clients(name, labor_rates), jobsheet_time_logs(log_date, time_in, time_out, technician_initials), jobsheet_parts(part_description, quantity, unit)").eq("id", sheetId!).single();
+      if (!sheetId) throw new Error("Select a job sheet");
+      const { data: s, error } = await supabase.from("job_sheets").select("id, jobsheet_number, client_id, site_id, estimate_id, billing_status, billing_source, billing_data, created_at, clients(name, labor_rates), jobsheet_time_logs(log_date, time_in, time_out, technician_initials, technician_count), jobsheet_parts(part_description, quantity, unit)").eq("id", sheetId).single();
       if (error) throw error;
       const today = new Date().toISOString().slice(0, 10);
       const [est, ag, cs] = await Promise.all([
@@ -42,7 +43,7 @@ export function BillingReview({ sheetId, onClose }: { sheetId: string | null; on
 
   const hours = (data?.s.jobsheet_time_logs ?? []).reduce((a, l) => {
     const h = splitHours(l.log_date, l.time_in, l.time_out, rules);
-    const n = Math.max(1, l.technician_initials?.length ?? 1);
+    const n = technicianCount(l.technician_count, l.technician_initials);
     return addSplits(a, { standard: h.standard * n, ot15: h.ot15 * n, ot20: h.ot20 * n });
   }, { standard: 0, ot15: 0, ot20: 0 });
   const clientRates = parseRates(data?.s.clients?.labor_rates);

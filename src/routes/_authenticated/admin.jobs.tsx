@@ -1,14 +1,17 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Mail, FileText, Trash2 } from "lucide-react";
-import { sendJobSheetEmail } from "@/lib/sendJobSheetEmail";
+import { Plus, Mail, FileText, Trash2, Download, X } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { DateFilter } from "@/components/date-filter";
+import { SearchSelect } from "@/components/search-select";
+import { sendJobSheetEmail, combinedJobSheets } from "@/lib/sendJobSheetEmail";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EVENTS, parseIntegrations, renderTemplate } from "@/lib/integrations";
 import { supabase } from "@/integrations/supabase/client";
-import { useProfile, useCompanyUsers } from "@/lib/profile";
-import { matchesSheetFilter } from "@/lib/jobsheets";
+import { useProfile, useCompanyUsers, initialsOf } from "@/lib/profile";
+import { matchesSheetFilter, matchesSheetDetails, validateCombinedSheets } from "@/lib/jobsheets";
 import { matchesSheetSearch } from "@/lib/dwr";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { useFieldDefs, renderCustomValues } from "@/components/custom-fields";
@@ -28,6 +31,7 @@ export const Route = createFileRoute("/_authenticated/admin/jobs")({
       { name: "description", content: "Master control of all job sheets: hours, overtime and status." },
       { property: "og:title", content: "Job sheets — FieldOps" },
       { property: "og:description", content: "Master job sheet control." },
+      { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
     ],
   }),
   component: AdminJobs,
@@ -44,6 +48,14 @@ function AdminJobs() {
   const [filter, setFilter] = useState("all");
   const [q, setQ] = useState("");
   const [mine, setMine] = useState(false);
+  const [details, setDetails] = useState({ from: "", to: "", client: "all", technician: "all" });
+  const [selected, setSelected] = useState<string[]>([]);
+  const [bulkEmail, setBulkEmail] = useState(false);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const combine = useServerFn(combinedJobSheets);
+  const { data: staff = [] } = useCompanyUsers();
+  const { data: customers = [] } = useQuery({ queryKey: ["clients"], queryFn: async () => (await supabase.from("clients").select("id, name").order("name")).data ?? [] });
+  useEffect(() => { setSelected([]); }, [filter, q, mine, details]);
   const { data: me } = useProfile();
   const [approving, setApproving] = useState<(typeof jobs)[number] | null>(null);
   const { data: jobs = [] } = useQuery({
@@ -51,7 +63,7 @@ function AdminJobs() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("job_sheets")
-        .select("*, clients(name), sites(name, address), assets(id, reference_number, asset_category, serial_number, custom_attributes), users(full_name), jobsheet_time_logs(daily_total_hours, traveling_time_hours)")
+        .select("*, clients(name), sites(name, address), assets(id, reference_number, asset_category, serial_number, custom_attributes), users(full_name), jobsheet_time_logs(daily_total_hours, traveling_time_hours, technician_initials)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -97,8 +109,24 @@ function AdminJobs() {
   };
 
   const queue = jobs.filter((j) => matchesSheetFilter(j, "admin_queue"));
-  const list = jobs.filter((j) => matchesSheetFilter(j, filter) && (!mine || j.assigned_technician_id === me?.id) && matchesSheetSearch(j.jobsheet_number, [j.clients?.name, j.users?.full_name, j.assets?.reference_number, j.sites?.name, j.reported_fault], q));
+  const list = jobs.filter((j) => matchesSheetDetails(j, { ...details, initials: staff.find((u) => u.id === details.technician) ? initialsOf(staff.find((u) => u.id === details.technician) ?? { full_name: "" }) : undefined }) && matchesSheetFilter(j, filter) && (!mine || j.assigned_technician_id === me?.id) && matchesSheetSearch(j.jobsheet_number, [j.clients?.name, j.users?.full_name, j.assets?.reference_number, j.sites?.name, j.reported_fault], q));
   const totalHours = (j: (typeof jobs)[number]) => (j.jobsheet_time_logs ?? []).reduce((s, l) => s + Number(l.daily_total_hours || 0), 0);
+
+  const office = me?.role === "admin" || me?.role === "superuser";
+  const selectedSheets = jobs.filter((j) => selected.includes(j.id));
+  const selectable = list.filter((j) => j.status === "completed");
+  const toggleSheet = (id: string, on: boolean) => setSelected((old) => on ? [...new Set([...old, id])] : old.filter((x) => x !== id));
+  const download = async () => {
+    try {
+      validateCombinedSheets(selectedSheets); setBulkBusy(true);
+      const r = await combine({ data: { sheetIds: selected } });
+      const bytes = Uint8Array.from(atob(r.base64), (c) => c.charCodeAt(0));
+      const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
+      const a = document.createElement("a"); a.href = url; a.download = r.filename; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+    } catch (e) { toast.error(e instanceof Error ? e.message : "PDF could not be generated"); }
+    finally { setBulkBusy(false); }
+  };
 
   return (
     <AppShell title="Job sheets" actions={<NewJobDialog />}>
@@ -113,10 +141,25 @@ function AdminJobs() {
           </SelectContent>
         </Select>
       </div>
-      <div className="mb-4 flex gap-2">
+      <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="space-y-1"><Label>Created from</Label><DateFilter label="From date" value={details.from} onChange={(from) => setDetails({ ...details, from })} /></div>
+        <div className="space-y-1"><Label>Created to</Label><DateFilter label="To date" value={details.to} onChange={(to) => setDetails({ ...details, to })} /></div>
+        <div className="space-y-1"><Label>Customer</Label><SearchSelect value={details.client} options={[{ value: "all", label: "All customers" }, ...customers.map((c) => ({ value: c.id, label: c.name }))]} onChange={(client) => setDetails({ ...details, client })} /></div>
+        <div className="space-y-1"><Label>Technician</Label><SearchSelect value={details.technician} options={[{ value: "all", label: "All technicians" }, ...staff.map((u) => ({ value: u.id, label: u.full_name, hint: initialsOf(u) }))]} onChange={(technician) => setDetails({ ...details, technician })} /></div>
+      </div>
+      {details.from && details.to && details.from > details.to && <p className="mb-3 text-sm text-destructive">End date must be on or after start date.</p>}
+      <div className="mb-4 flex flex-wrap gap-2">
         <Button size="sm" variant={mine ? "outline" : "default"} onClick={() => setMine(false)}>All sheets</Button>
         <Button size="sm" variant={mine ? "default" : "outline"} onClick={() => setMine(true)}>Assigned to me</Button>
+        <Button size="sm" variant="ghost" onClick={() => { setDetails({ from: "", to: "", client: "all", technician: "all" }); setFilter("all"); setQ(""); setMine(false); }}>Clear filters</Button>
+        <span className="self-center text-sm text-muted-foreground">{list.length} sheets</span>
       </div>
+      {office && selected.length > 0 && <div className="sticky top-0 z-10 mb-4 flex flex-wrap items-center gap-2 border border-primary bg-background p-3">
+        <span className="mr-auto text-sm font-medium">{selected.length} selected</span>
+        <Button size="sm" variant="outline" disabled={bulkBusy} onClick={download}><Download className="mr-1 h-4 w-4" />{bulkBusy ? "Preparing…" : "Download combined PDF"}</Button>
+        <Button size="sm" disabled={bulkBusy} onClick={() => { try { validateCombinedSheets(selectedSheets); setBulkEmail(true); } catch (e) { toast.error(e instanceof Error ? e.message : "Check selection"); } }}><Mail className="mr-1 h-4 w-4" />Email combined PDF</Button>
+        <Button size="icon" variant="ghost" aria-label="Clear selection" onClick={() => setSelected([])}><X className="h-4 w-4" /></Button>
+      </div>}
       {queue.length > 0 && (
         <section className="mb-4 rounded-xl border border-warning/50 bg-warning/10 p-4">
           <h2 className="mb-2 font-medium text-foreground">Admin pending queue ({queue.length})</h2>
@@ -141,6 +184,7 @@ function AdminJobs() {
           <Table>
             <TableHeader>
               <TableRow>
+                {office && <TableHead className="w-10"><Checkbox aria-label="Select all visible completed job sheets" checked={selectable.length > 0 && selectable.every((j) => selected.includes(j.id)) ? true : selectable.some((j) => selected.includes(j.id)) ? "indeterminate" : false} onCheckedChange={(on) => setSelected(on ? selectable.map((j) => j.id) : [])} /></TableHead>}
                 <TableHead>Client / asset</TableHead>
                 <TableHead>Technician</TableHead>
                 <TableHead className="text-right">Total h</TableHead>
@@ -153,7 +197,8 @@ function AdminJobs() {
               {list.map((j) => {
                 const cv = renderCustomValues(defs, j.custom_values);
                 return (
-                  <TableRow key={j.id} onClick={() => open(j.id)} className="cursor-pointer hover:bg-muted/50">
+                  <TableRow key={j.id} onClick={() => open(j.id)} data-state={selected.includes(j.id) ? "selected" : undefined} className="cursor-pointer hover:bg-muted/50 data-[state=selected]:bg-primary/10">
+                    {office && <TableCell onClick={stop}><Checkbox aria-label={`Select job sheet ${j.jobsheet_number}`} checked={selected.includes(j.id)} disabled={j.status !== "completed"} onCheckedChange={(on) => toggleSheet(j.id, !!on)} /></TableCell>}
                     <TableCell>
                       <p className="font-medium text-foreground"><span className="font-mono text-primary">#{j.jobsheet_number}</span> {j.clients?.name}</p>
                       <div className="mt-1 flex flex-wrap gap-1">
@@ -213,6 +258,7 @@ function AdminJobs() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {bulkEmail && selectedSheets[0] && <ResendDialog sheet={selectedSheets[0]} sheetIds={selected} onClose={() => setBulkEmail(false)} />}
       {resend && <ResendDialog sheet={resend} onClose={() => setResend(null)} />}
       <Dialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
         <DialogContent>
@@ -309,22 +355,24 @@ function NewJobDialog() {
 }
 
 /** Office admins and supervisors resend a completed (signed) job sheet to chosen contacts. */
-function ResendDialog({ sheet, onClose }: { sheet: { id: string; client_id: string; site_id: string | null; jobsheet_number: string }; onClose: () => void }) {
+function ResendDialog({ sheet, sheetIds, onClose }: { sheet: { id: string; client_id: string; site_id: string | null; jobsheet_number: string }; sheetIds?: string[]; onClose: () => void }) {
   const { data: contacts = [] } = useQuery({
     queryKey: ["resend-contacts", sheet.client_id],
     queryFn: async () => (await supabase.from("client_contacts").select("id, first_name, last_name, email, role_title, site_id, receives_job_sheets").eq("client_id", sheet.client_id).not("email", "is", null)).data ?? [],
   });
+  const combine = useServerFn(combinedJobSheets);
+  const sendSingle = useServerFn(sendJobSheetEmail);
   const [picked, setPicked] = useState<string[] | null>(null);
   const [extra, setExtra] = useState("");
   const [busy, setBusy] = useState(false);
-  const sel = picked ?? contacts.filter((c) => c.receives_job_sheets && (!c.site_id || !sheet.site_id || c.site_id === sheet.site_id)).map((c) => c.email!);
+  const sel = picked ?? contacts.filter((c) => c.receives_job_sheets && (!c.site_id || !sheet.site_id || c.site_id === sheet.site_id)).flatMap((c) => c.email ? [c.email] : []);
   const toggle = (e: string, on: boolean) => setPicked(on ? [...sel, e] : sel.filter((x) => x !== e));
   const send = async () => {
     const all = [...sel, ...extra.split(/[,;\s]+/).filter(Boolean)];
     if (!all.length) { toast.error("Pick at least one recipient"); return; }
     setBusy(true);
     try {
-      const r = await sendJobSheetEmail({ data: { sheetId: sheet.id, recipients: all } });
+      const r = sheetIds ? await combine({ data: { sheetIds, recipients: all, email: true } }) : await sendSingle({ data: { sheetId: sheet.id, recipients: all } });
       if (r.sent) { toast.success(`Job sheet- ${sheet.jobsheet_number} resent to ${r.recipients.join(", ")}`); onClose(); }
       else toast.error("No recipients");
     } catch (e) { toast.error(e instanceof Error ? e.message : "Send failed"); }
@@ -333,20 +381,20 @@ function ResendDialog({ sheet, onClose }: { sheet: { id: string; client_id: stri
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
-        <DialogHeader><DialogTitle>Resend Job sheet- {sheet.jobsheet_number}</DialogTitle></DialogHeader>
-        <p className="text-sm text-muted-foreground">The signed PDF and work photos are sent again. No new signature is requested.</p>
+        <DialogHeader><DialogTitle>{sheetIds ? `Email ${sheetIds.length} job sheets as one PDF` : `Resend Job sheet- ${sheet.jobsheet_number}`}</DialogTitle></DialogHeader>
+        <p className="text-sm text-muted-foreground">{sheetIds ? "The signed job sheets and work photos will be sent in one PDF, oldest first." : "The signed PDF and work photos are sent again. No new signature is requested."}</p>
         <div className="space-y-2">
           {contacts.length === 0 && <p className="text-sm text-muted-foreground">This client has no contacts with an email.</p>}
-          {contacts.map((c) => (
+          {contacts.filter((c) => !!c.email).map((c) => (
             <label key={c.id} className="flex items-center gap-2 text-sm">
-              <Checkbox checked={sel.includes(c.email!)} onCheckedChange={(b) => toggle(c.email!, !!b)} />
+              <Checkbox checked={sel.includes(c.email ?? "")} onCheckedChange={(b) => toggle(c.email ?? "", !!b)} />
               <span className="font-medium">{c.first_name} {c.last_name ?? ""}</span>
               <span className="truncate text-muted-foreground">{c.role_title ? `${c.role_title} · ` : ""}{c.email}</span>
             </label>
           ))}
         </div>
         <div className="space-y-1.5"><Label>Other email (optional)</Label><Input type="email" placeholder="name@example.com" value={extra} onChange={(e) => setExtra(e.target.value)} /></div>
-        <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button disabled={busy} onClick={send}><Mail className="mr-1 h-4 w-4" />{busy ? "Sending…" : "Resend"}</Button></DialogFooter>
+        <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button disabled={busy} onClick={send}><Mail className="mr-1 h-4 w-4" />{busy ? "Sending…" : sheetIds ? "Send combined PDF" : "Resend"}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );

@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Printer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, isManager } from "@/lib/profile";
-import { hoursFromTimes } from "@/lib/jobsheets";
+import { labourHours, technicianCount } from "@/lib/jobsheets";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/print/$sheetId")({
@@ -14,6 +14,7 @@ export const Route = createFileRoute("/_authenticated/print/$sheetId")({
       { name: "description", content: "Printable client copy of a job sheet." },
       { property: "og:title", content: "Client job sheet — FieldOps" },
       { property: "og:description", content: "Printable client copy." },
+      { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
     ],
   }),
   component: PrintSheet,
@@ -62,7 +63,7 @@ function PrintSheet() {
           <table className="w-full border-collapse text-left">
             <thead><tr className="border-b"><th className="py-1">Date</th><th>In</th><th>Out</th><th>Travel</th><th>Techs</th><th className="text-right">Hours</th></tr></thead>
             <tbody>{data.logs.map((l) => (
-              <tr key={l.id} className="border-b align-top"><td className="py-1">{l.log_date}</td><td>{l.time_in?.slice(0, 5)}</td><td>{l.time_out?.slice(0, 5)}</td><td>{Number(l.traveling_time_hours)}</td><td>{l.technician_initials.join(", ")}</td><td className="text-right">{(hoursFromTimes(l.time_in, l.time_out) + Number(l.traveling_time_hours)).toFixed(2)}</td></tr>
+              <tr key={l.id} className="border-b align-top"><td className="py-1">{l.log_date}</td><td>{l.time_in?.slice(0, 5)}</td><td>{l.time_out?.slice(0, 5)}</td><td>{Number(l.traveling_time_hours)}</td><td>{technicianCount(l.technician_count, l.technician_initials)} · {l.technician_initials.join(", ")}</td><td className="text-right">{labourHours(l.time_in, l.time_out, l.technician_count, l.technician_initials).toFixed(2)}</td></tr>
             ))}</tbody>
           </table>
         </section>

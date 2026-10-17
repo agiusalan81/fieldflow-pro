@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { clientPhotos, hoursFromTimes, parsePhotos } from "@/lib/jobsheets";
+import { clientPhotos, parsePhotos, labourHours, technicianCount, validateCombinedSheets } from "@/lib/jobsheets";
 import { parseTemplate, parseTerms, termsFor, visibleBlocks, type PdfTemplate } from "@/lib/documents";
 import { sheetTitle } from "@/lib/dwr";
 
@@ -48,10 +48,10 @@ export function rawEmail(to: string[], subject: string, body: string, attachment
 const safe = (s: unknown) =>
   String(s ?? "").replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/[–—]/g, "-").replace(/[^\x0A\x20-\x7E\xA0-\xFF]/g, "?");
 
-async function buildPdf(d: {
-  company: string; number: string | number; date: string; client: string; address: string; asset: string;
+export async function buildPdf(d: {
+  company: string; logo?: string; number: string | number; date: string; client: string; address: string; asset: string;
   fault: string; repairs: string; technician: string; signedBy: string; idCard: string; signature: string | null;
-  logs: { date: string; in: string; out: string; travel: number; total: number }[];
+  logs: { date: string; in: string; out: string; travel: number; total: number; techs: string; count: number }[];
   parts: { desc: string; unit: string; qty: number }[];
   notes: string | null; terms: string | null; template: PdfTemplate;
 }) {
@@ -80,7 +80,13 @@ async function buildPdf(d: {
   const label = (t: string) => { need(30); y -= 8; text(t.toUpperCase(), M, 8, bold, grey); y -= 14; };
   const para = (t: string) => { for (const l of wrap(t || "-", 10, W - 2 * M)) { need(14); text(l, M); y -= 14; } };
 
-  text(d.company, M, 18, bold); text(sheetTitle(d.number), W - M - bold.widthOfTextAtSize(safe(sheetTitle(d.number)), 12), 12, bold);
+  if (d.logo?.startsWith("data:image/png")) {
+    const logo = await doc.embedPng(d.logo);
+    const scale = Math.min(100 / logo.width, 45 / logo.height);
+    page.drawImage(logo, { x: M, y: y - 45, width: logo.width * scale, height: logo.height * scale }); y -= 60;
+  }
+  para(d.company);
+  text(sheetTitle(d.number), W - M - bold.widthOfTextAtSize(safe(sheetTitle(d.number)), 12), 12, bold);
   y -= 16; text("Job sheet - client copy", M, 10, font, grey); text(d.date, W - M - font.widthOfTextAtSize(safe(d.date), 10), 10, font, grey);
   y -= 12; page.drawLine({ start: { x: M, y }, end: { x: W - M, y }, thickness: 0.5, color: grey }); y -= 10;
 
@@ -112,11 +118,12 @@ async function buildPdf(d: {
       const showT = d.template.showTravel;
       const heads = showT ? ["Date", "In", "Out", "Travel h", "Total h"] : ["Date", "In", "Out", "Total h"];
       const cols = [M, M + 110, M + 180, M + 250, M + 330];
-      heads.forEach((h, i) => text(h, cols[i]!, 9, bold)); y -= 14;
+      heads.forEach((h, i) => text(h, cols[i] ?? M, 9, bold)); y -= 14;
       for (const l of d.logs) {
         need(14);
-        const vals = showT ? [l.date, l.in, l.out, String(l.travel), l.total.toFixed(2)] : [l.date, l.in, l.out, (l.total - l.travel).toFixed(2)];
-        vals.forEach((v, i) => text(v, cols[i]!, 9)); y -= 14;
+        const vals = showT ? [l.date, l.in, l.out, String(l.travel), l.total.toFixed(2)] : [l.date, l.in, l.out, l.total.toFixed(2)];
+        vals.forEach((v, i) => text(v, cols[i] ?? M, 9)); y -= 14;
+        para(`Technicians (${l.count}): ${l.techs || "-"}`);
       }
     }
     else if (b === "parts" && d.parts.length) {
@@ -137,30 +144,23 @@ async function buildPdf(d: {
   return doc.save();
 }
 
-/** Emails a completed job sheet (PDF + work-log photos) to the client contacts ticked "Send job sheet" via the connected Gmail account. */
-export const sendJobSheetEmail = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: { sheetId: string; recipients?: string[] }) => {
-    const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (d.recipients && (d.recipients.length > 20 || d.recipients.some((e) => typeof e !== "string" || e.length > 254 || !ok.test(e)))) throw new Error("Invalid email address");
-    return d;
-  })
-  .handler(async ({ data, context }) => {
-    const { supabase } = context;
+type AuthClient = import("@supabase/supabase-js").SupabaseClient<import("@/integrations/supabase/types").Database>;
+async function prepareSheet(supabase: AuthClient, sheetId: string, recipients?: string[]) {
+
     const { data: sheet, error } = await supabase
       .from("job_sheets")
       .select("client_id, site_id, company_id, special_notes, special_notes_in_pdf, special_notes_in_email, jobsheet_number, status, reported_fault, repairs_performed, technician_name, client_full_name, client_id_card_no, signature_data, photo_paths, asset_type, asset_type_other, lift_model, serial_number, created_at, clients(name, billing_address, property_name, street_name, location), sites(name, address), assets(reference_number, serial_number), companies(name)")
-      .eq("id", data.sheetId)
+      .eq("id", sheetId)
       .single();
     if (error || !sheet) throw new Error("Job sheet not found");
     if (sheet.status !== "completed") throw new Error("Job sheet must be completed before emailing");
 
     const { data: contacts } = await supabase
       .from("client_contacts").select("email, site_id").eq("client_id", sheet.client_id).eq("receives_job_sheets", true);
-    const { data: settings } = await supabase.from("company_settings").select("pdf_template, terms").eq("company_id", sheet.company_id).maybeSingle();
+    const { data: settings } = await supabase.from("company_settings").select("pdf_template, terms, logo_data").eq("company_id", sheet.company_id).maybeSingle();
     const notes = sheet.special_notes?.trim() || null;
-    const emails = data.recipients?.length ? [...new Set(data.recipients.map((e) => e.trim()))] : (contacts ?? []).filter((c) => !c.site_id || !sheet.site_id || c.site_id === sheet.site_id).map((c) => c.email).filter((e): e is string => !!e);
-    if (!emails.length) return { sent: false as const, recipients: [] as string[], reason: "no_recipients" };
+    const emails = recipients?.length ? [...new Set(recipients.map((e) => e.trim()))] : (contacts ?? []).filter((c) => !c.site_id || !sheet.site_id || c.site_id === sheet.site_id).map((c) => c.email).filter((e): e is string => !!e);
+
 
     const client = sheet.clients as { name: string; billing_address: string | null } | null;
     const site = sheet.sites as { name: string; address: string | null } | null;
@@ -170,19 +170,19 @@ export const sendJobSheetEmail = createServerFn({ method: "POST" })
     const date = new Date(sheet.created_at).toLocaleDateString("en-GB");
 
     const [{ data: logs }, { data: parts }] = await Promise.all([
-      supabase.from("jobsheet_time_logs").select("log_date, time_in, time_out, traveling_time_hours").eq("jobsheet_id", data.sheetId).order("sort_order"),
-      supabase.from("jobsheet_parts").select("part_description, unit, quantity").eq("jobsheet_id", data.sheetId).order("sort_order"),
+      supabase.from("jobsheet_time_logs").select("log_date, time_in, time_out, traveling_time_hours, technician_initials, technician_count").eq("jobsheet_id", sheetId).order("sort_order"),
+      supabase.from("jobsheet_parts").select("part_description, unit, quantity").eq("jobsheet_id", sheetId).order("sort_order"),
     ]);
 
     const assetType = sheet.asset_type === "Other" ? sheet.asset_type_other : sheet.asset_type;
     const pdf = await buildPdf({
-      company, number: sheet.jobsheet_number, date, client: client?.name ?? "-", address: address || "-",
+      company, logo: settings?.logo_data ?? "", number: sheet.jobsheet_number, date, client: client?.name ?? "-", address: address || "-",
       asset: [assetType, asset?.reference_number, sheet.lift_model && `Model ${sheet.lift_model}`, sheet.serial_number && `S/N ${sheet.serial_number}`].filter(Boolean).join("  ·  ").replace(/·/g, "-") || "-",
       fault: sheet.reported_fault ?? "", repairs: sheet.repairs_performed ?? "", technician: sheet.technician_name ?? "",
       signedBy: sheet.client_full_name ?? "", idCard: sheet.client_id_card_no ?? "", signature: sheet.signature_data,
       logs: (logs ?? []).map((l) => {
         const travel = Number(l.traveling_time_hours) || 0;
-        return { date: l.log_date, in: l.time_in?.slice(0, 5) ?? "", out: l.time_out?.slice(0, 5) ?? "", travel, total: hoursFromTimes(l.time_in, l.time_out) + travel };
+        return { date: l.log_date, in: l.time_in?.slice(0, 5) ?? "", out: l.time_out?.slice(0, 5) ?? "", travel, total: labourHours(l.time_in, l.time_out, l.technician_count, l.technician_initials), count: technicianCount(l.technician_count, l.technician_initials), techs: l.technician_initials.join(", ") };
       }),
       parts: (parts ?? []).map((p) => ({ desc: p.part_description, unit: p.unit ?? "", qty: Number(p.quantity) })),
       notes: sheet.special_notes_in_pdf ? notes : null,
@@ -212,6 +212,13 @@ export const sendJobSheetEmail = createServerFn({ method: "POST" })
       company,
     ].filter((l): l is string => l != null).join("\n");
 
+    return { sheet, emails, attachments, body, clientName: client?.name ?? "customer" };
+}
+
+function validateRecipients(recipients?: string[]) {
+  if (recipients?.some((e) => typeof e !== "string" || e.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))) throw new Error("Invalid email address");
+}
+async function sendMail(emails: string[], subject: string, body: string, attachments: Attachment[]) {
     const lovableKey = process.env["LOVABLE_API_KEY"];
     const gmailKey = process.env["GOOGLE_MAIL_API_KEY"];
     if (!lovableKey || !gmailKey) throw new Error("Email connection is not configured");
@@ -219,12 +226,60 @@ export const sendJobSheetEmail = createServerFn({ method: "POST" })
     const res = await fetch("https://connector-gateway.lovable.dev/google_mail/gmail/v1/users/me/messages/send", {
       method: "POST",
       headers: { Authorization: `Bearer ${lovableKey}`, "X-Connection-Api-Key": gmailKey, "Content-Type": "application/json" },
-      body: JSON.stringify({ raw: rawEmail(emails, `${sheetTitle(sheet.jobsheet_number)} — ${client?.name ?? "completed job"}`, body, attachments) }),
+      body: JSON.stringify({ raw: rawEmail(emails, subject, body, attachments) }),
     });
     if (!res.ok) {
       const t = await res.text();
       console.error(`Gmail send failed [${res.status}]: ${t}`);
-      throw new Error(`Email send failed [${res.status}]: ${t}`);
+      throw new Error("Email could not be sent. Check your email connection and try again.");
     }
-    return { sent: true as const, recipients: emails };
+}
+
+export const sendJobSheetEmail = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+  .inputValidator((d: { sheetId: string; recipients?: string[] }) => { validateRecipients(d.recipients); return d; })
+  .handler(async ({ data, context }) => {
+    const pack = await prepareSheet(context.supabase, data.sheetId, data.recipients);
+    if (!pack.emails.length) return { sent: false as const, recipients: [] as string[] };
+    await sendMail(pack.emails, `${sheetTitle(pack.sheet.jobsheet_number)} — ${pack.clientName}`, pack.body, pack.attachments);
+    return { sent: true as const, recipients: pack.emails };
+  });
+
+export const combinedJobSheets = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+  .inputValidator((d: { sheetIds: string[]; recipients?: string[]; email?: boolean }) => {
+    if (!Array.isArray(d.sheetIds) || !d.sheetIds.length || d.sheetIds.some((id) => !/^[0-9a-f-]{36}$/i.test(id))) throw new Error("Select valid job sheets");
+    validateRecipients(d.recipients); return d;
+  })
+  .handler(async ({ data, context }) => {
+    const { data: office, error } = await context.supabase.rpc("my_role");
+    if (error || (office !== "admin" && office !== "superuser")) throw new Error("Only office admins can combine job sheets");
+    const ids = [...new Set(data.sheetIds)];
+    const { data: rows, error: readError } = await context.supabase.from("job_sheets").select("id, client_id, status, created_at").in("id", ids).order("created_at");
+    if (readError || !rows || rows.length !== ids.length) throw new Error("Some selected sheets are not available");
+    validateCombinedSheets(rows);
+    const { PDFDocument } = await import("pdf-lib");
+    const doc = await PDFDocument.create();
+    let clientName = "customer"; let emails: string[] = [];
+    for (const row of rows) {
+      const pack = await prepareSheet(context.supabase, row.id, data.recipients);
+      clientName = pack.clientName; emails = pack.emails;
+      for (const a of pack.attachments) {
+        if (a.mime === "application/pdf") {
+          const source = await PDFDocument.load(a.data);
+          for (const page of await doc.copyPages(source, source.getPageIndices())) doc.addPage(page);
+        } else {
+          const image = a.data[0] === 137 ? await doc.embedPng(a.data) : await doc.embedJpg(a.data);
+          const page = doc.addPage([595, 842]);
+          const scale = Math.min(499 / image.width, 746 / image.height);
+          page.drawImage(image, { x: (595 - image.width * scale) / 2, y: (842 - image.height * scale) / 2, width: image.width * scale, height: image.height * scale });
+        }
+      }
+    }
+    const pdf = await doc.save();
+    const filename = `Job sheets - ${rows[0]?.created_at.slice(0, 10)} to ${rows[rows.length - 1]?.created_at.slice(0, 10)}.pdf`;
+    if (data.email) {
+      if (!data.recipients?.length) throw new Error("Pick at least one recipient");
+      await sendMail(emails, `Job sheets — ${clientName}`, `Dear ${clientName},\n\nPlease find your ${rows.length} completed job sheets attached as one PDF.\n\nThank you.`, [{ filename, mime: "application/pdf", data: pdf }]);
+      return { filename, base64: "", sent: true, recipients: emails };
+    }
+    return { filename, base64: bytesB64(pdf).replace(/\s/g, ""), sent: false, recipients: [] as string[] };
   });
