@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,12 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"signup" | "signin">("signup");
+  const [mode, setMode] = useState<"signup" | "signin">("signin");
+  const [idle, setIdle] = useState(false);
+  useEffect(() => {
+    setIdle(new URLSearchParams(window.location.search).get("reason") === "idle");
+    supabase.auth.getUser().then(({ data }) => { if (data.user) navigate({ to: "/dashboard", replace: true }); });
+  }, [navigate]);
   const [form, setForm] = useState({ company: "", name: "", email: "", password: "" });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,6 +73,7 @@ function AuthPage() {
             : "Sign in to your company workspace."}
         </p>
 
+        {idle && mode === "signin" && <p className="mt-6 rounded-lg border bg-muted p-3 text-sm text-muted-foreground">You were signed out after a period of inactivity.</p>}
         {sent ? (
           <div className="mt-8 rounded-xl border bg-card p-6 text-card-foreground">
             <p className="font-medium">Check your inbox</p>
@@ -88,7 +94,7 @@ function AuthPage() {
               </>
             )}
             <Field id="email" label="Work email">
-              <Input id="email" type="email" required value={form.email} onChange={set("email")} />
+              <Input id="email" type="email" autoFocus autoComplete="email" required value={form.email} onChange={set("email")} />
             </Field>
             <Field id="password" label="Password">
               <Input id="password" type="password" required minLength={8} value={form.password} onChange={set("password")} />
@@ -105,7 +111,7 @@ function AuthPage() {
           onClick={() => { setMode(mode === "signup" ? "signin" : "signup"); setSent(false); setError(null); }}
           className="mt-6 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
         >
-          {mode === "signup" ? "Already have an account? Sign in" : "New here? Create a company"}
+          {mode === "signup" ? "Already have an account? Sign in" : "New organisation? Set up a company"}
         </button>
       </div>
     </main>
