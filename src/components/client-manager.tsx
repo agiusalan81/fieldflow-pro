@@ -36,22 +36,34 @@ export function WhatsAppBadge() {
 type ContactDraft = { first_name: string; last_name: string; email: string; code: string; number: string; role_title: string; is_primary_contact: boolean; receives_job_sheets: boolean; has_whatsapp: boolean };
 const emptyContact: ContactDraft = { first_name: "", last_name: "", email: "", code: "+356", number: "", role_title: "", is_primary_contact: false, receives_job_sheets: false, has_whatsapp: false };
 
-export function ContactsManager({ clientId, companyId }: { clientId: string; companyId: string }) {
+/** siteId: undefined = every contact of the client, null = head-office contacts, string = that site's contacts. */
+export function ContactsManager({ clientId, companyId, siteId, title = "Contacts" }: { clientId: string; companyId: string; siteId?: string | null; title?: string }) {
   const qc = useQueryClient();
+  const { data: profile } = useProfile();
   const key = ["client-contacts", clientId];
-  const { data: contacts = [] } = useQuery({ queryKey: key, queryFn: async () => (await supabase.from("client_contacts").select("*").eq("client_id", clientId).order("is_primary_contact", { ascending: false })).data ?? [] });
+  const { data: allContacts = [] } = useQuery({ queryKey: key, queryFn: async () => (await supabase.from("client_contacts").select("*").eq("client_id", clientId).order("is_primary_contact", { ascending: false })).data ?? [] });
+  const contacts = siteId === undefined ? allContacts : allContacts.filter((c) => (c.site_id ?? null) === siteId);
+  const others = allContacts.filter((c) => !contacts.some((x) => x.id === c.id));
   const [editing, setEditing] = useState<string | null>(null);
   const [f, setF] = useState<ContactDraft>(emptyContact);
-  const refresh = () => { qc.invalidateQueries({ queryKey: key }); qc.invalidateQueries({ queryKey: ["contacts"] }); };
+  const refresh = () => { qc.invalidateQueries({ queryKey: key }); qc.invalidateQueries({ queryKey: ["contacts"] }); qc.invalidateQueries({ queryKey: ["entities-unified"] }); qc.invalidateQueries({ queryKey: ["contact-roles"] }); };
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
-    const row = { first_name: f.first_name, last_name: f.last_name, email: f.email, phone: `${f.code} ${f.number}`.trim(), role_title: f.role_title || null, is_primary_contact: f.is_primary_contact, receives_job_sheets: f.receives_job_sheets, has_whatsapp: f.has_whatsapp };
+    const row = { first_name: f.first_name, last_name: f.last_name, email: f.email, phone: `${f.code} ${f.number}`.trim(), role_title: f.role_title.trim() || null, is_primary_contact: f.is_primary_contact, receives_job_sheets: f.receives_job_sheets, has_whatsapp: f.has_whatsapp };
     const { error } = editing === "new"
-      ? await supabase.from("client_contacts").insert({ ...row, client_id: clientId, company_id: companyId })
+      ? await supabase.from("client_contacts").insert({ ...row, client_id: clientId, company_id: companyId, site_id: siteId ?? null })
       : await supabase.from("client_contacts").update(row).eq("id", editing!);
     if (error) { toast.error(error.message); return; }
+    if (profile && row.role_title) await learnContactRole(row.role_title, companyId, profile.id);
     setEditing(null); refresh();
+  };
+  const clone = async (id: string) => {
+    const c = allContacts.find((x) => x.id === id);
+    if (!c) return;
+    const { id: _id, ...rest } = c;
+    const { error } = await supabase.from("client_contacts").insert({ ...rest, site_id: siteId ?? null, is_primary_contact: false });
+    if (error) toast.error(error.message); else { toast.success(`${c.first_name} copied here`); refresh(); }
   };
   const toggleRecipient = async (id: string, v: boolean) => {
     const { error } = await supabase.from("client_contacts").update({ receives_job_sheets: v }).eq("id", id);
