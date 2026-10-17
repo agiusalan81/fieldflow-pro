@@ -87,19 +87,60 @@ export function DocumentSettings({ companyId }: { companyId: string }) {
         </section>
 
         <section className="rounded-xl border bg-card p-5">
-          <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">Live preview</p>
-          <div className="space-y-2 rounded-lg border bg-background p-4 text-xs">
-            {t.header && <p className="text-muted-foreground">{t.header}</p>}
-            <p className="text-base font-semibold text-foreground">Your company · Job sheet #1042</p>
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Live preview — what the client receives</p>
+            <Button size="sm" variant="outline" onClick={downloadSample}><Download className="mr-1 h-3.5 w-3.5" />Sample PDF</Button>
+          </div>
+          <div className="mx-auto max-w-md space-y-4 rounded-lg border bg-white p-6 text-[11px] leading-relaxed text-slate-800 shadow">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2">
+                {data?.logo_data && <img src={data.logo_data} alt="" className="h-10 max-w-24 object-contain" />}
+                <p className="text-sm font-semibold">{SAMPLE.company}</p>
+              </div>
+              <div className="text-right">
+                <p className="font-mono text-xs font-semibold">Job sheet- {SAMPLE.number}</p>
+                <p className="text-[10px] text-slate-500">{SAMPLE.date}</p>
+              </div>
+            </div>
+            <p className="text-[10px] text-slate-500">Job sheet - client copy</p>
+            <hr className="border-slate-300" />
+            {t.header && <p className="text-[10px] text-slate-500">{t.header}</p>}
             {visibleBlocks(t).map((k) => (
-              <div key={k} className="rounded border border-dashed p-2">
-                <p className="font-medium uppercase text-muted-foreground">{label(k)}</p>
-                <div className="mt-1 h-2 w-3/4 rounded bg-muted" />
+              <div key={k}>
+                <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">{label(k)}</p>
+                {k === "client" && <p>{SAMPLE.client}</p>}
+                {k === "address" && <p>{SAMPLE.address}</p>}
+                {k === "equipment" && <p>{SAMPLE.asset}</p>}
+                {k === "fault" && <p>{SAMPLE.fault}</p>}
+                {k === "work" && <p>{SAMPLE.repairs}</p>}
+                {k === "notes" && <p>{SAMPLE.notes}</p>}
+                {k === "timesheet" && (
+                  <table className="mt-1 w-full text-left text-[10px]">
+                    <thead><tr className="border-b border-slate-200"><th className="py-0.5 font-semibold">Date</th><th className="font-semibold">In</th><th className="font-semibold">Out</th>{t.showTravel && <th className="font-semibold">Travel h</th>}<th className="text-right font-semibold">Total h</th></tr></thead>
+                    <tbody>{SAMPLE.logs.map((l, i) => (
+                      <tr key={i} className="border-b border-slate-100"><td className="py-0.5">{l.date}</td><td>{l.in}</td><td>{l.out}</td>{t.showTravel && <td>{l.travel}</td>}<td className="text-right">{l.total.toFixed(2)}</td></tr>
+                    ))}</tbody>
+                  </table>
+                )}
+                {k === "timesheet" && <p className="mt-0.5 text-[10px] text-slate-500">Technicians ({SAMPLE.logs[0]!.count}): {SAMPLE.logs[0]!.techs}</p>}
+                {k === "parts" && (
+                  <table className="mt-1 w-full text-left text-[10px]">
+                    <thead><tr className="border-b border-slate-200"><th className="py-0.5 font-semibold">Description</th><th className="font-semibold">Unit</th><th className="text-right font-semibold">Qty</th></tr></thead>
+                    <tbody>{SAMPLE.parts.map((p, i) => <tr key={i} className="border-b border-slate-100"><td className="py-0.5">{p.desc}</td><td>{p.unit}</td><td className="text-right">{p.qty}</td></tr>)}</tbody>
+                  </table>
+                )}
+                {k === "signoff" && (
+                  <div className="mt-1 grid grid-cols-2 gap-4 border-t border-slate-300 pt-2">
+                    <div><p className="text-[9px] font-semibold uppercase text-slate-400">Technician</p><p>{SAMPLE.technician}</p></div>
+                    <div><p className="text-[9px] font-semibold uppercase text-slate-400">Client sign-off</p><p>{SAMPLE.signedBy} · ID {SAMPLE.idCard}</p><div className="mt-1 h-10 w-24 rounded border border-dashed border-slate-300 text-center text-[9px] leading-10 text-slate-400">signature</div></div>
+                  </div>
+                )}
               </div>
             ))}
-            {terms.job_sheet.enabled && <div className="rounded border border-dashed p-2"><p className="font-medium uppercase text-muted-foreground">Terms & conditions</p><p className="line-clamp-3 text-muted-foreground">{terms.job_sheet.text || "—"}</p></div>}
-            {t.footer && <p className="text-center text-muted-foreground">{t.footer}</p>}
+            {termsFor(terms, "job_sheet") && <div><p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">Terms & conditions</p><p className="whitespace-pre-wrap text-[9px] text-slate-500">{termsFor(terms, "job_sheet")}</p></div>}
+            {t.footer && <p className="border-t border-slate-200 pt-2 text-center text-[10px] text-slate-500">{t.footer}</p>}
           </div>
+          <p className="mt-2 text-xs text-muted-foreground">Sample data shown. Download the sample PDF to see the exact file the client receives by email.</p>
         </section>
       </div>
 
