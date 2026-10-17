@@ -1,4 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
+import { useSyncExternalStore } from "react";
+
+/** UI-only "View As" mode. Data access is still enforced by the real role on the server. */
+export type ViewAs = "technician" | "supervisor" | "admin";
+const VIEW_KEY = "fieldops:view-as";
+const listeners = new Set<() => void>();
+export function setViewAs(v: ViewAs | null) {
+  if (v) localStorage.setItem(VIEW_KEY, v); else localStorage.removeItem(VIEW_KEY);
+  listeners.forEach((l) => l());
+}
+function useViewAsRaw() {
+  return useSyncExternalStore(
+    (cb) => { listeners.add(cb); return () => listeners.delete(cb); },
+    () => localStorage.getItem(VIEW_KEY) as ViewAs | null,
+    () => null,
+  );
+}
 import { supabase } from "@/integrations/supabase/client";
 
 export type Profile = {
@@ -17,10 +34,19 @@ export type Profile = {
   employee_id: string | null;
   technician_initials: string | null;
   signature_on_file: string | null;
+  /** The account's real role; `role` reflects the active View As mode. */
+  real_role: "admin" | "technician" | "supervisor";
 };
 export type Kin = { name?: string; relationship?: string; phone?: string; email?: string };
 
 export function useProfile() {
+  const viewAs = useViewAsRaw();
+  const q = useRealProfile();
+  const data = q.data ? { ...q.data, role: q.data.real_role !== "technician" && viewAs ? viewAs : q.data.real_role } : q.data;
+  return { ...q, data } as typeof q;
+}
+
+function useRealProfile() {
   return useQuery({
     queryKey: ["profile"],
     queryFn: async (): Promise<Profile | null> => {
@@ -32,7 +58,7 @@ export function useProfile() {
         .eq("id", auth.user.id)
         .maybeSingle();
       if (error) throw error;
-      return data as unknown as Profile | null;
+      return data ? ({ ...data, real_role: data.role } as unknown as Profile) : null;
     },
     staleTime: 60_000,
   });

@@ -4,7 +4,9 @@ import {
   LayoutDashboard, ClipboardList, Clock, MessageSquare, CalendarDays, Users, Wrench, SlidersHorizontal, Package, LogOut, Menu, Plus, CalendarClock, Settings,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useProfile, isManager } from "@/lib/profile";
+import { useProfile, isManager, setViewAs, type ViewAs } from "@/lib/profile";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { useQueryClient } from "@tanstack/react-query";
@@ -59,10 +61,17 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   const qc = useQueryClient();
   const manager = isManager(profile);
   const items = manager ? adminNav : techNav;
+  const canSwitch = profile && profile.real_role !== "technician";
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", profile?.app_theme_preference === "dark");
+  }, [profile?.app_theme_preference]);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    setViewAs(null);
+    await qc.cancelQueries();
     qc.clear();
+    await supabase.auth.signOut();
     navigate({ to: "/auth" });
   };
 
@@ -107,6 +116,16 @@ export function AppShell({ title, actions, children }: { title: string; actions?
           </Sheet>
           <h1 className="truncate font-display text-xl text-foreground sm:text-2xl">{title}</h1>
           <div className="flex shrink-0 items-center gap-2">
+            {canSwitch && (
+              <Select value={profile.role} onValueChange={(v) => { setViewAs(v === profile.real_role ? null : (v as ViewAs)); navigate({ to: "/dashboard" }); }}>
+                <SelectTrigger className="h-9 w-[150px] border-dashed text-xs" aria-label="View As mode"><span className="hidden text-muted-foreground xl:inline">View as:&nbsp;</span><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="technician">Technician</SelectItem>
+                  <SelectItem value="supervisor">Supervisor</SelectItem>
+                  <SelectItem value="admin">Office Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
             {actions}
             <Button asChild size="sm" variant={actions ? "outline" : "default"}>
               <Link to="/sheets/new" search={{}}><Plus className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Create New Job Sheet</span></Link>
