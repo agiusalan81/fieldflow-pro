@@ -6,7 +6,7 @@ import { ArrowLeft, Car, Lock, MapPin, Plus, Save, Send, Trash2, ShieldAlert, Pe
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, useCompanyUsers, initialsOf, isManager } from "@/lib/profile";
 import { hoursFromTimes, missingSignOff, roundTo15, shiftTime } from "@/lib/jobsheets";
-import { sendJobSheetEmail } from "@/server/sendJobSheetEmail";
+import { sendJobSheetEmail } from "@/lib/sendJobSheetEmail";
 import { SearchSelect } from "@/components/search-select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
