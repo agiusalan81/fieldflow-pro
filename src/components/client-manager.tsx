@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-export const COUNTRY_CODES = ["+356", "+44", "+353", "+39", "+49", "+33", "+34", "+1", "+61", "+971"];
+export const COUNTRIES: [string, string][] = [["+356", "Malta"], ["+44", "UK"], ["+353", "Ireland"], ["+39", "Italy"], ["+49", "Germany"], ["+33", "France"], ["+34", "Spain"], ["+351", "Portugal"], ["+30", "Greece"], ["+31", "Netherlands"], ["+32", "Belgium"], ["+41", "Switzerland"], ["+43", "Austria"], ["+48", "Poland"], ["+40", "Romania"], ["+359", "Bulgaria"], ["+381", "Serbia"], ["+90", "Turkey"], ["+1", "USA / Canada"], ["+61", "Australia"], ["+971", "UAE"], ["+966", "Saudi Arabia"], ["+20", "Egypt"], ["+218", "Libya"], ["+216", "Tunisia"], ["+91", "India"], ["+63", "Philippines"], ["+977", "Nepal"], ["+880", "Bangladesh"], ["+234", "Nigeria"]];
+export const COUNTRY_CODES = COUNTRIES.map((c) => c[0]);
 export const EQUIPMENT_TYPES = ["Passenger Lift", "Goods Lift", "Platform Lift", "Escalator", "Dumbwaiter", "HVAC", "Generator", "Other"];
 
 export function splitPhone(p: string | null | undefined) {
@@ -23,8 +24,8 @@ export function PhoneInput({ code, number, onChange, required }: { code: string;
   return (
     <div className="flex gap-2">
       <Select value={code} onValueChange={(v) => onChange(v, number)}>
-        <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
-        <SelectContent>{COUNTRY_CODES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+        <SelectTrigger className="w-28 shrink-0"><SelectValue /></SelectTrigger>
+        <SelectContent>{(COUNTRY_CODES.includes(code) ? COUNTRIES : [[code, ""] as [string, string], ...COUNTRIES]).map(([c, n]) => <SelectItem key={c} value={c}>{c} <span className="text-muted-foreground">{n}</span></SelectItem>)}</SelectContent>
       </Select>
       <Input required={required} type="tel" inputMode="tel" pattern="[0-9 ]{4,}" title="Digits only" placeholder="Phone number" value={number} onChange={(e) => onChange(code, e.target.value)} />
     </div>

@@ -1324,6 +1324,9 @@ export type Database = {
           notes: string | null
           price_confirmed_at: string | null
           renewal_sent_at: string | null
+          renewal_signature: string | null
+          renewal_signed_at: string | null
+          renewal_signed_by: string | null
           site_id: string | null
           start_date: string
           status: string
@@ -1339,6 +1342,9 @@ export type Database = {
           notes?: string | null
           price_confirmed_at?: string | null
           renewal_sent_at?: string | null
+          renewal_signature?: string | null
+          renewal_signed_at?: string | null
+          renewal_signed_by?: string | null
           site_id?: string | null
           start_date: string
           status?: string
@@ -1354,6 +1360,9 @@ export type Database = {
           notes?: string | null
           price_confirmed_at?: string | null
           renewal_sent_at?: string | null
+          renewal_signature?: string | null
+          renewal_signed_at?: string | null
+          renewal_signed_by?: string | null
           site_id?: string | null
           start_date?: string
           status?: string

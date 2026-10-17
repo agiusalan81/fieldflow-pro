@@ -2,7 +2,10 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { Plus, Mail } from "lucide-react";
+import { sendJobSheetEmail } from "@/lib/sendJobSheetEmail";
+import { Checkbox } from "@/components/ui/checkbox";
+import { EVENTS, parseIntegrations, renderTemplate } from "@/lib/integrations";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, useCompanyUsers } from "@/lib/profile";
 import { matchesSheetFilter } from "@/lib/jobsheets";
@@ -60,6 +63,7 @@ function AdminJobs() {
     qc.invalidateQueries({ queryKey: ["admin-jobs"] });
     return true;
   };
+  const [resend, setResend] = useState<{ id: string; client_id: string; site_id: string | null; jobsheet_number: string } | null>(null);
   const open = (id: string) => navigate({ to: "/sheets/$sheetId", params: { sheetId: id } });
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
 
@@ -145,6 +149,7 @@ function AdminJobs() {
                         {j.requires_admin_approval && <span className="rounded bg-warning/25 px-1.5 text-[10px] text-warning-foreground">Asset edit needs approval</span>}
                         {j.pending_works_future_jobs?.trim() && <span className="rounded bg-muted px-1.5 text-[10px] text-muted-foreground">Pending works</span>}
                         {j.status === "completed" && <Link to="/print/$sheetId" params={{ sheetId: j.id }} target="_blank" onClick={stop} className="rounded border px-1.5 text-[10px] text-primary">Client PDF</Link>}
+                        {j.status === "completed" && <button type="button" onClick={(e) => { stop(e); setResend(j); }} className="inline-flex items-center gap-1 rounded border px-1.5 text-[10px] text-primary"><Mail className="h-3 w-3" />Resend to client</button>}
                       </div>
                       <p className="text-xs text-muted-foreground">{j.assets?.reference_number ?? "—"} · {new Date(j.created_at).toLocaleDateString()}</p>
                     </TableCell>
@@ -189,6 +194,7 @@ function AdminJobs() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {resend && <ResendDialog sheet={resend} onClose={() => setResend(null)} />}
     </AppShell>
   );
 }
@@ -210,13 +216,23 @@ function NewJobDialog() {
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile || !f.client_id) { toast.error("Pick a client"); return; }
-    const { error } = await supabase.from("jobs").insert({
+    const { data: job, error } = await supabase.from("jobs").insert({
       company_id: profile.company_id, client_id: f.client_id,
       site_id: f.site_id === "none" ? null : f.site_id, asset_id: f.asset_id === "none" ? null : f.asset_id,
       assigned_technician_id: f.tech === "none" ? null : f.tech, scheduled_date: f.scheduled_date,
       window_start: f.window_start || null, window_end: f.window_end || null, priority: f.priority, problem_summary: f.problem_summary || null,
-    });
+    }).select("job_number").single();
     if (error) { toast.error(error.message); return; }
+    if (f.priority === "urgent" && f.tech !== "none") {
+      const { data: cs } = await supabase.from("company_settings").select("integrations").eq("company_id", profile.company_id).maybeSingle();
+      const t = parseIntegrations(cs?.integrations).templates.emergency_dispatch;
+      if (t.enabled) {
+        const site = sites.find((x) => x.id === f.site_id);
+        await supabase.from("internal_messages").insert({ company_id: profile.company_id, sender_id: profile.id, receiver_id: f.tech,
+          message_text: "EMERGENCY: " + renderTemplate(t.body || EVENTS[2].body, { job_number: String(job?.job_number ?? ""), site_address: site?.name ?? "", site_name: site?.name ?? "", priority: "urgent", client_name: clients.find((c) => c.id === f.client_id)?.name ?? "" }) });
+        toast.success("Emergency sent to the technician's Team Chat");
+      }
+    }
     toast.success("Visit scheduled");
     setOpen(false); setF(empty);
     qc.invalidateQueries({ queryKey: ["schedule"] });
@@ -258,6 +274,50 @@ function NewJobDialog() {
           <div className="space-y-1.5"><Label>Problem summary</Label><Textarea value={f.problem_summary} onChange={(e) => setF({ ...f, problem_summary: e.target.value })} /></div>
           <Button type="submit" className="w-full">Schedule</Button>
         </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Office admins and supervisors resend a completed (signed) job sheet to chosen contacts. */
+function ResendDialog({ sheet, onClose }: { sheet: { id: string; client_id: string; site_id: string | null; jobsheet_number: string }; onClose: () => void }) {
+  const { data: contacts = [] } = useQuery({
+    queryKey: ["resend-contacts", sheet.client_id],
+    queryFn: async () => (await supabase.from("client_contacts").select("id, first_name, last_name, email, role_title, site_id, receives_job_sheets").eq("client_id", sheet.client_id).not("email", "is", null)).data ?? [],
+  });
+  const [picked, setPicked] = useState<string[] | null>(null);
+  const [extra, setExtra] = useState("");
+  const [busy, setBusy] = useState(false);
+  const sel = picked ?? contacts.filter((c) => c.receives_job_sheets && (!c.site_id || !sheet.site_id || c.site_id === sheet.site_id)).map((c) => c.email!);
+  const toggle = (e: string, on: boolean) => setPicked(on ? [...sel, e] : sel.filter((x) => x !== e));
+  const send = async () => {
+    const all = [...sel, ...extra.split(/[,;\s]+/).filter(Boolean)];
+    if (!all.length) { toast.error("Pick at least one recipient"); return; }
+    setBusy(true);
+    try {
+      const r = await sendJobSheetEmail({ data: { sheetId: sheet.id, recipients: all } });
+      if (r.sent) { toast.success(`Job sheet- ${sheet.jobsheet_number} resent to ${r.recipients.join(", ")}`); onClose(); }
+      else toast.error("No recipients");
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Send failed"); }
+    setBusy(false);
+  };
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Resend Job sheet- {sheet.jobsheet_number}</DialogTitle></DialogHeader>
+        <p className="text-sm text-muted-foreground">The signed PDF and work photos are sent again. No new signature is requested.</p>
+        <div className="space-y-2">
+          {contacts.length === 0 && <p className="text-sm text-muted-foreground">This client has no contacts with an email.</p>}
+          {contacts.map((c) => (
+            <label key={c.id} className="flex items-center gap-2 text-sm">
+              <Checkbox checked={sel.includes(c.email!)} onCheckedChange={(b) => toggle(c.email!, !!b)} />
+              <span className="font-medium">{c.first_name} {c.last_name ?? ""}</span>
+              <span className="truncate text-muted-foreground">{c.role_title ? `${c.role_title} · ` : ""}{c.email}</span>
+            </label>
+          ))}
+        </div>
+        <div className="space-y-1.5"><Label>Other email (optional)</Label><Input type="email" placeholder="name@example.com" value={extra} onChange={(e) => setExtra(e.target.value)} /></div>
+        <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button disabled={busy} onClick={send}><Mail className="mr-1 h-4 w-4" />{busy ? "Sending…" : "Resend"}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );

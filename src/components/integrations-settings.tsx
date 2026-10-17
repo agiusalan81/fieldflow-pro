@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { ACCOUNTING, CHANNELS, EVENTS, MERGE_TAGS, SAMPLE, parseIntegrations, renderTemplate, type Integrations, type ChannelKey } from "@/lib/integrations";
+import { ACCOUNTING, CHANNELS, EVENTS, MERGE_TAGS, SAMPLE, TAG_LABELS, toFriendly, fromFriendly, parseIntegrations, renderTemplate, type Integrations, type ChannelKey } from "@/lib/integrations";
 import { parseRates, ZERO_RATES, type Rates } from "@/lib/billing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,8 +42,9 @@ export function IntegrationsSettings({ companyId }: { companyId: string }) {
   };
   const insertTag = (ev: string, tag: string) => {
     const el = refs.current[ev]; const t = s.templates[ev as keyof Integrations["templates"]];
-    const pos = el?.selectionStart ?? t.body.length;
-    setS({ ...s, templates: { ...s.templates, [ev]: { ...t, body: `${t.body.slice(0, pos)}{{${tag}}}${t.body.slice(pos)}` } } });
+    const f = toFriendly(t.body); const pos = el?.selectionStart ?? f.length;
+    const label = `[${TAG_LABELS[tag as keyof typeof TAG_LABELS]}]`;
+    setS({ ...s, templates: { ...s.templates, [ev]: { ...t, body: fromFriendly(`${f.slice(0, pos)}${label}${f.slice(pos)}`) } } });
   };
   const acc = s.accounting;
   const setAcc = (p: Partial<Integrations["accounting"]>) => setS({ ...s, accounting: { ...acc, ...p } });
@@ -71,7 +72,7 @@ export function IntegrationsSettings({ companyId }: { companyId: string }) {
       </section>
 
       <section className="space-y-4 rounded-xl border bg-card p-5">
-        <div><h2 className="font-medium text-foreground">Message templates</h2><p className="text-sm text-muted-foreground">Edit the wording of each automatic message. Tap a tag to insert it where the cursor is.</p></div>
+        <div><h2 className="font-medium text-foreground">Message templates</h2><p className="text-sm text-muted-foreground">Write each message in your own words and language. Tap a blue button to drop in details like the contact name. The preview shows exactly what the client receives.</p></div>
         {EVENTS.map((e) => {
           const t = s.templates[e.key];
           const set = (p: Partial<typeof t>) => setS({ ...s, templates: { ...s.templates, [e.key]: { ...t, ...p } } });
@@ -81,17 +82,17 @@ export function IntegrationsSettings({ companyId }: { companyId: string }) {
                 <p className="text-sm font-medium text-foreground">{e.label}</p>
                 <div className="flex items-center gap-2 text-sm"><span className="text-muted-foreground">On</span><Switch checked={t.enabled} onCheckedChange={(b) => set({ enabled: b })} /></div>
               </div>
-              <div className="flex flex-wrap gap-3 text-sm">
+              {e.key === "emergency_dispatch" ? <p className="text-xs text-muted-foreground">Sent only inside the app, to the assigned technician's Team Chat. Never by SMS or WhatsApp.</p> : <div className="flex flex-wrap gap-3 text-sm">
                 {CHANNELS.map((c) => (
                   <label key={c.key} className="flex items-center gap-1.5"><Checkbox checked={t.channels.includes(c.key)} onCheckedChange={(b) => set({ channels: b ? [...t.channels, c.key] : t.channels.filter((x: ChannelKey) => x !== c.key) })} />{c.label.split(" ")[0]}</label>
                 ))}
-              </div>
+              </div>}
               <div className="grid gap-3 md:grid-cols-2">
-                <Textarea ref={(el) => { refs.current[e.key] = el; }} rows={4} value={t.body} onChange={(ev) => set({ body: ev.target.value })} />
-                <div className="rounded-lg bg-muted/50 p-3 text-sm text-foreground"><p className="mb-1 text-xs text-muted-foreground">Preview</p>{renderTemplate(t.body, SAMPLE)}</div>
+                <Textarea ref={(el) => { refs.current[e.key] = el; }} rows={4} value={toFriendly(t.body)} onChange={(ev) => set({ body: fromFriendly(ev.target.value) })} />
+                <div className="rounded-lg bg-muted/50 p-3 text-sm text-foreground"><p className="mb-1 text-xs text-muted-foreground">What the client sees</p><p className="whitespace-pre-wrap rounded-2xl rounded-tl-sm bg-card p-3 shadow-sm">{renderTemplate(t.body, SAMPLE)}</p></div>
               </div>
               <div className="flex flex-wrap gap-1">
-                {MERGE_TAGS.map((tag) => <button key={tag} type="button" onClick={() => insertTag(e.key, tag)} className="rounded border px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted">{`{{${tag}}}`}</button>)}
+                {MERGE_TAGS.map((tag) => <button key={tag} type="button" onClick={() => insertTag(e.key, tag)} className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary hover:bg-primary/20">+ {TAG_LABELS[tag]}</button>)}
                 <Button type="button" size="sm" variant="ghost" className="h-6 text-xs" onClick={() => set({ body: e.body })}>Reset</Button>
               </div>
             </div>
