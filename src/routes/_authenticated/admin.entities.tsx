@@ -38,8 +38,16 @@ function del(table: "sites" | "clients" | "client_contacts" | "assets", id: stri
   supabase.from(table).delete().eq("id", id).then(({ error }) => { if (error) toast.error(error.message); else done(); });
 }
 
+const ROW = "cursor-pointer hover:bg-muted/50";
+type Open = { id: string; name: string };
+type RecordTab = "sites" | "contacts" | "equipment";
+type TabProps = { q: string; onOpen: (c: Open, tab: RecordTab) => void };
+
 function Entities() {
   const [q, setQ] = useState("");
+  const [manage, setManage] = useState<(Open & { tab: RecordTab }) | null>(null);
+  const { data: profile } = useProfile();
+  const onOpen = (c: Open, tab: RecordTab) => setManage({ ...c, tab });
   return (
     <AppShell title="Clients & assets">
       <Tabs defaultValue="clients">
@@ -52,28 +60,80 @@ function Entities() {
           </TabsList>
           <Input placeholder="Filter…" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
-        <TabsContent value="clients"><ClientsTab q={q} /></TabsContent>
-        <TabsContent value="sites"><SitesTab q={q} /></TabsContent>
-        <TabsContent value="contacts"><ContactsTab q={q} /></TabsContent>
-        <TabsContent value="assets"><AssetsTab q={q} /></TabsContent>
+        <TabsContent value="clients"><ClientsTab q={q} onOpen={onOpen} /></TabsContent>
+        <TabsContent value="sites"><SitesTab q={q} onOpen={onOpen} /></TabsContent>
+        <TabsContent value="contacts"><ContactsTab q={q} onOpen={onOpen} /></TabsContent>
+        <TabsContent value="assets"><AssetsTab q={q} onOpen={onOpen} /></TabsContent>
       </Tabs>
+      <Dialog open={!!manage} onOpenChange={(o) => !o && setManage(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader><DialogTitle>{manage?.name}</DialogTitle></DialogHeader>
+          {manage && profile && (
+            <Tabs defaultValue={manage.tab}>
+              <TabsList className="mb-3">
+                <TabsTrigger value="sites">Sites</TabsTrigger>
+                <TabsTrigger value="contacts">Contacts</TabsTrigger>
+                <TabsTrigger value="equipment">Equipment</TabsTrigger>
+              </TabsList>
+              <TabsContent value="sites"><SitesManager clientId={manage.id} companyId={profile.company_id} /></TabsContent>
+              <TabsContent value="contacts"><ContactsManager clientId={manage.id} companyId={profile.company_id} /></TabsContent>
+              <TabsContent value="equipment"><EquipmentManager clientId={manage.id} companyId={profile.company_id} /></TabsContent>
+            </Tabs>
+          )}
+        </DialogContent>
+      </Dialog>
     </AppShell>
+  );
+}
+
+function SitesManager({ clientId, companyId }: { clientId: string; companyId: string }) {
+  const qc = useQueryClient();
+  const key = ["client-sites", clientId];
+  const { data: sites = [] } = useQuery({ queryKey: key, queryFn: async () => (await supabase.from("sites").select("*").eq("client_id", clientId).order("name")).data ?? [] });
+  const [edit, setEdit] = useState<{ id?: string; name: string; address: string } | null>(null);
+  const refresh = () => { qc.invalidateQueries({ queryKey: key }); qc.invalidateQueries({ queryKey: ["sites-full"] }); qc.invalidateQueries({ queryKey: ["sheet-refs"] }); };
+  const save = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!edit) return;
+    const res = edit.id
+      ? await supabase.from("sites").update({ name: edit.name, address: edit.address }).eq("id", edit.id)
+      : await supabase.from("sites").insert({ name: edit.name, address: edit.address, client_id: clientId, company_id: companyId });
+    if (res.error) { toast.error(res.error.message); return; }
+    setEdit(null); refresh();
+  };
+  return (
+    <div className="space-y-2">
+      {sites.length === 0 && <p className="text-sm text-muted-foreground">No sites yet.</p>}
+      {sites.map((s) => (
+        <div key={s.id} className={`flex items-center gap-2 rounded-lg border p-3 ${ROW}`} onClick={() => setEdit({ id: s.id, name: s.name, address: s.address ?? "" })}>
+          <div className="min-w-0 flex-1"><p className="font-medium">{s.name}</p><p className="truncate text-sm text-muted-foreground">{s.address || "—"}</p></div>
+          <Button size="icon" variant="ghost" aria-label="Edit"><Pencil className="h-4 w-4" /></Button>
+          <Button size="icon" variant="ghost" aria-label="Delete" onClick={(e) => { e.stopPropagation(); del("sites", s.id, refresh); }}><Trash2 className="h-4 w-4" /></Button>
+        </div>
+      ))}
+      {edit ? (
+        <form onSubmit={save} className="space-y-2 rounded-lg border p-3">
+          <Input required placeholder="Site name" value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} />
+          <Input placeholder="Address" value={edit.address} onChange={(e) => setEdit({ ...edit, address: e.target.value })} />
+          <div className="flex gap-2"><Button type="submit" size="sm">Save</Button><Button type="button" size="sm" variant="ghost" onClick={() => setEdit(null)}>Cancel</Button></div>
+        </form>
+      ) : <Button variant="outline" size="sm" className="w-full" onClick={() => setEdit({ name: "", address: "" })}><Plus className="mr-1 h-4 w-4" />Add site</Button>}
+    </div>
   );
 }
 
 const match = (q: string, ...s: (string | null | undefined)[]) => s.join(" ").toLowerCase().includes(q.toLowerCase());
 
-function ClientsTab({ q }: { q: string }) {
+function ClientsTab({ q, onOpen }: TabProps) {
   const { data: clients = [] } = useClients();
   const { data: profile } = useProfile();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
   const [clientId, setClientId] = useState<string | null>(null);
-  const [manage, setManage] = useState<{ id: string; name: string } | null>(null);
   const emptyF = { name: "", property_name: "", street_name: "", location: "", first_name: "", last_name: "", email: "", code: "+356", number: "" };
   const [f, setF] = useState(emptyF);
-  const refresh = () => { qc.invalidateQueries({ queryKey: ["clients-full"] }); qc.invalidateQueries({ queryKey: ["clients"] }); qc.invalidateQueries({ queryKey: ["contacts"] }); };
+  const refresh = () => { qc.invalidateQueries({ queryKey: ["clients-full"] }); qc.invalidateQueries({ queryKey: ["clients"] }); qc.invalidateQueries({ queryKey: ["contacts"] }); qc.invalidateQueries({ queryKey: ["sites-full"] }); qc.invalidateQueries({ queryKey: ["sheet-refs"] }); };
   const reset = (o: boolean) => { setOpen(o); if (!o) { setStep(1); setClientId(null); setF(emptyF); } };
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,7 +143,11 @@ function ClientsTab({ q }: { q: string }) {
     if (error || !c) { toast.error(error?.message ?? "Could not save"); return; }
     const { error: ce } = await supabase.from("client_contacts").insert({ client_id: c.id, company_id, first_name: f.first_name, last_name: f.last_name, email: f.email, phone: `${f.code} ${f.number}`, is_primary_contact: true, receives_job_sheets: true });
     if (ce) { toast.error(ce.message); return; }
-    refresh(); setClientId(c.id); setStep(2); toast.success("Client saved — now add equipment");
+    if (billing_address) {
+      const { error: se } = await supabase.from("sites").insert({ client_id: c.id, company_id, name: f.property_name || "Main site", address: billing_address });
+      if (se) toast.error(se.message);
+    }
+    refresh(); setClientId(c.id); setStep(2); toast.success("Client and site saved — now add equipment");
   };
   const list = clients.filter((c) => match(q, c.name, c.billing_address));
   return (
@@ -116,17 +180,6 @@ function ClientsTab({ q }: { q: string }) {
             ) : null}
           </DialogContent>
         </Dialog>
-        <Dialog open={!!manage} onOpenChange={(o) => !o && setManage(null)}>
-          <DialogContent className="max-h-[90vh] overflow-y-auto">
-            <DialogHeader><DialogTitle>{manage?.name}</DialogTitle></DialogHeader>
-            {manage && profile && (
-              <div className="space-y-6">
-                <ContactsManager clientId={manage.id} companyId={profile.company_id} />
-                <EquipmentManager clientId={manage.id} companyId={profile.company_id} />
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
       </div>
       {list.length === 0 ? <EmptyState>No clients yet.</EmptyState> : (
         <div className="overflow-x-auto rounded-xl border bg-card">
@@ -134,13 +187,12 @@ function ClientsTab({ q }: { q: string }) {
             <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Address</TableHead><TableHead>Added</TableHead><TableHead /></TableRow></TableHeader>
             <TableBody>
               {list.map((c) => (
-                <TableRow key={c.id}>
+                <TableRow key={c.id} className={ROW} onClick={() => onOpen({ id: c.id, name: c.name }, "sites")}>
                   <TableCell className="font-medium">{c.name}</TableCell>
                   <TableCell className="text-muted-foreground">{c.billing_address || "—"}</TableCell>
                   <TableCell className="whitespace-nowrap text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</TableCell>
                   <TableCell className="whitespace-nowrap text-right">
-                    <Button size="sm" variant="outline" onClick={() => setManage({ id: c.id, name: c.name })}><Pencil className="mr-1 h-4 w-4" />Contacts & equipment</Button>
-                    <Button size="icon" variant="ghost" aria-label="Delete" onClick={() => del("clients", c.id, refresh)}><Trash2 className="h-4 w-4" /></Button>
+                    <Button size="icon" variant="ghost" aria-label="Delete" onClick={(e) => { e.stopPropagation(); del("clients", c.id, refresh); }}><Trash2 className="h-4 w-4" /></Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -152,7 +204,7 @@ function ClientsTab({ q }: { q: string }) {
   );
 }
 
-function ContactsTab({ q }: { q: string }) {
+function ContactsTab({ q, onOpen }: TabProps) {
   const { data: clients = [] } = useClients();
   const { data: profile } = useProfile();
   const qc = useQueryClient();
@@ -200,13 +252,13 @@ function ContactsTab({ q }: { q: string }) {
             <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Client</TableHead><TableHead>Role</TableHead><TableHead>Email</TableHead><TableHead>Phone</TableHead><TableHead /></TableRow></TableHeader>
             <TableBody>
               {list.map((c) => (
-                <TableRow key={c.id}>
+                <TableRow key={c.id} className={ROW} onClick={() => onOpen({ id: c.client_id, name: c.clients?.name ?? "" }, "contacts")}>
                   <TableCell className="whitespace-nowrap font-medium">{c.first_name} {c.last_name}{c.is_primary_contact && <span className="ml-2 rounded bg-primary/15 px-1.5 text-xs text-primary">Primary</span>}</TableCell>
                   <TableCell>{c.clients?.name}</TableCell>
                   <TableCell className="text-muted-foreground">{c.role_title ?? "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{c.email ?? "—"}</TableCell>
                   <TableCell className="whitespace-nowrap text-muted-foreground">{c.phone ?? "—"}</TableCell>
-                  <TableCell className="text-right"><Button size="icon" variant="ghost" aria-label="Delete" onClick={() => del("client_contacts", c.id, refresh)}><Trash2 className="h-4 w-4" /></Button></TableCell>
+                  <TableCell className="text-right"><Button size="icon" variant="ghost" aria-label="Delete" onClick={(e) => { e.stopPropagation(); del("client_contacts", c.id, refresh); }}><Trash2 className="h-4 w-4" /></Button></TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -217,7 +269,7 @@ function ContactsTab({ q }: { q: string }) {
   );
 }
 
-function AssetsTab({ q }: { q: string }) {
+function AssetsTab({ q, onOpen }: TabProps) {
   const { data: clients = [] } = useClients();
   const { data: profile } = useProfile();
   const { data: defs = [] } = useFieldDefs("asset");
@@ -275,13 +327,13 @@ function AssetsTab({ q }: { q: string }) {
             <TableHeader><TableRow><TableHead>Reference</TableHead><TableHead>Category</TableHead><TableHead>Client</TableHead><TableHead>Location</TableHead><TableHead>Attributes</TableHead><TableHead /></TableRow></TableHeader>
             <TableBody>
               {list.map((a) => (
-                <TableRow key={a.id}>
+                <TableRow key={a.id} className={ROW} onClick={() => onOpen({ id: a.client_id, name: a.clients?.name ?? "" }, "equipment")}>
                   <TableCell className="font-medium">{a.reference_number}</TableCell>
                   <TableCell><span className="rounded-full bg-secondary px-2 py-0.5 text-xs">{a.asset_category}</span></TableCell>
                   <TableCell>{a.clients?.name}</TableCell>
                   <TableCell className="text-muted-foreground">{a.location_details ?? "—"}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">{renderCustomValues(defs, a.custom_attributes).join(" · ") || "—"}</TableCell>
-                  <TableCell className="text-right"><Button size="icon" variant="ghost" aria-label="Delete" onClick={() => del("assets", a.id, refresh)}><Trash2 className="h-4 w-4" /></Button></TableCell>
+                  <TableCell className="text-right"><Button size="icon" variant="ghost" aria-label="Delete" onClick={(e) => { e.stopPropagation(); del("assets", a.id, refresh); }}><Trash2 className="h-4 w-4" /></Button></TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -292,7 +344,7 @@ function AssetsTab({ q }: { q: string }) {
   );
 }
 
-function SitesTab({ q }: { q: string }) {
+function SitesTab({ q, onOpen }: TabProps) {
   const { data: clients = [] } = useClients();
   const { data: profile } = useProfile();
   const qc = useQueryClient();
@@ -333,11 +385,11 @@ function SitesTab({ q }: { q: string }) {
             <TableHeader><TableRow><TableHead>Site</TableHead><TableHead>Client</TableHead><TableHead>Address</TableHead><TableHead /></TableRow></TableHeader>
             <TableBody>
               {list.map((s) => (
-                <TableRow key={s.id}>
+                <TableRow key={s.id} className={ROW} onClick={() => onOpen({ id: s.client_id, name: s.clients?.name ?? "" }, "sites")}>
                   <TableCell className="font-medium">{s.name}</TableCell>
                   <TableCell>{s.clients?.name}</TableCell>
                   <TableCell className="text-muted-foreground">{s.address ?? "—"}</TableCell>
-                  <TableCell className="text-right"><Button size="icon" variant="ghost" aria-label="Delete" onClick={() => del("sites", s.id, refresh)}><Trash2 className="h-4 w-4" /></Button></TableCell>
+                  <TableCell className="text-right"><Button size="icon" variant="ghost" aria-label="Delete" onClick={(e) => { e.stopPropagation(); del("sites", s.id, refresh); }}><Trash2 className="h-4 w-4" /></Button></TableCell>
                 </TableRow>
               ))}
             </TableBody>

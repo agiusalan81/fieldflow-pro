@@ -69,31 +69,21 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
   };
 
   return (
-    <section className="grid gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-      <button
-        onClick={() => toggle("shift", shift)}
-        className={`flex min-h-32 flex-col justify-between rounded-2xl p-5 text-left transition-transform active:scale-[0.98] ${shift ? "bg-success text-success-foreground" : "bg-primary text-primary-foreground"}`}
-      >
-        <span className="flex items-center gap-2 text-sm font-medium opacity-90">
-          {shift ? <Square className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-          {shift ? "On shift — tap to clock out" : "Off shift — tap to clock in"}
-        </span>
-        <span className="font-display text-4xl tabular-nums sm:text-5xl">
-          {shift ? formatDuration(Date.now() - new Date(shift.started_at).getTime()) : "00:00:00"}
-        </span>
-      </button>
-      <button
-        disabled={!shift}
-        onClick={() => toggle("travel", travel)}
-        className={`flex min-h-32 flex-col justify-between rounded-2xl border p-5 text-left transition-transform active:scale-[0.98] disabled:opacity-50 ${travel ? "border-warning bg-warning/20" : "bg-card"}`}
-      >
-        <span className="flex items-center gap-2 text-sm font-medium text-foreground">
-          <Car className="h-4 w-4" /> {travel ? "Travelling — tap to stop" : "Start site travel"}
-        </span>
-        <span className="font-display text-3xl tabular-nums text-foreground">
-          {travel ? formatDuration(Date.now() - new Date(travel.started_at).getTime()) : "—"}
-        </span>
-      </button>
+    <section className="flex flex-wrap items-center gap-2 rounded-xl border bg-card p-2.5">
+      <span className={`inline-flex h-7 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium ${shift ? "bg-success/20 text-foreground" : "bg-muted text-muted-foreground"}`}>
+        <span className={`h-2 w-2 rounded-full ${shift ? "bg-success" : "bg-muted-foreground"}`} />
+        {shift ? "On shift" : "Off shift"}
+        <span className="tabular-nums">{shift ? formatDuration(Date.now() - new Date(shift.started_at).getTime()) : ""}</span>
+      </span>
+      {travel && <span className="inline-flex h-7 items-center gap-1 rounded-full bg-warning/20 px-2.5 text-xs tabular-nums text-foreground"><Car className="h-3 w-3" />{formatDuration(Date.now() - new Date(travel.started_at).getTime())}</span>}
+      <div className="ml-auto flex gap-2">
+        <Button size="sm" variant={travel ? "secondary" : "outline"} disabled={!shift} onClick={() => toggle("travel", travel)}>
+          <Car className="mr-1 h-4 w-4" />{travel ? "Stop travel" : "Travel"}
+        </Button>
+        <Button size="sm" variant={shift ? "outline" : "default"} onClick={() => toggle("shift", shift)}>
+          {shift ? <Square className="mr-1 h-4 w-4" /> : <Play className="mr-1 h-4 w-4" />}{shift ? "Clock out" : "Clock in"}
+        </Button>
+      </div>
     </section>
   );
 }
