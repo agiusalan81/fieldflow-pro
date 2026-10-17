@@ -50,6 +50,13 @@
       "when": 1792218194364,
       "tag": "0006_auto_employee_id",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792225449093,
+      "tag": "0007_roles_permissions_contracts_estimates",
+      "breakpoints": true
     }
   ]
 }

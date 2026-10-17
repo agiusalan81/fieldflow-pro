@@ -72,6 +72,41 @@ export type Database = {
           },
         ]
       }
+      checklist_templates: {
+        Row: {
+          company_id: string
+          created_at: string
+          equipment_category: string
+          id: string
+          items: Json
+          name: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          equipment_category: string
+          id?: string
+          items?: Json
+          name: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          equipment_category?: string
+          id?: string
+          items?: Json
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_templates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_contacts: {
         Row: {
           client_id: string
@@ -184,6 +219,156 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      company_invites: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string
+          email: string | null
+          expires_at: string
+          full_name: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          token: string
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by?: string
+          email?: string | null
+          expires_at?: string
+          full_name?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          token?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          email?: string | null
+          expires_at?: string
+          full_name?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          token?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_invites_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_settings: {
+        Row: {
+          after_hours_rate: number
+          company_id: string
+          holiday_rate: number
+          industry: string | null
+          public_holidays: string[]
+          renewal_notice_days: number
+          saturday_rate: number
+          sunday_rate: number
+          updated_at: string
+          work_days: number[]
+          work_end: string
+          work_start: string
+        }
+        Insert: {
+          after_hours_rate?: number
+          company_id: string
+          holiday_rate?: number
+          industry?: string | null
+          public_holidays?: string[]
+          renewal_notice_days?: number
+          saturday_rate?: number
+          sunday_rate?: number
+          updated_at?: string
+          work_days?: number[]
+          work_end?: string
+          work_start?: string
+        }
+        Update: {
+          after_hours_rate?: number
+          company_id?: string
+          holiday_rate?: number
+          industry?: string | null
+          public_holidays?: string[]
+          renewal_notice_days?: number
+          saturday_rate?: number
+          sunday_rate?: number
+          updated_at?: string
+          work_days?: number[]
+          work_end?: string
+          work_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contract_types: {
+        Row: {
+          annual_price: number
+          company_id: string
+          created_at: string
+          equipment_category: string
+          id: string
+          labour_discount_pct: number
+          name: string
+          parts_discount_pct: number
+          tier: string | null
+          visits_per_year: number
+        }
+        Insert: {
+          annual_price?: number
+          company_id: string
+          created_at?: string
+          equipment_category?: string
+          id?: string
+          labour_discount_pct?: number
+          name: string
+          parts_discount_pct?: number
+          tier?: string | null
+          visits_per_year?: number
+        }
+        Update: {
+          annual_price?: number
+          company_id?: string
+          created_at?: string
+          equipment_category?: string
+          id?: string
+          labour_discount_pct?: number
+          name?: string
+          parts_discount_pct?: number
+          tier?: string | null
+          visits_per_year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_types_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       custom_field_definitions: {
         Row: {
@@ -323,6 +508,7 @@ export type Database = {
           asset_type: string
           asset_type_other: string | null
           assigned_technician_id: string | null
+          checklist_values: Json
           client_full_name: string | null
           client_id: string
           client_id_card_no: string | null
@@ -342,6 +528,8 @@ export type Database = {
           maintenance_agreement_type: string | null
           notes: string | null
           overtime_rate: number | null
+          pending_job_id: string | null
+          pending_status: string
           pending_works_future_jobs: string | null
           photo_paths: Json
           repairs_performed: string | null
@@ -362,6 +550,7 @@ export type Database = {
           asset_type?: string
           asset_type_other?: string | null
           assigned_technician_id?: string | null
+          checklist_values?: Json
           client_full_name?: string | null
           client_id: string
           client_id_card_no?: string | null
@@ -381,6 +570,8 @@ export type Database = {
           maintenance_agreement_type?: string | null
           notes?: string | null
           overtime_rate?: number | null
+          pending_job_id?: string | null
+          pending_status?: string
           pending_works_future_jobs?: string | null
           photo_paths?: Json
           repairs_performed?: string | null
@@ -401,6 +592,7 @@ export type Database = {
           asset_type?: string
           asset_type_other?: string | null
           assigned_technician_id?: string | null
+          checklist_values?: Json
           client_full_name?: string | null
           client_id?: string
           client_id_card_no?: string | null
@@ -420,6 +612,8 @@ export type Database = {
           maintenance_agreement_type?: string | null
           notes?: string | null
           overtime_rate?: number | null
+          pending_job_id?: string | null
+          pending_status?: string
           pending_works_future_jobs?: string | null
           photo_paths?: Json
           repairs_performed?: string | null
@@ -467,6 +661,13 @@ export type Database = {
           {
             foreignKeyName: "job_sheets_job_id_fkey"
             columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_sheets_pending_job_id_fkey"
+            columns: ["pending_job_id"]
             isOneToOne: false
             referencedRelation: "jobs"
             referencedColumns: ["id"]
@@ -744,6 +945,79 @@ export type Database = {
           },
         ]
       }
+      lift_estimates: {
+        Row: {
+          client_id: string | null
+          company_id: string
+          created_at: string
+          created_by: string
+          events: Json
+          id: string
+          quoted_amount: number | null
+          site_id: string | null
+          specs: string | null
+          status: string
+          supplier_email: string | null
+          supplier_name: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string
+          events?: Json
+          id?: string
+          quoted_amount?: number | null
+          site_id?: string | null
+          specs?: string | null
+          status?: string
+          supplier_email?: string | null
+          supplier_name?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          events?: Json
+          id?: string
+          quoted_amount?: number | null
+          site_id?: string | null
+          specs?: string | null
+          status?: string
+          supplier_email?: string | null
+          supplier_name?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lift_estimates_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lift_estimates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lift_estimates_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lookup_options: {
         Row: {
           category: string
@@ -788,6 +1062,83 @@ export type Database = {
             columns: ["created_by_user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_agreements: {
+        Row: {
+          annual_price: number
+          client_id: string
+          company_id: string
+          contract_type_id: string | null
+          created_at: string
+          end_date: string
+          id: string
+          notes: string | null
+          price_confirmed_at: string | null
+          renewal_sent_at: string | null
+          site_id: string | null
+          start_date: string
+          status: string
+        }
+        Insert: {
+          annual_price?: number
+          client_id: string
+          company_id: string
+          contract_type_id?: string | null
+          created_at?: string
+          end_date: string
+          id?: string
+          notes?: string | null
+          price_confirmed_at?: string | null
+          renewal_sent_at?: string | null
+          site_id?: string | null
+          start_date: string
+          status?: string
+        }
+        Update: {
+          annual_price?: number
+          client_id?: string
+          company_id?: string
+          contract_type_id?: string | null
+          created_at?: string
+          end_date?: string
+          id?: string
+          notes?: string | null
+          price_confirmed_at?: string | null
+          renewal_sent_at?: string | null
+          site_id?: string | null
+          start_date?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_agreements_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_agreements_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_agreements_contract_type_id_fkey"
+            columns: ["contract_type_id"]
+            isOneToOne: false
+            referencedRelation: "contract_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_agreements_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
             referencedColumns: ["id"]
           },
         ]
@@ -849,6 +1200,35 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      role_permissions: {
+        Row: {
+          company_id: string
+          enabled: boolean
+          module: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          company_id: string
+          enabled: boolean
+          module: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          company_id?: string
+          enabled?: boolean
+          module?: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -982,6 +1362,38 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           app_theme_preference: string
@@ -1050,13 +1462,32 @@ export type Database = {
     }
     Functions: {
       current_company_id: { Args: never; Returns: string }
+      get_invite: {
+        Args: { _token: string }
+        Returns: {
+          company_name: string
+          email: string
+          full_name: string
+          role: Database["public"]["Enums"]["app_role"]
+          valid: boolean
+        }[]
+      }
       has_company_role: {
         Args: { _role: Database["public"]["Enums"]["user_role"] }
         Returns: boolean
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       is_company_manager: { Args: never; Returns: boolean }
+      my_role: { Args: never; Returns: Database["public"]["Enums"]["app_role"] }
     }
     Enums: {
+      app_role: "superuser" | "admin" | "supervisor" | "technician"
       custom_field_target: "asset" | "job_sheet" | "client"
       custom_field_type: "text" | "number" | "dropdown" | "date" | "checkbox"
       job_status:
@@ -1194,6 +1625,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["superuser", "admin", "supervisor", "technician"],
       custom_field_target: ["asset", "job_sheet", "client"],
       custom_field_type: ["text", "number", "dropdown", "date", "checkbox"],
       job_status: [
