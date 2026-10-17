@@ -120,6 +120,7 @@ export type Database = {
           phone: string | null
           receives_job_sheets: boolean
           role_title: string | null
+          site_id: string | null
         }
         Insert: {
           client_id: string
@@ -133,6 +134,7 @@ export type Database = {
           phone?: string | null
           receives_job_sheets?: boolean
           role_title?: string | null
+          site_id?: string | null
         }
         Update: {
           client_id?: string
@@ -146,6 +148,7 @@ export type Database = {
           phone?: string | null
           receives_job_sheets?: boolean
           role_title?: string | null
+          site_id?: string | null
         }
         Relationships: [
           {
@@ -160,6 +163,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_contacts_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
             referencedColumns: ["id"]
           },
         ]
@@ -282,11 +292,14 @@ export type Database = {
           emergency_phone: string | null
           holiday_rate: number
           industry: string | null
+          note_presets: Json
           office_phone: string | null
+          pdf_template: Json
           public_holidays: string[]
           renewal_notice_days: number
           saturday_rate: number
           sunday_rate: number
+          terms: Json
           theme: Json
           updated_at: string
           whatsapp_phone: string | null
@@ -302,11 +315,14 @@ export type Database = {
           emergency_phone?: string | null
           holiday_rate?: number
           industry?: string | null
+          note_presets?: Json
           office_phone?: string | null
+          pdf_template?: Json
           public_holidays?: string[]
           renewal_notice_days?: number
           saturday_rate?: number
           sunday_rate?: number
+          terms?: Json
           theme?: Json
           updated_at?: string
           whatsapp_phone?: string | null
@@ -322,11 +338,14 @@ export type Database = {
           emergency_phone?: string | null
           holiday_rate?: number
           industry?: string | null
+          note_presets?: Json
           office_phone?: string | null
+          pdf_template?: Json
           public_holidays?: string[]
           renewal_notice_days?: number
           saturday_rate?: number
           sunday_rate?: number
+          terms?: Json
           theme?: Json
           updated_at?: string
           whatsapp_phone?: string | null
@@ -559,6 +578,9 @@ export type Database = {
           serial_number: string | null
           signature_data: string | null
           site_id: string | null
+          special_notes: string | null
+          special_notes_in_email: boolean
+          special_notes_in_pdf: boolean
           status: Database["public"]["Enums"]["job_status"]
           technician_name: string | null
           travel_start_time: string | null
@@ -601,6 +623,9 @@ export type Database = {
           serial_number?: string | null
           signature_data?: string | null
           site_id?: string | null
+          special_notes?: string | null
+          special_notes_in_email?: boolean
+          special_notes_in_pdf?: boolean
           status?: Database["public"]["Enums"]["job_status"]
           technician_name?: string | null
           travel_start_time?: string | null
@@ -643,6 +668,9 @@ export type Database = {
           serial_number?: string | null
           signature_data?: string | null
           site_id?: string | null
+          special_notes?: string | null
+          special_notes_in_email?: boolean
+          special_notes_in_pdf?: boolean
           status?: Database["public"]["Enums"]["job_status"]
           technician_name?: string | null
           travel_start_time?: string | null
@@ -1046,6 +1074,7 @@ export type Database = {
           created_by_user_id: string | null
           id: string
           industry_type: string | null
+          is_approved: boolean
           is_global: boolean
           label_value: string
           usage_count: number
@@ -1056,6 +1085,7 @@ export type Database = {
           created_by_user_id?: string | null
           id?: string
           industry_type?: string | null
+          is_approved?: boolean
           is_global?: boolean
           label_value: string
           usage_count?: number
@@ -1066,6 +1096,7 @@ export type Database = {
           created_by_user_id?: string | null
           id?: string
           industry_type?: string | null
+          is_approved?: boolean
           is_global?: boolean
           label_value?: string
           usage_count?: number
