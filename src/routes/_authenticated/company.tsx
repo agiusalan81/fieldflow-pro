@@ -10,6 +10,7 @@ import { useCompanyRules, FONT_CHOICES, applyTypography, DEFAULT_THEME, type Typ
 import { PhoneInput, splitPhone } from "@/components/client-manager";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DocumentSettings } from "@/components/document-settings";
+import { DocumentLibrary } from "@/components/document-library";
 import { IntegrationsSettings } from "@/components/integrations-settings";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -50,6 +51,7 @@ function CompanyPage() {
           {office && <TabsTrigger value="hours">Hours & overtime</TabsTrigger>}
           {office && <TabsTrigger value="profile">Profile & branding</TabsTrigger>}
           {office && <TabsTrigger value="documents">PDF & terms</TabsTrigger>}
+          {office && <TabsTrigger value="library">Document library</TabsTrigger>}
           {office && <TabsTrigger value="integrations">Integrations</TabsTrigger>}
           {team && <TabsTrigger value="team">Team & invites</TabsTrigger>}
           {superuser && <TabsTrigger value="access">Role access</TabsTrigger>}
@@ -57,6 +59,7 @@ function CompanyPage() {
         {office && <TabsContent value="hours" className="mt-4"><HoursTab companyId={profile.company_id} /></TabsContent>}
         {office && <TabsContent value="profile" className="mt-4"><ProfileTab companyId={profile.company_id} /></TabsContent>}
         {office && <TabsContent value="documents" className="mt-4"><DocumentSettings companyId={profile.company_id} /></TabsContent>}
+        {office && <TabsContent value="library" className="mt-4"><DocumentLibrary companyId={profile.company_id} userId={profile.id} /></TabsContent>}
         {office && <TabsContent value="integrations" className="mt-4"><IntegrationsSettings companyId={profile.company_id} /></TabsContent>}
         {team && <TabsContent value="team" className="mt-4"><TeamTab role={profile.role} companyId={profile.company_id} meId={profile.id} /></TabsContent>}
         {superuser && <TabsContent value="access" className="mt-4"><AccessTab companyId={profile.company_id} /></TabsContent>}
