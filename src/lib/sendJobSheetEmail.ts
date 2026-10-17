@@ -14,9 +14,9 @@ function bytesB64(bytes: Uint8Array) {
   return btoa(bin).replace(/.{76}/g, "$&\r\n");
 }
 
-type Attachment = { filename: string; mime: string; data: Uint8Array };
+export type Attachment = { filename: string; mime: string; data: Uint8Array };
 
-function rawEmail(to: string[], subject: string, body: string, attachments: Attachment[]) {
+export function rawEmail(to: string[], subject: string, body: string, attachments: Attachment[]) {
   const boundary = `b_${crypto.randomUUID()}`;
   const parts = [
     `To: ${to.join(", ")}`,
