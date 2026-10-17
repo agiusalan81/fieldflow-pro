@@ -7,7 +7,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { EquipmentManager, PhoneInput, WhatsAppBadge } from "@/components/client-manager";
 import { SiteHierarchy } from "@/components/site-hierarchy";
 import { supabase } from "@/integrations/supabase/client";
-import { useProfile } from "@/lib/profile";
+import { useProfile, isOffice } from "@/lib/profile";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { CustomFieldsForm, useFieldDefs, renderCustomValues } from "@/components/custom-fields";
 import { Button } from "@/components/ui/button";

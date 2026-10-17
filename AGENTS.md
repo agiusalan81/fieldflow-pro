@@ -21,3 +21,6 @@
 - Daily works reports are filed client-side at clock-out (src/lib/dwr-report.ts) into daily_work_reports; assisting-tech time comes from dwr_sheet_entries() matching time-log initials. Why: one ledger managers can filter, no second job sheet needed.
 - DWR, mandatory-break, sheet-search and standby-rotation rules live in src/lib/dwr.ts with tests beside it. Why: keeps rules testable apart from screens.
 - Clock-in before creating a job sheet is enforced by the job_sheets_require_clock_in DB trigger for every role. Why: UI checks alone can be bypassed.
+
+- Billing pricing rules (estimate > contract > client rate card > company default) live in src/lib/billing.ts; integrations config and message templates are parsed only through src/lib/integrations.ts. Why: review screen, settings and future exports must price and render identically.
+- Only office admins may change job-sheet billing review fields, enforced by the job_sheets_guard_billing trigger. Why: UI checks alone can be bypassed.
