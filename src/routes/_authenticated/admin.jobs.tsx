@@ -1,20 +1,20 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useProfile, useCompanyUsers, hoursBetween } from "@/lib/profile";
+import { useProfile, useCompanyUsers } from "@/lib/profile";
+import { matchesSheetFilter } from "@/lib/jobsheets";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { useFieldDefs, renderCustomValues } from "@/components/custom-fields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/admin/jobs")({
   head: () => ({
@@ -30,17 +30,21 @@ export const Route = createFileRoute("/_authenticated/admin/jobs")({
 
 const STATUSES = [["draft", "Draft"], ["pending", "Pending"], ["in_transit", "In transit"], ["in_progress", "In progress"], ["completed", "Completed"]] as const;
 
+const QUEUE_FILTERS = [["admin_queue", "In admin queue"], ["needs_approval", "Needs asset approval"], ["has_pending", "Has pending works"]] as const;
+
 function AdminJobs() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const { data: defs = [] } = useFieldDefs("job_sheet");
   const [filter, setFilter] = useState("all");
   const [q, setQ] = useState("");
+  const [approving, setApproving] = useState<(typeof jobs)[number] | null>(null);
   const { data: jobs = [] } = useQuery({
     queryKey: ["admin-jobs"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("job_sheets")
-        .select("*, clients(name), assets(reference_number), users(full_name)")
+        .select("*, clients(name), sites(name, address), assets(id, reference_number, asset_category, serial_number, custom_attributes), users(full_name), jobsheet_time_logs(daily_total_hours, traveling_time_hours)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -48,21 +52,46 @@ function AdminJobs() {
   });
   const update = async (id: string, patch: Record<string, unknown>) => {
     const { error } = await supabase.from("job_sheets").update(patch as never).eq("id", id);
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(error.message); return false; }
     qc.invalidateQueries({ queryKey: ["admin-jobs"] });
+    return true;
   };
-  const queue = jobs.filter((j) => j.requires_admin_approval || (j.pending_works_future_jobs ?? "").trim());
-  const list = jobs.filter((j) => (filter === "all" || j.status === filter) && `${j.clients?.name} ${j.users?.full_name} ${j.assets?.reference_number}`.toLowerCase().includes(q.toLowerCase()));
+  const open = (id: string) => navigate({ to: "/sheets/$sheetId", params: { sheetId: id } });
+  const stop = (e: React.SyntheticEvent) => e.stopPropagation();
+
+  const confirmApprove = async () => {
+    const j = approving;
+    if (!j) return;
+    if (j.assets?.id) {
+      const attrs = { ...((j.assets.custom_attributes ?? {}) as Record<string, unknown>) };
+      if (j.lift_model) attrs["model"] = j.lift_model;
+      const { error } = await supabase.from("assets").update({
+        custom_attributes: attrs as never,
+        ...(j.serial_number ? { serial_number: j.serial_number } : {}),
+      }).eq("id", j.assets.id);
+      if (error) { toast.error(error.message); return; }
+    }
+    if (await update(j.id, { requires_admin_approval: false })) {
+      toast.success(`Asset ${j.assets?.reference_number ?? ""} approved`);
+      qc.invalidateQueries({ queryKey: ["assets-all"] });
+      setApproving(null);
+    }
+  };
+
+  const queue = jobs.filter((j) => matchesSheetFilter(j, "admin_queue"));
+  const list = jobs.filter((j) => matchesSheetFilter(j, filter) && `${j.clients?.name} ${j.users?.full_name} ${j.assets?.reference_number} ${j.jobsheet_number}`.toLowerCase().includes(q.toLowerCase()));
+  const totalHours = (j: (typeof jobs)[number]) => (j.jobsheet_time_logs ?? []).reduce((s, l) => s + Number(l.daily_total_hours || 0), 0);
 
   return (
     <AppShell title="Job sheets" actions={<NewJobDialog />}>
-      <div className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_200px]">
-        <Input placeholder="Search client, technician or asset" value={q} onChange={(e) => setQ(e.target.value)} />
+      <div className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_220px]">
+        <Input placeholder="Search client, technician, asset or sheet no." value={q} onChange={(e) => setQ(e.target.value)} />
         <Select value={filter} onValueChange={setFilter}>
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All statuses</SelectItem>
-            {STATUSES.map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}
+            <SelectGroup><SelectLabel>Status</SelectLabel>{STATUSES.map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}</SelectGroup>
+            <SelectGroup><SelectLabel>Needs attention</SelectLabel>{QUEUE_FILTERS.map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}</SelectGroup>
           </SelectContent>
         </Select>
       </div>
@@ -71,15 +100,14 @@ function AdminJobs() {
           <h2 className="mb-2 font-medium text-foreground">Admin pending queue ({queue.length})</h2>
           <ul className="space-y-2">
             {queue.map((j) => (
-              <li key={j.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-lg bg-card p-3 text-sm">
+              <li key={j.id} onClick={() => open(j.id)} className="grid cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-lg bg-card p-3 text-sm transition-colors hover:bg-muted/50">
                 <div className="min-w-0">
                   <p className="truncate font-medium"><span className="font-mono text-primary">#{j.jobsheet_number}</span> {j.clients?.name} · {j.users?.full_name ?? "—"}</p>
                   {j.requires_admin_approval && <p className="truncate text-xs text-muted-foreground">Asset changed: model {j.lift_model || "—"}, serial {j.serial_number || "—"}</p>}
-                  {j.pending_works_future_jobs && <p className="truncate text-xs text-muted-foreground">Pending works: {j.pending_works_future_jobs}</p>}
+                  {j.pending_works_future_jobs?.trim() && <p className="truncate text-xs text-muted-foreground">Pending works: {j.pending_works_future_jobs}</p>}
                 </div>
-                <div className="flex gap-1">
-                  {j.requires_admin_approval && <Button size="sm" onClick={() => update(j.id, { requires_admin_approval: false })}>Approve asset</Button>}
-                  {j.pending_works_future_jobs && <Button size="sm" variant="outline" onClick={() => update(j.id, { pending_works_future_jobs: null })}>Mark scheduled</Button>}
+                <div className="flex gap-1" onClick={stop}>
+                  {j.requires_admin_approval && <Button size="sm" onClick={() => setApproving(j)}>Approve asset</Button>}
                 </div>
               </li>
             ))}
@@ -93,9 +121,7 @@ function AdminJobs() {
               <TableRow>
                 <TableHead>Client / asset</TableHead>
                 <TableHead>Technician</TableHead>
-                <TableHead className="text-right">Travel h</TableHead>
-                <TableHead className="text-right">Work h</TableHead>
-                <TableHead>Overtime</TableHead>
+                <TableHead className="text-right">Total h</TableHead>
                 <TableHead className="min-w-56">Custom fields</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
@@ -104,26 +130,20 @@ function AdminJobs() {
               {list.map((j) => {
                 const cv = renderCustomValues(defs, j.custom_values);
                 return (
-                  <TableRow key={j.id}>
+                  <TableRow key={j.id} onClick={() => open(j.id)} className="cursor-pointer hover:bg-muted/50">
                     <TableCell>
-                      <p className="font-medium text-foreground"><Link to="/sheets/$sheetId" params={{ sheetId: j.id }} className="font-mono text-primary">#{j.jobsheet_number}</Link> {j.clients?.name}</p>
+                      <p className="font-medium text-foreground"><span className="font-mono text-primary">#{j.jobsheet_number}</span> {j.clients?.name}</p>
                       <div className="mt-1 flex flex-wrap gap-1">
                         {j.requires_admin_approval && <span className="rounded bg-warning/25 px-1.5 text-[10px] text-warning-foreground">Asset edit needs approval</span>}
-                        {j.status === "completed" && <Link to="/print/$sheetId" params={{ sheetId: j.id }} target="_blank" className="rounded border px-1.5 text-[10px] text-primary">Client PDF</Link>}
+                        {j.pending_works_future_jobs?.trim() && <span className="rounded bg-muted px-1.5 text-[10px] text-muted-foreground">Pending works</span>}
+                        {j.status === "completed" && <Link to="/print/$sheetId" params={{ sheetId: j.id }} target="_blank" onClick={stop} className="rounded border px-1.5 text-[10px] text-primary">Client PDF</Link>}
                       </div>
                       <p className="text-xs text-muted-foreground">{j.assets?.reference_number ?? "—"} · {new Date(j.created_at).toLocaleDateString()}</p>
                     </TableCell>
                     <TableCell className="whitespace-nowrap">{j.users?.full_name ?? <span className="text-muted-foreground">Unassigned</span>}</TableCell>
-                    <TableCell className="text-right tabular-nums">{hoursBetween(j.travel_start_time, j.work_start_time ?? j.work_end_time).toFixed(2)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{hoursBetween(j.work_start_time, j.work_end_time).toFixed(2)}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Switch checked={j.is_overtime} onCheckedChange={(c) => update(j.id, { is_overtime: c })} />
-                        {j.is_overtime && j.overtime_rate && <span className="text-xs text-muted-foreground">×{j.overtime_rate}</span>}
-                      </div>
-                    </TableCell>
+                    <TableCell className="text-right tabular-nums">{totalHours(j).toFixed(2)}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{cv.length ? cv.join(" · ") : "—"}</TableCell>
-                    <TableCell>
+                    <TableCell onClick={stop}>
                       <Select value={j.status} onValueChange={(v) => update(j.id, { status: v })}>
                         <SelectTrigger className="h-8 w-36"><SelectValue /></SelectTrigger>
                         <SelectContent>{STATUSES.map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}</SelectContent>
@@ -136,6 +156,31 @@ function AdminJobs() {
           </Table>
         </div>
       )}
+      <Dialog open={!!approving} onOpenChange={(o) => !o && setApproving(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Approve asset changes</DialogTitle></DialogHeader>
+          {approving && (
+            <div className="space-y-3 text-sm">
+              <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1">
+                <dt className="text-muted-foreground">Job sheet</dt><dd className="font-mono">#{approving.jobsheet_number}</dd>
+                <dt className="text-muted-foreground">Client</dt><dd>{approving.clients?.name ?? "—"}</dd>
+                <dt className="text-muted-foreground">Site</dt><dd>{approving.sites?.name ?? "—"}{approving.sites?.address ? ` · ${approving.sites.address}` : ""}</dd>
+                <dt className="text-muted-foreground">Equipment</dt><dd>{approving.assets ? `${approving.assets.reference_number} · ${approving.assets.asset_category}` : "No linked equipment"}</dd>
+              </dl>
+              <div className="rounded-lg border">
+                <div className="grid grid-cols-3 border-b bg-muted/50 px-3 py-1.5 text-xs font-medium"><span /><span>Current</span><span>Proposed</span></div>
+                <div className="grid grid-cols-3 px-3 py-1.5"><span className="text-muted-foreground">Model</span><span>{String(((approving.assets?.custom_attributes ?? {}) as Record<string, unknown>)["model"] ?? "—")}</span><span className="font-medium">{approving.lift_model || "—"}</span></div>
+                <div className="grid grid-cols-3 px-3 py-1.5"><span className="text-muted-foreground">Serial</span><span>{approving.assets?.serial_number ?? "—"}</span><span className="font-medium">{approving.serial_number || "—"}</span></div>
+              </div>
+              {!approving.assets && <p className="text-xs text-muted-foreground">No equipment is linked, so only the approval flag will be cleared.</p>}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setApproving(null)}>Cancel</Button>
+            <Button onClick={confirmApprove}>Confirm &amp; approve</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
