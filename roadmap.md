@@ -50,3 +50,9 @@
 - [ ] Later: renewal/agreement emails + client e-signature, daily push alerts (needs email/push setup)
 - [ ] Later: Zoho Books estimates, billing and labour rates
 - [ ] Later: per-tenant industry customisation (labels, equipment types)
+- [x] Plain-language message editor (friendly field buttons, client preview)
+- [x] Emergency dispatch goes only to in-app Team Chat
+- [x] Country code picker on every phone field
+- [x] Contract renewal pack (same contract + checklist) with client digital signature
+- [x] Signed job sheets never ask for another signature
+- [x] Resend job sheet to client from the job sheets list
