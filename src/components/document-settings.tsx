@@ -1,15 +1,18 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowDown, ArrowUp, Download, GripVertical, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Download, FileUp, GripVertical, Loader2, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BLOCKS, DOC_TYPES, moveBlock, parsePresets, parseTemplate, parseTerms, termsFor, visibleBlocks, type NotePreset, type PdfTemplate, type Terms } from "@/lib/documents";
 import { buildPdf } from "@/lib/sendJobSheetEmail";
+import { extractDocumentText } from "@/lib/document-library.functions";
+import { DOC_CATEGORIES, type DocCategory } from "@/components/document-library";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const label = (k: string) => BLOCKS.find((b) => b.key === k)?.label ?? k;
 
