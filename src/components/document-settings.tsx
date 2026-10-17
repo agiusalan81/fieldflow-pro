@@ -40,9 +40,9 @@ export function DocumentSettings({ companyId }: { companyId: string }) {
     if (!importFor) return;
     setImporting(true);
     try {
-      const { text, name } = await extractDocumentText({ data: { documentId: id } });
+      const { text } = await extractDocumentText({ data: { documentId: id } });
       setTerms((cur) => cur ? { ...cur, [importFor]: { ...cur[importFor], text } } : cur);
-      toast.success(`Imported text from “${name}” — review it below, then save.`);
+      toast.success("Text imported — review it below, then save.");
       setImportFor(null);
     } catch (e) { toast.error(e instanceof Error ? e.message : "Could not read that document"); }
     setImporting(false);
