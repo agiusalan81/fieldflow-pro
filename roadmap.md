@@ -6,3 +6,14 @@
 - [x] Time in/out: remove +/- buttons, manual edit
 - [x] Photos: Camera + Gallery buttons
 - [x] Full-screen signature + hand-off screen hiding internal notes
+- [x] 4 tenant roles (Superuser, Office Admin, Supervisor, Technician) in separate roles table
+- [x] Staff join links (Admin & Supervisor)
+- [x] Superuser role-access matrix in Company settings
+- [x] Office Admin & Supervisor dashboards
+- [x] Company hours + automatic 1.0× / 1.5× / 2.0× split
+- [x] Contract types, client agreements, renewals queue, checklists (required on maintenance sheets)
+- [x] Pending works screen, Lift estimates & supplier quote tracking
+- [x] Completed sheet cards clickable
+- [ ] Later: renewal/agreement emails + client e-signature, daily push alerts (needs email/push setup)
+- [ ] Later: Zoho Books estimates, billing and labour rates
+- [ ] Later: per-tenant industry customisation (labels, equipment types)
