@@ -129,6 +129,8 @@ function TechToday({ profile }: { profile: Profile }) {
     <AppShell title={`Hi, ${profile.full_name.split(" ")[0]}`}>
       <div className="mx-auto max-w-4xl space-y-6">
         <ShiftTracker profile={profile} />
+        <OvertimeCard userId={profile.id} />
+        <InternalWorkCard profile={profile} />
         <ScanQr />
         <section>
           <h2 className="mb-3 font-medium text-foreground">Today's jobs ({jobs.length})</h2>
