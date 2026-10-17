@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_authenticated/sheets/")({
       { property: "og:description", content: "Your job sheets." },
     ],
   }),
-  validateSearch: (s: Record<string, unknown>): { tab?: "open" | "done" } => (s.tab === "done" ? { tab: "done" } : {}),
+  validateSearch: (s: Record<string, unknown>): { tab?: "open" | "done" } => (s["tab"] === "done" ? { tab: "done" } : {}),
   component: SheetsPage,
 });
 
