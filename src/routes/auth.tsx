@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -21,6 +22,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [mode, setMode] = useState<"signup" | "signin">("signin");
   const [idle, setIdle] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -67,6 +69,7 @@ function AuthPage() {
       else {
         if (remember) window.localStorage.setItem("fieldflow_saved_email", form.email);
         else window.localStorage.removeItem("fieldflow_saved_email");
+        queryClient.clear();
         navigate({ to: "/dashboard" });
       }
     }
