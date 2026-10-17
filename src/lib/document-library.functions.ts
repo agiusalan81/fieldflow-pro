@@ -47,7 +47,8 @@ export const extractDocumentText = createServerFn({ method: "POST" })
       method: "POST",
       headers: { "Lovable-API-Key": key, Authorization: `Bearer ${key}`, "Content-Type": "application/json", "X-Lovable-AIG-SDK": "fetch" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash", stream: true, store: false,
+        model: "openai/gpt-6-astra", stream: true, store: false,
+        reasoning: { effort: "low" },
         input: [{ role: "user", content: [{ type: "input_text", text: PROMPT }, filePart] }],
       }),
     });
