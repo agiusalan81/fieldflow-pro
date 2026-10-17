@@ -92,6 +92,7 @@ function SheetForm() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { data: profile } = useProfile();
+  const { data: company } = useCompanyRules();
   const { data: users = [] } = useCompanyUsers();
 
   const { data } = useQuery({
