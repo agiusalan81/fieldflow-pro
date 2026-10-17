@@ -140,7 +140,11 @@ async function buildPdf(d: {
 /** Emails a completed job sheet (PDF + work-log photos) to the client contacts ticked "Send job sheet" via the connected Gmail account. */
 export const sendJobSheetEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { sheetId: string }) => d)
+  .inputValidator((d: { sheetId: string; recipients?: string[] }) => {
+    const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (d.recipients && (d.recipients.length > 20 || d.recipients.some((e) => typeof e !== "string" || e.length > 254 || !ok.test(e)))) throw new Error("Invalid email address");
+    return d;
+  })
   .handler(async ({ data, context }) => {
     const { supabase } = context;
     const { data: sheet, error } = await supabase
@@ -155,7 +159,7 @@ export const sendJobSheetEmail = createServerFn({ method: "POST" })
       .from("client_contacts").select("email, site_id").eq("client_id", sheet.client_id).eq("receives_job_sheets", true);
     const { data: settings } = await supabase.from("company_settings").select("pdf_template, terms").eq("company_id", sheet.company_id).maybeSingle();
     const notes = sheet.special_notes?.trim() || null;
-    const emails = (contacts ?? []).filter((c) => !c.site_id || !sheet.site_id || c.site_id === sheet.site_id).map((c) => c.email).filter((e): e is string => !!e);
+    const emails = data.recipients?.length ? [...new Set(data.recipients.map((e) => e.trim()))] : (contacts ?? []).filter((c) => !c.site_id || !sheet.site_id || c.site_id === sheet.site_id).map((c) => c.email).filter((e): e is string => !!e);
     if (!emails.length) return { sent: false as const, recipients: [] as string[], reason: "no_recipients" };
 
     const client = sheet.clients as { name: string; billing_address: string | null } | null;

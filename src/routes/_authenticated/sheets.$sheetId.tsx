@@ -501,9 +501,10 @@ function SheetForm() {
               <div className="text-sm"><p className="font-medium">{form.client_full_name as string}</p><p className="text-muted-foreground">ID {form.client_id_card_no as string}</p></div>
             </div>
           ) : <p className="text-sm text-muted-foreground">Not signed yet.</p>}
-          {!readOnly && (
+          {form.signature_data && <p className="mt-2 text-xs text-success">Signed — the PDF opens read-only, no further signature needed.</p>}
+          {!readOnly && !form.signature_data && (
             <Button type="button" className="mt-4 h-11 w-full sm:w-auto" onClick={() => setSignOpen(true)}>
-              <PenLine className="mr-1 h-4 w-4" />{form.signature_data ? "Re-open client sign-off" : "Present to client for sign-off"}
+              <PenLine className="mr-1 h-4 w-4" />Present to client for sign-off
             </Button>
           )}
         </Section>
