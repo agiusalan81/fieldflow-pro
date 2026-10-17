@@ -23,6 +23,7 @@ export type Database = {
           id: string
           location_details: string | null
           reference_number: string
+          serial_number: string | null
           site_id: string | null
         }
         Insert: {
@@ -33,6 +34,7 @@ export type Database = {
           id?: string
           location_details?: string | null
           reference_number: string
+          serial_number?: string | null
           site_id?: string | null
         }
         Update: {
@@ -43,6 +45,7 @@ export type Database = {
           id?: string
           location_details?: string | null
           reference_number?: string
+          serial_number?: string | null
           site_id?: string | null
         }
         Relationships: [
@@ -79,6 +82,7 @@ export type Database = {
           is_primary_contact: boolean
           last_name: string | null
           phone: string | null
+          receives_job_sheets: boolean
           role_title: string | null
         }
         Insert: {
@@ -90,6 +94,7 @@ export type Database = {
           is_primary_contact?: boolean
           last_name?: string | null
           phone?: string | null
+          receives_job_sheets?: boolean
           role_title?: string | null
         }
         Update: {
@@ -101,6 +106,7 @@ export type Database = {
           is_primary_contact?: boolean
           last_name?: string | null
           phone?: string | null
+          receives_job_sheets?: boolean
           role_title?: string | null
         }
         Relationships: [
@@ -126,21 +132,30 @@ export type Database = {
           company_id: string
           created_at: string
           id: string
+          location: string | null
           name: string
+          property_name: string | null
+          street_name: string | null
         }
         Insert: {
           billing_address?: string | null
           company_id: string
           created_at?: string
           id?: string
+          location?: string | null
           name: string
+          property_name?: string | null
+          street_name?: string | null
         }
         Update: {
           billing_address?: string | null
           company_id?: string
           created_at?: string
           id?: string
+          location?: string | null
           name?: string
+          property_name?: string | null
+          street_name?: string | null
         }
         Relationships: [
           {
