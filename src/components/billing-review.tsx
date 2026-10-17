@@ -5,7 +5,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompanyRules } from "@/lib/company";
 import { splitHours, addSplits, DEFAULT_RULES, technicianCount } from "@/lib/jobsheets";
-import { draftLines, lineTotal, linesTotal, parseRates, pickSource, ZERO_RATES, type Line, type PriceSource } from "@/lib/billing";
+import { draftLines, lineTotal, linesTotal, parseRates, pickSource, ZERO_RATES, ratesFor, returnFeeLine, type Line, type PriceSource } from "@/lib/billing";
 import { parseIntegrations, ACCOUNTING } from "@/lib/integrations";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +24,7 @@ export function BillingReview({ sheetId, onClose }: { sheetId: string | null; on
     enabled: !!sheetId,
     queryFn: async () => {
       if (!sheetId) throw new Error("Select a job sheet");
-      const { data: s, error } = await supabase.from("job_sheets").select("id, jobsheet_number, client_id, site_id, estimate_id, billing_status, billing_source, billing_data, created_at, clients(name, labor_rates), jobsheet_time_logs(log_date, time_in, time_out, technician_initials, technician_count), jobsheet_parts(part_description, quantity, unit)").eq("id", sheetId).single();
+      const { data: s, error } = await supabase.from("job_sheets").select("id, jobsheet_number, client_id, site_id, estimate_id, billing_status, billing_source, billing_data, created_at, clients(name, labor_rates), return_fee_hours, jobsheet_time_logs(log_date, time_in, time_out, traveling_time_hours, technician_initials, technician_count), jobsheet_parts(part_description, quantity, unit)").eq("id", sheetId).single();
       if (error) throw error;
       const today = new Date().toISOString().slice(0, 10);
       const [est, ag, cs] = await Promise.all([
@@ -44,7 +44,8 @@ export function BillingReview({ sheetId, onClose }: { sheetId: string | null; on
   const hours = (data?.s.jobsheet_time_logs ?? []).reduce((a, l) => {
     const h = splitHours(l.log_date, l.time_in, l.time_out, rules);
     const n = technicianCount(l.technician_count, l.technician_initials);
-    return addSplits(a, { standard: h.standard * n, ot15: h.ot15 * n, ot20: h.ot20 * n });
+    const t = Number(l.traveling_time_hours) || 0;
+    return addSplits(a, { standard: +((h.standard + t) * n).toFixed(2), ot15: h.ot15 * n, ot20: h.ot20 * n });
   }, { standard: 0, ot15: 0, ot20: 0 });
   const clientRates = parseRates(data?.s.clients?.labor_rates);
   const discount = Number(data?.agreement?.contract_types?.labour_discount_pct ?? 0);
@@ -54,7 +55,8 @@ export function BillingReview({ sheetId, onClose }: { sheetId: string | null; on
     const e = data.estimates.find((x) => x.id === estId);
     const base = draftLines({ source: src, hours, company: data.company, client: clientRates, contractDiscountPct: discount, estimate: e ? { title: e.title, price: Number(e.client_price ?? e.quoted_amount ?? 0), fixedLabor: e.fixed_labor } : null });
     const parts: Line[] = src === "estimate" ? [] : data.s.jobsheet_parts.map((p) => ({ description: p.part_description, qty: Number(p.quantity), unit_price: 0, kind: "parts" }));
-    return [...base, ...parts];
+    const fee = returnFeeLine(Number(data.s.return_fee_hours ?? 0), ratesFor(src === "estimate" ? "company" : src, data.company, clientRates));
+    return [...base, ...(fee ? [fee] : []), ...parts];
   };
 
   useEffect(() => {

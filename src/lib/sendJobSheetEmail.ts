@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { clientPhotos, parsePhotos, labourHours, technicianCount, validateCombinedSheets } from "@/lib/jobsheets";
+import { clientPhotos, parsePhotos, labourHours, technicianCount, validateCombinedSheets, dayLabourHours } from "@/lib/jobsheets";
 import { parseTemplate, parseTerms, termsFor, visibleBlocks, type PdfTemplate } from "@/lib/documents";
 import { sheetTitle } from "@/lib/dwr";
 
