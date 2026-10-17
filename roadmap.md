@@ -77,3 +77,4 @@
 - [x] 1 h return-visit charge on approved unsigned departures unless waived
 - [x] On/off switches for "no one to open" and "unsigned departure" (Messages & emails → On)
 - [x] Travel hours multiplied by technician count
+- [x] Forgot password flow + email trimming on sign-in (fixes mobile 'invalid credentials')
