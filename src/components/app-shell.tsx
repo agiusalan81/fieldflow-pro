@@ -1,17 +1,18 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import {
-  LayoutDashboard, ClipboardList, Clock, MessageSquare, CalendarDays, Users, Wrench, SlidersHorizontal, Package, LogOut, Menu, Plus, CalendarClock, Settings,
+  LayoutDashboard, ClipboardList, Clock, MessageSquare, CalendarDays, Users, Wrench, SlidersHorizontal, Package, LogOut, Menu, Plus, CalendarClock, Settings, Building2, FileSignature, Hammer, Calculator,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useProfile, isManager, setViewAs, type ViewAs } from "@/lib/profile";
+import { useProfile, isManager, isOffice, setViewAs, ROLE_LABEL, type ViewAs } from "@/lib/profile";
+import { useCan, type ModuleKey } from "@/lib/permissions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { useQueryClient } from "@tanstack/react-query";
 
-type NavItem = { to: string; label: string; icon: typeof Clock };
+type NavItem = { to: string; label: string; icon: typeof Clock; module?: ModuleKey; office?: boolean };
 
 const techNav: NavItem[] = [
   { to: "/dashboard", label: "Today", icon: LayoutDashboard },
@@ -26,11 +27,15 @@ const techNav: NavItem[] = [
 const adminNav: NavItem[] = [
   { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { to: "/admin/jobs", label: "Job sheets", icon: ClipboardList },
-  { to: "/admin/entities", label: "Clients & assets", icon: Users },
-  { to: "/admin/inventory", label: "Inventory", icon: Package },
+  { to: "/pending-works", label: "Pending works", icon: Hammer, module: "pending_works" },
+  { to: "/admin/entities", label: "Clients & assets", icon: Users, module: "clients" },
+  { to: "/contracts", label: "Contracts", icon: FileSignature, module: "contracts" },
+  { to: "/estimates", label: "Lift estimates", icon: Calculator, module: "estimates" },
+  { to: "/admin/inventory", label: "Inventory", icon: Package, module: "inventory" },
   { to: "/leave", label: "Leave", icon: CalendarDays },
   { to: "/messages", label: "Chat", icon: MessageSquare },
-  { to: "/admin/fields", label: "Fields & lookups", icon: SlidersHorizontal },
+  { to: "/admin/fields", label: "Fields & lookups", icon: SlidersHorizontal, module: "fields" },
+  { to: "/company", label: "Company", icon: Building2, module: "team" },
   { to: "/sheets", label: "My job sheets", icon: Wrench },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
@@ -60,7 +65,9 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   const navigate = useNavigate();
   const qc = useQueryClient();
   const manager = isManager(profile);
-  const items = manager ? adminNav : techNav;
+  const can = useCan(profile);
+  const office = isOffice(profile);
+  const items = (manager ? adminNav : techNav).filter((i) => !i.module || can(i.module) || (i.to === "/company" && office));
   const canSwitch = profile && profile.real_role !== "technician";
 
   useEffect(() => {
@@ -84,7 +91,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   const footer = (
     <div className="mt-auto border-t border-sidebar-border px-3 pt-4">
       <p className="truncate text-sm font-medium text-sidebar-foreground">{profile?.full_name}</p>
-      <p className="text-xs capitalize text-sidebar-foreground/60">{profile?.role}</p>
+      <p className="text-xs capitalize text-sidebar-foreground/60">{profile ? ROLE_LABEL[profile.role] : ""}</p>
       <Button variant="ghost" size="sm" className="mt-2 -ml-2" onClick={signOut}>
         <LogOut className="mr-2 h-4 w-4" /> Sign out
       </Button>
@@ -120,6 +127,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
               <Select value={profile.role} onValueChange={(v) => { setViewAs(v === profile.real_role ? null : (v as ViewAs)); navigate({ to: "/dashboard" }); }}>
                 <SelectTrigger className="h-9 w-[150px] border-dashed text-xs" aria-label="View As mode"><span className="hidden text-muted-foreground xl:inline">View as:&nbsp;</span><SelectValue /></SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="superuser">Superuser</SelectItem>
                   <SelectItem value="technician">Technician</SelectItem>
                   <SelectItem value="supervisor">Supervisor</SelectItem>
                   <SelectItem value="admin">Office Admin</SelectItem>
