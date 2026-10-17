@@ -222,6 +222,11 @@ function ManagerOverview({ profile }: { profile: Profile }) {
   return isOffice(profile) ? <OfficeOverview profile={profile} /> : <SupervisorOverview profile={profile} />;
 }
 
+/** "My shift & hours" strip shown on every manager overview. */
+function MyHours({ profile }: { profile: Profile }) {
+  return <div className="grid gap-3 lg:grid-cols-2"><ShiftTracker profile={profile} /><OvertimeCard userId={profile.id} /></div>;
+}
+
 function OfficeOverview({ profile }: { profile: Profile }) {
   const can = useCan(profile);
   const navigate = useNavigate();
@@ -235,6 +240,7 @@ function OfficeOverview({ profile }: { profile: Profile }) {
   return (
     <AppShell title={profile.companies?.name ?? "Overview"} actions={<Button asChild size="sm" variant="outline"><Link to="/company">Company settings</Link></Button>}>
       <div className="space-y-6">
+        <MyHours profile={profile} />
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {can("billing") && <Card to="/admin/jobs" title="Completed (30 days)" icon={ClipboardList} value={completed.length} sub={`${tot.standard} h std · ${tot.ot15} h 1.5× · ${tot.ot20} h 2×`} />}
           {can("billing") && <Card to="/admin/jobs" title="Overtime hours" icon={Clock} value={(tot.ot15 + tot.ot20).toFixed(2)} sub="1.5× and 2× in the last 30 days" />}
