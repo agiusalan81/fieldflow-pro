@@ -1,3 +1,4 @@
+import { ClientRates } from "@/components/integrations-settings";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -61,9 +62,11 @@ function Entities() {
               <TabsList className="mb-3">
                 <TabsTrigger value="sites">Sites & contacts</TabsTrigger>
                 <TabsTrigger value="equipment">All equipment</TabsTrigger>
+                {isOffice(profile) && <TabsTrigger value="rates">Labour rates</TabsTrigger>}
               </TabsList>
               <TabsContent value="sites"><SiteHierarchy clientId={manage.id} companyId={profile.company_id} /></TabsContent>
               <TabsContent value="equipment"><EquipmentManager clientId={manage.id} companyId={profile.company_id} /></TabsContent>
+              {isOffice(profile) && <TabsContent value="rates"><ClientRates clientId={manage.id} /></TabsContent>}
             </Tabs>
           )}
         </DialogContent>

@@ -17,6 +17,7 @@ import { Route as AuthenticatedContractsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedDwrRouteImport } from './routes/_authenticated/dwr'
 import { Route as AuthenticatedEstimatesRouteImport } from './routes/_authenticated/estimates'
+import { Route as AuthenticatedHoursRouteImport } from './routes/_authenticated/hours'
 import { Route as AuthenticatedLeaveRouteImport } from './routes/_authenticated/leave'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
 import { Route as AuthenticatedOvertimeRouteImport } from './routes/_authenticated/overtime'
@@ -73,6 +74,11 @@ const AuthenticatedDwrRoute = AuthenticatedDwrRouteImport.update({
 const AuthenticatedEstimatesRoute = AuthenticatedEstimatesRouteImport.update({
   id: '/estimates',
   path: '/estimates',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHoursRoute = AuthenticatedHoursRouteImport.update({
+  id: '/hours',
+  path: '/hours',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedLeaveRoute = AuthenticatedLeaveRouteImport.update({
@@ -181,6 +187,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/dwr': typeof AuthenticatedDwrRoute
   '/estimates': typeof AuthenticatedEstimatesRoute
+  '/hours': typeof AuthenticatedHoursRoute
   '/leave': typeof AuthenticatedLeaveRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/overtime': typeof AuthenticatedOvertimeRoute
@@ -208,6 +215,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/dwr': typeof AuthenticatedDwrRoute
   '/estimates': typeof AuthenticatedEstimatesRoute
+  '/hours': typeof AuthenticatedHoursRoute
   '/leave': typeof AuthenticatedLeaveRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/overtime': typeof AuthenticatedOvertimeRoute
@@ -237,6 +245,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/dwr': typeof AuthenticatedDwrRoute
   '/_authenticated/estimates': typeof AuthenticatedEstimatesRoute
+  '/_authenticated/hours': typeof AuthenticatedHoursRoute
   '/_authenticated/leave': typeof AuthenticatedLeaveRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/overtime': typeof AuthenticatedOvertimeRoute
@@ -266,6 +275,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dwr'
     | '/estimates'
+    | '/hours'
     | '/leave'
     | '/messages'
     | '/overtime'
@@ -293,6 +303,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dwr'
     | '/estimates'
+    | '/hours'
     | '/leave'
     | '/messages'
     | '/overtime'
@@ -321,6 +332,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/dwr'
     | '/_authenticated/estimates'
+    | '/_authenticated/hours'
     | '/_authenticated/leave'
     | '/_authenticated/messages'
     | '/_authenticated/overtime'
@@ -404,6 +416,13 @@ declare module '@tanstack/react-router' {
       path: '/estimates'
       fullPath: '/estimates'
       preLoaderRoute: typeof AuthenticatedEstimatesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/hours': {
+      id: '/_authenticated/hours'
+      path: '/hours'
+      fullPath: '/hours'
+      preLoaderRoute: typeof AuthenticatedHoursRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/leave': {
@@ -541,6 +560,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDwrRoute: typeof AuthenticatedDwrRoute
   AuthenticatedEstimatesRoute: typeof AuthenticatedEstimatesRoute
+  AuthenticatedHoursRoute: typeof AuthenticatedHoursRoute
   AuthenticatedLeaveRoute: typeof AuthenticatedLeaveRoute
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedOvertimeRoute: typeof AuthenticatedOvertimeRoute
@@ -566,6 +586,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDwrRoute: AuthenticatedDwrRoute,
   AuthenticatedEstimatesRoute: AuthenticatedEstimatesRoute,
+  AuthenticatedHoursRoute: AuthenticatedHoursRoute,
   AuthenticatedLeaveRoute: AuthenticatedLeaveRoute,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedOvertimeRoute: AuthenticatedOvertimeRoute,
