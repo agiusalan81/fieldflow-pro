@@ -208,7 +208,7 @@ function useOpsData() {
     queryFn: async () => {
       const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
       const [sheets, inv, leave, shifts, jobs, users] = await Promise.all([
-        supabase.from("job_sheets").select("id, jobsheet_number, status, requires_admin_approval, pending_works_future_jobs, pending_status, assigned_technician_id, updated_at, clients(name), sites(name), users(full_name), billing_status, jobsheet_time_logs(log_date, time_in, time_out)").gte("updated_at", since).order("updated_at", { ascending: false }),
+        supabase.from("job_sheets").select("id, jobsheet_number, status, requires_admin_approval, pending_works_future_jobs, pending_status, assigned_technician_id, updated_at, clients(name), sites(name), users!job_sheets_assigned_technician_id_fkey(full_name), billing_status, jobsheet_time_logs(log_date, time_in, time_out)").gte("updated_at", since).order("updated_at", { ascending: false }),
         supabase.from("inventory_items").select("id, part_name, current_stock, min_stock_level"),
         supabase.from("leave_requests").select("id").eq("status", "pending"),
         supabase.from("shifts").select("user_id, shift_type, started_at").is("ended_at", null),

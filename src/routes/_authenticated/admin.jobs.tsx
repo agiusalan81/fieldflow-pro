@@ -63,7 +63,7 @@ function AdminJobs() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("job_sheets")
-        .select("*, clients(name), sites(name, address), assets(id, reference_number, asset_category, serial_number, custom_attributes), users(full_name), jobsheet_time_logs(daily_total_hours, traveling_time_hours, technician_initials)")
+        .select("*, clients(name), sites(name, address), assets(id, reference_number, asset_category, serial_number, custom_attributes), users!job_sheets_assigned_technician_id_fkey(full_name), jobsheet_time_logs(daily_total_hours, traveling_time_hours, technician_initials)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;

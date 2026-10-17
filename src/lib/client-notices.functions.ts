@@ -50,7 +50,7 @@ export const sendClientNotice = createServerFn({ method: "POST" })
           body: JSON.stringify({ raw: rawEmail(emails, subject, `${text}\n\n${company?.name ?? ""}`, []) }),
         });
         if (!res.ok) console.error(`Notice email failed [${res.status}]: ${await res.text()}`);
-        result.push({ channel: "email", to: emails.join(", "), ok: res.ok, error: res.ok ? undefined : "Email could not be sent" });
+        result.push({ channel: "email", to: emails.join(", "), ok: res.ok, ...(res.ok ? {} : { error: "Email could not be sent" });
       } else result.push({ channel: "email", to: "", ok: false, error: emails.length ? "Email not connected" : "No client email on file" });
     }
     if (tpl.channels.includes("whatsapp")) {
@@ -65,7 +65,7 @@ export const sendClientNotice = createServerFn({ method: "POST" })
         });
         const t = await res.text();
         if (!res.ok) console.error(`Notice WhatsApp failed [${res.status}]: ${t}`);
-        result.push({ channel: "whatsapp", to, ok: res.ok, error: res.ok ? undefined : "WhatsApp refused it (the wording may need Meta approval first)" });
+        result.push({ channel: "whatsapp", to, ok: res.ok, ...(res.ok ? {} : { error: "WhatsApp refused it (the wording may need Meta approval first)" }) });
       }
     }
     const log = [...((sheet.client_notices as unknown[]) ?? []), { event: data.event, at: new Date().toISOString(), by: context.userId, result }];
