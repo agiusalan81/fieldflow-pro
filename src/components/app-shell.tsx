@@ -59,7 +59,7 @@ const EXTRA: Record<string, { label: string; icon: typeof Clock; manager?: boole
 
 const isActive = (path: string, to: string) => (to === "/dashboard" ? path === to : path === to || path.startsWith(to + "/"));
 
-function NavLinks({ items, onNavigate, uid }: { items: NavItem[]; onNavigate?: () => void; uid?: string }) {
+function NavLinks({ items, onNavigate, uid }: { items: NavItem[]; onNavigate?: () => void; uid?: string | undefined }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const groups = [...new Set(items.map((i) => i.group))];
   const activeGroup = items.find((i) => isActive(path, i.to))?.group ?? groups[0];
@@ -95,7 +95,7 @@ function NavLinks({ items, onNavigate, uid }: { items: NavItem[]; onNavigate?: (
   );
 }
 
-function QuickLink({ to, uid, className, children }: { to: string; uid?: string; className: string; children: ReactNode }) {
+function QuickLink({ to, uid, className, children }: { to: string; uid?: string | undefined; className: string; children: ReactNode }) {
   const [p, q] = to.split("?");
   return (
     <Link to={p!} search={q ? { new: true } as never : {} as never} className={className} onClick={() => uid && recordUsage(uid, to)}>
