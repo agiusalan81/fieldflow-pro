@@ -1,12 +1,16 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Car, Play, Square, AlertTriangle, CalendarDays, ClipboardList } from "lucide-react";
+import { QrCode, Car, Play, Square, AlertTriangle, CalendarDays, ClipboardList } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, isManager, formatDuration, type Profile } from "@/lib/profile";
 import { AppShell, StatusBadge, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { createDraftSheet } from "@/lib/jobsheets";
+import { AssetHistory, LiftHistoryButton, PriorityBadge, timeWindow } from "@/components/job-card";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -95,48 +99,93 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
 }
 
 function TechToday({ profile }: { profile: Profile }) {
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const today = new Date().toISOString().slice(0, 10);
   const { data: jobs = [] } = useQuery({
-    queryKey: ["my-jobs"],
+    queryKey: ["today-jobs", profile.id, today],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("job_sheets")
-        .select("id, status, notes, created_at, clients(name), assets(reference_number, asset_category)")
+        .from("jobs")
+        .select("id, job_number, asset_id, window_start, window_end, problem_summary, priority, acknowledged_at, clients(name), sites(name, address), assets(reference_number, asset_category)")
         .eq("assigned_technician_id", profile.id)
-        .order("created_at", { ascending: false });
+        .eq("scheduled_date", today)
+        .order("window_start");
       if (error) throw error;
       return data;
     },
   });
-  const active = jobs.filter((j) => j.status !== "completed");
+
+  const inTransit = async (j: (typeof jobs)[number]) => {
+    try {
+      const id = await createDraftSheet(profile, j.id);
+      await supabase.from("job_sheets").update({ status: "in_transit", travel_start_time: new Date().toISOString() }).eq("id", id);
+      await supabase.from("jobs").update({ acknowledged_at: new Date().toISOString() }).eq("id", j.id);
+      qc.invalidateQueries({ queryKey: ["today-jobs"] });
+      toast.success(`SMS / WhatsApp sent to ${j.clients?.name}: “Your technician is on the way.” (simulated)`);
+    } catch (e) { toast.error((e as Error).message); }
+  };
+
   return (
     <AppShell title={`Hi, ${profile.full_name.split(" ")[0]}`}>
-      <div className="mx-auto max-w-3xl space-y-6">
+      <div className="mx-auto max-w-4xl space-y-6">
         <ShiftTracker profile={profile} />
+        <ScanQr />
         <section>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-medium text-foreground">Open jobs ({active.length})</h2>
-            <Link to="/jobs" className="text-sm text-primary">All jobs</Link>
-          </div>
-          {active.length === 0 ? (
-            <EmptyState>No open jobs assigned to you.</EmptyState>
+          <h2 className="mb-3 font-medium text-foreground">Today's jobs ({jobs.length})</h2>
+          {jobs.length === 0 ? (
+            <EmptyState>No jobs scheduled for you today.</EmptyState>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {active.slice(0, 6).map((j) => (
-                <Link key={j.id} to="/jobs/$jobId" params={{ jobId: j.id }} className="rounded-xl border bg-card p-4 active:bg-accent">
+            <ul className="grid gap-3 md:grid-cols-2">
+              {jobs.map((j) => (
+                <li key={j.id} className="space-y-3 rounded-xl border bg-card p-4">
                   <div className="flex items-start justify-between gap-2">
-                    <p className="min-w-0 truncate font-medium text-foreground">{j.clients?.name}</p>
-                    <StatusBadge status={j.status} />
+                    <div className="min-w-0">
+                      <p className="text-xs text-muted-foreground">Job #{j.job_number} · {timeWindow(j.window_start, j.window_end)}</p>
+                      <p className="truncate font-medium text-foreground">{j.clients?.name}</p>
+                      <p className="truncate text-sm text-muted-foreground">{j.sites?.name ?? "No site"} · {j.assets?.reference_number ?? "No lift"}</p>
+                    </div>
+                    <PriorityBadge p={j.priority} />
                   </div>
-                  <p className="mt-1 truncate text-sm text-muted-foreground">
-                    {j.assets ? `${j.assets.reference_number} · ${j.assets.asset_category}` : "No asset"}
-                  </p>
-                </Link>
+                  <p className="line-clamp-2 text-sm text-foreground">{j.problem_summary || "No problem summary"}</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    <Button variant="outline" className="h-11" onClick={() => inTransit(j)}><Car className="mr-1 h-4 w-4" />In Transit</Button>
+                    <Button className="h-11" onClick={() => navigate({ to: "/sheets/new", search: { jobId: j.id } })}><Play className="mr-1 h-4 w-4" />Start</Button>
+                    <LiftHistoryButton assetId={j.asset_id} label={`${j.assets?.reference_number ?? ""} · ${j.sites?.name ?? j.clients?.name ?? ""}`} />
+                  </div>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
         </section>
       </div>
     </AppShell>
+  );
+}
+
+function ScanQr() {
+  const [open, setOpen] = useState(false);
+  const [code, setCode] = useState("");
+  const [found, setFound] = useState<{ id: string; label: string } | null | "none">(null);
+  const lookup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { data } = await supabase.from("assets").select("id, reference_number, asset_category, clients(name)").ilike("reference_number", code.trim()).maybeSingle();
+    setFound(data ? { id: data.id, label: `${data.reference_number} · ${data.asset_category} · ${data.clients?.name}` } : "none");
+  };
+  return (
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setFound(null); setCode(""); } }}>
+      <DialogTrigger asChild><Button variant="outline" className="h-12 w-full"><QrCode className="mr-2 h-5 w-5" />Scan QR Code</Button></DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Site lookup</DialogTitle></DialogHeader>
+        <form onSubmit={lookup} className="flex gap-2">
+          <Input autoFocus className="h-11" placeholder="Scan or type lift reference" value={code} onChange={(e) => setCode(e.target.value)} />
+          <Button type="submit" className="h-11">Look up</Button>
+        </form>
+        <p className="text-xs text-muted-foreground">Camera scanning is simulated — enter the reference printed under the QR code.</p>
+        {found === "none" && <p className="text-sm text-destructive">No lift found with that reference.</p>}
+        {found && found !== "none" && <AssetHistory assetId={found.id} label={found.label} />}
+      </DialogContent>
+    </Dialog>
   );
 }
 
