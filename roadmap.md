@@ -44,7 +44,8 @@
 - [x] Labour rates: company defaults + per-client rate cards; fixed-price estimates; office admin billing review before export
 - [ ] PDF preview, letterhead/background image, section backgrounds in Company settings
 - [ ] Upload PDF to digitise contracts, checklists, T&Cs
-- [ ] Contract document upload → auto-fill agreement + checklist (next)
+- [x] Document library in Company settings (upload checklists, contracts, T&Cs — source for auto-fill)
+- [ ] Contract document upload → auto-fill agreement + checklist (next: extraction from library docs)
 - [ ] T&C preset library (waiting for the user's reference document)
 - [ ] Automatic WhatsApp sending (needs a WhatsApp Business API account)
 - [ ] Later: renewal/agreement emails + client e-signature, daily push alerts (needs email/push setup)
