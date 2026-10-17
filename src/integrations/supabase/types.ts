@@ -1763,6 +1763,10 @@ export type Database = {
       }
       is_company_manager: { Args: never; Returns: boolean }
       my_role: { Args: never; Returns: Database["public"]["Enums"]["app_role"] }
+      user_initials: {
+        Args: { _full_name: string; _initials: string }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "superuser" | "admin" | "supervisor" | "technician"
