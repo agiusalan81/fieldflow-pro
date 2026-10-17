@@ -13,6 +13,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { useQueryClient } from "@tanstack/react-query";
+import { IdleLogout } from "@/components/idle-logout";
 
 type NavItem = { to: string; label: string; icon: typeof Clock; module?: ModuleKey; office?: boolean };
 
@@ -103,6 +104,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
 
   return (
     <div className="min-h-screen bg-background lg:grid lg:grid-cols-[240px_minmax(0,1fr)]">
+      {profile && company && <IdleLogout userId={profile.id} realRole={profile.real_role} timeoutMin={company.idleTimeout} />}
       <aside className="sticky top-0 hidden h-screen flex-col gap-6 border-r border-sidebar-border bg-sidebar py-6 px-3 lg:flex">
         {brand}
         <NavLinks items={items} />
