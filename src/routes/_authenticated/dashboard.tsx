@@ -296,6 +296,7 @@ function SupervisorOverview({ profile }: { profile: Profile }) {
   return (
     <AppShell title="Field command" actions={<Button asChild size="sm" variant="outline"><Link to="/admin/jobs" search={{ new: true }}>Dispatch job</Link></Button>}>
       <div className="space-y-6">
+        <MyHours profile={profile} />
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {can("live_status") && <Card to="/dashboard" title="Technicians active" icon={Play} value={techs.filter((t) => t.on).length} sub={`of ${techs.length} team members`} />}
           {can("dispatch") && <Card to="/admin/jobs" title="Today's jobs" icon={CalendarDays} value={data?.jobs.length ?? 0} sub={`${done} sheets completed today`} />}
