@@ -141,6 +141,13 @@
       "when": 1792258636055,
       "tag": "0019_client_notices_departure",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1792261100385,
+      "tag": "0020_return_fee_realtime",
+      "breakpoints": true
     }
   ]
 }
