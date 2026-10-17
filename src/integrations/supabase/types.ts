@@ -113,6 +113,7 @@ export type Database = {
           company_id: string
           email: string | null
           first_name: string
+          has_whatsapp: boolean
           id: string
           is_primary_contact: boolean
           last_name: string | null
@@ -125,6 +126,7 @@ export type Database = {
           company_id: string
           email?: string | null
           first_name: string
+          has_whatsapp?: boolean
           id?: string
           is_primary_contact?: boolean
           last_name?: string | null
@@ -137,6 +139,7 @@ export type Database = {
           company_id?: string
           email?: string | null
           first_name?: string
+          has_whatsapp?: boolean
           id?: string
           is_primary_contact?: boolean
           last_name?: string | null
@@ -273,42 +276,60 @@ export type Database = {
       company_settings: {
         Row: {
           after_hours_rate: number
+          company_address: string | null
+          company_email: string | null
           company_id: string
+          emergency_phone: string | null
           holiday_rate: number
           industry: string | null
+          office_phone: string | null
           public_holidays: string[]
           renewal_notice_days: number
           saturday_rate: number
           sunday_rate: number
+          theme: Json
           updated_at: string
+          whatsapp_phone: string | null
           work_days: number[]
           work_end: string
           work_start: string
         }
         Insert: {
           after_hours_rate?: number
+          company_address?: string | null
+          company_email?: string | null
           company_id: string
+          emergency_phone?: string | null
           holiday_rate?: number
           industry?: string | null
+          office_phone?: string | null
           public_holidays?: string[]
           renewal_notice_days?: number
           saturday_rate?: number
           sunday_rate?: number
+          theme?: Json
           updated_at?: string
+          whatsapp_phone?: string | null
           work_days?: number[]
           work_end?: string
           work_start?: string
         }
         Update: {
           after_hours_rate?: number
+          company_address?: string | null
+          company_email?: string | null
           company_id?: string
+          emergency_phone?: string | null
           holiday_rate?: number
           industry?: string | null
+          office_phone?: string | null
           public_holidays?: string[]
           renewal_notice_days?: number
           saturday_rate?: number
           sunday_rate?: number
+          theme?: Json
           updated_at?: string
+          whatsapp_phone?: string | null
           work_days?: number[]
           work_end?: string
           work_start?: string

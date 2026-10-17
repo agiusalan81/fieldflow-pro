@@ -57,6 +57,13 @@
       "when": 1792225449093,
       "tag": "0007_roles_permissions_contracts_estimates",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792227494728,
+      "tag": "0008_whatsapp_phones_theme_pending_autodone",
+      "breakpoints": true
     }
   ]
 }
