@@ -60,7 +60,7 @@ function Renewals({ office }: { office: boolean }) {
   );
 }
 
-function Agreements({ office, companyId }: { office: boolean; companyId?: string }) {
+function Agreements({ office, companyId }: { office: boolean; companyId?: string | undefined }) {
   const qc = useQueryClient();
   const { data = [] } = useAgreements();
   const { data: opts } = useQuery({
@@ -112,7 +112,7 @@ function Agreements({ office, companyId }: { office: boolean; companyId?: string
   );
 }
 
-function Types({ office, companyId }: { office: boolean; companyId?: string }) {
+function Types({ office, companyId }: { office: boolean; companyId?: string | undefined }) {
   const qc = useQueryClient();
   const { data = [] } = useQuery({
     queryKey: ["contract-types"],
@@ -155,7 +155,7 @@ function Types({ office, companyId }: { office: boolean; companyId?: string }) {
   );
 }
 
-function Checklists({ office, companyId }: { office: boolean; companyId?: string }) {
+function Checklists({ office, companyId }: { office: boolean; companyId?: string | undefined }) {
   const qc = useQueryClient();
   const { data = [] } = useQuery({
     queryKey: ["checklists"],
