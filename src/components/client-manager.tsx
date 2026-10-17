@@ -48,7 +48,7 @@ export function ContactsManager({ clientId, companyId, siteId, title = "Contacts
   const others = allContacts.filter((c) => !contacts.some((x) => x.id === c.id));
   const [editing, setEditing] = useState<string | null>(null);
   const [f, setF] = useState<ContactDraft>(emptyContact);
-  const refresh = () => { qc.invalidateQueries({ queryKey: key }); qc.invalidateQueries({ queryKey: ["contacts"] }); qc.invalidateQueries({ queryKey: ["entities-unified"] }); qc.invalidateQueries({ queryKey: ["contact-roles"] }); };
+  const refresh = () => { qc.invalidateQueries({ queryKey: key }); qc.invalidateQueries({ queryKey: ["contacts"] }); qc.invalidateQueries({ queryKey: ["entities-unified"] }); qc.invalidateQueries({ queryKey: ["lookup", "contact_role"] }); };
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
