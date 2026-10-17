@@ -44,3 +44,12 @@ export async function downloadDwr(r: DwrRecord, company: string) {
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
+
+/** Builds the PDF in the browser (local times) and emails it to the technician. */
+export async function emailDwr(r: DwrRecord, company: string) {
+  const { sendDwrEmail } = await import("@/lib/sendDwrEmail");
+  const bytes = await dwrPdf(r, company);
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return sendDwrEmail({ data: { pdfBase64: btoa(bin), filename: `DWR_${r.report_date}.pdf`, date: r.report_date } });
+}
