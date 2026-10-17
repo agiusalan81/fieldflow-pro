@@ -133,7 +133,7 @@ function PendingWorks() {
   );
 }
 
-function ReviewBody({ r }: { r: ReturnType<typeof usePendingWorks>["data"] extends (infer T)[] | undefined ? T : never }) {
+function ReviewBody({ r }: { r: NonNullable<ReturnType<typeof usePendingWorks>["data"]>[number] }) {
   const photos = parsePhotos(r.photo_paths).filter((p) => p.scope === "pending");
   const [urls, setUrls] = useState<string[] | null>(null);
   useEffect(() => {
