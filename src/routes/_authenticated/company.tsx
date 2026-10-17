@@ -142,6 +142,52 @@ function HoursTab({ companyId }: { companyId: string }) {
 
 type Phones = { office_phone: string; whatsapp_phone: string; emergency_phone: string; company_email: string; company_address: string };
 
+/** Shrinks an image to fit 400×400 and returns a PNG data URL, so it embeds in PDFs and emails. */
+function shrinkImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const s = Math.min(1, 400 / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+      c.getContext("2d")!.drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(img.src);
+      resolve(c.toDataURL("image/png"));
+    };
+    img.onerror = () => reject(new Error("That file isn't a readable image"));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+function LogoCard({ companyId, current }: { companyId: string; current: string }) {
+  const qc = useQueryClient();
+  const save = async (logo_data: string | null) => {
+    const { error } = await supabase.from("company_settings").upsert({ company_id: companyId, logo_data });
+    if (error) { toast.error(error.message); return; }
+    toast.success(logo_data ? "Logo saved" : "Logo removed");
+    qc.invalidateQueries({ queryKey: ["company-settings"] });
+  };
+  const pick = async (f?: File) => {
+    if (!f) return;
+    if (f.size > 5 * 1024 * 1024) { toast.error("Logo must be under 5 MB"); return; }
+    try { await save(await shrinkImage(f)); } catch (e) { toast.error((e as Error).message); }
+  };
+  return (
+    <section className="space-y-4 rounded-xl border bg-card p-5">
+      <div><h2 className="font-medium text-foreground">Company logo</h2><p className="text-sm text-muted-foreground">Shown in the menu, on client job sheet PDFs and the sign-off screen. PNG, JPG, SVG or WebP.</p></div>
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="flex h-24 w-24 items-center justify-center rounded-lg border border-dashed bg-muted/40">
+          {current ? <img src={current} alt="Company logo" className="max-h-full max-w-full object-contain p-1" /> : <span className="text-xs text-muted-foreground">No logo</span>}
+        </div>
+        <div className="flex gap-2">
+          <Button asChild variant="outline" className="h-11"><label className="cursor-pointer">{current ? "Change logo" : "Upload logo"}<input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" className="sr-only" onChange={(e) => { pick(e.target.files?.[0]); e.target.value = ""; }} /></label></Button>
+          {current && <Button variant="ghost" className="h-11" onClick={() => save(null)}>Remove</Button>}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function ProfileTab({ companyId }: { companyId: string }) {
   const { data } = useCompanyRules();
   const qc = useQueryClient();
@@ -190,6 +236,7 @@ function ProfileTab({ companyId }: { companyId: string }) {
   };
   return (
     <div className="space-y-4">
+      <LogoCard companyId={companyId} current={data?.logo ?? ""} />
       <section className="space-y-4 rounded-xl border bg-card p-5">
         <div><h2 className="font-medium text-foreground">Company contact details</h2><p className="text-sm text-muted-foreground">Shown to clients on job sheets and in "on the way" messages.</p></div>
         <div className="grid gap-4 sm:grid-cols-2">
