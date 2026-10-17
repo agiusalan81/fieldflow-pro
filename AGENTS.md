@@ -18,3 +18,6 @@
 - Tenant typography lives in company_settings.theme and is applied as --tenant-* CSS variables by AppShell (applyTypography in src/lib/company.ts). Why: one place styles every screen without touching components.
 - Pending works close automatically via the close_pending_on_followup DB trigger when the linked follow-up sheet completes. Why: works even if the technician's app closes mid-submit.
 - Client PDF layout, T&Cs and note presets live in company_settings (pdf_template/terms/note_presets) and are parsed only through src/lib/documents.ts. Why: the settings editor and the email PDF must read them identically.
+- Daily works reports are filed client-side at clock-out (src/lib/dwr-report.ts) into daily_work_reports; assisting-tech time comes from dwr_sheet_entries() matching time-log initials. Why: one ledger managers can filter, no second job sheet needed.
+- DWR, mandatory-break, sheet-search and standby-rotation rules live in src/lib/dwr.ts with tests beside it. Why: keeps rules testable apart from screens.
+- Clock-in before creating a job sheet is enforced by the job_sheets_require_clock_in DB trigger for every role. Why: UI checks alone can be bypassed.
