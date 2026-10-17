@@ -23,6 +23,7 @@ export const Route = createFileRoute("/_authenticated/sheets/")({
       { property: "og:description", content: "Your job sheets." },
     ],
   }),
+  validateSearch: (s: Record<string, unknown>): { tab?: "open" | "done" } => (s["tab"] === "done" ? { tab: "done" } : {}),
   component: SheetsPage,
 });
 
@@ -30,6 +31,7 @@ function SheetsPage() {
   const { data: profile } = useProfile();
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const { tab = "open" } = Route.useSearch();
   const [q, setQ] = useState("");
   const [client, setClient] = useState("all");
   const [from, setFrom] = useState("");
@@ -110,7 +112,7 @@ function SheetsPage() {
           <Input className="h-11" type="date" aria-label="From date" value={from} onChange={(e) => setFrom(e.target.value)} />
           <Input className="h-11" type="date" aria-label="To date" value={to} onChange={(e) => setTo(e.target.value)} />
         </div>
-        <Tabs defaultValue="open">
+        <Tabs value={tab} onValueChange={(v) => navigate({ to: "/sheets", search: v === "done" ? { tab: "done" } : {}, replace: true })}>
           <TabsList className="grid w-full grid-cols-2 sm:w-auto">
             <TabsTrigger value="open">Drafts & In-Progress ({open.length})</TabsTrigger>
             <TabsTrigger value="done">Completed ({done.length})</TabsTrigger>

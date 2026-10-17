@@ -15,3 +15,5 @@
 - "View As" mode and the per-role module switches (role_permissions, src/lib/permissions.ts) are UI visibility only; data access always comes from user_roles in RLS. Why: a display setting must never grant data access.
 - Staff join via single-use invite tokens redeemed in the auth signup trigger. Why: role assignment must happen server-side.
 - Job sheet business rules (sign-off validation, leave hours, balance, overtime split, checklist, renewal window) live in src/lib/jobsheets.ts with tests beside it. Why: keeps rules testable apart from screens.
+- Tenant typography lives in company_settings.theme and is applied as --tenant-* CSS variables by AppShell (applyTypography in src/lib/company.ts). Why: one place styles every screen without touching components.
+- Pending works close automatically via the close_pending_on_followup DB trigger when the linked follow-up sheet completes. Why: works even if the technician's app closes mid-submit.

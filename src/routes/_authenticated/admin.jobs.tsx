@@ -38,6 +38,8 @@ function AdminJobs() {
   const { data: defs = [] } = useFieldDefs("job_sheet");
   const [filter, setFilter] = useState("all");
   const [q, setQ] = useState("");
+  const [mine, setMine] = useState(false);
+  const { data: me } = useProfile();
   const [approving, setApproving] = useState<(typeof jobs)[number] | null>(null);
   const { data: jobs = [] } = useQuery({
     queryKey: ["admin-jobs"],
@@ -79,7 +81,7 @@ function AdminJobs() {
   };
 
   const queue = jobs.filter((j) => matchesSheetFilter(j, "admin_queue"));
-  const list = jobs.filter((j) => matchesSheetFilter(j, filter) && `${j.clients?.name} ${j.users?.full_name} ${j.assets?.reference_number} ${j.jobsheet_number}`.toLowerCase().includes(q.toLowerCase()));
+  const list = jobs.filter((j) => matchesSheetFilter(j, filter) && (!mine || j.assigned_technician_id === me?.id) && `${j.clients?.name} ${j.users?.full_name} ${j.assets?.reference_number} ${j.jobsheet_number}`.toLowerCase().includes(q.toLowerCase()));
   const totalHours = (j: (typeof jobs)[number]) => (j.jobsheet_time_logs ?? []).reduce((s, l) => s + Number(l.daily_total_hours || 0), 0);
 
   return (
@@ -94,6 +96,10 @@ function AdminJobs() {
             <SelectGroup><SelectLabel>Needs attention</SelectLabel>{QUEUE_FILTERS.map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}</SelectGroup>
           </SelectContent>
         </Select>
+      </div>
+      <div className="mb-4 flex gap-2">
+        <Button size="sm" variant={mine ? "outline" : "default"} onClick={() => setMine(false)}>All sheets</Button>
+        <Button size="sm" variant={mine ? "default" : "outline"} onClick={() => setMine(true)}>Assigned to me</Button>
       </div>
       {queue.length > 0 && (
         <section className="mb-4 rounded-xl border border-warning/50 bg-warning/10 p-4">

@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CalendarPlus, CheckCircle2, Receipt } from "lucide-react";
@@ -17,9 +17,9 @@ export const Route = createFileRoute("/_authenticated/pending-works")({
   head: () => ({
     meta: [
       { title: "Pending works — FieldOps" },
-      { name: "description", content: "Follow-up repairs flagged by technicians, ready to schedule or quote." },
+      { name: "description", content: "Follow-up repairs flagged by technicians, ready to schedule or estimate." },
       { property: "og:title", content: "Pending works — FieldOps" },
-      { property: "og:description", content: "Follow-up repairs ready to schedule or quote." },
+      { property: "og:description", content: "Follow-up repairs ready to schedule or estimate." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -27,14 +27,14 @@ export const Route = createFileRoute("/_authenticated/pending-works")({
   component: PendingWorks,
 });
 
-const STATUS: Record<string, string> = { open: "Open", quote: "Awaiting quote", scheduled: "Scheduled", done: "Done" };
+const STATUS: Record<string, string> = { open: "Open", quote: "Awaiting estimate", scheduled: "Scheduled", done: "Done" };
 
 export function usePendingWorks() {
   return useQuery({
     queryKey: ["pending-works"],
     queryFn: async () => {
       const { data, error } = await supabase.from("job_sheets")
-        .select("id, jobsheet_number, client_id, site_id, asset_id, pending_works_future_jobs, pending_status, photo_paths, updated_at, clients(name), sites(name), assets(reference_number), users(full_name)")
+        .select("id, jobsheet_number, client_id, site_id, asset_id, pending_works_future_jobs, pending_status, photo_paths, updated_at, reported_fault, repairs_performed, internal_comments_admin_only, lift_model, serial_number, clients(name), sites(name), assets(reference_number), users(full_name)")
         .not("pending_works_future_jobs", "is", null).neq("pending_works_future_jobs", "").order("updated_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -50,6 +50,7 @@ function PendingWorks() {
   const navigate = useNavigate();
   const [filter, setFilter] = useState("active");
   const [sched, setSched] = useState<(typeof data)[number] | null>(null);
+  const [review, setReview] = useState<(typeof data)[number] | null>(null);
   const [f, setF] = useState({ date: new Date().toISOString().slice(0, 10), tech: "none" });
   const rows = data.filter((r) => filter === "all" || (filter === "active" ? r.pending_status !== "done" : r.pending_status === filter));
   const setStatus = async (id: string, s: string) => {
@@ -94,8 +95,8 @@ function PendingWorks() {
                   <p className="mt-2 whitespace-pre-line text-sm text-foreground">{r.pending_works_future_jobs}</p>
                   <div className="mt-3 flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
                     {r.pending_status !== "scheduled" && r.pending_status !== "done" && <Button size="sm" onClick={() => setSched(r)}><CalendarPlus className="mr-1 h-4 w-4" />Schedule visit</Button>}
-                    {r.pending_status === "open" && <Button size="sm" variant="outline" onClick={() => setStatus(r.id, "quote")}><Receipt className="mr-1 h-4 w-4" />Needs quote</Button>}
-                    {r.pending_status !== "done" && <Button size="sm" variant="outline" onClick={() => setStatus(r.id, "done")}><CheckCircle2 className="mr-1 h-4 w-4" />Mark done</Button>}
+                    {r.pending_status === "open" && <Button size="sm" variant="outline" onClick={() => setReview(r)}><Receipt className="mr-1 h-4 w-4" />Review for estimate</Button>}
+                    {r.pending_status !== "done" && <Button size="sm" variant="outline" onClick={() => setStatus(r.id, "done")}><CheckCircle2 className="mr-1 h-4 w-4" />Close manually</Button>}
                   </div>
                 </li>
               );
@@ -103,6 +104,17 @@ function PendingWorks() {
           </ul>
         )}
       </div>
+      <p className="mx-auto mt-4 max-w-5xl text-xs text-muted-foreground">Scheduled items close automatically when the follow-up job sheet is submitted.</p>
+      <Dialog open={!!review} onOpenChange={(o) => !o && setReview(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader><DialogTitle>Review for estimate — #{review?.jobsheet_number}</DialogTitle></DialogHeader>
+          {review && <ReviewBody r={review} />}
+          <div className="grid gap-2 sm:grid-cols-2">
+            <Button variant="outline" className="h-11" onClick={() => review && navigate({ to: "/sheets/$sheetId", params: { sheetId: review.id } })}>Open full job sheet</Button>
+            <Button className="h-11" onClick={async () => { if (review) { await setStatus(review.id, "quote"); toast.success("Marked as needing an estimate"); setReview(null); } }}><Receipt className="mr-1 h-4 w-4" />Needs estimate</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
       <Dialog open={!!sched} onOpenChange={(o) => !o && setSched(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>Schedule return visit</DialogTitle></DialogHeader>
@@ -118,5 +130,32 @@ function PendingWorks() {
         </DialogContent>
       </Dialog>
     </AppShell>
+  );
+}
+
+function ReviewBody({ r }: { r: NonNullable<ReturnType<typeof usePendingWorks>["data"]>[number] }) {
+  const photos = parsePhotos(r.photo_paths).filter((p) => p.scope === "pending");
+  const [urls, setUrls] = useState<string[] | null>(null);
+  useEffect(() => {
+    if (!photos.length) { setUrls([]); return; }
+    supabase.storage.from("job-photos").createSignedUrls(photos.map((p) => p.path), 600).then(({ data }) => setUrls((data ?? []).map((d) => d.signedUrl).filter(Boolean) as string[]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [r.id]);
+  const row = (l: string, v: string | null | undefined) => v ? <div><p className="text-xs text-muted-foreground">{l}</p><p className="whitespace-pre-line text-sm text-foreground">{v}</p></div> : null;
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-foreground">{r.clients?.name}{r.sites?.name ? ` · ${r.sites.name}` : ""}{r.assets?.reference_number ? ` · ${r.assets.reference_number}` : ""}</p>
+      <div className="grid gap-3 sm:grid-cols-2">{row("Model", r.lift_model)}{row("Serial number", r.serial_number)}</div>
+      {row("Reported fault", r.reported_fault)}
+      {row("Work done on this visit", r.repairs_performed)}
+      <div className="rounded-lg border bg-muted/40 p-3">{row("Pending works (from technician)", r.pending_works_future_jobs)}</div>
+      {row("Internal comments", r.internal_comments_admin_only)}
+      <div>
+        <p className="mb-1 text-xs text-muted-foreground">Pending works photos ({photos.length})</p>
+        {urls === null ? <p className="text-sm text-muted-foreground">Loading…</p> : urls.length ? (
+          <div className="grid grid-cols-3 gap-2">{urls.map((u) => <a key={u} href={u} target="_blank" rel="noreferrer"><img src={u} alt="Pending works" className="aspect-square w-full rounded-md object-cover" /></a>)}</div>
+        ) : <p className="text-sm text-muted-foreground">No photos.</p>}
+      </div>
+    </div>
   );
 }

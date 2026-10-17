@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, Trash2, Pencil } from "lucide-react";
-import { ContactsManager, EquipmentManager, PhoneInput } from "@/components/client-manager";
+import { ContactsManager, EquipmentManager, PhoneInput, WhatsAppBadge } from "@/components/client-manager";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/lib/profile";
 import { AppShell, EmptyState } from "@/components/app-shell";
@@ -49,22 +49,9 @@ function Entities() {
   const { data: profile } = useProfile();
   const onOpen = (c: Open, tab: RecordTab) => setManage({ ...c, tab });
   return (
-    <AppShell title="Clients & assets">
-      <Tabs defaultValue="clients">
-        <div className="mb-4 grid gap-2 sm:grid-cols-[auto_minmax(0,1fr)]">
-          <TabsList>
-            <TabsTrigger value="clients">Clients</TabsTrigger>
-            <TabsTrigger value="sites">Sites</TabsTrigger>
-            <TabsTrigger value="contacts">Contacts</TabsTrigger>
-            <TabsTrigger value="assets">Assets</TabsTrigger>
-          </TabsList>
-          <Input placeholder="Filter…" value={q} onChange={(e) => setQ(e.target.value)} />
-        </div>
-        <TabsContent value="clients"><ClientsTab q={q} onOpen={onOpen} /></TabsContent>
-        <TabsContent value="sites"><SitesTab q={q} onOpen={onOpen} /></TabsContent>
-        <TabsContent value="contacts"><ContactsTab q={q} onOpen={onOpen} /></TabsContent>
-        <TabsContent value="assets"><AssetsTab q={q} onOpen={onOpen} /></TabsContent>
-      </Tabs>
+    <AppShell title="Clients, sites & assets">
+      <div className="mb-3"><Input placeholder="Search client, address, contact, lift reference or serial…" value={q} onChange={(e) => setQ(e.target.value)} /></div>
+      <ClientsTab q={q} onOpen={onOpen} />
       <Dialog open={!!manage} onOpenChange={(o) => !o && setManage(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader><DialogTitle>{manage?.name}</DialogTitle></DialogHeader>
@@ -131,9 +118,9 @@ function ClientsTab({ q, onOpen }: TabProps) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
   const [clientId, setClientId] = useState<string | null>(null);
-  const emptyF = { name: "", property_name: "", street_name: "", location: "", first_name: "", last_name: "", email: "", code: "+356", number: "" };
+  const emptyF = { name: "", property_name: "", street_name: "", location: "", first_name: "", last_name: "", email: "", code: "+356", number: "", whatsapp: false };
   const [f, setF] = useState(emptyF);
-  const refresh = () => { qc.invalidateQueries({ queryKey: ["clients-full"] }); qc.invalidateQueries({ queryKey: ["clients"] }); qc.invalidateQueries({ queryKey: ["contacts"] }); qc.invalidateQueries({ queryKey: ["sites-full"] }); qc.invalidateQueries({ queryKey: ["sheet-refs"] }); };
+  const refresh = () => { qc.invalidateQueries({ queryKey: ["clients-full"] }); qc.invalidateQueries({ queryKey: ["clients"] }); qc.invalidateQueries({ queryKey: ["contacts"] }); qc.invalidateQueries({ queryKey: ["sites-full"] }); qc.invalidateQueries({ queryKey: ["sheet-refs"] }); qc.invalidateQueries({ queryKey: ["entities-unified"] }); };
   const reset = (o: boolean) => { setOpen(o); if (!o) { setStep(1); setClientId(null); setF(emptyF); } };
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,7 +128,7 @@ function ClientsTab({ q, onOpen }: TabProps) {
     const billing_address = [f.property_name, f.street_name, f.location].filter(Boolean).join(", ");
     const { data: c, error } = await supabase.from("clients").insert({ name: f.name, property_name: f.property_name, street_name: f.street_name, location: f.location, billing_address, company_id }).select("id").single();
     if (error || !c) { toast.error(error?.message ?? "Could not save"); return; }
-    const { error: ce } = await supabase.from("client_contacts").insert({ client_id: c.id, company_id, first_name: f.first_name, last_name: f.last_name, email: f.email, phone: `${f.code} ${f.number}`, is_primary_contact: true, receives_job_sheets: true });
+    const { error: ce } = await supabase.from("client_contacts").insert({ client_id: c.id, company_id, first_name: f.first_name, last_name: f.last_name, email: f.email, phone: `${f.code} ${f.number}`, is_primary_contact: true, receives_job_sheets: true, has_whatsapp: f.whatsapp });
     if (ce) { toast.error(ce.message); return; }
     if (billing_address) {
       const { error: se } = await supabase.from("sites").insert({ client_id: c.id, company_id, name: f.property_name || "Main site", address: billing_address });
@@ -149,7 +136,7 @@ function ClientsTab({ q, onOpen }: TabProps) {
     }
     refresh(); setClientId(c.id); setStep(2); toast.success("Client and site saved — now add equipment");
   };
-  const list = clients.filter((c) => match(q, c.name, c.billing_address));
+  const list = clients;
   return (
     <>
       <div className="mb-3 flex justify-end">
@@ -170,6 +157,7 @@ function ClientsTab({ q, onOpen }: TabProps) {
                 </div>
                 <Input required type="email" placeholder="Contact email *" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
                 <PhoneInput required code={f.code} number={f.number} onChange={(code, number) => setF({ ...f, code, number })} />
+                <label className="flex items-center gap-2 text-sm"><Checkbox checked={f.whatsapp} onCheckedChange={(c) => setF({ ...f, whatsapp: !!c })} />This number is on WhatsApp</label>
                 <Button type="submit" className="w-full">Save & continue</Button>
               </form>
             ) : clientId && profile ? (
@@ -181,215 +169,62 @@ function ClientsTab({ q, onOpen }: TabProps) {
           </DialogContent>
         </Dialog>
       </div>
-      {list.length === 0 ? <EmptyState>No clients yet.</EmptyState> : (
-        <div className="overflow-x-auto rounded-xl border bg-card">
-          <Table>
-            <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Address</TableHead><TableHead>Added</TableHead><TableHead /></TableRow></TableHeader>
-            <TableBody>
-              {list.map((c) => (
-                <TableRow key={c.id} className={ROW} onClick={() => onOpen({ id: c.id, name: c.name }, "sites")}>
-                  <TableCell className="font-medium">{c.name}</TableCell>
-                  <TableCell className="text-muted-foreground">{c.billing_address || "—"}</TableCell>
-                  <TableCell className="whitespace-nowrap text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</TableCell>
-                  <TableCell className="whitespace-nowrap text-right">
-                    <Button size="icon" variant="ghost" aria-label="Delete" onClick={(e) => { e.stopPropagation(); del("clients", c.id, refresh); }}><Trash2 className="h-4 w-4" /></Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+      <UnifiedTable q={q} onOpen={onOpen} clients={list} onDelete={(id) => del("clients", id, refresh)} />
     </>
   );
 }
 
-function ContactsTab({ q, onOpen }: TabProps) {
-  const { data: clients = [] } = useClients();
-  const { data: profile } = useProfile();
-  const qc = useQueryClient();
-  const [open, setOpen] = useState(false);
-  const empty = { client_id: "", first_name: "", last_name: "", role_title: "", email: "", phone: "", is_primary_contact: false };
-  const [f, setF] = useState(empty);
-  const { data: contacts = [] } = useQuery({ queryKey: ["contacts"], queryFn: async () => (await supabase.from("client_contacts").select("*, clients(name)").order("first_name")).data ?? [] });
-  const refresh = () => qc.invalidateQueries({ queryKey: ["contacts"] });
-  const save = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!f.client_id) { toast.error("Pick a client"); return; }
-    const { error } = await supabase.from("client_contacts").insert({ ...f, company_id: profile!.company_id });
-    if (error) { toast.error(error.message); return; }
-    setOpen(false); setF(empty); refresh();
-  };
-  const list = contacts.filter((c) => match(q, c.first_name, c.last_name, c.email, c.clients?.name));
-  return (
-    <>
-      <div className="mb-3 flex justify-end">
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button size="sm"><Plus className="mr-1 h-4 w-4" />Add contact</Button></DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>New contact</DialogTitle></DialogHeader>
-            <form onSubmit={save} className="space-y-3">
-              <Select value={f.client_id} onValueChange={(v) => setF({ ...f, client_id: v })}>
-                <SelectTrigger><SelectValue placeholder="Client" /></SelectTrigger>
-                <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-              </Select>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Input required placeholder="First name" value={f.first_name} onChange={(e) => setF({ ...f, first_name: e.target.value })} />
-                <Input placeholder="Last name" value={f.last_name} onChange={(e) => setF({ ...f, last_name: e.target.value })} />
-                <Input placeholder="Role / title" value={f.role_title} onChange={(e) => setF({ ...f, role_title: e.target.value })} />
-                <Input placeholder="Phone" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} />
-              </div>
-              <Input type="email" placeholder="Email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
-              <label className="flex items-center gap-2 text-sm"><Checkbox checked={f.is_primary_contact} onCheckedChange={(c) => setF({ ...f, is_primary_contact: !!c })} />Primary contact</label>
-              <Button type="submit" className="w-full">Save</Button>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-      {list.length === 0 ? <EmptyState>No contacts yet.</EmptyState> : (
-        <div className="overflow-x-auto rounded-xl border bg-card">
-          <Table>
-            <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Client</TableHead><TableHead>Role</TableHead><TableHead>Email</TableHead><TableHead>Phone</TableHead><TableHead /></TableRow></TableHeader>
-            <TableBody>
-              {list.map((c) => (
-                <TableRow key={c.id} className={ROW} onClick={() => onOpen({ id: c.client_id, name: c.clients?.name ?? "" }, "contacts")}>
-                  <TableCell className="whitespace-nowrap font-medium">{c.first_name} {c.last_name}{c.is_primary_contact && <span className="ml-2 rounded bg-primary/15 px-1.5 text-xs text-primary">Primary</span>}</TableCell>
-                  <TableCell>{c.clients?.name}</TableCell>
-                  <TableCell className="text-muted-foreground">{c.role_title ?? "—"}</TableCell>
-                  <TableCell className="text-muted-foreground">{c.email ?? "—"}</TableCell>
-                  <TableCell className="whitespace-nowrap text-muted-foreground">{c.phone ?? "—"}</TableCell>
-                  <TableCell className="text-right"><Button size="icon" variant="ghost" aria-label="Delete" onClick={(e) => { e.stopPropagation(); del("client_contacts", c.id, refresh); }}><Trash2 className="h-4 w-4" /></Button></TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-    </>
-  );
-}
+type Row = { key: string; clientId: string; client: string; contact: string; whatsapp: boolean; site: string; address: string; asset: string; category: string; serial: string };
 
-function AssetsTab({ q, onOpen }: TabProps) {
-  const { data: clients = [] } = useClients();
-  const { data: profile } = useProfile();
-  const { data: defs = [] } = useFieldDefs("asset");
-  const qc = useQueryClient();
-  const [open, setOpen] = useState(false);
+function UnifiedTable({ q, onOpen, clients, onDelete }: { q: string; onOpen: (c: Open, tab: RecordTab) => void; clients: { id: string; name: string; billing_address: string | null }[]; onDelete: (id: string) => void }) {
+  const [client, setClient] = useState("all");
   const [cat, setCat] = useState("all");
-  const empty = { client_id: "", reference_number: "", asset_category: "", location_details: "" };
-  const [f, setF] = useState(empty);
-  const [attrs, setAttrs] = useState<Record<string, unknown>>({});
-  const { data: assets = [] } = useQuery({ queryKey: ["assets"], queryFn: async () => (await supabase.from("assets").select("*, clients(name)").order("reference_number")).data ?? [] });
-  const refresh = () => { qc.invalidateQueries({ queryKey: ["assets"] }); qc.invalidateQueries({ queryKey: ["assets-all"] }); };
-  const categories = Array.from(new Set(assets.map((a) => a.asset_category))).sort();
-  const save = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!f.client_id) { toast.error("Pick a client"); return; }
-    const { error } = await supabase.from("assets").insert({ ...f, custom_attributes: attrs as never, company_id: profile!.company_id });
-    if (error) { toast.error(error.message); return; }
-    setOpen(false); setF(empty); setAttrs({}); refresh();
-  };
-  const list = assets.filter((a) => (cat === "all" || a.asset_category === cat) && match(q, a.reference_number, a.asset_category, a.location_details, a.clients?.name));
+  const { data } = useQuery({
+    queryKey: ["entities-unified"],
+    queryFn: async () => {
+      const [s, c, a] = await Promise.all([
+        supabase.from("sites").select("id, client_id, name, address"),
+        supabase.from("client_contacts").select("client_id, first_name, last_name, phone, is_primary_contact, has_whatsapp"),
+        supabase.from("assets").select("id, client_id, site_id, reference_number, asset_category, serial_number"),
+      ]);
+      return { sites: s.data ?? [], contacts: c.data ?? [], assets: a.data ?? [] };
+    },
+  });
+  const rows: Row[] = clients.flatMap((c) => {
+    const contacts = (data?.contacts ?? []).filter((x) => x.client_id === c.id);
+    const pc = contacts.find((x) => x.is_primary_contact) ?? contacts[0];
+    const contact = pc ? `${pc.first_name} ${pc.last_name ?? ""} · ${pc.phone ?? ""}`.trim() : "—";
+    const sites = (data?.sites ?? []).filter((x) => x.client_id === c.id);
+    const assets = (data?.assets ?? []).filter((x) => x.client_id === c.id);
+    const base = { clientId: c.id, client: c.name, contact, whatsapp: !!pc?.has_whatsapp };
+    if (!assets.length) return [{ ...base, key: c.id, site: sites[0]?.name ?? "—", address: sites[0]?.address ?? c.billing_address ?? "", asset: "", category: "", serial: "" }];
+    return assets.map((a) => {
+      const st = sites.find((x) => x.id === a.site_id) ?? sites[0];
+      return { ...base, key: a.id, site: st?.name ?? "—", address: st?.address ?? c.billing_address ?? "", asset: a.reference_number, category: a.asset_category, serial: a.serial_number ?? "" };
+    });
+  });
+  const categories = Array.from(new Set((data?.assets ?? []).map((a) => a.asset_category))).sort();
+  const list = rows.filter((r) => (client === "all" || r.clientId === client) && (cat === "all" || r.category === cat) && match(q, r.client, r.contact, r.site, r.address, r.asset, r.category, r.serial));
   return (
     <>
-      <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] gap-2 sm:flex sm:justify-between">
-        <Select value={cat} onValueChange={setCat}>
-          <SelectTrigger className="sm:w-56"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All categories</SelectItem>
-            {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button size="sm"><Plus className="mr-1 h-4 w-4" />Add asset</Button></DialogTrigger>
-          <DialogContent className="max-h-[90vh] overflow-y-auto">
-            <DialogHeader><DialogTitle>New asset</DialogTitle></DialogHeader>
-            <form onSubmit={save} className="space-y-3">
-              <Select value={f.client_id} onValueChange={(v) => setF({ ...f, client_id: v })}>
-                <SelectTrigger><SelectValue placeholder="Client" /></SelectTrigger>
-                <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-              </Select>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Input required placeholder="Reference number" value={f.reference_number} onChange={(e) => setF({ ...f, reference_number: e.target.value })} />
-                <Input required list="asset-cats" placeholder="Category" value={f.asset_category} onChange={(e) => setF({ ...f, asset_category: e.target.value })} />
-                <datalist id="asset-cats">{categories.map((c) => <option key={c} value={c} />)}</datalist>
-              </div>
-              <Input placeholder="Location details" value={f.location_details} onChange={(e) => setF({ ...f, location_details: e.target.value })} />
-              {defs.length > 0 && <CustomFieldsForm defs={defs} values={attrs} onChange={setAttrs} />}
-              <Button type="submit" className="w-full">Save</Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+      <div className="mb-3 grid gap-2 sm:grid-cols-2">
+        <Select value={client} onValueChange={setClient}><SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent><SelectItem value="all">All clients</SelectItem>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select>
+        <Select value={cat} onValueChange={setCat}><SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent><SelectItem value="all">All equipment types</SelectItem>{categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select>
       </div>
-      {list.length === 0 ? <EmptyState>No assets found.</EmptyState> : (
+      {list.length === 0 ? <EmptyState>Nothing matches these filters.</EmptyState> : (
         <div className="overflow-x-auto rounded-xl border bg-card">
           <Table>
-            <TableHeader><TableRow><TableHead>Reference</TableHead><TableHead>Category</TableHead><TableHead>Client</TableHead><TableHead>Location</TableHead><TableHead>Attributes</TableHead><TableHead /></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>Client</TableHead><TableHead>Primary contact</TableHead><TableHead>Site / address</TableHead><TableHead>Equipment</TableHead><TableHead /></TableRow></TableHeader>
             <TableBody>
-              {list.map((a) => (
-                <TableRow key={a.id} className={ROW} onClick={() => onOpen({ id: a.client_id, name: a.clients?.name ?? "" }, "equipment")}>
-                  <TableCell className="font-medium">{a.reference_number}</TableCell>
-                  <TableCell><span className="rounded-full bg-secondary px-2 py-0.5 text-xs">{a.asset_category}</span></TableCell>
-                  <TableCell>{a.clients?.name}</TableCell>
-                  <TableCell className="text-muted-foreground">{a.location_details ?? "—"}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{renderCustomValues(defs, a.custom_attributes).join(" · ") || "—"}</TableCell>
-                  <TableCell className="text-right"><Button size="icon" variant="ghost" aria-label="Delete" onClick={(e) => { e.stopPropagation(); del("assets", a.id, refresh); }}><Trash2 className="h-4 w-4" /></Button></TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-    </>
-  );
-}
-
-function SitesTab({ q, onOpen }: TabProps) {
-  const { data: clients = [] } = useClients();
-  const { data: profile } = useProfile();
-  const qc = useQueryClient();
-  const [open, setOpen] = useState(false);
-  const [f, setF] = useState({ client_id: "", name: "", address: "" });
-  const { data: sites = [] } = useQuery({ queryKey: ["sites-full"], queryFn: async () => (await supabase.from("sites").select("*, clients(name)").order("name")).data ?? [] });
-  const refresh = () => { qc.invalidateQueries({ queryKey: ["sites-full"] }); qc.invalidateQueries({ queryKey: ["sites"] }); };
-  const save = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!f.client_id) { toast.error("Pick a client"); return; }
-    const { error } = await supabase.from("sites").insert({ ...f, company_id: profile!.company_id });
-    if (error) { toast.error(error.message); return; }
-    setOpen(false); setF({ client_id: "", name: "", address: "" }); refresh();
-  };
-  const list = sites.filter((s) => match(q, s.name, s.address, s.clients?.name));
-  return (
-    <>
-      <div className="mb-3 flex justify-end">
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button size="sm"><Plus className="mr-1 h-4 w-4" />Add site</Button></DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>New site</DialogTitle></DialogHeader>
-            <form onSubmit={save} className="space-y-3">
-              <Select value={f.client_id} onValueChange={(v) => setF({ ...f, client_id: v })}>
-                <SelectTrigger><SelectValue placeholder="Client" /></SelectTrigger>
-                <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-              </Select>
-              <Input required placeholder="Site name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
-              <Input placeholder="Address" value={f.address} onChange={(e) => setF({ ...f, address: e.target.value })} />
-              <Button type="submit" className="w-full">Save</Button>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-      {list.length === 0 ? <EmptyState>No sites yet.</EmptyState> : (
-        <div className="overflow-x-auto rounded-xl border bg-card">
-          <Table>
-            <TableHeader><TableRow><TableHead>Site</TableHead><TableHead>Client</TableHead><TableHead>Address</TableHead><TableHead /></TableRow></TableHeader>
-            <TableBody>
-              {list.map((s) => (
-                <TableRow key={s.id} className={ROW} onClick={() => onOpen({ id: s.client_id, name: s.clients?.name ?? "" }, "sites")}>
-                  <TableCell className="font-medium">{s.name}</TableCell>
-                  <TableCell>{s.clients?.name}</TableCell>
-                  <TableCell className="text-muted-foreground">{s.address ?? "—"}</TableCell>
-                  <TableCell className="text-right"><Button size="icon" variant="ghost" aria-label="Delete" onClick={(e) => { e.stopPropagation(); del("sites", s.id, refresh); }}><Trash2 className="h-4 w-4" /></Button></TableCell>
+              {list.map((r) => (
+                <TableRow key={r.key} className={ROW} onClick={() => onOpen({ id: r.clientId, name: r.client }, r.asset ? "equipment" : "sites")}>
+                  <TableCell className="font-medium">{r.client}</TableCell>
+                  <TableCell className="text-sm">{r.contact}{r.whatsapp && <WhatsAppBadge />}</TableCell>
+                  <TableCell className="text-sm"><span className="text-foreground">{r.site}</span><span className="block text-xs text-muted-foreground">{r.address || "—"}</span></TableCell>
+                  <TableCell className="text-sm">{r.asset ? <><span className="font-mono">{r.asset}</span> <span className="rounded-full bg-secondary px-2 py-0.5 text-xs">{r.category}</span>{r.serial && <span className="block text-xs text-muted-foreground">S/N {r.serial}</span>}</> : <span className="text-muted-foreground">No equipment</span>}</TableCell>
+                  <TableCell className="text-right"><Button size="icon" variant="ghost" aria-label="Delete client" onClick={(e) => { e.stopPropagation(); onDelete(r.clientId); }}><Trash2 className="h-4 w-4" /></Button></TableCell>
                 </TableRow>
               ))}
             </TableBody>

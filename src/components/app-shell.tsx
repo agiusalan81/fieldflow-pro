@@ -1,13 +1,15 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import {
-  LayoutDashboard, ClipboardList, Clock, MessageSquare, CalendarDays, Users, Wrench, SlidersHorizontal, Package, LogOut, Menu, Plus, CalendarClock, Settings, Building2, FileSignature, Hammer, Calculator,
+  LayoutDashboard, ClipboardList, Clock, MessageSquare, CalendarDays, Users, SlidersHorizontal, Package, LogOut, Menu, Plus, CalendarClock, Settings, Building2, FileSignature, Hammer, Calculator,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, isManager, isOffice, setViewAs, ROLE_LABEL, type ViewAs } from "@/lib/profile";
 import { useCan, type ModuleKey } from "@/lib/permissions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEffect } from "react";
+import { useCompanyRules, applyTypography } from "@/lib/company";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { useQueryClient } from "@tanstack/react-query";
@@ -36,7 +38,6 @@ const adminNav: NavItem[] = [
   { to: "/messages", label: "Chat", icon: MessageSquare },
   { to: "/admin/fields", label: "Fields & lookups", icon: SlidersHorizontal, module: "fields" },
   { to: "/company", label: "Company", icon: Building2, module: "team" },
-  { to: "/sheets", label: "My job sheets", icon: Wrench },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
@@ -70,6 +71,8 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   const items = (manager ? adminNav : techNav).filter((i) => !i.module || can(i.module) || (i.to === "/company" && office));
   const canSwitch = profile && profile.real_role !== "technician";
 
+  const { data: company } = useCompanyRules();
+  useEffect(() => { applyTypography(company?.theme); }, [company?.theme]);
   useEffect(() => {
     document.documentElement.classList.toggle("dark", profile?.app_theme_preference === "dark");
   }, [profile?.app_theme_preference]);
@@ -175,4 +178,14 @@ export function StatusBadge({ status }: { status: string }) {
 
 export function EmptyState({ children }: { children: ReactNode }) {
   return <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">{children}</div>;
+}
+
+/** Goes back one step in browser history; falls back to a given page when opened directly. */
+export function BackButton({ fallback = "/dashboard" }: { fallback?: string }) {
+  const navigate = useNavigate();
+  return (
+    <Button variant="ghost" size="sm" onClick={() => (window.history.length > 1 ? window.history.back() : navigate({ to: fallback }))}>
+      <ArrowLeft className="mr-1 h-4 w-4" />Back
+    </Button>
+  );
 }

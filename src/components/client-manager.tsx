@@ -29,8 +29,12 @@ export function PhoneInput({ code, number, onChange, required }: { code: string;
   );
 }
 
-type ContactDraft = { first_name: string; last_name: string; email: string; code: string; number: string; role_title: string; is_primary_contact: boolean; receives_job_sheets: boolean };
-const emptyContact: ContactDraft = { first_name: "", last_name: "", email: "", code: "+356", number: "", role_title: "", is_primary_contact: false, receives_job_sheets: false };
+export function WhatsAppBadge() {
+  return <span className="ml-2 rounded bg-success/15 px-1.5 text-xs text-success">WhatsApp</span>;
+}
+
+type ContactDraft = { first_name: string; last_name: string; email: string; code: string; number: string; role_title: string; is_primary_contact: boolean; receives_job_sheets: boolean; has_whatsapp: boolean };
+const emptyContact: ContactDraft = { first_name: "", last_name: "", email: "", code: "+356", number: "", role_title: "", is_primary_contact: false, receives_job_sheets: false, has_whatsapp: false };
 
 export function ContactsManager({ clientId, companyId }: { clientId: string; companyId: string }) {
   const qc = useQueryClient();
@@ -42,7 +46,7 @@ export function ContactsManager({ clientId, companyId }: { clientId: string; com
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
-    const row = { first_name: f.first_name, last_name: f.last_name, email: f.email, phone: `${f.code} ${f.number}`.trim(), role_title: f.role_title || null, is_primary_contact: f.is_primary_contact, receives_job_sheets: f.receives_job_sheets };
+    const row = { first_name: f.first_name, last_name: f.last_name, email: f.email, phone: `${f.code} ${f.number}`.trim(), role_title: f.role_title || null, is_primary_contact: f.is_primary_contact, receives_job_sheets: f.receives_job_sheets, has_whatsapp: f.has_whatsapp };
     const { error } = editing === "new"
       ? await supabase.from("client_contacts").insert({ ...row, client_id: clientId, company_id: companyId })
       : await supabase.from("client_contacts").update(row).eq("id", editing!);
@@ -71,6 +75,7 @@ export function ContactsManager({ clientId, companyId }: { clientId: string; com
       <div className="flex flex-wrap gap-4 text-sm">
         <label className="flex items-center gap-2"><Checkbox checked={f.is_primary_contact} onCheckedChange={(c) => setF({ ...f, is_primary_contact: !!c })} />Primary contact</label>
         <label className="flex items-center gap-2"><Checkbox checked={f.receives_job_sheets} onCheckedChange={(c) => setF({ ...f, receives_job_sheets: !!c })} />Send job sheets</label>
+        <label className="flex items-center gap-2"><Checkbox checked={f.has_whatsapp} onCheckedChange={(c) => setF({ ...f, has_whatsapp: !!c })} />Available on WhatsApp</label>
       </div>
       <div className="flex gap-2"><Button type="submit" size="sm"><Check className="mr-1 h-4 w-4" />Save</Button><Button type="button" size="sm" variant="ghost" onClick={() => setEditing(null)}><X className="mr-1 h-4 w-4" />Cancel</Button></div>
     </form>
@@ -89,10 +94,10 @@ export function ContactsManager({ clientId, companyId }: { clientId: string; com
         <div key={c.id} className="flex items-center gap-3 rounded-lg border p-2">
           <label className="flex flex-col items-center text-[10px] text-muted-foreground"><Checkbox aria-label="Send job sheets" checked={c.receives_job_sheets} onCheckedChange={(v) => toggleRecipient(c.id, !!v)} />Send</label>
           <div className="min-w-0 flex-1 text-sm">
-            <div className="font-medium">{c.first_name} {c.last_name}{c.is_primary_contact && <span className="ml-2 rounded bg-primary/15 px-1.5 text-xs text-primary">Primary</span>}</div>
+            <div className="font-medium">{c.first_name} {c.last_name}{c.is_primary_contact && <span className="ml-2 rounded bg-primary/15 px-1.5 text-xs text-primary">Primary</span>}{c.has_whatsapp && <WhatsAppBadge />}</div>
             <div className="truncate text-muted-foreground">{c.email} · {c.phone}</div>
           </div>
-          <Button size="icon" variant="ghost" aria-label="Edit" onClick={() => { const p = splitPhone(c.phone); setF({ first_name: c.first_name, last_name: c.last_name ?? "", email: c.email ?? "", code: p.code, number: p.number, role_title: c.role_title ?? "", is_primary_contact: c.is_primary_contact, receives_job_sheets: c.receives_job_sheets }); setEditing(c.id); }}><Pencil className="h-4 w-4" /></Button>
+          <Button size="icon" variant="ghost" aria-label="Edit" onClick={() => { const p = splitPhone(c.phone); setF({ first_name: c.first_name, last_name: c.last_name ?? "", email: c.email ?? "", code: p.code, number: p.number, role_title: c.role_title ?? "", is_primary_contact: c.is_primary_contact, receives_job_sheets: c.receives_job_sheets, has_whatsapp: c.has_whatsapp }); setEditing(c.id); }}><Pencil className="h-4 w-4" /></Button>
           <Button size="icon" variant="ghost" aria-label="Delete" onClick={() => remove(c.id)}><Trash2 className="h-4 w-4" /></Button>
         </div>
       ))}

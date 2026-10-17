@@ -12,7 +12,7 @@ import { AppShell, StatusBadge, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { createDraftSheet, splitHours, addSplits, DEFAULT_RULES } from "@/lib/jobsheets";
+import { splitHours, addSplits, DEFAULT_RULES } from "@/lib/jobsheets";
 import { AssetHistory, LiftHistoryButton, PriorityBadge, timeWindow } from "@/components/job-card";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -93,7 +93,6 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
 
 function TechToday({ profile }: { profile: Profile }) {
   const navigate = useNavigate();
-  const qc = useQueryClient();
   const today = new Date().toISOString().slice(0, 10);
   const { data: jobs = [] } = useQuery({
     queryKey: ["today-jobs", profile.id, today],
@@ -109,15 +108,6 @@ function TechToday({ profile }: { profile: Profile }) {
     },
   });
 
-  const inTransit = async (j: (typeof jobs)[number]) => {
-    try {
-      const id = await createDraftSheet(profile, j.id);
-      await supabase.from("job_sheets").update({ status: "in_transit", travel_start_time: new Date().toISOString() }).eq("id", id);
-      await supabase.from("jobs").update({ acknowledged_at: new Date().toISOString() }).eq("id", j.id);
-      qc.invalidateQueries({ queryKey: ["today-jobs"] });
-      toast.success(`SMS / WhatsApp sent to ${j.clients?.name}: “Your technician is on the way.” (simulated)`);
-    } catch (e) { toast.error((e as Error).message); }
-  };
 
   return (
     <AppShell title={`Hi, ${profile.full_name.split(" ")[0]}`}>
@@ -141,8 +131,7 @@ function TechToday({ profile }: { profile: Profile }) {
                     <PriorityBadge p={j.priority} />
                   </div>
                   <p className="line-clamp-2 text-sm text-foreground">{j.problem_summary || "No problem summary"}</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    <Button variant="outline" className="h-11" onClick={() => inTransit(j)}><Car className="mr-1 h-4 w-4" />In Transit</Button>
+                  <div className="grid grid-cols-2 gap-2">
                     <Button className="h-11" onClick={() => navigate({ to: "/sheets/new", search: { jobId: j.id } })}><Play className="mr-1 h-4 w-4" />Start</Button>
                     <LiftHistoryButton assetId={j.asset_id} label={`${j.assets?.reference_number ?? ""} · ${j.sites?.name ?? j.clients?.name ?? ""}`} />
                   </div>
