@@ -26,6 +26,13 @@
 - [x] Self-learning contact roles with admin approve/rename/merge
 - [x] Schedule: Details + Start job (auto-acknowledge)
 - [x] PDF layout designer, Terms & Conditions, special note presets
+- [x] My leave (own balance only) + separate Leave approvals with applicant balance; rejected leave shown struck-through
+- [x] Equipment "Other" → specify type, learnt + reviewed in Fields & lookups
+- [x] Technicians must clock in to start a job sheet ("Clock in & start")
+- [x] Contract categories Residential/Commercial/Other (learnt); tier sets visits (Gold 12, Silver 6, Bronze 4)
+- [x] Dispatch job opens the schedule form; model & serial pre-filled from equipment (editable)
+- [ ] Contract document upload → auto-fill agreement + checklist (next)
+- [ ] T&C preset library (waiting for the user's reference document)
 - [ ] Automatic WhatsApp sending (needs a WhatsApp Business API account)
 - [ ] Later: renewal/agreement emails + client e-signature, daily push alerts (needs email/push setup)
 - [ ] Later: Zoho Books estimates, billing and labour rates
