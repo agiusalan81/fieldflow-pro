@@ -16,6 +16,10 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedLeaveRouteImport } from './routes/_authenticated/leave'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
 import { Route as AuthenticatedOvertimeRouteImport } from './routes/_authenticated/overtime'
+import { Route as AuthenticatedAdminEntitiesRouteImport } from './routes/_authenticated/admin.entities'
+import { Route as AuthenticatedAdminFieldsRouteImport } from './routes/_authenticated/admin.fields'
+import { Route as AuthenticatedAdminInventoryRouteImport } from './routes/_authenticated/admin.inventory'
+import { Route as AuthenticatedAdminJobsRouteImport } from './routes/_authenticated/admin.jobs'
 import { Route as AuthenticatedJobsIndexRouteImport } from './routes/_authenticated/jobs.index'
 import { Route as AuthenticatedJobsJobIdRouteImport } from './routes/_authenticated/jobs.$jobId'
 
@@ -53,6 +57,29 @@ const AuthenticatedOvertimeRoute = AuthenticatedOvertimeRouteImport.update({
   path: '/overtime',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminEntitiesRoute =
+  AuthenticatedAdminEntitiesRouteImport.update({
+    id: '/admin/entities',
+    path: '/admin/entities',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminFieldsRoute =
+  AuthenticatedAdminFieldsRouteImport.update({
+    id: '/admin/fields',
+    path: '/admin/fields',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminInventoryRoute =
+  AuthenticatedAdminInventoryRouteImport.update({
+    id: '/admin/inventory',
+    path: '/admin/inventory',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminJobsRoute = AuthenticatedAdminJobsRouteImport.update({
+  id: '/admin/jobs',
+  path: '/admin/jobs',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedJobsIndexRoute = AuthenticatedJobsIndexRouteImport.update({
   id: '/jobs/',
   path: '/jobs/',
@@ -71,6 +98,10 @@ export interface FileRoutesByFullPath {
   '/leave': typeof AuthenticatedLeaveRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/overtime': typeof AuthenticatedOvertimeRoute
+  '/admin/entities': typeof AuthenticatedAdminEntitiesRoute
+  '/admin/fields': typeof AuthenticatedAdminFieldsRoute
+  '/admin/inventory': typeof AuthenticatedAdminInventoryRoute
+  '/admin/jobs': typeof AuthenticatedAdminJobsRoute
   '/jobs/$jobId': typeof AuthenticatedJobsJobIdRoute
   '/jobs/': typeof AuthenticatedJobsIndexRoute
 }
@@ -81,6 +112,10 @@ export interface FileRoutesByTo {
   '/leave': typeof AuthenticatedLeaveRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/overtime': typeof AuthenticatedOvertimeRoute
+  '/admin/entities': typeof AuthenticatedAdminEntitiesRoute
+  '/admin/fields': typeof AuthenticatedAdminFieldsRoute
+  '/admin/inventory': typeof AuthenticatedAdminInventoryRoute
+  '/admin/jobs': typeof AuthenticatedAdminJobsRoute
   '/jobs/$jobId': typeof AuthenticatedJobsJobIdRoute
   '/jobs': typeof AuthenticatedJobsIndexRoute
 }
@@ -93,6 +128,10 @@ export interface FileRoutesById {
   '/_authenticated/leave': typeof AuthenticatedLeaveRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/overtime': typeof AuthenticatedOvertimeRoute
+  '/_authenticated/admin/entities': typeof AuthenticatedAdminEntitiesRoute
+  '/_authenticated/admin/fields': typeof AuthenticatedAdminFieldsRoute
+  '/_authenticated/admin/inventory': typeof AuthenticatedAdminInventoryRoute
+  '/_authenticated/admin/jobs': typeof AuthenticatedAdminJobsRoute
   '/_authenticated/jobs/$jobId': typeof AuthenticatedJobsJobIdRoute
   '/_authenticated/jobs/': typeof AuthenticatedJobsIndexRoute
 }
@@ -105,6 +144,10 @@ export interface FileRouteTypes {
     | '/leave'
     | '/messages'
     | '/overtime'
+    | '/admin/entities'
+    | '/admin/fields'
+    | '/admin/inventory'
+    | '/admin/jobs'
     | '/jobs/$jobId'
     | '/jobs/'
   fileRoutesByTo: FileRoutesByTo
@@ -115,6 +158,10 @@ export interface FileRouteTypes {
     | '/leave'
     | '/messages'
     | '/overtime'
+    | '/admin/entities'
+    | '/admin/fields'
+    | '/admin/inventory'
+    | '/admin/jobs'
     | '/jobs/$jobId'
     | '/jobs'
   id:
@@ -126,6 +173,10 @@ export interface FileRouteTypes {
     | '/_authenticated/leave'
     | '/_authenticated/messages'
     | '/_authenticated/overtime'
+    | '/_authenticated/admin/entities'
+    | '/_authenticated/admin/fields'
+    | '/_authenticated/admin/inventory'
+    | '/_authenticated/admin/jobs'
     | '/_authenticated/jobs/$jobId'
     | '/_authenticated/jobs/'
   fileRoutesById: FileRoutesById
@@ -187,6 +238,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOvertimeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/entities': {
+      id: '/_authenticated/admin/entities'
+      path: '/admin/entities'
+      fullPath: '/admin/entities'
+      preLoaderRoute: typeof AuthenticatedAdminEntitiesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/fields': {
+      id: '/_authenticated/admin/fields'
+      path: '/admin/fields'
+      fullPath: '/admin/fields'
+      preLoaderRoute: typeof AuthenticatedAdminFieldsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/inventory': {
+      id: '/_authenticated/admin/inventory'
+      path: '/admin/inventory'
+      fullPath: '/admin/inventory'
+      preLoaderRoute: typeof AuthenticatedAdminInventoryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/jobs': {
+      id: '/_authenticated/admin/jobs'
+      path: '/admin/jobs'
+      fullPath: '/admin/jobs'
+      preLoaderRoute: typeof AuthenticatedAdminJobsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/jobs/': {
       id: '/_authenticated/jobs/'
       path: '/jobs'
@@ -209,6 +288,10 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLeaveRoute: typeof AuthenticatedLeaveRoute
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedOvertimeRoute: typeof AuthenticatedOvertimeRoute
+  AuthenticatedAdminEntitiesRoute: typeof AuthenticatedAdminEntitiesRoute
+  AuthenticatedAdminFieldsRoute: typeof AuthenticatedAdminFieldsRoute
+  AuthenticatedAdminInventoryRoute: typeof AuthenticatedAdminInventoryRoute
+  AuthenticatedAdminJobsRoute: typeof AuthenticatedAdminJobsRoute
   AuthenticatedJobsJobIdRoute: typeof AuthenticatedJobsJobIdRoute
   AuthenticatedJobsIndexRoute: typeof AuthenticatedJobsIndexRoute
 }
@@ -218,6 +301,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLeaveRoute: AuthenticatedLeaveRoute,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedOvertimeRoute: AuthenticatedOvertimeRoute,
+  AuthenticatedAdminEntitiesRoute: AuthenticatedAdminEntitiesRoute,
+  AuthenticatedAdminFieldsRoute: AuthenticatedAdminFieldsRoute,
+  AuthenticatedAdminInventoryRoute: AuthenticatedAdminInventoryRoute,
+  AuthenticatedAdminJobsRoute: AuthenticatedAdminJobsRoute,
   AuthenticatedJobsJobIdRoute: AuthenticatedJobsJobIdRoute,
   AuthenticatedJobsIndexRoute: AuthenticatedJobsIndexRoute,
 }
