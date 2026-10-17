@@ -104,3 +104,15 @@ export function parsePhotos(v: unknown): JobPhoto[] {
 
 /** Only work-log photos may ever be sent to a client. */
 export const clientPhotos = (photos: JobPhoto[]) => photos.filter((p) => p.scope === "work");
+
+/** Admin job-sheet filter: a status value, "all", or an operational queue filter. */
+export type SheetFilterRow = { status: string; requires_admin_approval?: boolean | null; pending_works_future_jobs?: string | null };
+export function matchesSheetFilter(j: SheetFilterRow, filter: string) {
+  const pending = !!(j.pending_works_future_jobs ?? "").trim();
+  const approval = !!j.requires_admin_approval;
+  if (filter === "all") return true;
+  if (filter === "needs_approval") return approval;
+  if (filter === "has_pending") return pending;
+  if (filter === "admin_queue") return approval || pending;
+  return j.status === filter;
+}
