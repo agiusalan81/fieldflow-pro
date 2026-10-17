@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowDown, ArrowUp, GripVertical, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Download, GripVertical, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { BLOCKS, DOC_TYPES, moveBlock, parsePresets, parseTemplate, parseTerms, visibleBlocks, type NotePreset, type PdfTemplate, type Terms } from "@/lib/documents";
+import { BLOCKS, DOC_TYPES, moveBlock, parsePresets, parseTemplate, parseTerms, termsFor, visibleBlocks, type NotePreset, type PdfTemplate, type Terms } from "@/lib/documents";
+import { buildPdf } from "@/lib/sendJobSheetEmail";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +17,7 @@ export function DocumentSettings({ companyId }: { companyId: string }) {
   const qc = useQueryClient();
   const { data } = useQuery({
     queryKey: ["doc-settings"],
-    queryFn: async () => (await supabase.from("company_settings").select("pdf_template, terms, note_presets").maybeSingle()).data,
+    queryFn: async () => (await supabase.from("company_settings").select("pdf_template, terms, note_presets, logo_data").maybeSingle()).data,
   });
   const [t, setT] = useState<PdfTemplate | null>(null);
   const [terms, setTerms] = useState<Terms | null>(null);
@@ -35,6 +36,33 @@ export function DocumentSettings({ companyId }: { companyId: string }) {
     qc.invalidateQueries({ queryKey: ["note-presets"] });
   };
   const toggle = (k: PdfTemplate["order"][number]) => setT({ ...t, hidden: t.hidden.includes(k) ? t.hidden.filter((x) => x !== k) : [...t.hidden, k] });
+
+  const SAMPLE = {
+    company: "Your Company Ltd", number: "1042", date: new Date().toLocaleDateString("en-GB"),
+    client: "Plaza Hotel Ltd", address: "Tower Road, Sliema", asset: "Elevator - LFT-02 - Model XJ-500 - S/N 88412",
+    fault: "Lift stops between floors 2 and 3 with a loud grinding noise.",
+    repairs: "Replaced worn guide rollers on the car frame, re-aligned the door tracks and tested 20 full travel cycles. Operation is now smooth and quiet.",
+    technician: "Jorey Gloria", signedBy: "Mario Camilleri", idCard: "123456M",
+    logs: [
+      { date: new Date().toISOString().slice(0, 10), in: "08:30", out: "11:00", travel: 0.5, total: 5, techs: "JG, AA", count: 2 },
+    ],
+    parts: [{ desc: "Guide roller assembly 90mm", unit: "pcs", qty: 4 }],
+    notes: "Parking is at the rear of the building; ask reception for the service lift key.",
+  };
+
+  const downloadSample = async () => {
+    try {
+      const pdf = await buildPdf({
+        company: SAMPLE.company, logo: data?.logo_data ?? "", number: SAMPLE.number, date: SAMPLE.date, client: SAMPLE.client,
+        address: SAMPLE.address, asset: SAMPLE.asset, fault: SAMPLE.fault, repairs: SAMPLE.repairs, technician: SAMPLE.technician,
+        signedBy: SAMPLE.signedBy, idCard: SAMPLE.idCard, signature: null, logs: SAMPLE.logs, parts: SAMPLE.parts,
+        notes: SAMPLE.notes, terms: termsFor(terms, "job_sheet"), template: t,
+      });
+      const url = URL.createObjectURL(new Blob([pdf as unknown as BlobPart], { type: "application/pdf" }));
+      const a = document.createElement("a"); a.href = url; a.download = `Job_sheet-${SAMPLE.number}_Sample.pdf`; a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 30_000);
+    } catch { toast.error("Could not build the sample PDF"); }
+  };
 
   return (
     <div className="space-y-4">
@@ -59,19 +87,60 @@ export function DocumentSettings({ companyId }: { companyId: string }) {
         </section>
 
         <section className="rounded-xl border bg-card p-5">
-          <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">Live preview</p>
-          <div className="space-y-2 rounded-lg border bg-background p-4 text-xs">
-            {t.header && <p className="text-muted-foreground">{t.header}</p>}
-            <p className="text-base font-semibold text-foreground">Your company · Job sheet #1042</p>
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Live preview — what the client receives</p>
+            <Button size="sm" variant="outline" onClick={downloadSample}><Download className="mr-1 h-3.5 w-3.5" />Sample PDF</Button>
+          </div>
+          <div className="mx-auto max-w-md space-y-4 rounded-lg border bg-white p-6 text-[11px] leading-relaxed text-slate-800 shadow">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2">
+                {data?.logo_data && <img src={data.logo_data} alt="" className="h-10 max-w-24 object-contain" />}
+                <p className="text-sm font-semibold">{SAMPLE.company}</p>
+              </div>
+              <div className="text-right">
+                <p className="font-mono text-xs font-semibold">Job sheet- {SAMPLE.number}</p>
+                <p className="text-[10px] text-slate-500">{SAMPLE.date}</p>
+              </div>
+            </div>
+            <p className="text-[10px] text-slate-500">Job sheet - client copy</p>
+            <hr className="border-slate-300" />
+            {t.header && <p className="text-[10px] text-slate-500">{t.header}</p>}
             {visibleBlocks(t).map((k) => (
-              <div key={k} className="rounded border border-dashed p-2">
-                <p className="font-medium uppercase text-muted-foreground">{label(k)}</p>
-                <div className="mt-1 h-2 w-3/4 rounded bg-muted" />
+              <div key={k}>
+                <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">{label(k)}</p>
+                {k === "client" && <p>{SAMPLE.client}</p>}
+                {k === "address" && <p>{SAMPLE.address}</p>}
+                {k === "equipment" && <p>{SAMPLE.asset}</p>}
+                {k === "fault" && <p>{SAMPLE.fault}</p>}
+                {k === "work" && <p>{SAMPLE.repairs}</p>}
+                {k === "notes" && <p>{SAMPLE.notes}</p>}
+                {k === "timesheet" && (
+                  <table className="mt-1 w-full text-left text-[10px]">
+                    <thead><tr className="border-b border-slate-200"><th className="py-0.5 font-semibold">Date</th><th className="font-semibold">In</th><th className="font-semibold">Out</th>{t.showTravel && <th className="font-semibold">Travel h</th>}<th className="text-right font-semibold">Total h</th></tr></thead>
+                    <tbody>{SAMPLE.logs.map((l, i) => (
+                      <tr key={i} className="border-b border-slate-100"><td className="py-0.5">{l.date}</td><td>{l.in}</td><td>{l.out}</td>{t.showTravel && <td>{l.travel}</td>}<td className="text-right">{l.total.toFixed(2)}</td></tr>
+                    ))}</tbody>
+                  </table>
+                )}
+                {k === "timesheet" && <p className="mt-0.5 text-[10px] text-slate-500">Technicians ({SAMPLE.logs[0]!.count}): {SAMPLE.logs[0]!.techs}</p>}
+                {k === "parts" && (
+                  <table className="mt-1 w-full text-left text-[10px]">
+                    <thead><tr className="border-b border-slate-200"><th className="py-0.5 font-semibold">Description</th><th className="font-semibold">Unit</th><th className="text-right font-semibold">Qty</th></tr></thead>
+                    <tbody>{SAMPLE.parts.map((p, i) => <tr key={i} className="border-b border-slate-100"><td className="py-0.5">{p.desc}</td><td>{p.unit}</td><td className="text-right">{p.qty}</td></tr>)}</tbody>
+                  </table>
+                )}
+                {k === "signoff" && (
+                  <div className="mt-1 grid grid-cols-2 gap-4 border-t border-slate-300 pt-2">
+                    <div><p className="text-[9px] font-semibold uppercase text-slate-400">Technician</p><p>{SAMPLE.technician}</p></div>
+                    <div><p className="text-[9px] font-semibold uppercase text-slate-400">Client sign-off</p><p>{SAMPLE.signedBy} · ID {SAMPLE.idCard}</p><div className="mt-1 h-10 w-24 rounded border border-dashed border-slate-300 text-center text-[9px] leading-10 text-slate-400">signature</div></div>
+                  </div>
+                )}
               </div>
             ))}
-            {terms.job_sheet.enabled && <div className="rounded border border-dashed p-2"><p className="font-medium uppercase text-muted-foreground">Terms & conditions</p><p className="line-clamp-3 text-muted-foreground">{terms.job_sheet.text || "—"}</p></div>}
-            {t.footer && <p className="text-center text-muted-foreground">{t.footer}</p>}
+            {termsFor(terms, "job_sheet") && <div><p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">Terms & conditions</p><p className="whitespace-pre-wrap text-[9px] text-slate-500">{termsFor(terms, "job_sheet")}</p></div>}
+            {t.footer && <p className="border-t border-slate-200 pt-2 text-center text-[10px] text-slate-500">{t.footer}</p>}
           </div>
+          <p className="mt-2 text-xs text-muted-foreground">Sample data shown. Download the sample PDF to see the exact file the client receives by email.</p>
         </section>
       </div>
 
