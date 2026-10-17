@@ -23,6 +23,7 @@ import { Route as AuthenticatedOvertimeRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedPendingWorksRouteImport } from './routes/_authenticated/pending-works'
 import { Route as AuthenticatedScheduleRouteImport } from './routes/_authenticated/schedule'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedStandbyRouteImport } from './routes/_authenticated/standby'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as AuthenticatedAdminEntitiesRouteImport } from './routes/_authenticated/admin.entities'
@@ -105,6 +106,11 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedStandbyRoute = AuthenticatedStandbyRouteImport.update({
+  id: '/standby',
+  path: '/standby',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTeamRoute = AuthenticatedTeamRouteImport.update({
   id: '/team',
   path: '/team',
@@ -181,6 +187,7 @@ export interface FileRoutesByFullPath {
   '/pending-works': typeof AuthenticatedPendingWorksRoute
   '/schedule': typeof AuthenticatedScheduleRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/standby': typeof AuthenticatedStandbyRoute
   '/team': typeof AuthenticatedTeamRoute
   '/join/$token': typeof JoinTokenRoute
   '/admin/entities': typeof AuthenticatedAdminEntitiesRoute
@@ -207,6 +214,7 @@ export interface FileRoutesByTo {
   '/pending-works': typeof AuthenticatedPendingWorksRoute
   '/schedule': typeof AuthenticatedScheduleRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/standby': typeof AuthenticatedStandbyRoute
   '/team': typeof AuthenticatedTeamRoute
   '/join/$token': typeof JoinTokenRoute
   '/admin/entities': typeof AuthenticatedAdminEntitiesRoute
@@ -235,6 +243,7 @@ export interface FileRoutesById {
   '/_authenticated/pending-works': typeof AuthenticatedPendingWorksRoute
   '/_authenticated/schedule': typeof AuthenticatedScheduleRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/standby': typeof AuthenticatedStandbyRoute
   '/_authenticated/team': typeof AuthenticatedTeamRoute
   '/join/$token': typeof JoinTokenRoute
   '/_authenticated/admin/entities': typeof AuthenticatedAdminEntitiesRoute
@@ -263,6 +272,7 @@ export interface FileRouteTypes {
     | '/pending-works'
     | '/schedule'
     | '/settings'
+    | '/standby'
     | '/team'
     | '/join/$token'
     | '/admin/entities'
@@ -289,6 +299,7 @@ export interface FileRouteTypes {
     | '/pending-works'
     | '/schedule'
     | '/settings'
+    | '/standby'
     | '/team'
     | '/join/$token'
     | '/admin/entities'
@@ -316,6 +327,7 @@ export interface FileRouteTypes {
     | '/_authenticated/pending-works'
     | '/_authenticated/schedule'
     | '/_authenticated/settings'
+    | '/_authenticated/standby'
     | '/_authenticated/team'
     | '/join/$token'
     | '/_authenticated/admin/entities'
@@ -436,6 +448,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/standby': {
+      id: '/_authenticated/standby'
+      path: '/standby'
+      fullPath: '/standby'
+      preLoaderRoute: typeof AuthenticatedStandbyRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/team': {
       id: '/_authenticated/team'
       path: '/team'
@@ -528,6 +547,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPendingWorksRoute: typeof AuthenticatedPendingWorksRoute
   AuthenticatedScheduleRoute: typeof AuthenticatedScheduleRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedStandbyRoute: typeof AuthenticatedStandbyRoute
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
   AuthenticatedAdminEntitiesRoute: typeof AuthenticatedAdminEntitiesRoute
   AuthenticatedAdminFieldsRoute: typeof AuthenticatedAdminFieldsRoute
@@ -552,6 +572,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPendingWorksRoute: AuthenticatedPendingWorksRoute,
   AuthenticatedScheduleRoute: AuthenticatedScheduleRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedStandbyRoute: AuthenticatedStandbyRoute,
   AuthenticatedTeamRoute: AuthenticatedTeamRoute,
   AuthenticatedAdminEntitiesRoute: AuthenticatedAdminEntitiesRoute,
   AuthenticatedAdminFieldsRoute: AuthenticatedAdminFieldsRoute,
