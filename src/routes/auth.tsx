@@ -1,7 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -21,8 +23,15 @@ function AuthPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<"signup" | "signin">("signin");
   const [idle, setIdle] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [remember, setRemember] = useState(false);
   useEffect(() => {
     setIdle(new URLSearchParams(window.location.search).get("reason") === "idle");
+    const saved = window.localStorage.getItem("fieldflow_saved_email");
+    if (saved) {
+      setForm((f) => ({ ...f, email: saved }));
+      setRemember(true);
+    }
     supabase.auth.getUser().then(({ data }) => { if (data.user) navigate({ to: "/dashboard", replace: true }); });
   }, [navigate]);
   const [form, setForm] = useState({ company: "", name: "", email: "", password: "" });
@@ -55,7 +64,11 @@ function AuthPage() {
         password: form.password,
       });
       if (error) setError(error.message);
-      else navigate({ to: "/dashboard" });
+      else {
+        if (remember) window.localStorage.setItem("fieldflow_saved_email", form.email);
+        else window.localStorage.removeItem("fieldflow_saved_email");
+        navigate({ to: "/dashboard" });
+      }
     }
     setBusy(false);
   };
@@ -97,8 +110,33 @@ function AuthPage() {
               <Input id="email" type="email" autoFocus autoComplete="email" required value={form.email} onChange={set("email")} />
             </Field>
             <Field id="password" label="Password">
-              <Input id="password" type="password" required minLength={8} value={form.password} onChange={set("password")} />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  minLength={8}
+                  autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                  value={form.password}
+                  onChange={set("password")}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => !s)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </Field>
+            {mode === "signin" && (
+              <label htmlFor="remember" className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+                <Checkbox id="remember" checked={remember} onCheckedChange={(v) => setRemember(v === true)} />
+                Remember me on this device
+              </label>
+            )}
             {error && <p className="text-sm text-destructive">{error}</p>}
             <Button type="submit" className="w-full" size="lg" disabled={busy}>
               {busy ? "Please wait…" : mode === "signup" ? "Create company" : "Sign in"}
