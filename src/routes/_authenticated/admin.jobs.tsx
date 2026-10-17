@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Mail } from "lucide-react";
+import { Plus, Mail, FileText } from "lucide-react";
 import { sendJobSheetEmail } from "@/lib/sendJobSheetEmail";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EVENTS, parseIntegrations, renderTemplate } from "@/lib/integrations";
@@ -136,6 +136,7 @@ function AdminJobs() {
                 <TableHead className="text-right">Total h</TableHead>
                 <TableHead className="min-w-56">Custom fields</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
