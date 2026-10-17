@@ -236,6 +236,57 @@ export type Database = {
         }
         Relationships: []
       }
+      company_documents: {
+        Row: {
+          category: string
+          company_id: string
+          created_at: string
+          file_path: string
+          file_size: number
+          id: string
+          name: string
+          notes: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          category: string
+          company_id: string
+          created_at?: string
+          file_path: string
+          file_size?: number
+          id?: string
+          name: string
+          notes?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          category?: string
+          company_id?: string
+          created_at?: string
+          file_path?: string
+          file_size?: number
+          id?: string
+          name?: string
+          notes?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_documents_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_documents_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_invites: {
         Row: {
           company_id: string
