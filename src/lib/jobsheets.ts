@@ -119,6 +119,27 @@ export function matchesSheetFilter(j: SheetFilterRow, filter: string) {
   return j.status === filter;
 }
 
+export function technicianCount(count: number | null | undefined, initials: string[] = []) {
+  return Math.max(1, Math.floor(count || 1), new Set(initials.filter(Boolean)).size);
+}
+
+export function labourHours(tin: string | null | undefined, tout: string | null | undefined, count: number, initials: string[] = []) {
+  return +(hoursFromTimes(tin, tout) * technicianCount(count, initials)).toFixed(2);
+}
+
+export function matchesSheetDetails(j: { created_at: string; client_id: string; assigned_technician_id: string | null; jobsheet_time_logs?: { technician_initials?: string[] }[] }, f: { from: string; to: string; client: string; technician: string; initials?: string }) {
+  const date = j.created_at.slice(0, 10);
+  return (!f.from || date >= f.from) && (!f.to || date <= f.to) &&
+    (f.client === "all" || j.client_id === f.client) &&
+    (f.technician === "all" || j.assigned_technician_id === f.technician || !!f.initials && !!j.jobsheet_time_logs?.some((l) => l.technician_initials?.includes(f.initials ?? "")));
+}
+
+export function validateCombinedSheets(sheets: { client_id: string; status: string }[]) {
+  if (!sheets.length) throw new Error("Select job sheets first");
+  if (sheets.some((s) => s.status !== "completed")) throw new Error("Only completed job sheets can be combined");
+  if (new Set(sheets.map((s) => s.client_id)).size !== 1) throw new Error("Select job sheets for one customer at a time");
+}
+
 /** Company hours & overtime rules used to split logged time into pay/billing buckets. */
 export type OvertimeRules = {
   work_days: number[]; // 0=Sun … 6=Sat
