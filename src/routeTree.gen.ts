@@ -20,6 +20,7 @@ import { Route as AuthenticatedAdminEntitiesRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminFieldsRouteImport } from './routes/_authenticated/admin.fields'
 import { Route as AuthenticatedAdminInventoryRouteImport } from './routes/_authenticated/admin.inventory'
 import { Route as AuthenticatedAdminJobsRouteImport } from './routes/_authenticated/admin.jobs'
+import { Route as AuthenticatedSheetsNewRouteImport } from './routes/_authenticated/sheets.new'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -78,6 +79,11 @@ const AuthenticatedAdminJobsRoute = AuthenticatedAdminJobsRouteImport.update({
   path: '/admin/jobs',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSheetsNewRoute = AuthenticatedSheetsNewRouteImport.update({
+  id: '/sheets/new',
+  path: '/sheets/new',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -90,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/admin/fields': typeof AuthenticatedAdminFieldsRoute
   '/admin/inventory': typeof AuthenticatedAdminInventoryRoute
   '/admin/jobs': typeof AuthenticatedAdminJobsRoute
+  '/sheets/new': typeof AuthenticatedSheetsNewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/admin/fields': typeof AuthenticatedAdminFieldsRoute
   '/admin/inventory': typeof AuthenticatedAdminInventoryRoute
   '/admin/jobs': typeof AuthenticatedAdminJobsRoute
+  '/sheets/new': typeof AuthenticatedSheetsNewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -116,6 +124,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/fields': typeof AuthenticatedAdminFieldsRoute
   '/_authenticated/admin/inventory': typeof AuthenticatedAdminInventoryRoute
   '/_authenticated/admin/jobs': typeof AuthenticatedAdminJobsRoute
+  '/_authenticated/sheets/new': typeof AuthenticatedSheetsNewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -130,6 +139,7 @@ export interface FileRouteTypes {
     | '/admin/fields'
     | '/admin/inventory'
     | '/admin/jobs'
+    | '/sheets/new'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -142,6 +152,7 @@ export interface FileRouteTypes {
     | '/admin/fields'
     | '/admin/inventory'
     | '/admin/jobs'
+    | '/sheets/new'
   id:
     | '__root__'
     | '/'
@@ -155,6 +166,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/fields'
     | '/_authenticated/admin/inventory'
     | '/_authenticated/admin/jobs'
+    | '/_authenticated/sheets/new'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -242,6 +254,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminJobsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/sheets/new': {
+      id: '/_authenticated/sheets/new'
+      path: '/sheets/new'
+      fullPath: '/sheets/new'
+      preLoaderRoute: typeof AuthenticatedSheetsNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -254,6 +273,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminFieldsRoute: typeof AuthenticatedAdminFieldsRoute
   AuthenticatedAdminInventoryRoute: typeof AuthenticatedAdminInventoryRoute
   AuthenticatedAdminJobsRoute: typeof AuthenticatedAdminJobsRoute
+  AuthenticatedSheetsNewRoute: typeof AuthenticatedSheetsNewRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -265,6 +285,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminFieldsRoute: AuthenticatedAdminFieldsRoute,
   AuthenticatedAdminInventoryRoute: AuthenticatedAdminInventoryRoute,
   AuthenticatedAdminJobsRoute: AuthenticatedAdminJobsRoute,
+  AuthenticatedSheetsNewRoute: AuthenticatedSheetsNewRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
