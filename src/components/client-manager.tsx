@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Pencil, Plus, Trash2, Check, X, Copy } from "lucide-react";
+import { Pencil, Plus, Trash2, Check, X, Copy, ChevronDown } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/lib/profile";
 import { RoleCombobox, learnContactRole, LookupInput, learnLookup, useLookup, EQUIPMENT_TYPE } from "@/components/role-combobox";
@@ -20,13 +21,38 @@ export function splitPhone(p: string | null | undefined) {
   return m ? { code: m[1] ?? "+356", number: m[2] ?? "" } : { code: "+356", number: p ?? "" };
 }
 
+/** Filters countries by name or dial code ("malta", "356", "+44"). */
+export function searchCountries(q: string): [string, string][] {
+  const s = q.trim().toLowerCase().replace(/^\+/, "");
+  if (!s) return COUNTRIES;
+  return COUNTRIES.filter(([c, n]) => n.toLowerCase().includes(s) || c.slice(1).startsWith(s));
+}
+
 export function PhoneInput({ code, number, onChange, required }: { code: string; number: string; onChange: (code: string, number: string) => void; required?: boolean }) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const list = searchCountries(q);
+  const custom = /^\+?\d{1,4}$/.test(q.trim()) && !list.some(([c]) => c === `+${q.trim().replace(/^\+/, "")}`) ? `+${q.trim().replace(/^\+/, "")}` : null;
+  const pick = (c: string) => { onChange(c, number); setOpen(false); setQ(""); };
   return (
     <div className="flex gap-2">
-      <Select value={code} onValueChange={(v) => onChange(v, number)}>
-        <SelectTrigger className="w-28 shrink-0"><SelectValue /></SelectTrigger>
-        <SelectContent>{(COUNTRY_CODES.includes(code) ? COUNTRIES : [[code, ""] as [string, string], ...COUNTRIES]).map(([c, n]) => <SelectItem key={c} value={c}>{c} <span className="text-muted-foreground">{n}</span></SelectItem>)}</SelectContent>
-      </Select>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button type="button" variant="outline" className="w-28 shrink-0 justify-between px-3 font-normal" aria-label="Country code">{code}<ChevronDown className="h-4 w-4 opacity-50" /></Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-64 p-2" align="start">
+          <Input autoFocus placeholder="Search country or code" value={q} onChange={(e) => setQ(e.target.value)} className="mb-2 h-9" />
+          <div className="max-h-60 overflow-y-auto">
+            {custom && <button type="button" className="w-full rounded px-2 py-1.5 text-left text-sm hover:bg-accent" onClick={() => pick(custom)}>Use {custom}</button>}
+            {list.map(([c, n]) => (
+              <button key={c} type="button" onClick={() => pick(c)} className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-sm hover:bg-accent ${c === code ? "bg-accent" : ""}`}>
+                <span>{n}</span><span className="text-muted-foreground">{c}</span>
+              </button>
+            ))}
+            {!list.length && !custom && <p className="px-2 py-1.5 text-sm text-muted-foreground">No country found</p>}
+          </div>
+        </PopoverContent>
+      </Popover>
       <Input required={required} type="tel" inputMode="tel" pattern="[0-9 ]{4,}" title="Digits only" placeholder="Phone number" value={number} onChange={(e) => onChange(code, e.target.value)} />
     </div>
   );

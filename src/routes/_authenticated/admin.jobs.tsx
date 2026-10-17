@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Mail, FileText } from "lucide-react";
+import { Plus, Mail, FileText, Trash2 } from "lucide-react";
 import { sendJobSheetEmail } from "@/lib/sendJobSheetEmail";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EVENTS, parseIntegrations, renderTemplate } from "@/lib/integrations";
@@ -64,6 +64,16 @@ function AdminJobs() {
     return true;
   };
   const [resend, setResend] = useState<{ id: string; client_id: string; site_id: string | null; jobsheet_number: string } | null>(null);
+  const superuser = me?.real_role === "superuser";
+  const [deleting, setDeleting] = useState<{ id: string; jobsheet_number: string; status: string } | null>(null);
+  const confirmDelete = async () => {
+    if (!deleting) return;
+    const { error, count } = await supabase.from("job_sheets").delete({ count: "exact" }).eq("id", deleting.id);
+    if (error || !count) { toast.error(error?.message ?? "Not allowed to delete this sheet"); return; }
+    toast.success(`Job sheet- ${deleting.jobsheet_number} deleted`);
+    setDeleting(null);
+    qc.invalidateQueries({ queryKey: ["admin-jobs"] });
+  };
   const open = (id: string) => navigate({ to: "/sheets/$sheetId", params: { sheetId: id } });
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
 
@@ -162,12 +172,14 @@ function AdminJobs() {
                       </Select>
                     </TableCell>
                     <TableCell onClick={stop}>
-                      {j.status === "completed" ? (
-                        <div className="flex gap-2">
+                      <div className="flex gap-2">
+                        {j.status === "completed" && <>
                           <Button asChild size="sm" variant="outline"><Link to="/print/$sheetId" params={{ sheetId: j.id }} target="_blank"><FileText className="mr-1 h-4 w-4" />Client PDF</Link></Button>
                           <Button size="sm" onClick={() => setResend(j)}><Mail className="mr-1 h-4 w-4" />Resend</Button>
-                        </div>
-                      ) : <span className="text-xs text-muted-foreground">—</span>}
+                        </>}
+                        {superuser && <Button size="sm" variant="ghost" className="text-destructive" aria-label={`Delete job sheet ${j.jobsheet_number}`} onClick={() => setDeleting(j)}><Trash2 className="h-4 w-4" /></Button>}
+                        {j.status !== "completed" && !superuser && <span className="text-xs text-muted-foreground">—</span>}
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -202,6 +214,16 @@ function AdminJobs() {
         </DialogContent>
       </Dialog>
       {resend && <ResendDialog sheet={resend} onClose={() => setResend(null)} />}
+      <Dialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Delete Job sheet- {deleting?.jobsheet_number}?</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">This permanently removes the sheet, its time logs, parts and photos records. {deleting?.status === "completed" ? "It is completed and may already be signed by the client." : ""} This cannot be undone.</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleting(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={confirmDelete}>Delete permanently</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
