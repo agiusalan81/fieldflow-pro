@@ -5,7 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 
-export type SearchOption = { value: string; label: string; hint?: string };
+export type SearchOption = { value: string; label: string; hint?: string | undefined };
 
 /** Type-to-filter dropdown: start typing to see matching suggestions. */
 export function SearchSelect({ value, options, onChange, placeholder = "Choose…", disabled }: {
