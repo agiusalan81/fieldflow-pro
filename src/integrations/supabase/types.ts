@@ -572,6 +572,7 @@ export type Database = {
           company_id: string
           id: string
           jobsheet_id: string
+          log_sort_order: number | null
           part_description: string
           quantity: number
           sort_order: number
@@ -582,6 +583,7 @@ export type Database = {
           company_id: string
           id?: string
           jobsheet_id: string
+          log_sort_order?: number | null
           part_description: string
           quantity?: number
           sort_order?: number
@@ -592,6 +594,7 @@ export type Database = {
           company_id?: string
           id?: string
           jobsheet_id?: string
+          log_sort_order?: number | null
           part_description?: string
           quantity?: number
           sort_order?: number
