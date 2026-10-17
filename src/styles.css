@@ -157,3 +157,17 @@
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
 }
+
+/* Tenant typography (set from Company settings → Branding). Falls back to theme fonts. */
+main h1, main h2, main h3, header h1 {
+  font-family: var(--tenant-head-font, inherit);
+  font-weight: var(--tenant-head-weight, inherit);
+  font-style: var(--tenant-head-style, inherit);
+  color: var(--tenant-head-color, inherit);
+}
+main label {
+  font-family: var(--tenant-field-font, inherit);
+  font-weight: var(--tenant-field-weight, inherit);
+  font-style: var(--tenant-field-style, inherit);
+  color: var(--tenant-field-color, inherit);
+}
