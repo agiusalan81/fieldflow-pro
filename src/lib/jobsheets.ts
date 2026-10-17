@@ -188,3 +188,10 @@ export const contractName = (category: string, tier: string) => [category, tier 
 
 /** Technicians must be clocked in (an open "shift") before creating a job sheet; office staff are exempt. */
 export const needsClockIn = (role: string, openShiftTypes: string[]) => role === "technician" && !openShiftTypes.includes("shift");
+
+/** Applicant balance before approving one pending Annual request (its hours are already counted in pending). */
+export function approvalBalance(b: { base: number; ph: number; taken: number; pending: number }, requestHours: number) {
+  const available = remainingBalance({ ...b, pending: b.pending - requestHours });
+  const after = available - requestHours;
+  return { available, after, exceedsBy: after < 0 ? -after : 0 };
+}

@@ -14,3 +14,8 @@ describe("clock-in guard", () => {
   it("travel alone is not clocked in", () => expect(needsClockIn("technician", ["travel"])).toBe(true));
   it("supervisors exempt", () => expect(needsClockIn("supervisor", [])).toBe(false));
 });
+import { approvalBalance } from "./jobsheets";
+describe("leave approval balance", () => {
+  it("48 h available, 24 h request leaves 24 h", () => expect(approvalBalance({ base: 48, ph: 0, taken: 0, pending: 24 }, 24)).toEqual({ available: 48, after: 24, exceedsBy: 0 }));
+  it("flags over-allocation by 8 h", () => expect(approvalBalance({ base: 16, ph: 0, taken: 0, pending: 24 }, 24).exceedsBy).toBe(8));
+});
