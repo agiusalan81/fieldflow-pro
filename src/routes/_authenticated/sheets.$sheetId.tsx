@@ -119,6 +119,7 @@ function SheetForm() {
   const [sigKey, setSigKey] = useState(0);
   const [busy, setBusy] = useState(false);
   const [signOpen, setSignOpen] = useState(false);
+  const [handOff, setHandOff] = useState(false);
   const [photos, setPhotos] = useState<JobPhoto[]>([]);
 
   useEffect(() => {
@@ -389,12 +390,7 @@ function SheetForm() {
                       return (
                         <div key={w} className="space-y-1">
                           <Label className="text-xs">Time {w}</Label>
-                          <div className="flex gap-1">
-                            <Button type="button" size="icon" variant="outline" className="h-11 w-9 shrink-0" aria-label="minus 15 minutes" onClick={() => setT(shiftTime(l[k], -15))}>−</Button>
-                            <Input type="time" step={900} className="h-11 min-w-0 px-2" value={l[k]} onChange={(e) => setLog(i, { [k]: e.target.value })} onBlur={(e) => e.target.value && setT(roundTo15(e.target.value))} />
-                            <Button type="button" size="icon" variant="outline" className="h-11 w-9 shrink-0" aria-label="plus 15 minutes" onClick={() => setT(shiftTime(l[k] || nowHM(), l[k] ? 15 : 0))}>+</Button>
-                          </div>
-                          {!l[k] && <button type="button" className="text-xs text-primary" onClick={() => setT(roundTo15(nowHM()))}>Stamp now</button>}
+                          <Input type="time" step={900} className="h-11 w-full" value={l[k]} onChange={(e) => setLog(i, { [k]: e.target.value })} onBlur={(e) => e.target.value && setT(roundTo15(e.target.value))} />
                           {w === "out" && l.time_in && l.time_out && l.time_out < l.time_in && <p className="text-xs text-destructive">Time out must be after time in.</p>}
                         </div>
                       );
@@ -479,9 +475,19 @@ function SheetForm() {
         </Section>
       </fieldset>
 
-      <Dialog open={signOpen} onOpenChange={setSignOpen}>
-        <DialogContent className="max-h-[100dvh] max-w-3xl overflow-y-auto sm:max-h-[95vh]">
+      <Dialog open={signOpen} onOpenChange={(o) => { if (!o && handOff) return; setSignOpen(o); }}>
+        <DialogContent
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => { if (handOff) e.preventDefault(); }}
+          className="h-[100dvh] max-h-[100dvh] w-screen max-w-none overflow-y-auto rounded-none sm:h-auto sm:max-h-[95vh] sm:max-w-3xl sm:rounded-lg">
           <DialogHeader><DialogTitle>Job sheet {sheet.jobsheet_number} — client copy</DialogTitle></DialogHeader>
+          {handOff ? (
+            <div className="flex flex-1 flex-col items-center justify-center gap-6 py-16 text-center">
+              <p className="text-2xl font-semibold">Thank you!</p>
+              <p className="max-w-sm text-muted-foreground">Your signature has been recorded. Please hand the device back to your technician.</p>
+              <Button variant="outline" className="h-11" onClick={() => { setHandOff(false); setSignOpen(false); toast.success("Signed"); }}>Technician: back to job sheet</Button>
+            </div>
+          ) : (
           <div className="space-y-4 text-sm">
             <div className="grid gap-2 rounded-lg bg-muted/50 p-3 sm:grid-cols-2">
               <p><span className="text-muted-foreground">Client:</span> {client?.name ?? "—"}</p>
@@ -510,9 +516,10 @@ function SheetForm() {
             <Button className="h-11 w-full" onClick={() => {
               const missing = missingSignOff({ client_full_name: form.client_full_name as string, client_id_card_no: form.client_id_card_no as string, signature: form.signature_data as string });
               if (missing.length) { toast.error(`Missing: ${missing.join(", ")}`); return; }
-              setSignOpen(false); toast.success("Signed — hand the device back to the technician");
+              setHandOff(true);
             }}>Confirm & sign</Button>
           </div>
+          )}
         </DialogContent>
       </Dialog>
 

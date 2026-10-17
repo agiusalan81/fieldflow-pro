@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Camera, Loader2, X } from "lucide-react";
+import { Camera, Image as ImageIcon, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { JobPhoto } from "@/lib/jobsheets";
@@ -38,6 +38,7 @@ type Props = {
 
 export function JobPhotos({ companyId, sheetId, photos, scope, day, readOnly, onChange }: Props) {
   const input = useRef<HTMLInputElement>(null);
+  const cam = useRef<HTMLInputElement>(null);
   const [kind, setKind] = useState<JobPhoto["kind"]>(scope === "work" ? "damage" : "other");
   const [busy, setBusy] = useState(false);
   const [urls, setUrls] = useState<Record<string, string>>({});
@@ -93,10 +94,14 @@ export function JobPhotos({ companyId, sheetId, photos, scope, day, readOnly, on
               ))}
             </div>
           )}
-          <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => input.current?.click()}>
+          <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => cam.current?.click()}>
             {busy ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Camera className="mr-1 h-4 w-4" />}
-            {scope === "work" ? "Add photos" : "Add photos (internal)"}
+            {scope === "work" ? "Camera" : "Camera (internal)"}
           </Button>
+          <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => input.current?.click()}>
+            <ImageIcon className="mr-1 h-4 w-4" />Gallery
+          </Button>
+          <input ref={cam} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => { upload(e.target.files).then(() => { if (cam.current) cam.current.value = ""; }); }} />
           <input ref={input} type="file" accept="image/*" multiple className="hidden" onChange={(e) => upload(e.target.files)} />
         </div>
       )}

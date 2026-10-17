@@ -32,7 +32,7 @@ export function SignaturePad({ value, onChange }: { value: string | null; onChan
     <div className="space-y-2">
       <canvas
         ref={ref}
-        className="h-40 w-full touch-none rounded-lg border border-dashed bg-card text-foreground"
+        className="h-[55dvh] min-h-64 w-full touch-none rounded-lg border border-dashed bg-card text-foreground sm:h-56"
         onPointerDown={(e) => {
           drawing.current = true;
           ref.current!.setPointerCapture(e.pointerId);
