@@ -6,6 +6,7 @@ import { ArrowLeft, Car, Lock, MapPin, Plus, Save, Send, Trash2, ShieldAlert, Pe
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, useCompanyUsers, initialsOf, isManager } from "@/lib/profile";
 import { hoursFromTimes, missingSignOff, roundTo15, shiftTime } from "@/lib/jobsheets";
+import { sendJobSheetEmail } from "@/server/sendJobSheetEmail";
 import { SearchSelect } from "@/components/search-select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -209,9 +210,14 @@ function SheetForm() {
     if (missing.length) { toast.error(`Can't submit — missing: ${missing.join(", ")}`); return; }
     if (await persist("completed")) {
       await supabase.from("job_sheets").update({ work_end_time: new Date().toISOString() }).eq("id", sheetId);
-      const { data: rec } = await supabase.from("client_contacts").select("email").eq("client_id", sheet.client_id).eq("receives_job_sheets", true);
-      const emails = (rec ?? []).map((r) => r.email).filter(Boolean);
-      toast.success(`Job sheet ${sheet.jobsheet_number} submitted and emailed to ${emails.length ? emails.join(", ") : "no recipients (none ticked)"} (simulated)`);
+      try {
+        const result = await sendJobSheetEmail({ data: { sheetId } });
+        toast.success(result.sent
+          ? `Job sheet ${sheet.jobsheet_number} submitted and emailed to ${result.recipients.join(", ")}`
+          : `Job sheet ${sheet.jobsheet_number} submitted — no email recipients ticked for this client`);
+      } catch (e) {
+        toast.error(`Submitted, but the email failed: ${(e as Error).message}`);
+      }
       navigate({ to: "/sheets" });
     }
   };
