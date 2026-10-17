@@ -14,7 +14,7 @@ export const EQUIPMENT_TYPES = ["Passenger Lift", "Goods Lift", "Platform Lift",
 
 export function splitPhone(p: string | null | undefined) {
   const m = (p ?? "").match(/^(\+\d{1,4})\s*(.*)$/);
-  return m ? { code: m[1], number: m[2] } : { code: "+356", number: p ?? "" };
+  return m ? { code: m[1] ?? "+356", number: m[2] ?? "" } : { code: "+356", number: p ?? "" };
 }
 
 export function PhoneInput({ code, number, onChange, required }: { code: string; number: string; onChange: (code: string, number: string) => void; required?: boolean }) {
