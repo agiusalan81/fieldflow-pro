@@ -54,7 +54,7 @@ function SheetsPage() {
   const filtered = sheets.filter((s) => {
     const d = s.created_at.slice(0, 10);
     return (client === "all" || s.client_id === client) && (!from || d >= from) && (!to || d <= to)
-      && `${s.jobsheet_number} ${s.clients?.name} ${s.sites?.name} ${s.assets?.reference_number} ${s.reported_fault}`.toLowerCase().includes(q.toLowerCase());
+      && matchesSheetSearch(s.jobsheet_number, [s.clients?.name, s.sites?.name, s.assets?.reference_number, s.reported_fault], q);
   });
   const open = filtered.filter((s) => s.status !== "completed");
   const done = filtered.filter((s) => s.status === "completed");

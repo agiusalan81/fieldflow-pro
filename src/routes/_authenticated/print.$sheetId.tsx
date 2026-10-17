@@ -45,7 +45,7 @@ function PrintSheet() {
       <article className="mx-auto max-w-3xl space-y-6 bg-card p-10 text-sm text-card-foreground shadow print:shadow-none">
         <header className="flex items-start justify-between border-b pb-4">
           <div><p className="font-display text-2xl">{s.companies?.name}</p><p className="text-muted-foreground">Job sheet</p></div>
-          <div className="text-right"><p className="font-mono text-lg">#{s.jobsheet_number}</p><p className="text-muted-foreground">{new Date(s.created_at).toLocaleDateString()}</p></div>
+          <div className="text-right"><p className="font-mono text-lg">Job sheet- {s.jobsheet_number}</p><p className="text-muted-foreground">{new Date(s.created_at).toLocaleDateString()}</p></div>
         </header>
         <section className="grid grid-cols-2 gap-4">
           <div><p className="text-xs uppercase text-muted-foreground">Client</p><p>{s.clients?.name}</p><p className="text-muted-foreground">{s.clients?.billing_address}</p></div>

@@ -82,7 +82,7 @@ function AdminJobs() {
   };
 
   const queue = jobs.filter((j) => matchesSheetFilter(j, "admin_queue"));
-  const list = jobs.filter((j) => matchesSheetFilter(j, filter) && (!mine || j.assigned_technician_id === me?.id) && `${j.clients?.name} ${j.users?.full_name} ${j.assets?.reference_number} ${j.jobsheet_number}`.toLowerCase().includes(q.toLowerCase()));
+  const list = jobs.filter((j) => matchesSheetFilter(j, filter) && (!mine || j.assigned_technician_id === me?.id) && matchesSheetSearch(j.jobsheet_number, [j.clients?.name, j.users?.full_name, j.assets?.reference_number, j.sites?.name, j.reported_fault], q));
   const totalHours = (j: (typeof jobs)[number]) => (j.jobsheet_time_logs ?? []).reduce((s, l) => s + Number(l.daily_total_hours || 0), 0);
 
   return (
