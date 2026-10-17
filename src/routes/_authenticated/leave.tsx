@@ -31,7 +31,7 @@ const STATUS_CLS: Record<string, string> = {
   approved: "bg-success/15 text-success",
   rejected: "bg-destructive/10 text-destructive",
 };
-const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 function LeavePage() {
   const { data: profile } = useProfile();

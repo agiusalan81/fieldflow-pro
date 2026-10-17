@@ -146,7 +146,7 @@ function SheetForm() {
     set({
       asset_id: id === "none" ? null : id,
       asset_type: cat.includes("escalator") ? "Escalator" : cat.includes("lift") ? "Lift" : a ? "Other" : form.asset_type,
-      lift_model: (attrs.model as string) ?? form.lift_model, serial_number: (attrs.serial as string) ?? form.serial_number,
+      lift_model: (attrs["model"] as string) ?? form.lift_model, serial_number: (attrs["serial"] as string) ?? form.serial_number,
     });
   };
 

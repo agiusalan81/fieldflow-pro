@@ -5,7 +5,7 @@ import { createDraftSheet } from "@/lib/jobsheets";
 import { AppShell } from "@/components/app-shell";
 
 export const Route = createFileRoute("/_authenticated/sheets/new")({
-  validateSearch: (s: Record<string, unknown>): { jobId?: string } => ({ jobId: typeof s.jobId === "string" ? s.jobId : undefined }),
+  validateSearch: (s: Record<string, unknown>): { jobId?: string | undefined } => ({ jobId: typeof s["jobId"] === "string" ? s["jobId"] : undefined }),
   head: () => ({
     meta: [
       { title: "New job sheet — FieldOps" },

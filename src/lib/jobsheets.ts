@@ -22,10 +22,10 @@ export async function createDraftSheet(profile: Profile, jobId?: string) {
       };
     }
   }
-  if (!prefill.client_id) {
+  if (!prefill["client_id"]) {
     const { data: c } = await supabase.from("clients").select("id").order("name").limit(1).maybeSingle();
     if (!c) throw new Error("Your company has no clients yet — ask an admin to add one.");
-    prefill.client_id = c.id;
+    prefill["client_id"] = c.id;
   }
   const { data, error } = await supabase
     .from("job_sheets")
@@ -45,8 +45,8 @@ export async function createDraftSheet(profile: Profile, jobId?: string) {
 /** Hours between two HH:MM times on the same day (handles overnight). */
 export function hoursFromTimes(tin?: string | null, tout?: string | null) {
   if (!tin || !tout) return 0;
-  const [h1, m1] = tin.split(":").map(Number);
-  const [h2, m2] = tout.split(":").map(Number);
+  const [h1 = 0, m1 = 0] = tin.split(":").map(Number);
+  const [h2 = 0, m2 = 0] = tout.split(":").map(Number);
   let mins = h2 * 60 + m2 - (h1 * 60 + m1);
   if (mins < 0) mins += 24 * 60;
   return Math.round((mins / 60) * 100) / 100;
