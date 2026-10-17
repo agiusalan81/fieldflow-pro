@@ -26,6 +26,27 @@ export function DocumentSettings({ companyId }: { companyId: string }) {
   const [terms, setTerms] = useState<Terms | null>(null);
   const [presets, setPresets] = useState<NotePreset[]>([]);
   const [drag, setDrag] = useState<number | null>(null);
+  const [importFor, setImportFor] = useState<"job_sheet" | "estimate" | "agreement" | null>(null);
+  const [importing, setImporting] = useState(false);
+  const { data: libraryDocs = [] } = useQuery({
+    queryKey: ["company-documents"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("company_documents").select("id, name, category").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as { id: string; name: string; category: DocCategory }[];
+    },
+  });
+  const importDoc = async (id: string) => {
+    if (!importFor) return;
+    setImporting(true);
+    try {
+      const { text, name } = await extractDocumentText({ data: { documentId: id } });
+      setTerms((cur) => cur ? { ...cur, [importFor]: { ...cur[importFor], text } } : cur);
+      toast.success(`Imported text from “${name}” — review it below, then save.`);
+      setImportFor(null);
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Could not read that document"); }
+    setImporting(false);
+  };
   useEffect(() => {
     if (data !== undefined && !t) { setT(parseTemplate(data?.pdf_template)); setTerms(parseTerms(data?.terms)); setPresets(parsePresets(data?.note_presets)); }
   }, [data, t]);
