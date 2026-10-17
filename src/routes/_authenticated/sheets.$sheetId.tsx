@@ -7,10 +7,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useProfile, useCompanyUsers, initialsOf, isManager } from "@/lib/profile";
 import { remindBreakIfDue } from "@/lib/dwr-report";
 import { useCompanyRules } from "@/lib/company";
-import { hoursFromTimes, missingSignOff, missingChecklist, roundTo15, shiftTime, parsePhotos, createDraftSheet, type JobPhoto } from "@/lib/jobsheets";
+import { hoursFromTimes, missingSignOff, missingChecklist, roundTo15, shiftTime, parsePhotos, createDraftSheet, type JobPhoto, technicianCount, labourHours } from "@/lib/jobsheets";
 import { JobPhotos } from "@/components/job-photos";
 import { SpecialNotes } from "@/components/special-notes";
 import { sendJobSheetEmail } from "@/lib/sendJobSheetEmail";
+import { TechnicianPicker } from "@/components/technician-picker";
 import { SearchSelect } from "@/components/search-select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -34,6 +35,7 @@ export const Route = createFileRoute("/_authenticated/sheets/$sheetId")({
       { name: "description", content: "Fill in a job sheet: asset, time sheet, parts, notes and client sign-off." },
       { property: "og:title", content: "Job sheet — FieldOps" },
       { property: "og:description", content: "Job sheet form." },
+      { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
     ],
   }),
   component: SheetForm,
@@ -42,14 +44,14 @@ export const Route = createFileRoute("/_authenticated/sheets/$sheetId")({
 type Log = {
   log_date: string; time_in: string; time_out: string;
   latitude_in: number | null; longitude_in: number | null; latitude_out: number | null; longitude_out: number | null;
-  traveling_time_hours: number; technician_initials: string[]; daily_work_description: string;
+  traveling_time_hours: number; technician_count: number; technician_initials: string[]; daily_work_description: string;
 };
 type Part = { part_description: string; unit: string; quantity: number; time_acquiring_parts_hours: number; log_sort_order: number | null };
 
 const emptyLog = (): Log => ({
   log_date: new Date().toISOString().slice(0, 10), time_in: "", time_out: "",
   latitude_in: null, longitude_in: null, latitude_out: null, longitude_out: null,
-  traveling_time_hours: 0, technician_initials: [], daily_work_description: "",
+  traveling_time_hours: 0, technician_count: 1, technician_initials: [], daily_work_description: "",
 });
 const emptyPart = (): Part => ({ part_description: "", unit: "pcs", quantity: 1, time_acquiring_parts_hours: 0, log_sort_order: null });
 const nowHM = () => new Date().toTimeString().slice(0, 5);
@@ -144,7 +146,7 @@ function SheetForm() {
     setLogs(data.logs.map((l) => ({
       log_date: l.log_date, time_in: l.time_in?.slice(0, 5) ?? "", time_out: l.time_out?.slice(0, 5) ?? "",
       latitude_in: l.latitude_in, longitude_in: l.longitude_in, latitude_out: l.latitude_out, longitude_out: l.longitude_out,
-      traveling_time_hours: Number(l.traveling_time_hours), technician_initials: l.technician_initials ?? [], daily_work_description: l.daily_work_description ?? "",
+      traveling_time_hours: Number(l.traveling_time_hours), technician_count: technicianCount(l.technician_count, l.technician_initials), technician_initials: l.technician_initials ?? [], daily_work_description: l.daily_work_description ?? "",
     })));
     setParts(data.parts.map((p) => ({ part_description: p.part_description, unit: p.unit ?? "", quantity: Number(p.quantity), time_acquiring_parts_hours: Number(p.time_acquiring_parts_hours), log_sort_order: p.log_sort_order })));
   }, [data, form]);
@@ -162,7 +164,6 @@ function SheetForm() {
   const site = sites.find((s) => s.id === form.site_id);
   const assets = refs?.assets.filter((a) => a.client_id === form.client_id && (!form.site_id || !a.site_id || a.site_id === form.site_id)) ?? [];
   const asset = refs?.assets.find((a) => a.id === form.asset_id);
-  const techs = users.map((u) => initialsOf(u));
 
   const assetPatch = (id: string | null): Partial<Form> => {
     const a = refs?.assets.find((x) => x.id === id);
@@ -279,7 +280,7 @@ function SheetForm() {
     setLog(i, which === "in" ? { latitude_in: g.lat, longitude_in: g.lng } : { latitude_out: g.lat, longitude_out: g.lng });
     toast.success(`Location ${which === "in" ? "in" : "out"} captured${g.simulated ? " (simulated)" : ""}`);
   };
-  const totalHours = logs.reduce((s, l) => s + hoursFromTimes(l.time_in, l.time_out) + Number(l.traveling_time_hours || 0), 0);
+  const totalHours = logs.reduce((s, l) => s + labourHours(l.time_in, l.time_out, l.technician_count, l.technician_initials), 0);
   const manager = isManager(profile);
   const address = site?.address || asset?.location_details || client?.billing_address || "";
 
@@ -432,15 +433,8 @@ function SheetForm() {
                   <p className="mt-2 text-[11px] text-muted-foreground">
                     GPS in: {l.latitude_in != null ? `${l.latitude_in.toFixed(4)}, ${l.longitude_in?.toFixed(4)}` : "—"} · out: {l.latitude_out != null ? `${l.latitude_out.toFixed(4)}, ${l.longitude_out?.toFixed(4)}` : "—"}
                   </p>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {techs.map((t) => {
-                      const on = l.technician_initials.includes(t);
-                      return (
-                        <button key={t} type="button" onClick={() => setLog(i, { technician_initials: on ? l.technician_initials.filter((x) => x !== t) : [...l.technician_initials, t] })}
-                          className={`h-8 rounded-full border px-3 text-xs ${on ? "border-primary bg-primary text-primary-foreground" : "text-muted-foreground"}`}>{t}</button>
-                      );
-                    })}
-                  </div>
+                  <TechnicianPicker count={l.technician_count} selected={l.technician_initials} users={users} disabled={readOnly} onChange={(count, initials) => setLog(i, { technician_count: count, technician_initials: initials })} />
+                  <p className="mt-2 text-xs text-muted-foreground">{labourHours(l.time_in, l.time_out, l.technician_count, l.technician_initials).toFixed(2)} labour h · {l.technician_count} technicians</p>
                   <div className="mt-3 space-y-1"><Label className="text-xs">Repairs done this day</Label>
                     <Textarea rows={2} value={l.daily_work_description} onChange={(e) => setLog(i, { daily_work_description: e.target.value })} />
                   </div>
