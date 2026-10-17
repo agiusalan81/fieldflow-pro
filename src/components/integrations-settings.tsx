@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { WhatsAppTemplateStudio } from "@/components/whatsapp-template-studio";
 
 export function RatesFields({ value, onChange }: { value: Rates; onChange: (r: Rates) => void }) {
   const f = (k: keyof Rates, l: string) => (
@@ -51,6 +52,7 @@ export function IntegrationsSettings({ companyId }: { companyId: string }) {
 
   return (
     <div className="space-y-5">
+      <WhatsAppTemplateStudio />
       <section className="space-y-4 rounded-xl border bg-card p-5">
         <div><h2 className="font-medium text-foreground">Messaging channels</h2><p className="text-sm text-muted-foreground">All optional. Turn on the channels your company uses. Live sending starts once each provider account is connected.</p></div>
         <div className="grid gap-3 md:grid-cols-2">
