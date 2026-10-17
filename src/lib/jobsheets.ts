@@ -186,8 +186,8 @@ export const visitsForTier = (tier: string, current: number) => TIER_VISITS[tier
 /** Suggested contract type name from category + tier, e.g. "Residential Gold". */
 export const contractName = (category: string, tier: string) => [category, tier === "Custom" ? "" : tier].filter(Boolean).join(" ");
 
-/** Technicians must be clocked in (an open "shift") before creating a job sheet; office staff are exempt. */
-export const needsClockIn = (role: string, openShiftTypes: string[]) => role === "technician" && !openShiftTypes.includes("shift");
+/** Everyone (every role) must be clocked in (an open "shift") before creating a job sheet. Also enforced in the database. */
+export const needsClockIn = (_role: string, openShiftTypes: string[]) => !openShiftTypes.includes("shift");
 
 /** Applicant balance before approving one pending Annual request (its hours are already counted in pending). */
 export function approvalBalance(b: { base: number; ph: number; taken: number; pending: number }, requestHours: number) {
