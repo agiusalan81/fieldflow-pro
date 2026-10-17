@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { ArrowLeft, Car, Lock, MapPin, Plus, Save, Send, Trash2, ShieldAlert, PenLine } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, useCompanyUsers, initialsOf, isManager } from "@/lib/profile";
+import { remindBreakIfDue } from "@/lib/dwr-report";
+import { useCompanyRules } from "@/lib/company";
 import { hoursFromTimes, missingSignOff, missingChecklist, roundTo15, shiftTime, parsePhotos, createDraftSheet, type JobPhoto } from "@/lib/jobsheets";
 import { JobPhotos } from "@/components/job-photos";
 import { SpecialNotes } from "@/components/special-notes";
@@ -236,6 +238,7 @@ function SheetForm() {
       } catch (e) {
         toast.error(`Submitted, but the email failed: ${(e as Error).message}`);
       }
+      if (company) await remindBreakIfDue(profile.id, company.breaks, (m) => toast.info(m, { duration: 12000 }));
       const next = await findNextJob(profile.id, sheet.job_id);
       if (next) setNextStop(next); else navigate({ to: "/sheets" });
     }

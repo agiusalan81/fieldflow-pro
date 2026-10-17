@@ -53,3 +53,16 @@ export async function emailDwr(r: DwrRecord, company: string) {
   for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
   return sendDwrEmail({ data: { pdfBase64: btoa(bin), filename: `DWR_${r.report_date}.pdf`, date: r.report_date } });
 }
+
+/** After a job sheet is closed near mid-shift, nudge the technician to take their break (once per shift). */
+export async function remindBreakIfDue(userId: string, breaks: { enabled: boolean; minutes: number }, notify: (msg: string) => void) {
+  if (!breaks.enabled) return;
+  const { data } = await supabase.from("shifts").select("id, started_at").eq("user_id", userId).eq("shift_type", "shift").is("ended_at", null).maybeSingle();
+  if (!data) return;
+  const key = `break-reminded-${data.id}`;
+  if (localStorage.getItem(key)) return;
+  const { breakDue } = await import("@/lib/dwr");
+  if (!breakDue(new Date(data.started_at).getTime(), Date.now())) return;
+  localStorage.setItem(key, "1");
+  notify(`Time for your ${breaks.minutes}-minute break. It's recorded on your daily works report.`);
+}
