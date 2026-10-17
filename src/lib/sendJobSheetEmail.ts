@@ -1,23 +1,126 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { clientPhotos, hoursFromTimes, parsePhotos } from "@/lib/jobsheets";
 
 const b64 = (s: string) =>
   btoa(Array.from(new TextEncoder().encode(s), (b) => String.fromCharCode(b)).join(""));
 const header = (v: string) => (/^[\x00-\x7F]*$/.test(v) ? v : `=?UTF-8?B?${b64(v)}?=`);
 
-function rawEmail(to: string[], subject: string, body: string) {
-  const msg = [
+function bytesB64(bytes: Uint8Array) {
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(bin).replace(/.{76}/g, "$&\r\n");
+}
+
+type Attachment = { filename: string; mime: string; data: Uint8Array };
+
+function rawEmail(to: string[], subject: string, body: string, attachments: Attachment[]) {
+  const boundary = `b_${crypto.randomUUID()}`;
+  const parts = [
     `To: ${to.join(", ")}`,
     `Subject: ${header(subject)}`,
     "MIME-Version: 1.0",
-    'Content-Type: text/plain; charset="UTF-8"',
+    `Content-Type: multipart/mixed; boundary="${boundary}"`,
     "",
-    body,
-  ].join("\r\n");
-  return b64(msg).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    `--${boundary}`,
+    'Content-Type: text/plain; charset="UTF-8"',
+    "Content-Transfer-Encoding: base64",
+    "",
+    b64(body),
+  ];
+  for (const a of attachments) {
+    parts.push(
+      `--${boundary}`,
+      `Content-Type: ${a.mime}; name="${a.filename}"`,
+      `Content-Disposition: attachment; filename="${a.filename}"`,
+      "Content-Transfer-Encoding: base64",
+      "",
+      bytesB64(a.data),
+    );
+  }
+  parts.push(`--${boundary}--`);
+  return b64(parts.join("\r\n")).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-/** Emails a completed job sheet to the client contacts ticked "Send job sheet" via the connected Gmail account. */
+/** Standard PDF fonts only cover WinAnsi; replace anything else. */
+const safe = (s: unknown) =>
+  String(s ?? "").replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/[–—]/g, "-").replace(/[^\x0A\x20-\x7E\xA0-\xFF]/g, "?");
+
+async function buildPdf(d: {
+  company: string; number: string | number; date: string; client: string; address: string; asset: string;
+  fault: string; repairs: string; technician: string; signedBy: string; idCard: string; signature: string | null;
+  logs: { date: string; in: string; out: string; travel: number; total: number }[];
+  parts: { desc: string; unit: string; qty: number }[];
+}) {
+  const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
+  const doc = await PDFDocument.create();
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const W = 595, H = 842, M = 48;
+  let page = doc.addPage([W, H]);
+  let y = H - M;
+  const grey = rgb(0.4, 0.4, 0.45);
+  const need = (h: number) => { if (y - h < M) { page = doc.addPage([W, H]); y = H - M; } };
+  const wrap = (text: string, size: number, width: number) => {
+    const out: string[] = [];
+    for (const para of safe(text).split("\n")) {
+      let line = "";
+      for (const w of para.split(" ")) {
+        const t = line ? `${line} ${w}` : w;
+        if (font.widthOfTextAtSize(t, size) > width && line) { out.push(line); line = w; } else line = t;
+      }
+      out.push(line);
+    }
+    return out;
+  };
+  const text = (t: string, x: number, size = 10, f = font, color = rgb(0.1, 0.1, 0.12)) => page.drawText(safe(t), { x, y, size, font: f, color });
+  const label = (t: string) => { need(30); y -= 8; text(t.toUpperCase(), M, 8, bold, grey); y -= 14; };
+  const para = (t: string) => { for (const l of wrap(t || "-", 10, W - 2 * M)) { need(14); text(l, M); y -= 14; } };
+
+  text(d.company, M, 18, bold); text(`Job sheet #${d.number}`, W - M - bold.widthOfTextAtSize(safe(`Job sheet #${d.number}`), 12), 12, bold);
+  y -= 16; text("Job sheet - client copy", M, 10, font, grey); text(d.date, W - M - font.widthOfTextAtSize(safe(d.date), 10), 10, font, grey);
+  y -= 12; page.drawLine({ start: { x: M, y }, end: { x: W - M, y }, thickness: 0.5, color: grey }); y -= 10;
+
+  label("Client"); para(d.client);
+  label("Site address"); para(d.address);
+  label("Equipment"); para(d.asset);
+  label("Reported fault"); para(d.fault);
+  label("Work carried out"); para(d.repairs);
+
+  if (d.logs.length) {
+    label("Time sheet");
+    const cols = [M, M + 110, M + 180, M + 250, M + 330];
+    ["Date", "In", "Out", "Travel h", "Total h"].forEach((h, i) => text(h, cols[i]!, 9, bold)); y -= 14;
+    for (const l of d.logs) { need(14); [l.date, l.in, l.out, String(l.travel), l.total.toFixed(2)].forEach((v, i) => text(v, cols[i]!, 9)); y -= 14; }
+  }
+  if (d.parts.length) {
+    label("Parts used");
+    text("Description", M, 9, bold); text("Unit", M + 360, 9, bold); text("Qty", M + 430, 9, bold); y -= 14;
+    for (const p of d.parts) {
+      const lines = wrap(p.desc, 9, 340);
+      need(lines.length * 12 + 2);
+      text(p.unit, M + 360, 9); text(String(p.qty), M + 430, 9);
+      for (const l of lines) { text(l, M, 9); y -= 12; }
+      y -= 2;
+    }
+  }
+
+  need(130);
+  y -= 10; page.drawLine({ start: { x: M, y }, end: { x: W - M, y }, thickness: 0.5, color: grey }); y -= 18;
+  text("TECHNICIAN", M, 8, bold, grey); text("CLIENT SIGN-OFF", W / 2, 8, bold, grey); y -= 14;
+  text(d.technician || "-", M); text(`${d.signedBy || "-"}  ·  ID ${d.idCard || "-"}`.replace("·", "-"), W / 2); y -= 8;
+  if (d.signature?.startsWith("data:image/png")) {
+    try {
+      const img = await doc.embedPng(d.signature);
+      const h = 60, w = Math.min(200, (img.width / img.height) * h);
+      page.drawImage(img, { x: W / 2, y: y - h, width: w, height: h });
+      y -= h;
+    } catch { /* ignore bad signature image */ }
+  }
+  return doc.save();
+}
+
+/** Emails a completed job sheet (PDF + work-log photos) to the client contacts ticked "Send job sheet" via the connected Gmail account. */
 export const sendJobSheetEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { sheetId: string }) => d)
@@ -25,49 +128,61 @@ export const sendJobSheetEmail = createServerFn({ method: "POST" })
     const { supabase } = context;
     const { data: sheet, error } = await supabase
       .from("job_sheets")
-      .select("jobsheet_number, status, reported_fault, repairs_performed, technician_name, client_full_name, created_at, clients(name, property_name, street_name, location), sites(name, address), assets(reference_number, serial_number)")
+      .select("client_id, jobsheet_number, status, reported_fault, repairs_performed, technician_name, client_full_name, client_id_card_no, signature_data, photo_paths, asset_type, asset_type_other, lift_model, serial_number, created_at, clients(name, billing_address, property_name, street_name, location), sites(name, address), assets(reference_number, serial_number), companies(name)")
       .eq("id", data.sheetId)
       .single();
     if (error || !sheet) throw new Error("Job sheet not found");
     if (sheet.status !== "completed") throw new Error("Job sheet must be completed before emailing");
 
-    const client = sheet.clients as { name: string; property_name: string | null; street_name: string | null; location: string | null } | null;
-    const site = sheet.sites as { name: string; address: string | null } | null;
-    const asset = sheet.assets as { reference_number: string; serial_number: string | null } | null;
-
     const { data: contacts } = await supabase
-      .from("client_contacts")
-      .select("email, first_name, last_name")
-      .eq("client_id", (sheet as unknown as { client_id: string }).client_id ?? "")
-      .eq("receives_job_sheets", true);
-
-    // RLS-safe fallback: look up client_id explicitly if not embedded
-    let emails = (contacts ?? []).map((c) => c.email).filter((e): e is string => !!e);
-    if (!emails.length) {
-      const { data: js } = await supabase.from("job_sheets").select("client_id").eq("id", data.sheetId).single();
-      if (js) {
-        const { data: cs } = await supabase.from("client_contacts").select("email").eq("client_id", js.client_id).eq("receives_job_sheets", true);
-        emails = (cs ?? []).map((c) => c.email).filter((e): e is string => !!e);
-      }
-    }
+      .from("client_contacts").select("email").eq("client_id", sheet.client_id).eq("receives_job_sheets", true);
+    const emails = (contacts ?? []).map((c) => c.email).filter((e): e is string => !!e);
     if (!emails.length) return { sent: false as const, recipients: [] as string[], reason: "no_recipients" };
 
-    const address = [site?.name, site?.address, client?.property_name, client?.street_name, client?.location].filter(Boolean).join(", ");
+    const client = sheet.clients as { name: string; billing_address: string | null } | null;
+    const site = sheet.sites as { name: string; address: string | null } | null;
+    const asset = sheet.assets as { reference_number: string } | null;
+    const company = (sheet.companies as { name: string } | null)?.name ?? "";
+    const address = [site?.name, site?.address || client?.billing_address].filter(Boolean).join(", ");
+    const date = new Date(sheet.created_at).toLocaleDateString("en-GB");
+
+    const [{ data: logs }, { data: parts }] = await Promise.all([
+      supabase.from("jobsheet_time_logs").select("log_date, time_in, time_out, traveling_time_hours").eq("jobsheet_id", data.sheetId).order("sort_order"),
+      supabase.from("jobsheet_parts").select("part_description, unit, quantity").eq("jobsheet_id", data.sheetId).order("sort_order"),
+    ]);
+
+    const assetType = sheet.asset_type === "Other" ? sheet.asset_type_other : sheet.asset_type;
+    const pdf = await buildPdf({
+      company, number: sheet.jobsheet_number, date, client: client?.name ?? "-", address: address || "-",
+      asset: [assetType, asset?.reference_number, sheet.lift_model && `Model ${sheet.lift_model}`, sheet.serial_number && `S/N ${sheet.serial_number}`].filter(Boolean).join("  ·  ").replace(/·/g, "-") || "-",
+      fault: sheet.reported_fault ?? "", repairs: sheet.repairs_performed ?? "", technician: sheet.technician_name ?? "",
+      signedBy: sheet.client_full_name ?? "", idCard: sheet.client_id_card_no ?? "", signature: sheet.signature_data,
+      logs: (logs ?? []).map((l) => {
+        const travel = Number(l.traveling_time_hours) || 0;
+        return { date: l.log_date, in: l.time_in?.slice(0, 5) ?? "", out: l.time_out?.slice(0, 5) ?? "", travel, total: hoursFromTimes(l.time_in, l.time_out) + travel };
+      }),
+      parts: (parts ?? []).map((p) => ({ desc: p.part_description, unit: p.unit ?? "", qty: Number(p.quantity) })),
+    });
+
+    const attachments: Attachment[] = [{ filename: `JobSheet_${sheet.jobsheet_number}.pdf`, mime: "application/pdf", data: pdf }];
+    const counts = { damage: 0, part: 0, other: 0 };
+    for (const p of clientPhotos(parsePhotos(sheet.photo_paths))) {
+      const { data: file } = await supabase.storage.from("job-photos").download(p.path);
+      if (!file) continue;
+      counts[p.kind] += 1;
+      const name = p.kind === "damage" ? "damage_found" : p.kind === "part" ? "part_replaced" : "photo";
+      attachments.push({ filename: `${name}_${counts[p.kind]}.jpg`, mime: "image/jpeg", data: new Uint8Array(await file.arrayBuffer()) });
+    }
+
+    const photoCount = attachments.length - 1;
     const body = [
       `Dear ${client?.name ?? "customer"},`,
       "",
-      `Please find below the completed job sheet #${sheet.jobsheet_number}.`,
-      "",
-      `Date: ${new Date(sheet.created_at).toLocaleDateString()}`,
-      address ? `Site: ${address}` : null,
-      asset ? `Equipment: ${asset.reference_number}${asset.serial_number ? ` (S/N ${asset.serial_number})` : ""}` : null,
-      sheet.technician_name ? `Technician: ${sheet.technician_name}` : null,
-      "",
-      sheet.reported_fault ? `Reported fault:\n${sheet.reported_fault}\n` : null,
-      sheet.repairs_performed ? `Work carried out:\n${sheet.repairs_performed}\n` : null,
-      sheet.client_full_name ? `Signed off by: ${sheet.client_full_name}` : null,
+      `Please find attached the completed job sheet #${sheet.jobsheet_number} for work carried out${address ? ` at ${address}` : ""} on ${date}.`,
+      photoCount ? `${photoCount} photo${photoCount > 1 ? "s" : ""} of the work are also attached.` : null,
       "",
       "Thank you for your business.",
+      company,
     ].filter((l): l is string => l != null).join("\n");
 
     const lovableKey = process.env["LOVABLE_API_KEY"];
@@ -76,17 +191,13 @@ export const sendJobSheetEmail = createServerFn({ method: "POST" })
 
     const res = await fetch("https://connector-gateway.lovable.dev/google_mail/gmail/v1/users/me/messages/send", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${lovableKey}`,
-        "X-Connection-Api-Key": gmailKey,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ raw: rawEmail(emails, `Job sheet #${sheet.jobsheet_number} — ${client?.name ?? "completed job"}`, body) }),
+      headers: { Authorization: `Bearer ${lovableKey}`, "X-Connection-Api-Key": gmailKey, "Content-Type": "application/json" },
+      body: JSON.stringify({ raw: rawEmail(emails, `Job sheet #${sheet.jobsheet_number} — ${client?.name ?? "completed job"}`, body, attachments) }),
     });
     if (!res.ok) {
-      const text = await res.text();
-      console.error(`Gmail send failed [${res.status}]: ${text}`);
-      throw new Error(`Email send failed [${res.status}]: ${text}`);
+      const t = await res.text();
+      console.error(`Gmail send failed [${res.status}]: ${t}`);
+      throw new Error(`Email send failed [${res.status}]: ${t}`);
     }
     return { sent: true as const, recipients: emails };
   });
