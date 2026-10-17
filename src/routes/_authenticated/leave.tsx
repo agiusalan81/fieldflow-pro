@@ -48,14 +48,14 @@ function LeavePage() {
     e.preventDefault();
     if (!profile) return;
     const { error } = await supabase.from("leave_requests").insert({ ...range, company_id: profile.company_id, user_id: profile.id });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Leave requested");
     setRange({ start_date: "", end_date: "" });
     qc.invalidateQueries({ queryKey: ["leave"] });
   };
   const decide = async (id: string, status: "approved" | "rejected") => {
     const { error } = await supabase.from("leave_requests").update({ status }).eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     qc.invalidateQueries({ queryKey: ["leave"] });
   };
 

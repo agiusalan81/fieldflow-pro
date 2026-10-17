@@ -106,16 +106,16 @@ function JobSheet() {
   if (!job) return <AppShell title="Job sheet"><p className="text-muted-foreground">Loading…</p></AppShell>;
 
   const setStatus = async (patch: Record<string, unknown>) => {
-    const { error } = await supabase.from("job_sheets").update(patch).eq("id", jobId);
-    if (error) return toast.error(error.message);
+    const { error } = await supabase.from("job_sheets").update(patch as never).eq("id", jobId);
+    if (error) { toast.error(error.message); return; }
     refetch();
     qc.invalidateQueries({ queryKey: ["my-jobs-full"] });
   };
 
   const sync = async () => {
-    if (!online) return toast.info("You're offline — your draft is saved on this device.");
+    if (!online) { toast.info("You're offline — your draft is saved on this device."); return; }
     const { error } = await supabase.from("job_sheets").update({ notes, custom_values: values as never, signature_data: signature }).eq("id", jobId);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     localStorage.removeItem(draftKey(jobId));
     setHasDraft(false);
     refetch();

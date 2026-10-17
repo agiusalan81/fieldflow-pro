@@ -73,7 +73,7 @@ function Messages() {
       company_id: profile.company_id, sender_id: profile.id, message_text: text.trim(),
       receiver_id: active.kind === "user" ? active.id : null, job_sheet_id: active.kind === "job" ? active.id : null,
     });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     setText("");
     qc.invalidateQueries({ queryKey: ["messages"] });
   };
