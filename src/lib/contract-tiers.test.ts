@@ -7,3 +7,10 @@ describe("contract tiers", () => {
   it("Custom keeps manual count", () => expect(visitsForTier("Custom", 9)).toBe(9));
   it("names Residential Gold", () => expect(contractName("Residential", "Gold")).toBe("Residential Gold"));
 });
+import { needsClockIn } from "./jobsheets";
+describe("clock-in guard", () => {
+  it("blocks off-shift technician", () => expect(needsClockIn("technician", [])).toBe(true));
+  it("allows clocked-in technician", () => expect(needsClockIn("technician", ["shift"])).toBe(false));
+  it("travel alone is not clocked in", () => expect(needsClockIn("technician", ["travel"])).toBe(true));
+  it("supervisors exempt", () => expect(needsClockIn("supervisor", [])).toBe(false));
+});

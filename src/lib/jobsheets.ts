@@ -185,3 +185,6 @@ export const TIER_VISITS: Record<string, number> = { Bronze: 4, Silver: 6, Gold:
 export const visitsForTier = (tier: string, current: number) => TIER_VISITS[tier] ?? current;
 /** Suggested contract type name from category + tier, e.g. "Residential Gold". */
 export const contractName = (category: string, tier: string) => [category, tier === "Custom" ? "" : tier].filter(Boolean).join(" ");
+
+/** Technicians must be clocked in (an open "shift") before creating a job sheet; office staff are exempt. */
+export const needsClockIn = (role: string, openShiftTypes: string[]) => role === "technician" && !openShiftTypes.includes("shift");
