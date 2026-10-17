@@ -65,9 +65,9 @@ function CompanyPage() {
 function HoursTab({ companyId }: { companyId: string }) {
   const { data } = useCompanyRules();
   const qc = useQueryClient();
-  const [f, setF] = useState<null | { work_days: number[]; work_start: string; work_end: string; after_hours_rate: number; saturday_rate: number; sunday_rate: number; holiday_rate: number; holidays: string; renewal_notice_days: number; industry: string }>(null);
+  const [f, setF] = useState<null | { work_days: number[]; work_start: string; work_end: string; after_hours_rate: number; saturday_rate: number; sunday_rate: number; holiday_rate: number; holidays: string; renewal_notice_days: number; industry: string; idle_timeout_minutes: number }>(null);
   useEffect(() => {
-    if (data && !f) setF({ ...data.rules, holidays: data.rules.public_holidays.join(", "), renewal_notice_days: data.renewalDays, industry: data.industry });
+    if (data && !f) setF({ ...data.rules, holidays: data.rules.public_holidays.join(", "), renewal_notice_days: data.renewalDays, industry: data.industry, idle_timeout_minutes: data.idleTimeout });
   }, [data, f]);
   if (!f) return null;
   const save = async () => {
@@ -114,6 +114,13 @@ function HoursTab({ companyId }: { companyId: string }) {
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5"><Label>Contract renewal reminder (days before expiry)</Label><Input className="h-11" type="number" min={1} value={f.renewal_notice_days} onChange={(e) => setF({ ...f, renewal_notice_days: Number(e.target.value) || 30 })} /></div>
         <div className="space-y-1.5"><Label>Line of work</Label><Input className="h-11" placeholder="e.g. Lifts & escalators" value={f.industry} onChange={(e) => setF({ ...f, industry: e.target.value })} /></div>
+      </div>
+      <div className="space-y-1.5 sm:max-w-xs"><Label>Auto sign-out after inactivity</Label>
+        <Select value={String(f.idle_timeout_minutes)} onValueChange={(v) => setF({ ...f, idle_timeout_minutes: Number(v) })}>
+          <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+          <SelectContent>{[[0,"Off"],[15,"15 minutes"],[30,"30 minutes"],[60,"1 hour"],[120,"2 hours"],[180,"3 hours"]].map(([v,l]) => <SelectItem key={v} value={String(v)}>{l}</SelectItem>)}</SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">Technicians who are clocked in are never signed out.</p>
       </div>
       <Button className="h-11" onClick={save}>Save hours & rules</Button>
     </section>
