@@ -64,6 +64,18 @@ function captureGps(): Promise<{ lat: number; lng: number; simulated: boolean }>
   });
 }
 
+function Section({ n, title, children, priv }: { n: number; title: string; children: React.ReactNode; priv?: boolean }) {
+  return (
+  <section className="rounded-xl border bg-card p-4 sm:p-5">
+    <h2 className="mb-4 flex items-center gap-2 font-medium text-foreground">
+      <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/15 text-xs text-primary">{n}</span>{title}
+      {priv && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+    </h2>
+    {children}
+  </section>
+);
+}
+
 function SheetForm() {
   const { sheetId } = Route.useParams();
   const navigate = useNavigate();
@@ -210,15 +222,6 @@ function SheetForm() {
   };
   const totalHours = logs.reduce((s, l) => s + hoursFromTimes(l.time_in, l.time_out) + Number(l.traveling_time_hours || 0), 0);
 
-  const Section = ({ n, title, children, priv }: { n: number; title: string; children: React.ReactNode; priv?: boolean }) => (
-    <section className="rounded-xl border bg-card p-4 sm:p-5">
-      <h2 className="mb-4 flex items-center gap-2 font-medium text-foreground">
-        <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary/15 text-xs text-primary">{n}</span>{title}
-        {priv && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
-      </h2>
-      {children}
-    </section>
-  );
 
   return (
     <AppShell

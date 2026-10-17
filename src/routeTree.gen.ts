@@ -20,6 +20,7 @@ import { Route as AuthenticatedAdminEntitiesRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminFieldsRouteImport } from './routes/_authenticated/admin.fields'
 import { Route as AuthenticatedAdminInventoryRouteImport } from './routes/_authenticated/admin.inventory'
 import { Route as AuthenticatedAdminJobsRouteImport } from './routes/_authenticated/admin.jobs'
+import { Route as AuthenticatedSheetsSheetIdRouteImport } from './routes/_authenticated/sheets.$sheetId'
 import { Route as AuthenticatedSheetsNewRouteImport } from './routes/_authenticated/sheets.new'
 
 const IndexRoute = IndexRouteImport.update({
@@ -79,6 +80,12 @@ const AuthenticatedAdminJobsRoute = AuthenticatedAdminJobsRouteImport.update({
   path: '/admin/jobs',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSheetsSheetIdRoute =
+  AuthenticatedSheetsSheetIdRouteImport.update({
+    id: '/sheets/$sheetId',
+    path: '/sheets/$sheetId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSheetsNewRoute = AuthenticatedSheetsNewRouteImport.update({
   id: '/sheets/new',
   path: '/sheets/new',
@@ -96,6 +103,7 @@ export interface FileRoutesByFullPath {
   '/admin/fields': typeof AuthenticatedAdminFieldsRoute
   '/admin/inventory': typeof AuthenticatedAdminInventoryRoute
   '/admin/jobs': typeof AuthenticatedAdminJobsRoute
+  '/sheets/$sheetId': typeof AuthenticatedSheetsSheetIdRoute
   '/sheets/new': typeof AuthenticatedSheetsNewRoute
 }
 export interface FileRoutesByTo {
@@ -109,6 +117,7 @@ export interface FileRoutesByTo {
   '/admin/fields': typeof AuthenticatedAdminFieldsRoute
   '/admin/inventory': typeof AuthenticatedAdminInventoryRoute
   '/admin/jobs': typeof AuthenticatedAdminJobsRoute
+  '/sheets/$sheetId': typeof AuthenticatedSheetsSheetIdRoute
   '/sheets/new': typeof AuthenticatedSheetsNewRoute
 }
 export interface FileRoutesById {
@@ -124,6 +133,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/fields': typeof AuthenticatedAdminFieldsRoute
   '/_authenticated/admin/inventory': typeof AuthenticatedAdminInventoryRoute
   '/_authenticated/admin/jobs': typeof AuthenticatedAdminJobsRoute
+  '/_authenticated/sheets/$sheetId': typeof AuthenticatedSheetsSheetIdRoute
   '/_authenticated/sheets/new': typeof AuthenticatedSheetsNewRoute
 }
 export interface FileRouteTypes {
@@ -139,6 +149,7 @@ export interface FileRouteTypes {
     | '/admin/fields'
     | '/admin/inventory'
     | '/admin/jobs'
+    | '/sheets/$sheetId'
     | '/sheets/new'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -152,6 +163,7 @@ export interface FileRouteTypes {
     | '/admin/fields'
     | '/admin/inventory'
     | '/admin/jobs'
+    | '/sheets/$sheetId'
     | '/sheets/new'
   id:
     | '__root__'
@@ -166,6 +178,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/fields'
     | '/_authenticated/admin/inventory'
     | '/_authenticated/admin/jobs'
+    | '/_authenticated/sheets/$sheetId'
     | '/_authenticated/sheets/new'
   fileRoutesById: FileRoutesById
 }
@@ -254,6 +267,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminJobsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/sheets/$sheetId': {
+      id: '/_authenticated/sheets/$sheetId'
+      path: '/sheets/$sheetId'
+      fullPath: '/sheets/$sheetId'
+      preLoaderRoute: typeof AuthenticatedSheetsSheetIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/sheets/new': {
       id: '/_authenticated/sheets/new'
       path: '/sheets/new'
@@ -273,6 +293,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminFieldsRoute: typeof AuthenticatedAdminFieldsRoute
   AuthenticatedAdminInventoryRoute: typeof AuthenticatedAdminInventoryRoute
   AuthenticatedAdminJobsRoute: typeof AuthenticatedAdminJobsRoute
+  AuthenticatedSheetsSheetIdRoute: typeof AuthenticatedSheetsSheetIdRoute
   AuthenticatedSheetsNewRoute: typeof AuthenticatedSheetsNewRoute
 }
 
@@ -285,6 +306,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminFieldsRoute: AuthenticatedAdminFieldsRoute,
   AuthenticatedAdminInventoryRoute: AuthenticatedAdminInventoryRoute,
   AuthenticatedAdminJobsRoute: AuthenticatedAdminJobsRoute,
+  AuthenticatedSheetsSheetIdRoute: AuthenticatedSheetsSheetIdRoute,
   AuthenticatedSheetsNewRoute: AuthenticatedSheetsNewRoute,
 }
 
