@@ -7,7 +7,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { approvalBalance } from "@/lib/jobsheets";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
-import { STATUS_CLS } from "./leave";
 
 export const Route = createFileRoute("/_authenticated/admin/leave")({
   head: () => ({
@@ -22,6 +21,8 @@ export const Route = createFileRoute("/_authenticated/admin/leave")({
   }),
   component: LeaveApprovals,
 });
+
+const STATUS_CLS: Record<string, string> = { pending: "bg-warning/25 text-warning-foreground", approved: "bg-success/15 text-success", rejected: "bg-destructive/10 text-destructive" };
 
 function LeaveApprovals() {
   const qc = useQueryClient();

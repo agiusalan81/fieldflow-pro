@@ -27,6 +27,7 @@ import { Route as AuthenticatedAdminEntitiesRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminFieldsRouteImport } from './routes/_authenticated/admin.fields'
 import { Route as AuthenticatedAdminInventoryRouteImport } from './routes/_authenticated/admin.inventory'
 import { Route as AuthenticatedAdminJobsRouteImport } from './routes/_authenticated/admin.jobs'
+import { Route as AuthenticatedAdminLeaveRouteImport } from './routes/_authenticated/admin.leave'
 import { Route as AuthenticatedPrintSheetIdRouteImport } from './routes/_authenticated/print.$sheetId'
 import { Route as AuthenticatedSheetsIndexRouteImport } from './routes/_authenticated/sheets.index'
 import { Route as AuthenticatedSheetsSheetIdRouteImport } from './routes/_authenticated/sheets.$sheetId'
@@ -125,6 +126,11 @@ const AuthenticatedAdminJobsRoute = AuthenticatedAdminJobsRouteImport.update({
   path: '/admin/jobs',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminLeaveRoute = AuthenticatedAdminLeaveRouteImport.update({
+  id: '/admin/leave',
+  path: '/admin/leave',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPrintSheetIdRoute =
   AuthenticatedPrintSheetIdRouteImport.update({
     id: '/print/$sheetId',
@@ -167,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/admin/fields': typeof AuthenticatedAdminFieldsRoute
   '/admin/inventory': typeof AuthenticatedAdminInventoryRoute
   '/admin/jobs': typeof AuthenticatedAdminJobsRoute
+  '/admin/leave': typeof AuthenticatedAdminLeaveRoute
   '/print/$sheetId': typeof AuthenticatedPrintSheetIdRoute
   '/sheets/$sheetId': typeof AuthenticatedSheetsSheetIdRoute
   '/sheets/new': typeof AuthenticatedSheetsNewRoute
@@ -190,6 +197,7 @@ export interface FileRoutesByTo {
   '/admin/fields': typeof AuthenticatedAdminFieldsRoute
   '/admin/inventory': typeof AuthenticatedAdminInventoryRoute
   '/admin/jobs': typeof AuthenticatedAdminJobsRoute
+  '/admin/leave': typeof AuthenticatedAdminLeaveRoute
   '/print/$sheetId': typeof AuthenticatedPrintSheetIdRoute
   '/sheets/$sheetId': typeof AuthenticatedSheetsSheetIdRoute
   '/sheets/new': typeof AuthenticatedSheetsNewRoute
@@ -215,6 +223,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/fields': typeof AuthenticatedAdminFieldsRoute
   '/_authenticated/admin/inventory': typeof AuthenticatedAdminInventoryRoute
   '/_authenticated/admin/jobs': typeof AuthenticatedAdminJobsRoute
+  '/_authenticated/admin/leave': typeof AuthenticatedAdminLeaveRoute
   '/_authenticated/print/$sheetId': typeof AuthenticatedPrintSheetIdRoute
   '/_authenticated/sheets/$sheetId': typeof AuthenticatedSheetsSheetIdRoute
   '/_authenticated/sheets/new': typeof AuthenticatedSheetsNewRoute
@@ -240,6 +249,7 @@ export interface FileRouteTypes {
     | '/admin/fields'
     | '/admin/inventory'
     | '/admin/jobs'
+    | '/admin/leave'
     | '/print/$sheetId'
     | '/sheets/$sheetId'
     | '/sheets/new'
@@ -263,6 +273,7 @@ export interface FileRouteTypes {
     | '/admin/fields'
     | '/admin/inventory'
     | '/admin/jobs'
+    | '/admin/leave'
     | '/print/$sheetId'
     | '/sheets/$sheetId'
     | '/sheets/new'
@@ -287,6 +298,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/fields'
     | '/_authenticated/admin/inventory'
     | '/_authenticated/admin/jobs'
+    | '/_authenticated/admin/leave'
     | '/_authenticated/print/$sheetId'
     | '/_authenticated/sheets/$sheetId'
     | '/_authenticated/sheets/new'
@@ -428,6 +440,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminJobsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/leave': {
+      id: '/_authenticated/admin/leave'
+      path: '/admin/leave'
+      fullPath: '/admin/leave'
+      preLoaderRoute: typeof AuthenticatedAdminLeaveRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/print/$sheetId': {
       id: '/_authenticated/print/$sheetId'
       path: '/print/$sheetId'
@@ -474,6 +493,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminFieldsRoute: typeof AuthenticatedAdminFieldsRoute
   AuthenticatedAdminInventoryRoute: typeof AuthenticatedAdminInventoryRoute
   AuthenticatedAdminJobsRoute: typeof AuthenticatedAdminJobsRoute
+  AuthenticatedAdminLeaveRoute: typeof AuthenticatedAdminLeaveRoute
   AuthenticatedPrintSheetIdRoute: typeof AuthenticatedPrintSheetIdRoute
   AuthenticatedSheetsSheetIdRoute: typeof AuthenticatedSheetsSheetIdRoute
   AuthenticatedSheetsNewRoute: typeof AuthenticatedSheetsNewRoute
@@ -495,6 +515,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminFieldsRoute: AuthenticatedAdminFieldsRoute,
   AuthenticatedAdminInventoryRoute: AuthenticatedAdminInventoryRoute,
   AuthenticatedAdminJobsRoute: AuthenticatedAdminJobsRoute,
+  AuthenticatedAdminLeaveRoute: AuthenticatedAdminLeaveRoute,
   AuthenticatedPrintSheetIdRoute: AuthenticatedPrintSheetIdRoute,
   AuthenticatedSheetsSheetIdRoute: AuthenticatedSheetsSheetIdRoute,
   AuthenticatedSheetsNewRoute: AuthenticatedSheetsNewRoute,

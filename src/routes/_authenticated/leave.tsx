@@ -26,7 +26,7 @@ export const Route = createFileRoute("/_authenticated/leave")({
   component: LeavePage,
 });
 
-export const STATUS_CLS: Record<string, string> = {
+const STATUS_CLS: Record<string, string> = {
   pending: "bg-warning/25 text-warning-foreground",
   approved: "bg-success/15 text-success",
   rejected: "bg-destructive/10 text-destructive",
