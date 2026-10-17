@@ -13,6 +13,7 @@ export function useCompanyRules() {
         : DEFAULT_RULES;
       return {
         rules, renewalDays: data?.renewal_notice_days ?? 30, industry: data?.industry ?? "", exists: !!data,
+        idleTimeout: data?.idle_timeout_minutes ?? 30,
         theme: { ...DEFAULT_THEME, ...((data?.theme ?? {}) as Partial<Typography>) },
         phones: { office_phone: data?.office_phone ?? "", whatsapp_phone: data?.whatsapp_phone ?? "", emergency_phone: data?.emergency_phone ?? "", company_email: data?.company_email ?? "", company_address: data?.company_address ?? "" },
       };
