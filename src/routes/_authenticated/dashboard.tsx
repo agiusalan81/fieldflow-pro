@@ -14,6 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { splitHours, addSplits, DEFAULT_RULES } from "@/lib/jobsheets";
 import { AssetHistory, LiftHistoryButton, PriorityBadge, timeWindow } from "@/components/job-card";
+import { fileDailyReport, emailDwr, downloadDwr } from "@/lib/dwr-report";
+import { InternalWorkCard, OvertimeCard } from "@/components/work-extras";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -50,6 +52,7 @@ function useTick() {
 export function ShiftTracker({ profile }: { profile: Profile }) {
   useTick();
   const qc = useQueryClient();
+  const { data: company } = useCompanyRules();
   const { data: open = [] } = useQuery({
     queryKey: ["open-shifts", profile.id],
     queryFn: async () => {
@@ -61,14 +64,27 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
   const shift = open.find((s) => s.shift_type === "shift");
   const travel = open.find((s) => s.shift_type === "travel");
 
-  const toggle = async (type: "shift" | "travel", current?: { id: string }) => {
+  const toggle = async (type: "shift" | "travel", current?: { id: string; started_at: string }) => {
+    const endedAt = new Date().toISOString();
     const res = current
-      ? await supabase.from("shifts").update({ ended_at: new Date().toISOString() }).eq("id", current.id)
+      ? await supabase.from("shifts").update({ ended_at: endedAt }).eq("id", current.id)
       : await supabase.from("shifts").insert({ shift_type: type, company_id: profile.company_id, user_id: profile.id });
     if (res.error) { toast.error(res.error.message); return; }
-    if (type === "shift" && current && travel) await supabase.from("shifts").update({ ended_at: new Date().toISOString() }).eq("id", travel.id);
+    if (type === "shift" && current && travel) await supabase.from("shifts").update({ ended_at: endedAt }).eq("id", travel.id);
     qc.invalidateQueries({ queryKey: ["open-shifts", profile.id] });
     toast.success(current ? (type === "shift" ? "Clocked out" : "Travel stopped") : type === "shift" ? "Clocked in" : "Travel started");
+    if (type === "shift" && current && company) {
+      try {
+        const id = await fileDailyReport({ userId: profile.id, companyId: profile.company_id, shiftId: current.id, startedAt: current.started_at, endedAt, rules: company.rules, breaks: company.breaks });
+        const { data: r } = await supabase.from("daily_work_reports").select("*, users(full_name, employee_id)").eq("id", id).single();
+        qc.invalidateQueries({ queryKey: ["dwr"] });
+        if (r) {
+          const name = profile.companies?.name ?? "";
+          const mail = await emailDwr(r, name).catch(() => ({ sent: false }));
+          toast.success(mail.sent ? "Daily works report emailed to you" : "Daily works report saved", { action: { label: "Download PDF", onClick: () => downloadDwr(r, name) }, duration: 10000 });
+        }
+      } catch (e) { toast.error(`Couldn't file the daily works report: ${(e as Error).message}`); }
+    }
   };
 
   return (
@@ -113,6 +129,8 @@ function TechToday({ profile }: { profile: Profile }) {
     <AppShell title={`Hi, ${profile.full_name.split(" ")[0]}`}>
       <div className="mx-auto max-w-4xl space-y-6">
         <ShiftTracker profile={profile} />
+        <OvertimeCard userId={profile.id} />
+        <InternalWorkCard profile={profile} />
         <ScanQr />
         <section>
           <h2 className="mb-3 font-medium text-foreground">Today's jobs ({jobs.length})</h2>
@@ -204,6 +222,11 @@ function ManagerOverview({ profile }: { profile: Profile }) {
   return isOffice(profile) ? <OfficeOverview profile={profile} /> : <SupervisorOverview profile={profile} />;
 }
 
+/** "My shift & hours" strip shown on every manager overview. */
+function MyHours({ profile }: { profile: Profile }) {
+  return <div className="grid gap-3 lg:grid-cols-2"><ShiftTracker profile={profile} /><OvertimeCard userId={profile.id} /></div>;
+}
+
 function OfficeOverview({ profile }: { profile: Profile }) {
   const can = useCan(profile);
   const navigate = useNavigate();
@@ -217,6 +240,7 @@ function OfficeOverview({ profile }: { profile: Profile }) {
   return (
     <AppShell title={profile.companies?.name ?? "Overview"} actions={<Button asChild size="sm" variant="outline"><Link to="/company">Company settings</Link></Button>}>
       <div className="space-y-6">
+        <MyHours profile={profile} />
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {can("billing") && <Card to="/admin/jobs" title="Completed (30 days)" icon={ClipboardList} value={completed.length} sub={`${tot.standard} h std · ${tot.ot15} h 1.5× · ${tot.ot20} h 2×`} />}
           {can("billing") && <Card to="/admin/jobs" title="Overtime hours" icon={Clock} value={(tot.ot15 + tot.ot20).toFixed(2)} sub="1.5× and 2× in the last 30 days" />}
@@ -272,6 +296,7 @@ function SupervisorOverview({ profile }: { profile: Profile }) {
   return (
     <AppShell title="Field command" actions={<Button asChild size="sm" variant="outline"><Link to="/admin/jobs" search={{ new: true }}>Dispatch job</Link></Button>}>
       <div className="space-y-6">
+        <MyHours profile={profile} />
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {can("live_status") && <Card to="/dashboard" title="Technicians active" icon={Play} value={techs.filter((t) => t.on).length} sub={`of ${techs.length} team members`} />}
           {can("dispatch") && <Card to="/admin/jobs" title="Today's jobs" icon={CalendarDays} value={data?.jobs.length ?? 0} sub={`${done} sheets completed today`} />}

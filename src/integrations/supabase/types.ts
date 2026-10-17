@@ -286,6 +286,9 @@ export type Database = {
       company_settings: {
         Row: {
           after_hours_rate: number
+          break_enabled: boolean
+          break_minutes: number
+          breaks_per_shift: number
           company_address: string | null
           company_email: string | null
           company_id: string
@@ -299,6 +302,10 @@ export type Database = {
           public_holidays: string[]
           renewal_notice_days: number
           saturday_rate: number
+          standby_order: string[]
+          standby_per_shift: number
+          standby_rotation_days: number
+          standby_start: string
           sunday_rate: number
           terms: Json
           theme: Json
@@ -310,6 +317,9 @@ export type Database = {
         }
         Insert: {
           after_hours_rate?: number
+          break_enabled?: boolean
+          break_minutes?: number
+          breaks_per_shift?: number
           company_address?: string | null
           company_email?: string | null
           company_id: string
@@ -323,6 +333,10 @@ export type Database = {
           public_holidays?: string[]
           renewal_notice_days?: number
           saturday_rate?: number
+          standby_order?: string[]
+          standby_per_shift?: number
+          standby_rotation_days?: number
+          standby_start?: string
           sunday_rate?: number
           terms?: Json
           theme?: Json
@@ -334,6 +348,9 @@ export type Database = {
         }
         Update: {
           after_hours_rate?: number
+          break_enabled?: boolean
+          break_minutes?: number
+          breaks_per_shift?: number
           company_address?: string | null
           company_email?: string | null
           company_id?: string
@@ -347,6 +364,10 @@ export type Database = {
           public_holidays?: string[]
           renewal_notice_days?: number
           saturday_rate?: number
+          standby_order?: string[]
+          standby_per_shift?: number
+          standby_rotation_days?: number
+          standby_start?: string
           sunday_rate?: number
           terms?: Json
           theme?: Json
@@ -451,6 +472,79 @@ export type Database = {
           },
         ]
       }
+      daily_work_reports: {
+        Row: {
+          break_minutes: number
+          company_id: string
+          created_at: string
+          id: string
+          ot15_hours: number
+          ot20_hours: number
+          report_date: string
+          rows: Json
+          shift_end: string
+          shift_id: string | null
+          shift_start: string
+          standard_hours: number
+          user_id: string
+          worked_hours: number
+        }
+        Insert: {
+          break_minutes?: number
+          company_id: string
+          created_at?: string
+          id?: string
+          ot15_hours?: number
+          ot20_hours?: number
+          report_date: string
+          rows?: Json
+          shift_end: string
+          shift_id?: string | null
+          shift_start: string
+          standard_hours?: number
+          user_id: string
+          worked_hours?: number
+        }
+        Update: {
+          break_minutes?: number
+          company_id?: string
+          created_at?: string
+          id?: string
+          ot15_hours?: number
+          ot20_hours?: number
+          report_date?: string
+          rows?: Json
+          shift_end?: string
+          shift_id?: string | null
+          shift_start?: string
+          standard_hours?: number
+          user_id?: string
+          worked_hours?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_work_reports_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_work_reports_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_work_reports_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       internal_messages: {
         Row: {
           company_id: string
@@ -504,6 +598,60 @@ export type Database = {
           {
             foreignKeyName: "internal_messages_sender_id_fkey"
             columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      internal_work_logs: {
+        Row: {
+          activity: string
+          company_id: string
+          created_at: string
+          id: string
+          location: string | null
+          log_date: string
+          notes: string | null
+          time_in: string
+          time_out: string
+          user_id: string
+        }
+        Insert: {
+          activity: string
+          company_id: string
+          created_at?: string
+          id?: string
+          location?: string | null
+          log_date?: string
+          notes?: string | null
+          time_in: string
+          time_out: string
+          user_id: string
+        }
+        Update: {
+          activity?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          location?: string | null
+          log_date?: string
+          notes?: string | null
+          time_in?: string
+          time_out?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "internal_work_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "internal_work_logs_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
@@ -1378,6 +1526,64 @@ export type Database = {
           },
         ]
       }
+      standby_swaps: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          note: string | null
+          requester_id: string
+          responded_at: string | null
+          status: string
+          swap_date: string
+          target_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          requester_id: string
+          responded_at?: string | null
+          status?: string
+          swap_date: string
+          target_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          requester_id?: string
+          responded_at?: string | null
+          status?: string
+          swap_date?: string
+          target_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "standby_swaps_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "standby_swaps_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "standby_swaps_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_leave_balances: {
         Row: {
           base_entitlement_hours: number
@@ -1520,6 +1726,20 @@ export type Database = {
     }
     Functions: {
       current_company_id: { Args: never; Returns: string }
+      dwr_sheet_entries: {
+        Args: { _date: string; _user: string }
+        Returns: {
+          assisting: boolean
+          client: string
+          jobsheet_id: string
+          jobsheet_number: string
+          lead_name: string
+          site: string
+          time_in: string
+          time_out: string
+          travel: number
+        }[]
+      }
       get_invite: {
         Args: { _token: string }
         Returns: {
@@ -1543,6 +1763,10 @@ export type Database = {
       }
       is_company_manager: { Args: never; Returns: boolean }
       my_role: { Args: never; Returns: Database["public"]["Enums"]["app_role"] }
+      user_initials: {
+        Args: { _full_name: string; _initials: string }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "superuser" | "admin" | "supervisor" | "technician"

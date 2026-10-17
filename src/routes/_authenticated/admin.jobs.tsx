@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, useCompanyUsers } from "@/lib/profile";
 import { matchesSheetFilter } from "@/lib/jobsheets";
+import { matchesSheetSearch } from "@/lib/dwr";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { useFieldDefs, renderCustomValues } from "@/components/custom-fields";
 import { Button } from "@/components/ui/button";
@@ -82,7 +83,7 @@ function AdminJobs() {
   };
 
   const queue = jobs.filter((j) => matchesSheetFilter(j, "admin_queue"));
-  const list = jobs.filter((j) => matchesSheetFilter(j, filter) && (!mine || j.assigned_technician_id === me?.id) && `${j.clients?.name} ${j.users?.full_name} ${j.assets?.reference_number} ${j.jobsheet_number}`.toLowerCase().includes(q.toLowerCase()));
+  const list = jobs.filter((j) => matchesSheetFilter(j, filter) && (!mine || j.assigned_technician_id === me?.id) && matchesSheetSearch(j.jobsheet_number, [j.clients?.name, j.users?.full_name, j.assets?.reference_number, j.sites?.name, j.reported_fault], q));
   const totalHours = (j: (typeof jobs)[number]) => (j.jobsheet_time_logs ?? []).reduce((s, l) => s + Number(l.daily_total_hours || 0), 0);
 
   return (

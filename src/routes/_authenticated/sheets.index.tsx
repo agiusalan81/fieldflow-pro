@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/lib/profile";
+import { matchesSheetSearch } from "@/lib/dwr";
 import { AppShell, StatusBadge, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,7 +55,7 @@ function SheetsPage() {
   const filtered = sheets.filter((s) => {
     const d = s.created_at.slice(0, 10);
     return (client === "all" || s.client_id === client) && (!from || d >= from) && (!to || d <= to)
-      && `${s.jobsheet_number} ${s.clients?.name} ${s.sites?.name} ${s.assets?.reference_number} ${s.reported_fault}`.toLowerCase().includes(q.toLowerCase());
+      && matchesSheetSearch(s.jobsheet_number, [s.clients?.name, s.sites?.name, s.assets?.reference_number, s.reported_fault], q);
   });
   const open = filtered.filter((s) => s.status !== "completed");
   const done = filtered.filter((s) => s.status === "completed");

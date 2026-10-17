@@ -85,6 +85,20 @@
       "when": 1792236636299,
       "tag": "0011_contract_category",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792241117680,
+      "tag": "0012_dwr_breaks_standby_clockin",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792241159292,
+      "tag": "0013_dwr_initials_fallback",
+      "breakpoints": true
     }
   ]
 }

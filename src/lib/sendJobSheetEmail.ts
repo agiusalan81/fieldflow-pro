@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { clientPhotos, hoursFromTimes, parsePhotos } from "@/lib/jobsheets";
 import { parseTemplate, parseTerms, termsFor, visibleBlocks, type PdfTemplate } from "@/lib/documents";
+import { sheetTitle } from "@/lib/dwr";
 
 const b64 = (s: string) =>
   btoa(Array.from(new TextEncoder().encode(s), (b) => String.fromCharCode(b)).join(""));
@@ -13,9 +14,9 @@ function bytesB64(bytes: Uint8Array) {
   return btoa(bin).replace(/.{76}/g, "$&\r\n");
 }
 
-type Attachment = { filename: string; mime: string; data: Uint8Array };
+export type Attachment = { filename: string; mime: string; data: Uint8Array };
 
-function rawEmail(to: string[], subject: string, body: string, attachments: Attachment[]) {
+export function rawEmail(to: string[], subject: string, body: string, attachments: Attachment[]) {
   const boundary = `b_${crypto.randomUUID()}`;
   const parts = [
     `To: ${to.join(", ")}`,
@@ -79,7 +80,7 @@ async function buildPdf(d: {
   const label = (t: string) => { need(30); y -= 8; text(t.toUpperCase(), M, 8, bold, grey); y -= 14; };
   const para = (t: string) => { for (const l of wrap(t || "-", 10, W - 2 * M)) { need(14); text(l, M); y -= 14; } };
 
-  text(d.company, M, 18, bold); text(`Job sheet #${d.number}`, W - M - bold.widthOfTextAtSize(safe(`Job sheet #${d.number}`), 12), 12, bold);
+  text(d.company, M, 18, bold); text(sheetTitle(d.number), W - M - bold.widthOfTextAtSize(safe(sheetTitle(d.number)), 12), 12, bold);
   y -= 16; text("Job sheet - client copy", M, 10, font, grey); text(d.date, W - M - font.widthOfTextAtSize(safe(d.date), 10), 10, font, grey);
   y -= 12; page.drawLine({ start: { x: M, y }, end: { x: W - M, y }, thickness: 0.5, color: grey }); y -= 10;
 
@@ -185,7 +186,7 @@ export const sendJobSheetEmail = createServerFn({ method: "POST" })
       template: parseTemplate(settings?.pdf_template),
     });
 
-    const attachments: Attachment[] = [{ filename: `JobSheet_${sheet.jobsheet_number}.pdf`, mime: "application/pdf", data: pdf }];
+    const attachments: Attachment[] = [{ filename: `${sheetTitle(sheet.jobsheet_number)}.pdf`, mime: "application/pdf", data: pdf }];
     const counts = { damage: 0, part: 0, other: 0 };
     for (const p of clientPhotos(parsePhotos(sheet.photo_paths))) {
       const { data: file } = await supabase.storage.from("job-photos").download(p.path);
@@ -199,7 +200,7 @@ export const sendJobSheetEmail = createServerFn({ method: "POST" })
     const body = [
       `Dear ${client?.name ?? "customer"},`,
       "",
-      `Please find attached the completed job sheet #${sheet.jobsheet_number} for work carried out${address ? ` at ${address}` : ""} on ${date}.`,
+      `Please find attached the completed ${sheetTitle(sheet.jobsheet_number)} for work carried out${address ? ` at ${address}` : ""} on ${date}.`,
       sheet.special_notes_in_email && notes ? `\n${notes}\n` : null,
       photoCount ? `${photoCount} photo${photoCount > 1 ? "s" : ""} of the work are also attached.` : null,
       "",
@@ -214,7 +215,7 @@ export const sendJobSheetEmail = createServerFn({ method: "POST" })
     const res = await fetch("https://connector-gateway.lovable.dev/google_mail/gmail/v1/users/me/messages/send", {
       method: "POST",
       headers: { Authorization: `Bearer ${lovableKey}`, "X-Connection-Api-Key": gmailKey, "Content-Type": "application/json" },
-      body: JSON.stringify({ raw: rawEmail(emails, `Job sheet #${sheet.jobsheet_number} — ${client?.name ?? "completed job"}`, body, attachments) }),
+      body: JSON.stringify({ raw: rawEmail(emails, `${sheetTitle(sheet.jobsheet_number)} — ${client?.name ?? "completed job"}`, body, attachments) }),
     });
     if (!res.ok) {
       const t = await res.text();

@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import {
-  LayoutDashboard, ClipboardList, Clock, MessageSquare, CalendarDays, Users, SlidersHorizontal, Package, LogOut, Menu, Plus, CalendarClock, Settings, Building2, FileSignature, Hammer, Calculator,
+  LayoutDashboard, ClipboardList, Clock, MessageSquare, CalendarDays, Users, SlidersHorizontal, Package, LogOut, Menu, Plus, CalendarClock, Settings, Building2, FileSignature, Hammer, Calculator, PhoneCall, FileText, UserCheck,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, isManager, isOffice, setViewAs, ROLE_LABEL, type ViewAs } from "@/lib/profile";
@@ -21,15 +21,19 @@ const techNav: NavItem[] = [
   { to: "/dashboard", label: "Today", icon: LayoutDashboard },
   { to: "/sheets", label: "Sheets", icon: ClipboardList },
   { to: "/schedule", label: "Schedule", icon: CalendarClock },
+  { to: "/standby", label: "Standby", icon: PhoneCall },
+  { to: "/dwr", label: "My daily reports", icon: FileText },
   { to: "/leave", label: "Leave", icon: CalendarDays },
   { to: "/settings", label: "Settings", icon: Settings },
   { to: "/messages", label: "Chat", icon: MessageSquare },
-  { to: "/overtime", label: "Overtime", icon: Clock },
 ];
 
 const adminNav: NavItem[] = [
   { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { to: "/admin/jobs", label: "Job sheets", icon: ClipboardList },
+  { to: "/dwr", label: "Daily works reports", icon: FileText },
+  { to: "/standby", label: "Standby roster", icon: PhoneCall },
+  { to: "/team", label: "Team availability", icon: UserCheck },
   { to: "/pending-works", label: "Pending works", icon: Hammer, module: "pending_works" },
   { to: "/admin/entities", label: "Clients & assets", icon: Users, module: "clients" },
   { to: "/contracts", label: "Contracts", icon: FileSignature, module: "contracts" },

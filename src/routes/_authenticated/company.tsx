@@ -65,9 +65,9 @@ function CompanyPage() {
 function HoursTab({ companyId }: { companyId: string }) {
   const { data } = useCompanyRules();
   const qc = useQueryClient();
-  const [f, setF] = useState<null | { work_days: number[]; work_start: string; work_end: string; after_hours_rate: number; saturday_rate: number; sunday_rate: number; holiday_rate: number; holidays: string; renewal_notice_days: number; industry: string; idle_timeout_minutes: number }>(null);
+  const [f, setF] = useState<null | { work_days: number[]; work_start: string; work_end: string; after_hours_rate: number; saturday_rate: number; sunday_rate: number; holiday_rate: number; holidays: string; renewal_notice_days: number; industry: string; idle_timeout_minutes: number; break_enabled: boolean; breaks_per_shift: number; break_minutes: number }>(null);
   useEffect(() => {
-    if (data && !f) setF({ ...data.rules, holidays: data.rules.public_holidays.join(", "), renewal_notice_days: data.renewalDays, industry: data.industry, idle_timeout_minutes: data.idleTimeout });
+    if (data && !f) setF({ ...data.rules, holidays: data.rules.public_holidays.join(", "), renewal_notice_days: data.renewalDays, industry: data.industry, idle_timeout_minutes: data.idleTimeout, break_enabled: data.breaks.enabled, breaks_per_shift: data.breaks.count, break_minutes: data.breaks.minutes });
   }, [data, f]);
   if (!f) return null;
   const save = async () => {
@@ -121,6 +121,16 @@ function HoursTab({ companyId }: { companyId: string }) {
           <SelectContent>{[[0,"Off"],[15,"15 minutes"],[30,"30 minutes"],[60,"1 hour"],[120,"2 hours"],[180,"3 hours"]].map(([v,l]) => <SelectItem key={v} value={String(v)}>{l}</SelectItem>)}</SelectContent>
         </Select>
         <p className="text-xs text-muted-foreground">Technicians who are clocked in are never signed out.</p>
+      </div>
+      <div className="space-y-3 rounded-lg border p-4">
+        <label className="flex items-center gap-2 text-sm font-medium"><Switch checked={f.break_enabled} onCheckedChange={(c) => setF({ ...f, break_enabled: c })} />Mandatory breaks & mid-shift reminder</label>
+        <p className="text-xs text-muted-foreground">Breaks always show as taken on the daily works report, even if the technician didn't press anything. Shifts under 4 hours get no break.</p>
+        {f.break_enabled && (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5"><Label>Breaks per shift</Label><Input className="h-11" type="number" min={1} max={4} value={f.breaks_per_shift} onChange={(e) => setF({ ...f, breaks_per_shift: Math.min(4, Math.max(1, Number(e.target.value) || 1)) })} /></div>
+            <div className="space-y-1.5"><Label>Minutes per break</Label><Input className="h-11" type="number" min={5} max={120} step={5} value={f.break_minutes} onChange={(e) => setF({ ...f, break_minutes: Math.min(120, Math.max(5, Number(e.target.value) || 30)) })} /></div>
+          </div>
+        )}
       </div>
       <Button className="h-11" onClick={save}>Save hours & rules</Button>
     </section>

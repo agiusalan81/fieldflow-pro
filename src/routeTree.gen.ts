@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedCompanyRouteImport } from './routes/_authenticated/company'
 import { Route as AuthenticatedContractsRouteImport } from './routes/_authenticated/contracts'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedDwrRouteImport } from './routes/_authenticated/dwr'
 import { Route as AuthenticatedEstimatesRouteImport } from './routes/_authenticated/estimates'
 import { Route as AuthenticatedLeaveRouteImport } from './routes/_authenticated/leave'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
@@ -22,6 +23,8 @@ import { Route as AuthenticatedOvertimeRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedPendingWorksRouteImport } from './routes/_authenticated/pending-works'
 import { Route as AuthenticatedScheduleRouteImport } from './routes/_authenticated/schedule'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedStandbyRouteImport } from './routes/_authenticated/standby'
+import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as AuthenticatedAdminEntitiesRouteImport } from './routes/_authenticated/admin.entities'
 import { Route as AuthenticatedAdminFieldsRouteImport } from './routes/_authenticated/admin.fields'
@@ -62,6 +65,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedDwrRoute = AuthenticatedDwrRouteImport.update({
+  id: '/dwr',
+  path: '/dwr',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedEstimatesRoute = AuthenticatedEstimatesRouteImport.update({
   id: '/estimates',
   path: '/estimates',
@@ -96,6 +104,16 @@ const AuthenticatedScheduleRoute = AuthenticatedScheduleRouteImport.update({
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedStandbyRoute = AuthenticatedStandbyRouteImport.update({
+  id: '/standby',
+  path: '/standby',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTeamRoute = AuthenticatedTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const JoinTokenRoute = JoinTokenRouteImport.update({
@@ -161,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/company': typeof AuthenticatedCompanyRoute
   '/contracts': typeof AuthenticatedContractsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/dwr': typeof AuthenticatedDwrRoute
   '/estimates': typeof AuthenticatedEstimatesRoute
   '/leave': typeof AuthenticatedLeaveRoute
   '/messages': typeof AuthenticatedMessagesRoute
@@ -168,6 +187,8 @@ export interface FileRoutesByFullPath {
   '/pending-works': typeof AuthenticatedPendingWorksRoute
   '/schedule': typeof AuthenticatedScheduleRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/standby': typeof AuthenticatedStandbyRoute
+  '/team': typeof AuthenticatedTeamRoute
   '/join/$token': typeof JoinTokenRoute
   '/admin/entities': typeof AuthenticatedAdminEntitiesRoute
   '/admin/fields': typeof AuthenticatedAdminFieldsRoute
@@ -185,6 +206,7 @@ export interface FileRoutesByTo {
   '/company': typeof AuthenticatedCompanyRoute
   '/contracts': typeof AuthenticatedContractsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/dwr': typeof AuthenticatedDwrRoute
   '/estimates': typeof AuthenticatedEstimatesRoute
   '/leave': typeof AuthenticatedLeaveRoute
   '/messages': typeof AuthenticatedMessagesRoute
@@ -192,6 +214,8 @@ export interface FileRoutesByTo {
   '/pending-works': typeof AuthenticatedPendingWorksRoute
   '/schedule': typeof AuthenticatedScheduleRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/standby': typeof AuthenticatedStandbyRoute
+  '/team': typeof AuthenticatedTeamRoute
   '/join/$token': typeof JoinTokenRoute
   '/admin/entities': typeof AuthenticatedAdminEntitiesRoute
   '/admin/fields': typeof AuthenticatedAdminFieldsRoute
@@ -211,6 +235,7 @@ export interface FileRoutesById {
   '/_authenticated/company': typeof AuthenticatedCompanyRoute
   '/_authenticated/contracts': typeof AuthenticatedContractsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/dwr': typeof AuthenticatedDwrRoute
   '/_authenticated/estimates': typeof AuthenticatedEstimatesRoute
   '/_authenticated/leave': typeof AuthenticatedLeaveRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
@@ -218,6 +243,8 @@ export interface FileRoutesById {
   '/_authenticated/pending-works': typeof AuthenticatedPendingWorksRoute
   '/_authenticated/schedule': typeof AuthenticatedScheduleRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/standby': typeof AuthenticatedStandbyRoute
+  '/_authenticated/team': typeof AuthenticatedTeamRoute
   '/join/$token': typeof JoinTokenRoute
   '/_authenticated/admin/entities': typeof AuthenticatedAdminEntitiesRoute
   '/_authenticated/admin/fields': typeof AuthenticatedAdminFieldsRoute
@@ -237,6 +264,7 @@ export interface FileRouteTypes {
     | '/company'
     | '/contracts'
     | '/dashboard'
+    | '/dwr'
     | '/estimates'
     | '/leave'
     | '/messages'
@@ -244,6 +272,8 @@ export interface FileRouteTypes {
     | '/pending-works'
     | '/schedule'
     | '/settings'
+    | '/standby'
+    | '/team'
     | '/join/$token'
     | '/admin/entities'
     | '/admin/fields'
@@ -261,6 +291,7 @@ export interface FileRouteTypes {
     | '/company'
     | '/contracts'
     | '/dashboard'
+    | '/dwr'
     | '/estimates'
     | '/leave'
     | '/messages'
@@ -268,6 +299,8 @@ export interface FileRouteTypes {
     | '/pending-works'
     | '/schedule'
     | '/settings'
+    | '/standby'
+    | '/team'
     | '/join/$token'
     | '/admin/entities'
     | '/admin/fields'
@@ -286,6 +319,7 @@ export interface FileRouteTypes {
     | '/_authenticated/company'
     | '/_authenticated/contracts'
     | '/_authenticated/dashboard'
+    | '/_authenticated/dwr'
     | '/_authenticated/estimates'
     | '/_authenticated/leave'
     | '/_authenticated/messages'
@@ -293,6 +327,8 @@ export interface FileRouteTypes {
     | '/_authenticated/pending-works'
     | '/_authenticated/schedule'
     | '/_authenticated/settings'
+    | '/_authenticated/standby'
+    | '/_authenticated/team'
     | '/join/$token'
     | '/_authenticated/admin/entities'
     | '/_authenticated/admin/fields'
@@ -356,6 +392,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/dwr': {
+      id: '/_authenticated/dwr'
+      path: '/dwr'
+      fullPath: '/dwr'
+      preLoaderRoute: typeof AuthenticatedDwrRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/estimates': {
       id: '/_authenticated/estimates'
       path: '/estimates'
@@ -403,6 +446,20 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/standby': {
+      id: '/_authenticated/standby'
+      path: '/standby'
+      fullPath: '/standby'
+      preLoaderRoute: typeof AuthenticatedStandbyRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/team': {
+      id: '/_authenticated/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof AuthenticatedTeamRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/join/$token': {
@@ -482,6 +539,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCompanyRoute: typeof AuthenticatedCompanyRoute
   AuthenticatedContractsRoute: typeof AuthenticatedContractsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedDwrRoute: typeof AuthenticatedDwrRoute
   AuthenticatedEstimatesRoute: typeof AuthenticatedEstimatesRoute
   AuthenticatedLeaveRoute: typeof AuthenticatedLeaveRoute
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
@@ -489,6 +547,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPendingWorksRoute: typeof AuthenticatedPendingWorksRoute
   AuthenticatedScheduleRoute: typeof AuthenticatedScheduleRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedStandbyRoute: typeof AuthenticatedStandbyRoute
+  AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
   AuthenticatedAdminEntitiesRoute: typeof AuthenticatedAdminEntitiesRoute
   AuthenticatedAdminFieldsRoute: typeof AuthenticatedAdminFieldsRoute
   AuthenticatedAdminInventoryRoute: typeof AuthenticatedAdminInventoryRoute
@@ -504,6 +564,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCompanyRoute: AuthenticatedCompanyRoute,
   AuthenticatedContractsRoute: AuthenticatedContractsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedDwrRoute: AuthenticatedDwrRoute,
   AuthenticatedEstimatesRoute: AuthenticatedEstimatesRoute,
   AuthenticatedLeaveRoute: AuthenticatedLeaveRoute,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
@@ -511,6 +572,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPendingWorksRoute: AuthenticatedPendingWorksRoute,
   AuthenticatedScheduleRoute: AuthenticatedScheduleRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedStandbyRoute: AuthenticatedStandbyRoute,
+  AuthenticatedTeamRoute: AuthenticatedTeamRoute,
   AuthenticatedAdminEntitiesRoute: AuthenticatedAdminEntitiesRoute,
   AuthenticatedAdminFieldsRoute: AuthenticatedAdminFieldsRoute,
   AuthenticatedAdminInventoryRoute: AuthenticatedAdminInventoryRoute,
