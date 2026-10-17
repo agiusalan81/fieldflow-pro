@@ -32,13 +32,16 @@ export function useNoticeEnabled(event: EventKey) {
   return data ? data.templates[event].enabled : false;
 }
 
+const seen = new Set<string>();
 /** Live alert for the technician when a manager decides on their request to leave an unsigned site. */
 export function DepartureAlerts({ userId }: { userId: string }) {
   const [msg, setMsg] = useState<{ text: string; ok: boolean; sheetId: string } | null>(null);
   useEffect(() => {
     const ch = supabase.channel(`departure-${userId}`).on("postgres_changes", { event: "UPDATE", schema: "public", table: "job_sheets", filter: `assigned_technician_id=eq.${userId}` }, (p) => {
       const n = p.new as { id: string; jobsheet_number: number; departure_status: string }; const o = p.old as { departure_status?: string };
-      if (o.departure_status === n.departure_status || !["approved", "rejected"].includes(n.departure_status)) return;
+      const key = `${n.id}:${n.departure_status}`;
+      if (o.departure_status === n.departure_status || !["approved", "rejected"].includes(n.departure_status) || seen.has(key)) return;
+      seen.add(key);
       const ok = n.departure_status === "approved";
       const text = ok ? `Job sheet- ${n.jobsheet_number}: you may leave site. The client has been notified.` : `Job sheet- ${n.jobsheet_number}: leaving was declined — please wait for the client.`;
       setMsg({ text, ok, sheetId: n.id });
