@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useProfile } from "@/lib/profile";
+import { usePreviewProfile } from "@/lib/impersonation";
 import { matchesSheetSearch } from "@/lib/dwr";
 import { AppShell, StatusBadge, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,7 @@ export const Route = createFileRoute("/_authenticated/sheets/")({
 });
 
 function SheetsPage() {
-  const { data: profile } = useProfile();
+  const { data: profile, isPreview } = usePreviewProfile();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const { tab = "open" } = Route.useSearch();
@@ -64,6 +64,7 @@ function SheetsPage() {
   const done = filtered.filter((s) => s.status === "completed");
 
   const discard = async (id: string) => {
+    if (isPreview) return;
     const { error } = await supabase.from("job_sheets").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
     toast.success("Draft discarded");
@@ -86,7 +87,7 @@ function SheetsPage() {
         ) : (
           <>
             <Button asChild className="h-10 flex-1 sm:flex-none"><Link to="/sheets/$sheetId" params={{ sheetId: s.id }}><Pencil className="mr-1 h-4 w-4" />Resume / Edit</Link></Button>
-            {s.status === "draft" && (
+            {s.status === "draft" && !isPreview && (
               <AlertDialog>
                 <AlertDialogTrigger asChild><Button variant="outline" className="h-10"><Trash2 className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Discard Draft</span></Button></AlertDialogTrigger>
                 <AlertDialogContent>
@@ -116,7 +117,7 @@ function SheetsPage() {
           <Input className="h-11" type="date" aria-label="From date" value={from} onChange={(e) => setFrom(e.target.value)} />
           <Input className="h-11" type="date" aria-label="To date" value={to} onChange={(e) => setTo(e.target.value)} />
         </div>
-        <MonthlySheets sheets={filtered} office={profile?.role === "admin" || profile?.role === "superuser"} />
+        {!isPreview && <MonthlySheets sheets={filtered} office={profile?.role === "admin" || profile?.role === "superuser"} />}
         <Tabs value={tab} onValueChange={(v) => navigate({ to: "/sheets", search: v === "done" ? { tab: "done" } : {}, replace: true })}>
           <TabsList className="grid w-full grid-cols-2 sm:w-auto">
             <TabsTrigger value="open">Drafts & In-Progress ({open.length})</TabsTrigger>

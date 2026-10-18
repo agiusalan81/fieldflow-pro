@@ -18,6 +18,7 @@ import { fileDailyReport, emailDwr, downloadDwr } from "@/lib/dwr-report";
 import { InternalWorkCard } from "@/components/work-extras";
 import { BillingReview } from "@/components/billing-review";
 import { NoAccessButton, DepartureRequests, DepartureAlerts } from "@/components/client-notices";
+import { usePreviewProfile, useUserPreview } from "@/lib/impersonation";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -34,7 +35,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function Dashboard() {
-  const { data: profile, isLoading } = useProfile();
+  const { data: profile, isLoading, isPreview } = usePreviewProfile();
   if (isLoading) return <AppShell title="Loading…"><p className="text-muted-foreground">Loading…</p></AppShell>;
   if (!profile)
     return (
@@ -42,7 +43,7 @@ function Dashboard() {
         <EmptyState>Your account isn't linked to a company yet. Ask your company admin to add you.</EmptyState>
       </AppShell>
     );
-  return isManager(profile) ? <ManagerOverview profile={profile} /> : <TechToday profile={profile} />;
+  return isManager(profile) ? <ManagerOverview profile={profile} /> : <TechToday profile={profile} readOnly={isPreview} />;
 }
 
 function useTick() {
@@ -54,6 +55,8 @@ function useTick() {
 }
 
 export function ShiftTracker({ profile }: { profile: Profile }) {
+  const { data: actor } = useProfile();
+  const { active: readOnly } = useUserPreview(actor);
   useTick();
   const qc = useQueryClient();
   const { data: company } = useCompanyRules();
@@ -69,6 +72,7 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
   const travel = open.find((s) => s.shift_type === "travel");
 
   const toggle = async (type: "shift" | "travel", current?: { id: string; started_at: string }) => {
+    if (readOnly) return;
     const endedAt = new Date().toISOString();
     const res = current
       ? await supabase.from("shifts").update({ ended_at: endedAt }).eq("id", current.id)
@@ -100,10 +104,10 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
       </span>
       {travel && <span className="inline-flex h-7 items-center gap-1 rounded-full bg-warning/20 px-2.5 text-xs tabular-nums text-foreground"><Car className="h-3 w-3" />{formatDuration(Date.now() - new Date(travel.started_at).getTime())}</span>}
       <div className="ml-auto flex gap-2">
-        <Button size="sm" variant={travel ? "secondary" : "outline"} disabled={!shift} onClick={() => toggle("travel", travel)}>
+        <Button size="sm" variant={travel ? "secondary" : "outline"} disabled={readOnly || !shift} onClick={() => toggle("travel", travel)}>
           <Car className="mr-1 h-4 w-4" />{travel ? "Stop travel" : "Travel"}
         </Button>
-        <Button size="sm" variant={shift ? "outline" : "default"} onClick={() => toggle("shift", shift)}>
+        <Button size="sm" variant={shift ? "outline" : "default"} disabled={readOnly} onClick={() => toggle("shift", shift)}>
           {shift ? <Square className="mr-1 h-4 w-4" /> : <Play className="mr-1 h-4 w-4" />}{shift ? "Clock out" : "Clock in"}
         </Button>
       </div>
@@ -111,7 +115,7 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
   );
 }
 
-function TechToday({ profile }: { profile: Profile }) {
+function TechToday({ profile, readOnly }: { profile: Profile; readOnly: boolean }) {
   const navigate = useNavigate();
   const today = new Date().toISOString().slice(0, 10);
   const { data: jobs = [] } = useQuery({
@@ -133,10 +137,10 @@ function TechToday({ profile }: { profile: Profile }) {
     <AppShell title={`Hi, ${profile.full_name.split(" ")[0]}`}>
       <div className="mx-auto max-w-4xl space-y-6">
         <ShiftTracker profile={profile} />
-        <InternalWorkCard profile={profile} />
+        <fieldset disabled={readOnly} className="min-w-0"><InternalWorkCard profile={profile} /></fieldset>
         <ScanQr />
-        <DepartureAlerts userId={profile.id} />
-        <NoAccessButton profile={profile} jobs={jobs} />
+        {!readOnly && <DepartureAlerts userId={profile.id} />}
+        {!readOnly && <NoAccessButton profile={profile} jobs={jobs} />}
         <section>
           <h2 className="mb-3 font-medium text-foreground">Today's jobs ({jobs.length})</h2>
           {jobs.length === 0 ? (
@@ -155,7 +159,7 @@ function TechToday({ profile }: { profile: Profile }) {
                   </div>
                   <p className="line-clamp-2 text-sm text-foreground">{j.problem_summary || "No problem summary"}</p>
                   <div className="grid grid-cols-2 gap-2">
-                    <Button className="h-11" onClick={() => navigate({ to: "/sheets/new", search: { jobId: j.id } })}><Play className="mr-1 h-4 w-4" />Start</Button>
+                    <Button disabled={readOnly} className="h-11" onClick={() => navigate({ to: "/sheets/new", search: { jobId: j.id } })}><Play className="mr-1 h-4 w-4" />Start</Button>
                     <LiftHistoryButton assetId={j.asset_id} label={`${j.assets?.reference_number ?? ""} · ${j.sites?.name ?? j.clients?.name ?? ""}`} />
                   </div>
                 </li>
@@ -229,7 +233,9 @@ function ManagerOverview({ profile }: { profile: Profile }) {
 
 /** Shift clock shown on every manager overview; hours live on the My hours page. */
 function MyHours({ profile }: { profile: Profile }) {
-  return <><ShiftTracker profile={profile} /><DepartureRequests /></>;
+  const { data: actor } = useProfile();
+  const { active } = useUserPreview(actor);
+  return <><ShiftTracker profile={profile} />{!active && <DepartureRequests />}</>;
 }
 
 function OfficeOverview({ profile }: { profile: Profile }) {

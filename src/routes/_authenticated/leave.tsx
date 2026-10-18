@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Paperclip } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useProfile } from "@/lib/profile";
+import { usePreviewProfile } from "@/lib/impersonation";
 import { leaveHours, remainingBalance } from "@/lib/jobsheets";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,7 @@ const STATUS_CLS: Record<string, string> = {
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 function LeavePage() {
-  const { data: profile } = useProfile();
+  const { data: profile, isPreview } = usePreviewProfile();
   const qc = useQueryClient();
   const [f, setF] = useState({ leave_type: "Annual", start_date: "", end_date: "", optional_notes: "" });
   const [file, setFile] = useState<File | null>(null);
@@ -46,7 +46,8 @@ function LeavePage() {
     queryKey: ["leave", "mine", profile?.id],
     enabled: !!profile,
     queryFn: async () => {
-      const { data, error } = await supabase.from("leave_requests").select("*").eq("user_id", profile!.id).order("start_date", { ascending: false });
+      if (!profile) return [];
+      const { data, error } = await supabase.from("leave_requests").select("*").eq("user_id", profile.id).order("start_date", { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -54,7 +55,12 @@ function LeavePage() {
   const { data: bal } = useQuery({
     queryKey: ["leave-balance", profile?.id],
     enabled: !!profile,
-    queryFn: async () => (await supabase.from("user_leave_balances").select("*").eq("user_id", profile!.id).maybeSingle()).data,
+    queryFn: async () => {
+      if (!profile) return null;
+      const { data, error } = await supabase.from("user_leave_balances").select("*").eq("user_id", profile.id).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
   });
 
   const mine = reqs.filter((r) => r.user_id === profile?.id);
@@ -70,7 +76,7 @@ function LeavePage() {
 
   const request = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profile) return;
+    if (!profile || isPreview) return;
     if (f.leave_type === "Sick" && !file) { toast.error("Sick leave needs a medical certificate"); return; }
     if (requested <= 0) { toast.error("Pick a date range with at least one weekday"); return; }
     if (f.leave_type === "Annual" && requested > remaining) { toast.error(`Only ${remaining.toFixed(2)} h left`); return; }
@@ -117,6 +123,7 @@ function LeavePage() {
 
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
           <form onSubmit={request} className="space-y-3 rounded-xl border bg-card p-5">
+            <fieldset disabled={isPreview} className="min-w-0 space-y-3">
             <h2 className="font-medium text-foreground">Request leave</h2>
             <div className="space-y-1.5">
               <Label>Leave type</Label>
@@ -141,6 +148,7 @@ function LeavePage() {
             )}
             <div className="space-y-1.5"><Label>Notes (optional)</Label><Textarea value={f.optional_notes} onChange={(e) => setF({ ...f, optional_notes: e.target.value })} /></div>
             <Button type="submit" className="h-11 w-full" disabled={busy}>Submit request</Button>
+            </fieldset>
           </form>
 
           <section className="rounded-xl border bg-card">
@@ -152,7 +160,7 @@ function LeavePage() {
                   <TableBody>
                     {mine.map((r) => (
                       <TableRow key={r.id}>
-                        <TableCell>{r.leave_type}{r.medical_certificate_path && <button className="ml-1 text-primary" aria-label="View certificate" onClick={() => openCert(r.medical_certificate_path!)}><Paperclip className="inline h-3 w-3" /></button>}</TableCell>
+                        <TableCell>{r.leave_type}{r.medical_certificate_path && <Button size="icon" variant="ghost" className="ml-1 h-6 w-6 text-primary" aria-label="View certificate" onClick={() => r.medical_certificate_path && openCert(r.medical_certificate_path)}><Paperclip className="h-3 w-3" /></Button>}</TableCell>
                         <TableCell className="whitespace-nowrap">{r.start_date} → {r.end_date}</TableCell>
                         <TableCell className="text-right tabular-nums">{Number(r.total_hours).toFixed(2)}</TableCell>
                         <TableCell><span className={`rounded-full px-2 py-0.5 text-xs ${STATUS_CLS[r.status]}`}>{cap(r.status)}</span></TableCell>

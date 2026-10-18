@@ -16,6 +16,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { IdleLogout } from "@/components/idle-logout";
 import { helpFor } from "@/lib/help-guides";
 import { QUICK_DEFAULTS, rankActions, readUsage, recordUsage, resetUsage } from "@/lib/quick-actions";
+import { useUserPreview, clearUserPreview } from "@/lib/impersonation";
+import { UserPreviewControl, UserPreviewBanner } from "@/components/user-preview";
 
 type NavItem = { to: string; label: string; icon: typeof Clock; module?: ModuleKey; office?: boolean; group: string };
 
@@ -98,7 +100,7 @@ function NavLinks({ items, onNavigate, uid }: { items: NavItem[]; onNavigate?: (
 function QuickLink({ to, uid, className, children }: { to: string; uid?: string | undefined; className: string; children: ReactNode }) {
   const [p, q] = to.split("?");
   return (
-    <Link to={p!} search={q ? { new: true } as never : {} as never} className={className} onClick={() => uid && recordUsage(uid, to)}>
+    <Link to={p ?? "/dashboard"} search={q ? { new: true } as never : {} as never} className={className} onClick={() => uid && recordUsage(uid, to)}>
       {children}
     </Link>
   );
@@ -109,7 +111,7 @@ function QuickActions({ items, uid, role, manager }: { items: NavItem[]; uid: st
   const [usage, setUsage] = useState<Record<string, number>>({});
   useEffect(() => { setUsage(readUsage(uid)); }, [uid]);
   const meta = (to: string) => EXTRA[to] ?? items.find((i) => i.to === to);
-  const allowed = [...Object.keys(EXTRA).filter((k) => !EXTRA[k]!.manager || manager), ...items.map((i) => i.to).filter((t) => t !== "/dashboard")];
+  const allowed = [...Object.keys(EXTRA).filter((k) => !EXTRA[k]?.manager || manager), ...items.map((i) => i.to).filter((t) => t !== "/dashboard")];
   const list = rankActions(QUICK_DEFAULTS[role].filter((t) => t !== "/dashboard"), allowed, usage, 6);
   return (
     <section className="mb-5 lg:hidden">
@@ -148,7 +150,9 @@ function HelpButton() {
 }
 
 export function AppShell({ title, actions, children }: { title: string; actions?: ReactNode; children: ReactNode }) {
-  const { data: profile } = useProfile();
+  const { data: actor } = useProfile();
+  const preview = useUserPreview(actor);
+  const profile = actor && preview.member ? { ...actor, role: preview.member.role } : actor;
   const navigate = useNavigate();
   const qc = useQueryClient();
   const path = useRouterState({ select: (s) => s.location.pathname });
@@ -157,7 +161,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   const can = useCan(profile);
   const office = isOffice(profile);
   const items = (manager ? adminNav : techNav).filter((i) => !i.module || can(i.module) || (i.to === "/company" && office));
-  const canSwitch = profile && profile.real_role !== "technician";
+  const canSwitch = profile && profile.real_role !== "technician" && !preview.active;
 
   const { data: company } = useCompanyRules();
   useEffect(() => { applyTypography(company?.theme); }, [company?.theme]);
@@ -166,6 +170,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   }, [profile?.app_theme_preference]);
 
   const signOut = async () => {
+    clearUserPreview();
     setViewAs(null);
     await qc.cancelQueries();
     qc.clear();
@@ -205,7 +210,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
       </aside>
 
       <div className="flex min-h-screen min-w-0 flex-col pb-20 lg:pb-0">
-        <header className="sticky top-0 z-20 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b bg-background/90 px-4 py-3 backdrop-blur sm:px-6 lg:grid-cols-[minmax(0,1fr)_auto]">
+        <header className="sticky top-0 z-20 flex flex-wrap items-center gap-3 border-b bg-background/90 px-4 py-3 backdrop-blur sm:px-6">
           <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open menu">
@@ -219,9 +224,10 @@ export function AppShell({ title, actions, children }: { title: string; actions?
               {footer}
             </SheetContent>
           </Sheet>
-          <h1 className="truncate font-display text-xl text-foreground sm:text-2xl">{title}</h1>
-          <div className="flex shrink-0 items-center gap-2">
+          <h1 className="min-w-0 flex-1 truncate font-display text-xl text-foreground sm:text-2xl">{title}</h1>
+          <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-2">
             <HelpButton />
+            <UserPreviewControl />
             {canSwitch && (
               <Select value={profile.role} onValueChange={(v) => { setViewAs(v === profile.real_role ? null : (v as ViewAs)); navigate({ to: "/dashboard" }); }}>
                 <SelectTrigger className="h-9 w-[150px] border-dashed text-xs" aria-label="View As mode"><span className="hidden text-muted-foreground xl:inline">View as:&nbsp;</span><SelectValue /></SelectTrigger>
@@ -233,14 +239,15 @@ export function AppShell({ title, actions, children }: { title: string; actions?
                 </SelectContent>
               </Select>
             )}
-            {actions}
-            <Button asChild size="sm" variant={actions ? "outline" : "default"} className="hidden sm:inline-flex">
+            {!preview.active && actions}
+            {!preview.active && <Button asChild size="sm" variant={actions ? "outline" : "default"} className="hidden sm:inline-flex">
               <Link to="/sheets/new" search={{}}><Plus className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Create New Job Sheet</span></Link>
-            </Button>
+            </Button>}
           </div>
         </header>
+        <UserPreviewBanner />
         <main className="flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
-          {profile && path === "/dashboard" && <QuickActions items={items} uid={profile.id} role={profile.role} manager={manager} />}
+          {profile && path === "/dashboard" && !preview.active && <QuickActions items={items} uid={profile.id} role={profile.role} manager={manager} />}
           {children}
         </main>
       </div>
@@ -248,7 +255,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
       <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 items-end border-t bg-card lg:hidden">
         <Link to="/dashboard" className={tab} activeProps={{ className: "text-primary font-medium" }} activeOptions={{ exact: true }}><LayoutDashboard className="h-5 w-5" />Home</Link>
         <Link to={manager ? "/admin/jobs" : "/sheets"} className={tab} activeProps={{ className: "text-primary font-medium" }}><ClipboardList className="h-5 w-5" />Jobs</Link>
-        <Link to="/sheets/new" search={{}} aria-label="Create new job sheet" className="mx-auto -mt-5 mb-1.5 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg"><Plus className="h-7 w-7" /></Link>
+        {preview.active ? <Link to="/hours" className={tab}><Clock className="h-5 w-5" />Hours</Link> : <Link to="/sheets/new" search={{}} aria-label="Create new job sheet" className="mx-auto -mt-5 mb-1.5 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg"><Plus className="h-7 w-7" /></Link>}
         <Link to={second.to} className={tab} activeProps={{ className: "text-primary font-medium" }}><second.icon className="h-5 w-5" />{second.label}</Link>
         <button type="button" className={tab} onClick={() => setMenuOpen(true)}><MoreHorizontal className="h-5 w-5" />More</button>
       </nav>

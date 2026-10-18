@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useProfile } from "@/lib/profile";
+import { usePreviewProfile } from "@/lib/impersonation";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { OvertimeCard } from "@/components/work-extras";
 import { ShiftTracker } from "./dashboard";
@@ -21,11 +21,16 @@ export const Route = createFileRoute("/_authenticated/hours")({
 });
 
 function HoursPage() {
-  const { data: profile } = useProfile();
+  const { data: profile } = usePreviewProfile();
   const { data: days = [] } = useQuery({
     queryKey: ["dwr", "mine-list", profile?.id],
     enabled: !!profile,
-    queryFn: async () => (await supabase.from("daily_work_reports").select("id, report_date, shift_start, shift_end, break_minutes, worked_hours, standard_hours, ot15_hours, ot20_hours").eq("user_id", profile!.id).order("report_date", { ascending: false }).limit(31)).data ?? [],
+    queryFn: async () => {
+      if (!profile) return [];
+      const { data, error } = await supabase.from("daily_work_reports").select("id, report_date, shift_start, shift_end, break_minutes, worked_hours, standard_hours, ot15_hours, ot20_hours").eq("user_id", profile.id).order("report_date", { ascending: false }).limit(31);
+      if (error) throw error;
+      return data ?? [];
+    },
   });
   if (!profile) return <AppShell title="My hours"><p className="text-muted-foreground">Loading…</p></AppShell>;
   const t = (s: string) => new Date(s).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
