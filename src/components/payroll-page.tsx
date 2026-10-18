@@ -18,7 +18,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PayrollRates } from "@/components/payroll-rates";
 import { PayrollEmployee } from "@/components/payroll-employee";
-import { defaultStatutory, employeeConfig, validStatutory, wageBasis, monthlyPayroll, type EmployeeConfig, type StatutoryYear } from "@/lib/payroll-statutory";
+import { defaultStatutory, employeeConfig, validStatutory, wageBasis, monthlyPayroll, weekendHolidayCredit, type EmployeeConfig, type StatutoryYear } from "@/lib/payroll-statutory";
+import { NumInput } from "@/components/num-input";
 import { overtimeDetails } from "@/lib/payroll-overtime";
 import { useCompanyRules } from "@/lib/company";
 import type { Json } from "@/integrations/supabase/types";
@@ -26,7 +27,7 @@ import type { Json } from "@/integrations/supabase/types";
 const today = new Date().toISOString().slice(0,10);
 function NumberField({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
   const id=label.toLowerCase().replace(/[^a-z0-9]+/g,"-");
-  return <div className="space-y-1.5"><Label htmlFor={id}>{label}</Label><Input id={id} type="number" min="0" step="0.01" value={value} onChange={e => onChange(Number(e.target.value))} /></div>;
+  return <div className="space-y-1.5"><Label htmlFor={id}>{label}</Label><NumInput id={id} min="0" step="0.01" value={value} onChange={onChange} /></div>;
 }
 
 export function PayrollPage({ section = "hours" }: { section?: "hours" | "wages" | "payslips" }) {
