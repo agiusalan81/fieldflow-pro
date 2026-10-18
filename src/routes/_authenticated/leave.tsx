@@ -98,6 +98,7 @@ function LeavePage() {
     qc.invalidateQueries({ queryKey: ["leave"] });
   };
   const openCert = async (path: string) => {
+    if (isPreview) return;
     const { data, error } = await supabase.storage.from("leave-certificates").createSignedUrl(path, 300);
     if (error) { toast.error(error.message); return; }
     window.open(data.signedUrl, "_blank");
@@ -160,7 +161,7 @@ function LeavePage() {
                   <TableBody>
                     {mine.map((r) => (
                       <TableRow key={r.id}>
-                        <TableCell>{r.leave_type}{r.medical_certificate_path && <Button size="icon" variant="ghost" className="ml-1 h-6 w-6 text-primary" aria-label="View certificate" onClick={() => r.medical_certificate_path && openCert(r.medical_certificate_path)}><Paperclip className="h-3 w-3" /></Button>}</TableCell>
+                        <TableCell>{r.leave_type}{r.medical_certificate_path && !isPreview && <Button size="icon" variant="ghost" className="ml-1 h-6 w-6 text-primary" aria-label="View certificate" onClick={() => r.medical_certificate_path && openCert(r.medical_certificate_path)}><Paperclip className="h-3 w-3" /></Button>}</TableCell>
                         <TableCell className="whitespace-nowrap">{r.start_date} → {r.end_date}</TableCell>
                         <TableCell className="text-right tabular-nums">{Number(r.total_hours).toFixed(2)}</TableCell>
                         <TableCell><span className={`rounded-full px-2 py-0.5 text-xs ${STATUS_CLS[r.status]}`}>{cap(r.status)}</span></TableCell>
