@@ -10,6 +10,7 @@
 <!-- LOVABLE:END -->
 
 ## Project rules
+- Payroll rules live in src/lib/payroll.ts with tests; confidential settings and immutable reviewed payslips use office-only tenant RLS, worked hours come only from DWR and roster changes are versioned. Why: prevent wage disclosure, double-counting and retroactive changes to issued payslips; statutory deductions are explicitly office-entered, not an automated tax engine.
 - User testing previews use isolated in-memory actor-scoped state and opt-in read profiles; the removable tenant control is gated by real superuser role, and a root boundary blocks non-preview screens. Why: inspect personal data without changing sessions, offline ownership or write/audit identity.
 - Tenant isolation is enforced by RLS on company_id via current_company_id(); UI never filters by company itself. Why: one source of truth for access.
 - Roles live only in public.user_roles (superuser/admin/supervisor/technician), read by has_role/has_company_role/is_company_manager in RLS; users.role is a deprecated display mirror. Why: roles on the profile table enable privilege escalation.

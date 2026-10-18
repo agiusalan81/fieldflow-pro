@@ -611,6 +611,60 @@ export type Database = {
           },
         ]
       }
+      employee_payroll_settings: {
+        Row: {
+          company_id: string
+          entitlement_year: number
+          hourly_rate: number
+          id: string
+          notes: string | null
+          sick_full_hours: number
+          sick_half_hours: number
+          tax_reference: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          entitlement_year?: number
+          hourly_rate?: number
+          id?: string
+          notes?: string | null
+          sick_full_hours?: number
+          sick_half_hours?: number
+          tax_reference?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          entitlement_year?: number
+          hourly_rate?: number
+          id?: string
+          notes?: string | null
+          sick_full_hours?: number
+          sick_half_hours?: number
+          tax_reference?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_payroll_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_payroll_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       internal_messages: {
         Row: {
           company_id: string
@@ -1549,6 +1603,142 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_payslips: {
+        Row: {
+          company_id: string
+          created_by: string
+          gross_eur: number
+          id: string
+          issued_at: string
+          net_eur: number
+          period_end: string
+          period_start: string
+          snapshot: Json
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_by?: string
+          gross_eur?: number
+          id?: string
+          issued_at?: string
+          net_eur?: number
+          period_end: string
+          period_start: string
+          snapshot?: Json
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_by?: string
+          gross_eur?: number
+          id?: string
+          issued_at?: string
+          net_eur?: number
+          period_end?: string
+          period_start?: string
+          snapshot?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_payslips_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_payslips_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_policies: {
+        Row: {
+          company_id: string
+          country: string
+          created_at: string
+          effective_from: string
+          id: string
+          sick_full_hours: number
+          sick_half_hours: number
+          standby_weekly_eur: number
+        }
+        Insert: {
+          company_id: string
+          country?: string
+          created_at?: string
+          effective_from?: string
+          id?: string
+          sick_full_hours?: number
+          sick_half_hours?: number
+          standby_weekly_eur?: number
+        }
+        Update: {
+          company_id?: string
+          country?: string
+          created_at?: string
+          effective_from?: string
+          id?: string
+          sick_full_hours?: number
+          sick_half_hours?: number
+          standby_weekly_eur?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_policies_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_roster_versions: {
+        Row: {
+          captured_at: string
+          company_id: string
+          effective_from: string
+          id: string
+          per_shift: number
+          roster_start: string
+          rotation_days: number
+          technician_order: string[]
+        }
+        Insert: {
+          captured_at?: string
+          company_id: string
+          effective_from: string
+          id?: string
+          per_shift: number
+          roster_start: string
+          rotation_days: number
+          technician_order: string[]
+        }
+        Update: {
+          captured_at?: string
+          company_id?: string
+          effective_from?: string
+          id?: string
+          per_shift?: number
+          roster_start?: string
+          rotation_days?: number
+          technician_order?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_roster_versions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
