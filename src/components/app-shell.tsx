@@ -169,7 +169,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
 
   const { data: company } = useCompanyRules();
   useEffect(() => { applyTypography(company?.theme); }, [company?.theme]);
-  if (company) setTenantLocale(company.locale);
+  if (company) setTenantLocale(company.locale ?? {});
   useEffect(() => {
     document.documentElement.classList.toggle("dark", profile?.app_theme_preference === "dark");
   }, [profile?.app_theme_preference]);
