@@ -32,7 +32,7 @@ const techNav: NavItem[] = [
   { group: "Time & roster", to: "/leave", label: "Leave", icon: CalendarDays },
   { group: "General", to: "/messages", label: "Team chat", icon: MessageSquare },
   { group: "General", to: "/settings", label: "Settings", icon: Settings },
-  { group: "General", to: "/subscription", label: "Referrals & plans", icon: Receipt },
+  { group: "General", to: "/subscription", label: "Referrals & plans", icon: Calculator },
 ];
 
 const adminNav: NavItem[] = [
@@ -167,7 +167,8 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   const can = useCan(profile);
   const office = isOffice(profile);
   const { data: platformOwner } = useQuery({ queryKey: ["platform-owner"], enabled: !!actor && !preview.active, queryFn: async () => (await supabase.rpc("is_platform_owner")).data === true });
-  const items = [...(manager ? adminNav : techNav), ...(platformOwner && !preview.active ? [{ group: "Platform", to: "/platform", label: "Portfolio HQ", icon: Building2 }] : [])].filter((i) => (!i.office || office) && (!i.module || can(i.module) || (i.to === "/company" && office)));
+  const extraNav: NavItem[] = platformOwner && !preview.active ? [{ group: "Platform", to: "/platform", label: "Portfolio HQ", icon: Building2 }] : [];
+  const items = [...(manager ? adminNav : techNav), ...extraNav].filter((i) => (!i.office || office) && (!i.module || can(i.module) || (i.to === "/company" && office)));
   const canSwitch = profile && profile.real_role !== "technician" && !preview.active;
 
   const { data: company } = useCompanyRules();
