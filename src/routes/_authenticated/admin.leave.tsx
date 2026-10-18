@@ -38,6 +38,7 @@ function LeaveApprovals() {
     const annual = reqs.filter((r) => r.user_id === uid && r.leave_type === "Annual");
     return {
       base: Number(b?.base_entitlement_hours ?? 192), ph: Number(b?.public_holiday_credit_hours ?? 0),
+      carried: b?.carried_forward_year===new Date().getFullYear()?Number(b.carried_forward_hours):0,
       taken: annual.filter((r) => r.status === "approved").reduce((s, r) => s + Number(r.total_hours), 0),
       pending: annual.filter((r) => r.status === "pending").reduce((s, r) => s + Number(r.total_hours), 0),
     };

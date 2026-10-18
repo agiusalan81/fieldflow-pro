@@ -1,0 +1,3 @@
+import { createFileRoute } from '@tanstack/react-router';
+import { PayrollPage } from '@/components/payroll-page';
+export const Route=createFileRoute('/_authenticated/payroll/payslips')({head:()=>({meta:[{title:'Payslips — FieldOps'},{name:'description',content:'Generate, review and issue employee payslips with leave balances.'},{property:'og:title',content:'Payslips — FieldOps'},{property:'og:description',content:'Generate, review and issue employee payslips with leave balances.'},{property:'og:type',content:'website'},{name:'twitter:card',content:'summary'}]}),component:()=> <PayrollPage section="payslips"/>});

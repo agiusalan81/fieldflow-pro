@@ -34,6 +34,9 @@ import { Route as AuthenticatedAdminFieldsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminInventoryRouteImport } from './routes/_authenticated/admin.inventory'
 import { Route as AuthenticatedAdminJobsRouteImport } from './routes/_authenticated/admin.jobs'
 import { Route as AuthenticatedAdminLeaveRouteImport } from './routes/_authenticated/admin.leave'
+import { Route as AuthenticatedPayrollHoursRouteImport } from './routes/_authenticated/payroll.hours'
+import { Route as AuthenticatedPayrollPayslipsRouteImport } from './routes/_authenticated/payroll.payslips'
+import { Route as AuthenticatedPayrollWagesRouteImport } from './routes/_authenticated/payroll.wages'
 import { Route as AuthenticatedPrintSheetIdRouteImport } from './routes/_authenticated/print.$sheetId'
 import { Route as AuthenticatedSheetsIndexRouteImport } from './routes/_authenticated/sheets.index'
 import { Route as AuthenticatedSheetsSheetIdRouteImport } from './routes/_authenticated/sheets.$sheetId'
@@ -167,6 +170,24 @@ const AuthenticatedAdminLeaveRoute = AuthenticatedAdminLeaveRouteImport.update({
   path: '/admin/leave',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPayrollHoursRoute =
+  AuthenticatedPayrollHoursRouteImport.update({
+    id: '/hours',
+    path: '/hours',
+    getParentRoute: () => AuthenticatedPayrollRoute,
+  } as any)
+const AuthenticatedPayrollPayslipsRoute =
+  AuthenticatedPayrollPayslipsRouteImport.update({
+    id: '/payslips',
+    path: '/payslips',
+    getParentRoute: () => AuthenticatedPayrollRoute,
+  } as any)
+const AuthenticatedPayrollWagesRoute =
+  AuthenticatedPayrollWagesRouteImport.update({
+    id: '/wages',
+    path: '/wages',
+    getParentRoute: () => AuthenticatedPayrollRoute,
+  } as any)
 const AuthenticatedPrintSheetIdRoute =
   AuthenticatedPrintSheetIdRouteImport.update({
     id: '/print/$sheetId',
@@ -204,7 +225,7 @@ export interface FileRoutesByFullPath {
   '/leave': typeof AuthenticatedLeaveRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/overtime': typeof AuthenticatedOvertimeRoute
-  '/payroll': typeof AuthenticatedPayrollRoute
+  '/payroll': typeof AuthenticatedPayrollRouteWithChildren
   '/pending-works': typeof AuthenticatedPendingWorksRoute
   '/schedule': typeof AuthenticatedScheduleRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -216,6 +237,9 @@ export interface FileRoutesByFullPath {
   '/admin/inventory': typeof AuthenticatedAdminInventoryRoute
   '/admin/jobs': typeof AuthenticatedAdminJobsRoute
   '/admin/leave': typeof AuthenticatedAdminLeaveRoute
+  '/payroll/hours': typeof AuthenticatedPayrollHoursRoute
+  '/payroll/payslips': typeof AuthenticatedPayrollPayslipsRoute
+  '/payroll/wages': typeof AuthenticatedPayrollWagesRoute
   '/print/$sheetId': typeof AuthenticatedPrintSheetIdRoute
   '/sheets/$sheetId': typeof AuthenticatedSheetsSheetIdRoute
   '/sheets/new': typeof AuthenticatedSheetsNewRoute
@@ -234,7 +258,7 @@ export interface FileRoutesByTo {
   '/leave': typeof AuthenticatedLeaveRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/overtime': typeof AuthenticatedOvertimeRoute
-  '/payroll': typeof AuthenticatedPayrollRoute
+  '/payroll': typeof AuthenticatedPayrollRouteWithChildren
   '/pending-works': typeof AuthenticatedPendingWorksRoute
   '/schedule': typeof AuthenticatedScheduleRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -246,6 +270,9 @@ export interface FileRoutesByTo {
   '/admin/inventory': typeof AuthenticatedAdminInventoryRoute
   '/admin/jobs': typeof AuthenticatedAdminJobsRoute
   '/admin/leave': typeof AuthenticatedAdminLeaveRoute
+  '/payroll/hours': typeof AuthenticatedPayrollHoursRoute
+  '/payroll/payslips': typeof AuthenticatedPayrollPayslipsRoute
+  '/payroll/wages': typeof AuthenticatedPayrollWagesRoute
   '/print/$sheetId': typeof AuthenticatedPrintSheetIdRoute
   '/sheets/$sheetId': typeof AuthenticatedSheetsSheetIdRoute
   '/sheets/new': typeof AuthenticatedSheetsNewRoute
@@ -266,7 +293,7 @@ export interface FileRoutesById {
   '/_authenticated/leave': typeof AuthenticatedLeaveRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/overtime': typeof AuthenticatedOvertimeRoute
-  '/_authenticated/payroll': typeof AuthenticatedPayrollRoute
+  '/_authenticated/payroll': typeof AuthenticatedPayrollRouteWithChildren
   '/_authenticated/pending-works': typeof AuthenticatedPendingWorksRoute
   '/_authenticated/schedule': typeof AuthenticatedScheduleRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
@@ -278,6 +305,9 @@ export interface FileRoutesById {
   '/_authenticated/admin/inventory': typeof AuthenticatedAdminInventoryRoute
   '/_authenticated/admin/jobs': typeof AuthenticatedAdminJobsRoute
   '/_authenticated/admin/leave': typeof AuthenticatedAdminLeaveRoute
+  '/_authenticated/payroll/hours': typeof AuthenticatedPayrollHoursRoute
+  '/_authenticated/payroll/payslips': typeof AuthenticatedPayrollPayslipsRoute
+  '/_authenticated/payroll/wages': typeof AuthenticatedPayrollWagesRoute
   '/_authenticated/print/$sheetId': typeof AuthenticatedPrintSheetIdRoute
   '/_authenticated/sheets/$sheetId': typeof AuthenticatedSheetsSheetIdRoute
   '/_authenticated/sheets/new': typeof AuthenticatedSheetsNewRoute
@@ -310,6 +340,9 @@ export interface FileRouteTypes {
     | '/admin/inventory'
     | '/admin/jobs'
     | '/admin/leave'
+    | '/payroll/hours'
+    | '/payroll/payslips'
+    | '/payroll/wages'
     | '/print/$sheetId'
     | '/sheets/$sheetId'
     | '/sheets/new'
@@ -340,6 +373,9 @@ export interface FileRouteTypes {
     | '/admin/inventory'
     | '/admin/jobs'
     | '/admin/leave'
+    | '/payroll/hours'
+    | '/payroll/payslips'
+    | '/payroll/wages'
     | '/print/$sheetId'
     | '/sheets/$sheetId'
     | '/sheets/new'
@@ -371,6 +407,9 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/inventory'
     | '/_authenticated/admin/jobs'
     | '/_authenticated/admin/leave'
+    | '/_authenticated/payroll/hours'
+    | '/_authenticated/payroll/payslips'
+    | '/_authenticated/payroll/wages'
     | '/_authenticated/print/$sheetId'
     | '/_authenticated/sheets/$sheetId'
     | '/_authenticated/sheets/new'
@@ -562,6 +601,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminLeaveRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/payroll/hours': {
+      id: '/_authenticated/payroll/hours'
+      path: '/hours'
+      fullPath: '/payroll/hours'
+      preLoaderRoute: typeof AuthenticatedPayrollHoursRouteImport
+      parentRoute: typeof AuthenticatedPayrollRoute
+    }
+    '/_authenticated/payroll/payslips': {
+      id: '/_authenticated/payroll/payslips'
+      path: '/payslips'
+      fullPath: '/payroll/payslips'
+      preLoaderRoute: typeof AuthenticatedPayrollPayslipsRouteImport
+      parentRoute: typeof AuthenticatedPayrollRoute
+    }
+    '/_authenticated/payroll/wages': {
+      id: '/_authenticated/payroll/wages'
+      path: '/wages'
+      fullPath: '/payroll/wages'
+      preLoaderRoute: typeof AuthenticatedPayrollWagesRouteImport
+      parentRoute: typeof AuthenticatedPayrollRoute
+    }
     '/_authenticated/print/$sheetId': {
       id: '/_authenticated/print/$sheetId'
       path: '/print/$sheetId'
@@ -593,6 +653,21 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedPayrollRouteChildren {
+  AuthenticatedPayrollHoursRoute: typeof AuthenticatedPayrollHoursRoute
+  AuthenticatedPayrollPayslipsRoute: typeof AuthenticatedPayrollPayslipsRoute
+  AuthenticatedPayrollWagesRoute: typeof AuthenticatedPayrollWagesRoute
+}
+
+const AuthenticatedPayrollRouteChildren: AuthenticatedPayrollRouteChildren = {
+  AuthenticatedPayrollHoursRoute: AuthenticatedPayrollHoursRoute,
+  AuthenticatedPayrollPayslipsRoute: AuthenticatedPayrollPayslipsRoute,
+  AuthenticatedPayrollWagesRoute: AuthenticatedPayrollWagesRoute,
+}
+
+const AuthenticatedPayrollRouteWithChildren =
+  AuthenticatedPayrollRoute._addFileChildren(AuthenticatedPayrollRouteChildren)
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCompanyRoute: typeof AuthenticatedCompanyRoute
   AuthenticatedContractsRoute: typeof AuthenticatedContractsRoute
@@ -603,7 +678,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLeaveRoute: typeof AuthenticatedLeaveRoute
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedOvertimeRoute: typeof AuthenticatedOvertimeRoute
-  AuthenticatedPayrollRoute: typeof AuthenticatedPayrollRoute
+  AuthenticatedPayrollRoute: typeof AuthenticatedPayrollRouteWithChildren
   AuthenticatedPendingWorksRoute: typeof AuthenticatedPendingWorksRoute
   AuthenticatedScheduleRoute: typeof AuthenticatedScheduleRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -630,7 +705,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLeaveRoute: AuthenticatedLeaveRoute,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedOvertimeRoute: AuthenticatedOvertimeRoute,
-  AuthenticatedPayrollRoute: AuthenticatedPayrollRoute,
+  AuthenticatedPayrollRoute: AuthenticatedPayrollRouteWithChildren,
   AuthenticatedPendingWorksRoute: AuthenticatedPendingWorksRoute,
   AuthenticatedScheduleRoute: AuthenticatedScheduleRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,

@@ -10,7 +10,7 @@
 <!-- LOVABLE:END -->
 
 ## Project rules
-- Payroll rules live in src/lib/payroll.ts with tests; confidential settings and immutable reviewed payslips use office-only tenant RLS, worked hours come only from DWR and roster changes are versioned. Why: prevent wage disclosure, double-counting and retroactive changes to issued payslips; statutory deductions are explicitly office-entered, not an automated tax engine.
+- Payroll rules live in src/lib/payroll.ts with tests; confidential settings and immutable reviewed payslips use office-only tenant RLS, worked hours come only from DWR and roster changes are versioned. Why: prevent wage disclosure, double-counting and retroactive changes to issued payslips; statutory calculations use office-approved annual tables in src/lib/payroll-statutory.ts and reviewed monthly snapshots; category suggestions never establish eligibility automatically.
 - User testing previews use isolated in-memory actor-scoped state and opt-in read profiles; the removable tenant control is gated by real superuser role, and a root boundary blocks non-preview screens. Why: inspect personal data without changing sessions, offline ownership or write/audit identity.
 - Tenant isolation is enforced by RLS on company_id via current_company_id(); UI never filters by company itself. Why: one source of truth for access.
 - Roles live only in public.user_roles (superuser/admin/supervisor/technician), read by has_role/has_company_role/is_company_manager in RLS; users.role is a deprecated display mirror. Why: roles on the profile table enable privilege escalation.
@@ -33,3 +33,7 @@
 - job_sheets has two FKs to users; always embed as users!job_sheets_assigned_technician_id_fkey(...). Why: an unhinted embed fails.
 - Monthly signing batches are authenticated, creator-owned records finalized with transactional signing and the shared PDF builder; delivery state is stored before sending. Why: preserves partial sessions and prevents duplicate automatic emails.
 - Offline draft snapshots are account-scoped in IndexedDB and sync through an optimistic-locking transactional RPC; registration lives only in the guarded PWA wrapper. Why: avoids cross-account replay, partial saves, stale overwrites and preview caches.
+
+- Payroll sections reuse src/components/payroll-page.tsx behind separate leaf routes; annual statutory tables and employee payroll configuration retain office-only RLS. Why: one calculation engine and private onboarding data across payroll screens.
+- Overtime site details use stored DWR activity intervals and their captured rules; historical reports without rules show associated shift sites only. Why: never invent site allocation or recalculate old totals from changed rules.
+- Leave opening carry-forward is year-qualified on the shared balance; payslips snapshot leave without consuming it again. Why: approved requests already drive leave usage.

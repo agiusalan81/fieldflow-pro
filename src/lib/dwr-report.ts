@@ -28,7 +28,7 @@ export async function fileDailyReport(p: { userId: string; companyId: string; sh
   const breakH = (mandatoryBreaks(start, end, p.breaks).length * p.breaks.minutes) / 60;
   const { data, error } = await supabase.from("daily_work_reports").insert({
     company_id: p.companyId, user_id: p.userId, shift_id: p.shiftId, report_date: date,
-    shift_start: p.startedAt, shift_end: p.endedAt, rows: rows as never,
+    shift_start: p.startedAt, shift_end: p.endedAt, rows: rows as never, overtime_rules: p.rules as never,
     break_minutes: Math.round(breakH * 60), worked_hours: workedHours(start, end, p.breaks),
     standard_hours: Math.max(0, +(split.standard - breakH).toFixed(2)), ot15_hours: split.ot15, ot20_hours: split.ot20,
   }).select("id").single();
