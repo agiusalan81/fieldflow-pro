@@ -1,0 +1,2 @@
+ALTER TABLE public.clients ADD COLUMN waive_transport boolean NOT NULL DEFAULT false;
+COMMENT ON COLUMN public.clients.waive_transport IS 'When true, travel time is not billable for this client and is hidden on job sheets.';

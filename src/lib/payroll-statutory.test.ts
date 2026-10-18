@@ -1,5 +1,5 @@
 import { describe,it,expect } from 'vitest';
-import { defaultStatutory,employeeConfig,wageBasis,yearlyTax,sscPerMonday,countMondays,monthlyPayroll,suggestCategories,validStatutory } from './payroll-statutory';
+import { defaultStatutory,employeeConfig,wageBasis,yearlyTax,sscPerMonday,countMondays,monthlyPayroll,suggestCategories,validStatutory,weekendHolidayCredit } from './payroll-statutory';
 import { aggregatePayroll } from './payroll';
 import { remainingBalance } from './jobsheets';
 const rates=defaultStatutory(),wage={hourly_rate:10,sick_full_hours:8,sick_half_hours:8};
@@ -44,4 +44,14 @@ describe('Annual statutory and employee payroll',()=>{
  it('validates preloaded rates',()=>expect(validStatutory(rates)).toBe(true));
  it('rejects descending bands',()=>{const bad=structuredClone(rates);bad.tax.single[1]={to:10000,rate:15,subtract:1800};expect(validStatutory(bad)).toBe(false);});
  it('adds opening leave carry exactly once',()=>expect(remainingBalance({base:224,ph:0,carried:40,taken:8,pending:8})).toBe(248));
+ it('credits 8h per public holiday falling on a non-working day',()=>{
+  const holidays=['2026-06-07','2026-08-15','2026-12-13','2026-01-01'];
+  expect(weekendHolidayCredit(holidays,[1,2,3,4,5],2026)).toBe(24);
+  expect(weekendHolidayCredit(holidays,[0,1,2,3,4,5,6],2026)).toBe(0);
+ });
+ it('honours an editable from threshold on tax bands',()=>{
+  const r=structuredClone(rates);const b=r.tax.single[1];if(b)b.from=12500;
+  expect(()=>yearlyTax(12500,'single',r)).toThrow('incomplete');
+  expect(yearlyTax(12500.5,'single',r)).toBe(75.08);
+ });
 });

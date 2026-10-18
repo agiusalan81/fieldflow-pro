@@ -14,6 +14,8 @@ import { VoiceDictation } from "@/components/voice-dictation";
 import { sendJobSheetEmail } from "@/lib/sendJobSheetEmail";
 import { TechnicianPicker } from "@/components/technician-picker";
 import { SearchSelect } from "@/components/search-select";
+import { TimePicker } from "@/components/time-picker";
+import { NumInput } from "@/components/num-input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AppShell, StatusBadge, BackButton } from "@/components/app-shell";
@@ -119,7 +121,7 @@ function SheetForm() {
     queryKey: ["sheet-refs"],
     queryFn: async () => {
       const [c, s, a] = await Promise.all([
-        supabase.from("clients").select("id, name, billing_address, preapprove_departure").order("name"),
+        supabase.from("clients").select("id, name, billing_address, preapprove_departure, waive_transport").order("name"),
         supabase.from("sites").select("id, client_id, name, address").order("name"),
         supabase.from("assets").select("id, client_id, site_id, reference_number, asset_category, location_details, custom_attributes, serial_number"),
       ]);
@@ -188,7 +190,12 @@ function SheetForm() {
       const snapshot: DraftSnapshot = {
         key: draftKey(profile.id, sheetId), userId: profile.id, sheetId, expected,
         form: { ...form, checklist_values: checks, photo_paths: photos, repairs_performed: logs.map((l) => l.daily_work_description.trim()).filter(Boolean).join("\n") || form.repairs_performed },
-        logs: logs.map((l, i) => ({ ...l, time_in: l.time_in || null, time_out: l.time_out || null, sort_order: i, daily_total_hours: dayLabourHours(l.time_in, l.time_out, l.traveling_time_hours, l.technician_count, l.technician_initials) })),
+        logs: logs.map((l, i) => {
+          const c = refs?.clients.find((x) => x.id === form.client_id);
+          const travel = c?.waive_transport ? 0 : l.traveling_time_hours;
+          const ph = parts.filter((p) => p.log_sort_order === i).reduce((s, p) => s + (Number(p.time_acquiring_parts_hours) || 0), 0);
+          return { ...l, traveling_time_hours: travel, time_in: l.time_in || null, time_out: l.time_out || null, sort_order: i, daily_total_hours: dayLabourHours(l.time_in, l.time_out, travel, l.technician_count, l.technician_initials, ph) };
+        }),
         parts: parts.filter((p) => p.part_description.trim()).map((p, i) => ({ ...p, sort_order: i })), savedAt: new Date().toISOString(),
       };
       void saveLocalDraft(snapshot).catch(() => toast.error("This device could not save your draft. Free storage space and try again."));
@@ -239,7 +246,10 @@ function SheetForm() {
       const snapshot: DraftSnapshot = {
         key: draftKey(profile.id, sheetId), userId: profile.id, sheetId, expected: revision.current ?? sheet.updated_at,
         form: { ...form, checklist_values: checks, photo_paths: photos, repairs_performed: repairs },
-        logs: logs.map((l, i) => ({ ...l, time_in: l.time_in || null, time_out: l.time_out || null, sort_order: i, daily_total_hours: dayLabourHours(l.time_in, l.time_out, l.traveling_time_hours, l.technician_count, l.technician_initials) })),
+        logs: logs.map((l, i) => {
+          const travel = client?.waive_transport ? 0 : l.traveling_time_hours;
+          return { ...l, traveling_time_hours: travel, time_in: l.time_in || null, time_out: l.time_out || null, sort_order: i, daily_total_hours: dayLabourHours(l.time_in, l.time_out, travel, l.technician_count, l.technician_initials, dayPartsHours(i)) };
+        }),
         parts: parts.filter((p) => p.part_description.trim()).map((p, i) => ({ ...p, sort_order: i })), savedAt: new Date().toISOString(),
       };
       if (!navigator.onLine) {
@@ -332,7 +342,8 @@ function SheetForm() {
     setLog(i, which === "in" ? { latitude_in: g.lat, longitude_in: g.lng } : { latitude_out: g.lat, longitude_out: g.lng });
     toast.success(`Location ${which === "in" ? "in" : "out"} captured${g.simulated ? " (simulated)" : ""}`);
   };
-  const totalHours = logs.reduce((s, l) => s + labourHours(l.time_in, l.time_out, l.technician_count, l.technician_initials), 0);
+  const dayPartsHours = (i: number) => parts.filter((p) => p.log_sort_order === i).reduce((s, p) => s + (Number(p.time_acquiring_parts_hours) || 0), 0);
+  const totalHours = logs.reduce((s, l, i) => s + dayLabourHours(l.time_in, l.time_out, l.traveling_time_hours, l.technician_count, l.technician_initials, dayPartsHours(i)), 0);
   const manager = isManager(profile);
   const address = site?.address || asset?.location_details || client?.billing_address || "";
 
@@ -452,7 +463,7 @@ function SheetForm() {
           </div>
           <div className="space-y-3">
             {logs.map((l, i) => {
-              const day = dayLabourHours(l.time_in, l.time_out, l.traveling_time_hours, l.technician_count, l.technician_initials);
+              const day = dayLabourHours(l.time_in, l.time_out, l.traveling_time_hours, l.technician_count, l.technician_initials, dayPartsHours(i));
               const dayParts = parts.map((p, j) => ({ p, j })).filter(({ p }) => p.log_sort_order === i);
               return (
                 <div key={i} className="rounded-lg border p-3">
@@ -480,18 +491,20 @@ function SheetForm() {
                       return (
                         <div key={w} className="space-y-1">
                           <Label className="text-xs">Time {w}</Label>
-                          <Input type="time" step={900} className="h-11 w-full" value={l[k]} onChange={(e) => setLog(i, { [k]: e.target.value })} onBlur={(e) => e.target.value && setT(roundTo15(e.target.value))} />
+                          <TimePicker label={`Time ${w}`} disabled={readOnly} value={l[k]} onChange={(v) => setT(roundTo15(v))} />
                           {w === "out" && l.time_in && l.time_out && l.time_out < l.time_in && <p className="text-xs text-destructive">Time out must be after time in.</p>}
                         </div>
                       );
                     })}
-                    <div className="space-y-1"><Label className="text-xs">Travel h</Label><Input type="number" step="0.25" min="0" inputMode="decimal" className="h-11" value={l.traveling_time_hours} onChange={(e) => setLog(i, { traveling_time_hours: Number(e.target.value) })} /></div>
+                    {client?.waive_transport
+                      ? <div className="space-y-1"><Label className="text-xs">Travel h</Label><p className="flex h-11 items-center rounded-md border border-dashed px-3 text-xs text-muted-foreground">Waived for this client</p></div>
+                      : <div className="space-y-1"><Label className="text-xs">Travel h</Label><NumInput step="0.25" min="0" className="h-11" value={l.traveling_time_hours} onChange={(v) => setLog(i, { traveling_time_hours: v })} /></div>}
                   </div>
                   <p className="mt-2 text-[11px] text-muted-foreground">
                     GPS in: {l.latitude_in != null ? `${l.latitude_in.toFixed(4)}, ${l.longitude_in?.toFixed(4)}` : "—"} · out: {l.latitude_out != null ? `${l.latitude_out.toFixed(4)}, ${l.longitude_out?.toFixed(4)}` : "—"}
                   </p>
                   <TechnicianPicker count={l.technician_count} selected={l.technician_initials} users={users} disabled={readOnly} onChange={(count, initials) => setLog(i, { technician_count: count, technician_initials: initials })} />
-                  <p className="mt-2 text-xs text-muted-foreground">{labourHours(l.time_in, l.time_out, l.technician_count, l.technician_initials).toFixed(2)} labour h · {l.technician_count} technicians</p>
+                  <p className="mt-2 text-xs text-muted-foreground">{day.toFixed(2)} labour h (site + travel + parts) · {l.technician_count} technicians</p>
                   <div className="mt-3 space-y-1"><Label className="text-xs">Repairs done this day</Label>
                     <Textarea rows={2} value={l.daily_work_description} onChange={(e) => setLog(i, { daily_work_description: e.target.value })} />
                     <VoiceDictation label="repairs done" disabled={readOnly} value={l.daily_work_description} onApply={(t) => setLog(i, { daily_work_description: t })} />
@@ -499,16 +512,17 @@ function SheetForm() {
                   <div className="mt-3 space-y-2">
                     <Label className="text-xs">Parts used</Label>
                     {dayParts.map(({ p, j }) => (
-                      <div key={j} className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 md:grid-cols-[minmax(0,1fr)_80px_80px_auto]">
+                      <div key={j} className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 md:grid-cols-[minmax(0,1fr)_70px_70px_110px_auto]">
                         <Input className="col-span-2 h-10 md:col-span-1" placeholder="Part description" value={p.part_description} onChange={(e) => setPart(j, { part_description: e.target.value })} />
-                        <div className="grid grid-cols-2 gap-2 md:contents">
+                        <div className="grid grid-cols-3 gap-2 md:contents">
                           <Input className="h-10" placeholder="Unit" value={p.unit} onChange={(e) => setPart(j, { unit: e.target.value })} />
-                          <Input className="h-10" type="number" min="0" placeholder="Qty" value={p.quantity} onChange={(e) => setPart(j, { quantity: Number(e.target.value) })} />
+                          <NumInput className="h-10" min="0" aria-label="Part quantity" placeholder="Qty" value={p.quantity} onChange={(v) => setPart(j, { quantity: v })} />
+                          <NumInput className="h-10" min="0" step="0.25" aria-label="Hours acquiring this part" placeholder="Acq. h" value={p.time_acquiring_parts_hours} onChange={(v) => setPart(j, { time_acquiring_parts_hours: v })} />
                         </div>
                         <Button type="button" size="icon" variant="ghost" aria-label="Remove part" onClick={() => setParts(parts.filter((_, x) => x !== j))}><Trash2 className="h-4 w-4" /></Button>
                       </div>
                     ))}
-                    {dayParts.length > 0 && <p className="text-[11px] text-muted-foreground">description · unit · qty</p>}
+                    {dayParts.length > 0 && <p className="text-[11px] text-muted-foreground">description · unit · qty · hours spent acquiring the part (added to labour)</p>}
                     {!readOnly && <Button type="button" size="sm" variant="ghost" onClick={() => setParts([...parts, { ...emptyPart(), log_sort_order: i }])}><Plus className="mr-1 h-4 w-4" />Add part</Button>}
                   </div>
                   <div className="mt-3 space-y-1">

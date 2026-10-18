@@ -186,6 +186,7 @@ export type Database = {
           preapprove_departure: boolean
           property_name: string | null
           street_name: string | null
+          waive_transport: boolean
         }
         Insert: {
           billing_address?: string | null
@@ -198,6 +199,7 @@ export type Database = {
           preapprove_departure?: boolean
           property_name?: string | null
           street_name?: string | null
+          waive_transport?: boolean
         }
         Update: {
           billing_address?: string | null
@@ -210,6 +212,7 @@ export type Database = {
           preapprove_departure?: boolean
           property_name?: string | null
           street_name?: string | null
+          waive_transport?: boolean
         }
         Relationships: [
           {

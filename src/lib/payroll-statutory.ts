@@ -2,12 +2,20 @@ import { money, datesBetween, calculateWages, type PayrollHours, type WageSettin
 export const TAX_STATUSES = ['single','married','married_1','married_2','parent','parent_1','parent_2'] as const;
 export type TaxStatus = typeof TAX_STATUSES[number];
 export const TAX_LABELS: Record<TaxStatus,string> = { single:'Single', married:'Married', married_1:'Married · 1 child', married_2:'Married · 2+ children', parent:'Parent', parent_1:'Parent · 1 child', parent_2:'Parent · 2+ children' };
-export type TaxBand = { to: number | null; rate: number; subtract: number };
+export type TaxBand = { to: number | null; rate: number; subtract: number; from?: number };
 export type Contribution = { rate: number; fixed: number | null; cap: number | null };
 export type SscRule = { employee: Contribution; employer: Contribution; maternity: Contribution };
 export type StatutoryYear = { tax: Record<TaxStatus,TaxBand[]>; ssc: Record<string,SscRule>; lowWage: number; olderCap: number; newerCap: number; birthCutoff: string; overtimeTaxRate: number; weeksPerYear: number };
-export type EmployeeConfig = { employment: 'hourly'|'full_time'|'part_time'|'casual'; grossMonthly: number; weeklyHours: number; taxStatus: TaxStatus | ''; sscCategory: string; birthDate: string; student: boolean; familyStatus: ''|'single'|'married'|'parent'; children: number; housing: number; food: number; bonuses: Record<string,number>; bonusEnabled: boolean; overtimeConcession: boolean; categoryBProRata: boolean; carriedForward: number };
-export const DEFAULT_EMPLOYEE: EmployeeConfig = { employment:'hourly',grossMonthly:0,weeklyHours:40,taxStatus:'',sscCategory:'',birthDate:'',student:false,familyStatus:'',children:0,housing:0,food:0,bonuses:{'3':121.16,'6':135.10,'9':121.16,'12':135.10},bonusEnabled:false,overtimeConcession:false,categoryBProRata:false,carriedForward:0 };
+export type EmployeeConfig = { employment: 'hourly'|'full_time'|'part_time'|'casual'; grossMonthly: number; weeklyHours: number; taxStatus: TaxStatus | ''; sscCategory: string; birthDate: string; student: boolean; familyStatus: ''|'single'|'married'|'parent'; children: number; housing: number; food: number; bonuses: Record<string,number>; bonusEnabled: boolean; overtimeConcession: boolean; categoryBProRata: boolean; carriedForward: number; idCard: string };
+export const DEFAULT_EMPLOYEE: EmployeeConfig = { employment:'hourly',grossMonthly:0,weeklyHours:40,taxStatus:'',sscCategory:'',birthDate:'',student:false,familyStatus:'',children:0,housing:0,food:0,bonuses:{'3':121.16,'6':135.10,'9':121.16,'12':135.10},bonusEnabled:false,overtimeConcession:false,categoryBProRata:false,carriedForward:0,idCard:'' };
+export const SSC_DESCRIPTIONS: Record<string,string> = {
+ A:'Under 18, weekly wage up to the A/B maximum. Fixed weekly employee and employer contribution with a small maternity share.',
+ B:'18 or over, weekly wage up to the A/B maximum. Fixed weekly contribution; part-timers may elect the 10% pro-rata option.',
+ C:'Standard rate: 10% of the basic weekly wage, between the minimum wage and the birth-group cap. Maternity is 0.3%.',
+ D:'Weekly wage at or above the cap. Fixed weekly contribution that depends on the birth group (older/newer cutoff).',
+ E:'Qualifying student-worker under 18: 10% of weekly wage, capped at a small fixed amount per week.',
+ F:'Qualifying student-worker 18 or over: 10% of weekly wage, capped slightly higher than category E.',
+};
 const fixed=(n:number):Contribution=>({rate:0,fixed:n,cap:null});
 const percent=(rate:number,cap:number|null=null):Contribution=>({rate,fixed:null,cap});
 export function defaultStatutory(): StatutoryYear {
@@ -19,10 +27,10 @@ export function employeeConfig(v: unknown):EmployeeConfig { const p=v && typeof 
 export function validStatutory(r:StatutoryYear) {
  if(!r || !Number.isFinite(r.weeksPerYear) || r.weeksPerYear<=0 || !/^\d{4}-\d{2}-\d{2}$/.test(r.birthCutoff))return false;
  if(![r.lowWage,r.olderCap,r.newerCap,r.overtimeTaxRate].every(n=>Number.isFinite(n)&&n>=0) || r.overtimeTaxRate>100)return false;
- if(!TAX_STATUSES.every(k=>{const bs=r.tax?.[k];return Array.isArray(bs)&&bs.length>0&&bs.every((b,i)=>Number.isFinite(b.rate)&&b.rate>=0&&b.rate<=100&&Number.isFinite(b.subtract)&&b.subtract>=0&&(i===bs.length-1?b.to===null:Number.isFinite(b.to)&&Number(b.to)>(i===0?0:Number(bs[i-1]?.to))));}))return false;
+ if(!TAX_STATUSES.every(k=>{const bs=r.tax?.[k];return Array.isArray(bs)&&bs.length>0&&bs.every((b,i)=>{const from=b.from??(i===0?0:Number(bs[i-1]?.to));return Number.isFinite(b.rate)&&b.rate>=0&&b.rate<=100&&Number.isFinite(b.subtract)&&b.subtract>=0&&Number.isFinite(from)&&from>=0&&(i===bs.length-1?b.to===null:Number.isFinite(b.to)&&Number(b.to)>from);});}))return false;
  return ['A','B','C','D_older','D_newer','E','F'].every(k=>{const s=r.ssc?.[k];return s && [s.employee,s.employer,s.maternity].every(c=>c && [c.rate,c.fixed,c.cap].every(n=>n===null || Number.isFinite(n)&&n>=0)&&c.rate<=100);});
 }
-export function yearlyTax(income:number,status:TaxStatus,r:StatutoryYear){ const b=r.tax[status].find(b=>b.to===null || income<=b.to); if(!b)throw new Error('Tax bands are incomplete');return money(Math.max(0,income*b.rate/100-b.subtract)); }
+export function yearlyTax(income:number,status:TaxStatus,r:StatutoryYear){ const bs=r.tax[status];const b=bs.find((b,i)=>income>(b.from??(i===0?0:Number(bs[i-1]?.to)))&&(b.to===null||income<=b.to)); if(!b)throw new Error('Tax bands are incomplete');return money(Math.max(0,income*b.rate/100-b.subtract)); }
 export function wageBasis(w:WageSettings,c:EmployeeConfig,r:StatutoryYear){const yearly=c.employment==='full_time'?c.grossMonthly*12:w.hourly_rate*c.weeklyHours*r.weeksPerYear;const weekly=yearly/r.weeksPerYear;return {yearly,monthly:yearly/12,weekly,hourly:c.employment==='full_time'?weekly/c.weeklyHours:w.hourly_rate};}
 export function suggestCategories(c:EmployeeConfig,weekly:number,date:string,r:StatutoryYear):{tax:TaxStatus|'';ssc:string}{
  const kids=Math.min(2,Math.max(0,Math.floor(c.children)));const tax=c.familyStatus?(c.familyStatus==='single'?'single':`${c.familyStatus}${kids?'_'+kids:''}`) as TaxStatus:'';
@@ -38,6 +46,10 @@ export function sscPerMonday(weekly:number,c:EmployeeConfig,r:StatutoryYear){
  return {employee:c.sscCategory==='B'&&c.categoryBProRata?money(weekly*.1):contribution(weekly,s.employee),employer:contribution(weekly,s.employer),maternity:contribution(weekly,s.maternity)};
 }
 export function countMondays(from:string,to:string){return datesBetween(from,to).filter(d=>new Date(d+'T00:00:00Z').getUTCDay()===1).length;}
+/** Extra leave credit (hours) for public holidays that fall on a non-working day, per Malta rules. */
+export function weekendHolidayCredit(publicHolidays:string[],workDays:number[],year:number,dailyHours=8){
+ return publicHolidays.filter(d=>d.slice(0,4)===String(year)&&!workDays.includes(new Date(d+'T00:00:00Z').getUTCDay())).length*dailyHours;
+}
 export function monthlyPayroll(h:PayrollHours,w:WageSettings,c:EmployeeConfig,r:StatutoryYear,from:string,to:string,extraTaxable=0){
  if(!Number.isFinite(extraTaxable)||extraTaxable<0)throw new Error("Enter valid additional earnings");
  if(!validStatutory(r))throw new Error('Review and save valid statutory rates for this year');
