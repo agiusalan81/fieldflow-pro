@@ -58,7 +58,7 @@ export const linesTotal = (ls: Line[]) => r2(ls.reduce((s, l) => s + lineTotal(l
 
 /** Minimum charge for returning to switch the lift back on after an unsigned departure (unless waived). */
 export const RETURN_FEE_MIN_HOURS = 1;
-export function returnFeeLine(hours: number, r: Rates): Line | null {
+export function returnFeeLine(hours: number, r: Rates, equipment = "lift"): Line | null {
   if (!hours || hours <= 0) return null;
-  return { description: "Return visit – restore lift after unsigned departure (min. 1 h)", qty: Math.max(RETURN_FEE_MIN_HOURS, hours), unit_price: r2(r.standard), kind: "extra" };
+  return { description: `Return visit – restore ${equipment} after unsigned departure (min. 1 h)`, qty: Math.max(RETURN_FEE_MIN_HOURS, hours), unit_price: r2(r.standard), kind: "extra" };
 }
