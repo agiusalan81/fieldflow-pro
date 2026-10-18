@@ -2,7 +2,7 @@ import { money, datesBetween, calculateWages, type PayrollHours, type WageSettin
 export const TAX_STATUSES = ['single','married','married_1','married_2','parent','parent_1','parent_2'] as const;
 export type TaxStatus = typeof TAX_STATUSES[number];
 export const TAX_LABELS: Record<TaxStatus,string> = { single:'Single', married:'Married', married_1:'Married · 1 child', married_2:'Married · 2+ children', parent:'Parent', parent_1:'Parent · 1 child', parent_2:'Parent · 2+ children' };
-export type TaxBand = { to: number | null; rate: number; subtract: number };
+export type TaxBand = { to: number | null; rate: number; subtract: number; from?: number };
 export type Contribution = { rate: number; fixed: number | null; cap: number | null };
 export type SscRule = { employee: Contribution; employer: Contribution; maternity: Contribution };
 export type StatutoryYear = { tax: Record<TaxStatus,TaxBand[]>; ssc: Record<string,SscRule>; lowWage: number; olderCap: number; newerCap: number; birthCutoff: string; overtimeTaxRate: number; weeksPerYear: number };
@@ -19,10 +19,10 @@ export function employeeConfig(v: unknown):EmployeeConfig { const p=v && typeof 
 export function validStatutory(r:StatutoryYear) {
  if(!r || !Number.isFinite(r.weeksPerYear) || r.weeksPerYear<=0 || !/^\d{4}-\d{2}-\d{2}$/.test(r.birthCutoff))return false;
  if(![r.lowWage,r.olderCap,r.newerCap,r.overtimeTaxRate].every(n=>Number.isFinite(n)&&n>=0) || r.overtimeTaxRate>100)return false;
- if(!TAX_STATUSES.every(k=>{const bs=r.tax?.[k];return Array.isArray(bs)&&bs.length>0&&bs.every((b,i)=>Number.isFinite(b.rate)&&b.rate>=0&&b.rate<=100&&Number.isFinite(b.subtract)&&b.subtract>=0&&(i===bs.length-1?b.to===null:Number.isFinite(b.to)&&Number(b.to)>(i===0?0:Number(bs[i-1]?.to))));}))return false;
+ if(!TAX_STATUSES.every(k=>{const bs=r.tax?.[k];return Array.isArray(bs)&&bs.length>0&&bs.every((b,i)=>{const from=b.from??(i===0?0:Number(bs[i-1]?.to));return Number.isFinite(b.rate)&&b.rate>=0&&b.rate<=100&&Number.isFinite(b.subtract)&&b.subtract>=0&&Number.isFinite(from)&&from>=0&&(i===bs.length-1?b.to===null:Number.isFinite(b.to)&&Number(b.to)>from);});}))return false;
  return ['A','B','C','D_older','D_newer','E','F'].every(k=>{const s=r.ssc?.[k];return s && [s.employee,s.employer,s.maternity].every(c=>c && [c.rate,c.fixed,c.cap].every(n=>n===null || Number.isFinite(n)&&n>=0)&&c.rate<=100);});
 }
-export function yearlyTax(income:number,status:TaxStatus,r:StatutoryYear){ const b=r.tax[status].find(b=>b.to===null || income<=b.to); if(!b)throw new Error('Tax bands are incomplete');return money(Math.max(0,income*b.rate/100-b.subtract)); }
+export function yearlyTax(income:number,status:TaxStatus,r:StatutoryYear){ const bs=r.tax[status];const b=bs.find((b,i)=>income>(b.from??(i===0?0:Number(bs[i-1]?.to)))&&(b.to===null||income<=b.to)); if(!b)throw new Error('Tax bands are incomplete');return money(Math.max(0,income*b.rate/100-b.subtract)); }
 export function wageBasis(w:WageSettings,c:EmployeeConfig,r:StatutoryYear){const yearly=c.employment==='full_time'?c.grossMonthly*12:w.hourly_rate*c.weeklyHours*r.weeksPerYear;const weekly=yearly/r.weeksPerYear;return {yearly,monthly:yearly/12,weekly,hourly:c.employment==='full_time'?weekly/c.weeklyHours:w.hourly_rate};}
 export function suggestCategories(c:EmployeeConfig,weekly:number,date:string,r:StatutoryYear):{tax:TaxStatus|'';ssc:string}{
  const kids=Math.min(2,Math.max(0,Math.floor(c.children)));const tax=c.familyStatus?(c.familyStatus==='single'?'single':`${c.familyStatus}${kids?'_'+kids:''}`) as TaxStatus:'';
