@@ -148,6 +148,13 @@
       "when": 1792261100385,
       "tag": "0020_return_fee_realtime",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1792303766034,
+      "tag": "0021_monthly_signing_offline_drafts",
+      "breakpoints": true
     }
   ]
 }

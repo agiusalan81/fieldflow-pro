@@ -183,6 +183,7 @@ export type Database = {
           labor_rates: Json | null
           location: string | null
           name: string
+          preapprove_departure: boolean
           property_name: string | null
           street_name: string | null
         }
@@ -194,6 +195,7 @@ export type Database = {
           labor_rates?: Json | null
           location?: string | null
           name: string
+          preapprove_departure?: boolean
           property_name?: string | null
           street_name?: string | null
         }
@@ -205,6 +207,7 @@ export type Database = {
           labor_rates?: Json | null
           location?: string | null
           name?: string
+          preapprove_departure?: boolean
           property_name?: string | null
           street_name?: string | null
         }
@@ -1624,6 +1627,73 @@ export type Database = {
           },
         ]
       }
+      signing_batches: {
+        Row: {
+          client_id: string
+          company_id: string
+          created_at: string
+          created_by: string
+          delivery_error: string | null
+          id: string
+          month: string
+          recipients: string[]
+          sent_at: string | null
+          sheet_ids: string[]
+          signed_ids: string[]
+          status: string
+        }
+        Insert: {
+          client_id: string
+          company_id: string
+          created_at?: string
+          created_by: string
+          delivery_error?: string | null
+          id?: string
+          month: string
+          recipients?: string[]
+          sent_at?: string | null
+          sheet_ids: string[]
+          signed_ids?: string[]
+          status?: string
+        }
+        Update: {
+          client_id?: string
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          delivery_error?: string | null
+          id?: string
+          month?: string
+          recipients?: string[]
+          sent_at?: string | null
+          sheet_ids?: string[]
+          signed_ids?: string[]
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signing_batches_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signing_batches_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signing_batches_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sites: {
         Row: {
           address: string | null
@@ -1903,6 +1973,26 @@ export type Database = {
       }
       is_company_manager: { Args: never; Returns: boolean }
       my_role: { Args: never; Returns: Database["public"]["Enums"]["app_role"] }
+      save_sheet_snapshot: {
+        Args: {
+          _expected: string
+          _form: Json
+          _id: string
+          _logs: Json
+          _parts: Json
+        }
+        Returns: string
+      }
+      sign_batch_sheet: {
+        Args: {
+          _batch: string
+          _card: string
+          _name: string
+          _sheet: string
+          _signature: string
+        }
+        Returns: undefined
+      }
       user_initials: {
         Args: { _full_name: string; _initials: string }
         Returns: string
