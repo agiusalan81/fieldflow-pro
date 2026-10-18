@@ -39,3 +39,4 @@
 - Leave opening carry-forward is year-qualified on the shared balance; payslips snapshot leave without consuming it again. Why: approved requests already drive leave usage.
 
 - Payroll/opening leave save via an invoker-rights transaction; a trigger blocks issued-slip edits/deletes and mismatched totals. Why: prevent partial saves and preserve reviewed records.
+- Standby technicians bypass clock-in via is_on_standby() in job_sheets_require_clock_in; their DWR is held (shifts.dwr_held) and forgotten shifts auto-close via reconcileShifts in src/lib/dwr-report.ts with rules tested in src/lib/dwr.ts. Why: overnight callouts and missed clock-outs must not lose hours.
