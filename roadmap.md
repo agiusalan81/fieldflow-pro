@@ -4,7 +4,9 @@
 - [ ] Section 3: Configurable plans/packs/trials, company promotions and referral tracking; payments require provider setup
 - [ ] Section 4: Private multi-product Portfolio HQ, tenant directory and revenue/expense comparison
 - [ ] Section 5: Revocable client report/QR, tenant safety checks and fault/remedy library
-- [ ] Verify new workflows with signed-in account and focused rule tests
+- [ ] Verify new workflows with signed-in account (Alan session now available); focused document/platform tests pass. Work paused at user credit check-in.
+- [ ] Finish pre-release security review: prevent platform-owner reassignment via role identity edits; guard all commercial write paths; validate legacy checklist completion and agreement amendment snapshots.
+- [ ] Designate first Portfolio HQ owner with explicit approval; connect payment provider, trial reminders, affiliate payout automation and external product sync before commercial launch.
 - [x] Payroll update: submenu, monthly/full-time and hourly employment, year-configurable tax/SSC, allowances/bonuses, PE number, leave-linked payslips, overtime site detail and employee category suggestions (91 focused tests passed; signed-out access verified)
 - [x] Payroll: office-only employee overview, normal/leave/sick/1.5×/2× hours, prorated adjustable standby allowance (33 payroll/roster tests passed)
 - [x] Payroll: annual employee sick entitlements, wage settings, reviewed wage calculations and PDF payslips; annual statutory deductions calculated from office-approved tables; additional deductions reviewed by office
