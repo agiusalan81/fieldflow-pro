@@ -11,6 +11,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
@@ -146,7 +147,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <OfflineStatus />
-      <UserPreviewBoundary><Outlet /></UserPreviewBoundary>
+      <TooltipProvider><UserPreviewBoundary><Outlet /></UserPreviewBoundary></TooltipProvider>
       <Toaster richColors position="top-center" />
     </QueryClientProvider>
   );
