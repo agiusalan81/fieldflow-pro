@@ -53,3 +53,24 @@ describe("standby roster", () => {
   });
   it("pending swap changes nothing", () => expect(standbyFor("2026-10-13", c, [{ swap_date: "2026-10-13", requester_id: "a", target_id: "c", status: "pending" }])).toEqual(["a"]));
 });
+
+import { heldDwrDueAt, shiftForgotten, autoClockOutAt } from "./dwr";
+describe("held standby DWR and auto clock-out", () => {
+  const start = new Date(2026, 9, 19, 7, 30).toISOString();
+  it("standby DWR is due next morning at company start time", () => {
+    expect(heldDwrDueAt(start, "07:30").getTime()).toBe(new Date(2026, 9, 20, 7, 30).getTime());
+  });
+  it("a shift is forgotten only after its day has passed", () => {
+    expect(shiftForgotten(start, new Date(2026, 9, 19, 23, 59))).toBe(false);
+    expect(shiftForgotten(start, new Date(2026, 9, 20, 0, 1))).toBe(true);
+  });
+  it("job finishing 16:30 after 16:00 closing keeps the overtime", () => {
+    expect(autoClockOutAt(start, "16:00", "16:30").getTime()).toBe(new Date(2026, 9, 19, 16, 30).getTime());
+  });
+  it("adds recorded travel after the last job", () => {
+    expect(autoClockOutAt(start, "16:00", "16:30", 0.5).getTime()).toBe(new Date(2026, 9, 19, 17, 0).getTime());
+  });
+  it("snaps to closing time when the last job ended earlier", () => {
+    expect(autoClockOutAt(start, "16:00", "15:30").getTime()).toBe(new Date(2026, 9, 19, 16, 0).getTime());
+  });
+});
