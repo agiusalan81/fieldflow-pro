@@ -6,7 +6,7 @@ import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Repeat, X } from "lucide
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, useCompanyUsers, isManager, isOffice } from "@/lib/profile";
 import { useCompanyRules } from "@/lib/company";
-import { standbyFor, type StandbyConfig } from "@/lib/dwr";
+import { standbyFor, validStandbyStaffing, clampStandbyStaffing, type StandbyConfig } from "@/lib/dwr";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,7 +34,7 @@ const SWAP_CLS: Record<string, string> = { pending: "bg-warning/25 text-foregrou
 
 function StandbyPage() {
   const { data: profile } = useProfile();
-  const { data: users = [] } = useCompanyUsers();
+  const { data: users = [], isLoading: usersLoading, error: usersError } = useCompanyUsers();
   const { data: company } = useCompanyRules();
   const qc = useQueryClient();
   const [week, setWeek] = useState(() => monday(new Date()));
@@ -126,7 +126,7 @@ function StandbyPage() {
           </section>
         )}
 
-        {isOffice(profile) && <RosterSettings cfg={cfg} techs={techs} companyId={profile.company_id} />}
+        {isOffice(profile) && (usersLoading ? <p className="text-sm text-muted-foreground">Loading registered technicians…</p> : usersError ? <p className="text-sm text-destructive">Unable to load registered technicians. Try again before saving the roster.</p> : <RosterSettings cfg={cfg} techs={techs} registeredTechnicians={users.filter((u) => u.role === "technician").length} companyId={profile.company_id} />)}
       </div>
 
       <Dialog open={!!ask} onOpenChange={(o) => !o && setAsk(null)}>
@@ -162,13 +162,17 @@ function SwapList({ swaps, name, onCancel, meId, manager }: { swaps: { id: strin
   );
 }
 
-function RosterSettings({ cfg, techs, companyId }: { cfg: StandbyConfig; techs: { id: string; full_name: string }[]; companyId: string }) {
+function RosterSettings({ cfg, techs, registeredTechnicians, companyId }: { cfg: StandbyConfig; techs: { id: string; full_name: string }[]; registeredTechnicians: number; companyId: string }) {
   const qc = useQueryClient();
   const [f, setF] = useState(cfg);
-  useEffect(() => setF(cfg), [cfg]);
+  useEffect(() => setF({ ...cfg, perShift: clampStandbyStaffing(cfg.perShift, registeredTechnicians) }), [cfg, registeredTechnicians]);
   const name = (id: string) => techs.find((u) => u.id === id)?.full_name ?? "—";
-  const move = (i: number, d: number) => { const o = [...f.order]; const j = i + d; if (j < 0 || j >= o.length) return; [o[i], o[j]] = [o[j]!, o[i]!]; setF({ ...f, order: o }); };
+  const move = (i: number, d: number) => { const o = [...f.order]; const j = i + d; const from = o[i]; const to = o[j]; if (from === undefined || to === undefined) return; o[i] = to; o[j] = from; setF({ ...f, order: o }); };
   const save = async () => {
+    if (!validStandbyStaffing(f.perShift, registeredTechnicians)) {
+      toast.error(registeredTechnicians === 0 ? "Register a technician before setting up the roster." : `Only ${registeredTechnicians} technicians are registered. Reduce technicians per shift.`);
+      return;
+    }
     const { error } = await supabase.from("company_settings").upsert({ company_id: companyId, standby_start: f.start, standby_rotation_days: f.rotationDays, standby_per_shift: f.perShift, standby_order: f.order });
     if (error) { toast.error(error.message); return; }
     toast.success("Roster saved");
@@ -184,7 +188,7 @@ function RosterSettings({ cfg, techs, companyId }: { cfg: StandbyConfig; techs: 
             <SelectContent>{[[1, "Day"], [2, "2 days"], [3, "3 days"], [7, "Week"], [14, "2 weeks"]].map(([v, l]) => <SelectItem key={v} value={String(v)}>{l}</SelectItem>)}</SelectContent>
           </Select>
         </div>
-        <div className="space-y-1.5"><Label>Technicians per shift</Label><Input className="h-11" type="number" min={1} max={10} value={f.perShift} onChange={(e) => setF({ ...f, perShift: Math.max(1, Math.min(10, Number(e.target.value) || 1)) })} /></div>
+        <div className="space-y-1.5"><Label htmlFor="standby-staffing">Technicians per shift</Label><Input id="standby-staffing" className="h-11" type="number" min={registeredTechnicians ? 1 : 0} max={registeredTechnicians} step={1} disabled={registeredTechnicians === 0} value={f.perShift} onChange={(e) => setF({ ...f, perShift: clampStandbyStaffing(Number(e.target.value), registeredTechnicians) })} /><p className="text-xs text-muted-foreground">{registeredTechnicians} registered technician{registeredTechnicians === 1 ? "" : "s"} · maximum {registeredTechnicians} per shift</p></div>
         <div className="space-y-1.5"><Label>Rotation starts on</Label><Input className="h-11" type="date" value={f.start} onChange={(e) => setF({ ...f, start: e.target.value })} /></div>
       </div>
       <div className="space-y-2">
@@ -204,7 +208,7 @@ function RosterSettings({ cfg, techs, companyId }: { cfg: StandbyConfig; techs: 
           <SelectContent>{techs.filter((u) => !f.order.includes(u.id)).map((u) => <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>)}</SelectContent>
         </Select>
       </div>
-      <Button className="h-11" onClick={save}>Save roster</Button>
+      <Button className="h-11" disabled={!validStandbyStaffing(f.perShift, registeredTechnicians)} onClick={save}>Save roster</Button>
     </section>
   );
 }

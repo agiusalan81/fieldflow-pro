@@ -68,6 +68,16 @@ export const sheetTitle = (n: string | number) => `Job sheet- ${n}`;
 export type StandbyConfig = { start: string; rotationDays: number; perShift: number; order: string[] };
 export type Swap = { swap_date: string; requester_id: string; target_id: string; status: string };
 
+/** A roster cannot request more technicians than the company has registered. */
+export function validStandbyStaffing(perShift: number, registeredTechnicians: number) {
+  return Number.isInteger(perShift) && perShift >= 1 && perShift <= registeredTechnicians;
+}
+
+export function clampStandbyStaffing(perShift: number, registeredTechnicians: number) {
+  if (registeredTechnicians < 1) return 0;
+  return Math.max(1, Math.min(registeredTechnicians, Number.isFinite(perShift) ? Math.floor(perShift) : 1));
+}
+
 const dayIndex = (a: string, b: string) => Math.floor((Date.parse(b + "T00:00:00Z") - Date.parse(a + "T00:00:00Z")) / 86_400_000);
 
 /** Who is on standby on a date: rotation by blocks of N days, M people per shift, then accepted swaps. */
