@@ -16,6 +16,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "Personal settings — FieldOps" },
       { name: "description", content: "Your contact details, next of kin and app preferences." },
       { property: "og:title", content: "Personal settings — FieldOps" },

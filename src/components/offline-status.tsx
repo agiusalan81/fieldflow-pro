@@ -31,7 +31,7 @@ export function OfflineStatus() {
     return () => { active = false; if (timer) clearTimeout(timer); unsubscribe(); window.removeEventListener("online", reconnect); window.removeEventListener("offline", changed); window.removeEventListener("fieldops-offline", changed); };
   }, [qc]);
   if (online && !drafts.length) return null;
-  return <aside className="fixed inset-x-0 top-0 z-50 border-b bg-background p-2 text-center text-sm" aria-live="polite">
+  return <aside className="sticky top-0 z-50 border-b bg-background p-2 text-center text-sm" aria-live="polite">
     {!online && <span className="inline-flex items-center gap-2"><WifiOff className="h-4 w-4" />Offline — save changes on this device</span>}
     {drafts.length > 0 && <span className="ml-3">{drafts.length} draft{drafts.length === 1 ? "" : "s"} awaiting sync</span>}
     {online && userId && <Button size="sm" variant="ghost" onClick={() => syncPending(userId, qc)}><RefreshCw className="mr-1 h-4 w-4" />Sync</Button>}

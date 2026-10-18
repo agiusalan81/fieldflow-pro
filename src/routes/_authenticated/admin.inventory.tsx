@@ -16,6 +16,8 @@ import { Label } from "@/components/ui/label";
 export const Route = createFileRoute("/_authenticated/admin/inventory")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "Inventory — FieldOps" },
       { name: "description", content: "Parts stock control with low-stock alerts." },
       { property: "og:title", content: "Inventory — FieldOps" },

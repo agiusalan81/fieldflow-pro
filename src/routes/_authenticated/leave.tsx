@@ -17,6 +17,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 export const Route = createFileRoute("/_authenticated/leave")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "My leave — FieldOps" },
       { name: "description", content: "See your own leave balance, request leave and track your requests." },
       { property: "og:title", content: "Book leave — FieldOps" },

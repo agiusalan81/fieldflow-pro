@@ -1983,6 +1983,16 @@ export type Database = {
         }
         Returns: string
       }
+      save_sheet_snapshot_with_photos: {
+        Args: {
+          _expected: string
+          _form: Json
+          _id: string
+          _logs: Json
+          _parts: Json
+        }
+        Returns: string
+      }
       sign_batch_sheet: {
         Args: {
           _batch: string

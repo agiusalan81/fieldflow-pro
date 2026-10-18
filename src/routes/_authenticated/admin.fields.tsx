@@ -16,6 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export const Route = createFileRoute("/_authenticated/admin/fields")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "Fields & lookups — FieldOps" },
       { name: "description", content: "Build custom fields and curate dropdown options for your company." },
       { property: "og:title", content: "Fields & lookups — FieldOps" },

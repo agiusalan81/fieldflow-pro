@@ -13,6 +13,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 export const Route = createFileRoute("/_authenticated/schedule")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "Scheduled works — FieldOps" },
       { name: "description", content: "Your upcoming assignments in a list or calendar." },
       { property: "og:title", content: "Scheduled works — FieldOps" },

@@ -1,7 +1,9 @@
 # Roadmap
-- [ ] Client-level pre-approved unsigned departure
-- [ ] Monthly monitoring, sequential signing and automatic combined PDF email with hand-back screen
-- [ ] Published offline support: locally saved draft work and reconnect sync with conflict protection
+- [x] Client-level pre-approved unsigned departure
+- [x] Monthly monitoring, sequential signing and automatic combined PDF email with hand-back screen
+- [x] Locally saved existing draft work and reconnect sync with conflict protection (signed-in save/sync verified)
+- [ ] Verify monthly signatures and automatic email with a consenting client (blocked: client signature and real recipient approval)
+- [ ] Verify offline reopening after published update (blocked: latest version not published; offline clocking/new sheets/signing are not supported)
 - [x] Core technician & admin screens (brief 1)
 - [x] Brief 2: jobs & sites, extended job sheet form, time logs, parts
 - [x] Brief 2: Today's jobs, Past & draft sheets, Scheduled works, Book leave with balance, Personal settings
