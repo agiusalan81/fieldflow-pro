@@ -174,6 +174,32 @@ export type Database = {
           },
         ]
       }
+      client_report_photos: {
+        Row: {
+          kind: string
+          photo_path: string
+          report_id: string
+        }
+        Insert: {
+          kind?: string
+          photo_path: string
+          report_id: string
+        }
+        Update: {
+          kind?: string
+          photo_path?: string
+          report_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_report_photos_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "client_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_reports: {
         Row: {
           company_id: string
@@ -2913,6 +2939,14 @@ export type Database = {
       }
       is_platform_owner: { Args: never; Returns: boolean }
       my_role: { Args: never; Returns: Database["public"]["Enums"]["app_role"] }
+      platform_company_directory: {
+        Args: never
+        Returns: {
+          id: string
+          name: string
+          user_count: number
+        }[]
+      }
       read_client_report: { Args: { _hash: string }; Returns: Json }
       save_employee_payroll_setup: {
         Args: {

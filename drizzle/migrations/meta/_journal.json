@@ -232,6 +232,13 @@
       "when": 1792361992264,
       "tag": "0032_client_reports_safety_and_checklist_snapshots",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1792362227636,
+      "tag": "0033_portfolio_directory_and_report_snapshot_guards",
+      "breakpoints": true
     }
   ]
 }
