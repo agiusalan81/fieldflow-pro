@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { MonthlySheets } from "@/components/monthly-sheets";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Eye, Pencil, Trash2 } from "lucide-react";
@@ -22,6 +23,7 @@ export const Route = createFileRoute("/_authenticated/sheets/")({
       { name: "description", content: "Resume drafts or open completed job sheets." },
       { property: "og:title", content: "Past & draft job sheets — FieldOps" },
       { property: "og:description", content: "Your job sheets." },
+      { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
     ],
   }),
   validateSearch: (s: Record<string, unknown>): { tab?: "open" | "done" } => (s["tab"] === "done" ? { tab: "done" } : {}),
@@ -42,10 +44,11 @@ function SheetsPage() {
     queryKey: ["sheets", profile?.id],
     enabled: !!profile,
     queryFn: async () => {
+      if (!profile) return [];
       const { data, error } = await supabase
         .from("job_sheets")
-        .select("id, jobsheet_number, status, created_at, updated_at, reported_fault, client_id, clients(name), sites(name), assets(reference_number)")
-        .eq("assigned_technician_id", profile!.id)
+        .select("id, jobsheet_number, status, signature_data, created_at, updated_at, reported_fault, client_id, clients(name), sites(name), assets(reference_number)")
+        .eq("assigned_technician_id", profile.id)
         .order("updated_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -113,6 +116,7 @@ function SheetsPage() {
           <Input className="h-11" type="date" aria-label="From date" value={from} onChange={(e) => setFrom(e.target.value)} />
           <Input className="h-11" type="date" aria-label="To date" value={to} onChange={(e) => setTo(e.target.value)} />
         </div>
+        <MonthlySheets sheets={filtered} office={profile?.role === "admin" || profile?.role === "superuser"} />
         <Tabs value={tab} onValueChange={(v) => navigate({ to: "/sheets", search: v === "done" ? { tab: "done" } : {}, replace: true })}>
           <TabsList className="grid w-full grid-cols-2 sm:w-auto">
             <TabsTrigger value="open">Drafts & In-Progress ({open.length})</TabsTrigger>

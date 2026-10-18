@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Plus, Mail, FileText, Trash2, Download, X } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { DateFilter } from "@/components/date-filter";
+import { MonthlySheets } from "@/components/monthly-sheets";
 import { SearchSelect } from "@/components/search-select";
 import { sendJobSheetEmail, combinedJobSheets } from "@/lib/sendJobSheetEmail";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -160,6 +161,7 @@ function AdminJobs() {
         <Button size="sm" disabled={bulkBusy} onClick={() => { try { validateCombinedSheets(selectedSheets); setBulkEmail(true); } catch (e) { toast.error(e instanceof Error ? e.message : "Check selection"); } }}><Mail className="mr-1 h-4 w-4" />Email combined PDF</Button>
         <Button size="icon" variant="ghost" aria-label="Clear selection" onClick={() => setSelected([])}><X className="h-4 w-4" /></Button>
       </div>}
+      <MonthlySheets sheets={list} office={office} />
       {queue.length > 0 && (
         <section className="mb-4 rounded-xl border border-warning/50 bg-warning/10 p-4">
           <h2 className="mb-2 font-medium text-foreground">Admin pending queue ({queue.length})</h2>
