@@ -38,7 +38,8 @@ export function sscPerMonday(weekly:number,c:EmployeeConfig,r:StatutoryYear){
  return {employee:c.sscCategory==='B'&&c.categoryBProRata?money(weekly*.1):contribution(weekly,s.employee),employer:contribution(weekly,s.employer),maternity:contribution(weekly,s.maternity)};
 }
 export function countMondays(from:string,to:string){return datesBetween(from,to).filter(d=>new Date(d+'T00:00:00Z').getUTCDay()===1).length;}
-export function monthlyPayroll(h:PayrollHours,w:WageSettings,c:EmployeeConfig,r:StatutoryYear,from:string,to:string){
+export function monthlyPayroll(h:PayrollHours,w:WageSettings,c:EmployeeConfig,r:StatutoryYear,from:string,to:string,extraTaxable=0){
+ if(!Number.isFinite(extraTaxable)||extraTaxable<0)throw new Error("Enter valid additional earnings");
  if(!validStatutory(r))throw new Error('Review and save valid statutory rates for this year');
  const last=new Date(from.slice(0,7)+'-01T00:00:00Z');last.setUTCMonth(last.getUTCMonth()+1);last.setUTCDate(0);
  if(from.slice(8)!=='01'||to!==last.toISOString().slice(0,10))throw new Error('Choose a complete calendar month for automatic payroll');
@@ -47,14 +48,14 @@ export function monthlyPayroll(h:PayrollHours,w:WageSettings,c:EmployeeConfig,r:
  const hourly=calculateWages(h,basis.hourly,{bonus:0,tax:0,nationalInsurance:0,otherDeductions:0});
  // Salary includes paid leave and full sick leave; never add the same absence twice.
  const normalPay=c.employment==='full_time'?money(Math.max(0,c.grossMonthly-(h.sickHalf+h.sickUnpaid)*basis.hourly)):hourly.normalPay;
- const halfPay=c.employment==='full_time'?0:hourly.halfPay;
+ const halfPay=hourly.halfPay;
  const bonus=c.bonusEnabled?Number(c.bonuses[String(Number(from.slice(5,7)))]??0):0;
  const allowances=money(c.housing+c.food), overtime=money(hourly.ot15Pay+hourly.ot20Pay);
- const annualChargeable=(normalPay+halfPay+allowances)*12+Object.values(c.bonuses).reduce((s,n)=>s+(c.bonusEnabled?n:0),0)+(c.overtimeConcession?0:overtime*12);
+ const annualChargeable=(normalPay+halfPay+allowances+extraTaxable)*12+Object.values(c.bonuses).reduce((s,n)=>s+(c.bonusEnabled?n:0),0)+(c.overtimeConcession?0:overtime*12);
  const taxYearly=yearlyTax(annualChargeable,c.taxStatus,r), taxBasic=money(taxYearly/12), taxOvertime=c.overtimeConcession?money(overtime*r.overtimeTaxRate/100):0;
  const ssc=sscPerMonday(c.employment==='full_time'?basis.weekly:(hourly.normalPay+hourly.halfPay)*7/datesBetween(from,to).length,c,r),mondays=countMondays(from,to);
  const nationalInsurance=money(ssc.employee*mondays),tax=money(taxBasic+taxOvertime);
- const gross=money(normalPay+halfPay+overtime+allowances+bonus+h.standbyPay),deductions=money(tax+nationalInsurance);
+ const gross=money(normalPay+halfPay+overtime+allowances+bonus+h.standbyPay+extraTaxable),deductions=money(tax+nationalInsurance);
  if(deductions>gross)throw new Error('Calculated deductions exceed gross pay; review employee setup');
  return {normalPay,halfPay,ot15Pay:hourly.ot15Pay,ot20Pay:hourly.ot20Pay,gross,deductions,net:money(gross-deductions),basis,bonus,allowances,taxYearly,taxBasic,taxOvertime,tax,nationalInsurance,mondays,ssc,employerSsc:money(ssc.employer*mondays),maternity:money(ssc.maternity*mondays)};
 }

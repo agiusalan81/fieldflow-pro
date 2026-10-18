@@ -97,8 +97,8 @@ export function PayrollPage({ section = "hours" }: { section?: "hours" | "wages"
   let totals: ReturnType<typeof calculateWages> | null=null, calculationError="";
   if(selected && mode==='pay'){try{
     if(!ratesConfirmed)throw new Error(`Review and save statutory rates for ${year} before calculating pay.`);
-    automatic=monthlyPayroll(selected.hours,selected.wage,getConfig(selected.user.id),savedRates ?? rates,from,to);
-    const gross=+(automatic.gross+adjustments.bonus).toFixed(2),deductions=+(automatic.deductions+adjustments.tax+adjustments.nationalInsurance+adjustments.otherDeductions).toFixed(2);
+    automatic=monthlyPayroll(selected.hours,selected.wage,getConfig(selected.user.id),savedRates ?? rates,from,to,adjustments.bonus);
+    const gross=+(automatic.gross).toFixed(2),deductions=+(automatic.deductions+adjustments.tax+adjustments.nationalInsurance+adjustments.otherDeductions).toFixed(2);
     if(deductions>gross)throw new Error('Deductions cannot exceed gross pay');
     totals={normalPay:automatic.normalPay,halfPay:automatic.halfPay,ot15Pay:automatic.ot15Pay,ot20Pay:automatic.ot20Pay,gross,deductions,net:+(gross-deductions).toFixed(2)};
   }catch(e){calculationError=e instanceof Error?e.message:'Invalid wage calculation';}}

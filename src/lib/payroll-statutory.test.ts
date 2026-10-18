@@ -10,7 +10,7 @@ describe('Annual statutory and employee payroll',()=>{
  it('derives full-time hourly from annual gross and weekly hours',()=>expect(wageBasis(wage,config,rates).hourly).toBeCloseTo(24000/52/40));
  it('uses entered hourly wage for part-time work',()=>expect(wageBasis(wage,{...config,employment:'part_time'},rates).hourly).toBe(10));
  it('uses entered hourly wage for casual work',()=>expect(wageBasis(wage,{...config,employment:'casual'},rates).hourly).toBe(10));
- const expected=[['single',2600],['married',1450],['married_1',1025],['married_2',225],['parent',2300],['parent_1',1725],['parent_2',375]] as const;
+ const expected=[['single',2600],['married',1450],['married_1',975],['married_2',225],['parent',2300],['parent_1',1725],['parent_2',825]] as const;
  for(const [category,tax] of expected)it(`applies 2026 ${category} subtraction formula at 24000`,()=>expect(yearlyTax(24000,category,rates)).toBe(tax));
  it('taxes cents above a bracket boundary without gaps',()=>expect(yearlyTax(12000.5,'single',rates)).toBe(.08));
  it('uses updated annual rates without mutating previous rates',()=>{const next=structuredClone(rates);const band=next.tax.single[2];if(band)band.subtract=4000;expect(yearlyTax(24000,'single',next)).toBe(2000);expect(yearlyTax(24000,'single',rates)).toBe(2600);});
@@ -25,6 +25,8 @@ describe('Annual statutory and employee payroll',()=>{
  it('Category E student contributions cap at 4.38 and 0.13',()=>expect(sscPerMonday(600,{...config,sscCategory:'E'},rates)).toEqual({employee:4.38,employer:4.38,maternity:.13}));
  it('Category F student contributions cap at 7.94 and 0.24',()=>expect(sscPerMonday(600,{...config,sscCategory:'F'},rates)).toEqual({employee:7.94,employer:7.94,maternity:.24}));
  it('full-time salary includes paid leave only once',()=>{const result=monthlyPayroll({...hours,leave:8,sickFull:8},wage,config,rates,'2026-10-01','2026-10-31');expect(result.normalPay).toBe(2000);});
+ it('full-time sick half pay retains half the wage for those hours',()=>{const r=monthlyPayroll({...hours,sickHalf:8},wage,config,rates,'2026-10-01','2026-10-31');expect(r.normalPay+r.halfPay).toBeCloseTo(2000-8*wageBasis(wage,config,rates).hourly/2,1);expect(r.halfPay).toBeGreaterThan(0);});
+ it('extra taxable earnings increase calculated tax',()=>{const a=monthlyPayroll(hours,wage,config,rates,'2026-10-01','2026-10-31'),b=monthlyPayroll(hours,wage,config,rates,'2026-10-01','2026-10-31',100);expect(b.tax).toBeGreaterThan(a.tax);expect(b.gross-a.gross).toBe(100);});
  it('part-time pay is hourly times normal hours',()=>expect(monthlyPayroll(hours,wage,{...config,employment:'part_time'},rates,'2026-10-01','2026-10-31').normalPay).toBe(1600));
  it('housing and food increase tax but not SSC',()=>{const a=monthlyPayroll(hours,wage,config,rates,'2026-10-01','2026-10-31'),b=monthlyPayroll(hours,wage,{...config,housing:500,food:100},rates,'2026-10-01','2026-10-31');expect(b.nationalInsurance).toBe(a.nationalInsurance);expect(b.tax).toBeGreaterThan(a.tax);expect(b.gross-a.gross).toBe(600);});
  it('standby adds 50 euros tax-free and SSC-free',()=>{const a=monthlyPayroll(hours,wage,config,rates,'2026-10-01','2026-10-31'),b=monthlyPayroll({...hours,standbyPay:50},wage,config,rates,'2026-10-01','2026-10-31');expect(b.tax).toBe(a.tax);expect(b.nationalInsurance).toBe(a.nationalInsurance);expect(b.net-a.net).toBe(50);});
