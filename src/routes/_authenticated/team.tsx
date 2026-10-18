@@ -44,7 +44,7 @@ function TeamPage() {
   if (!isManager(profile)) return <AppShell title="Team availability"><EmptyState>Only supervisors and office staff can see team availability.</EmptyState></AppShell>;
   const statusOf = (id: string): { s: Status; sub: string } => {
     const lv = data?.leave.find((x) => x.user_id === id);
-    if (lv) return { s: lv.leave_type === "Sick" && isOffice(profile) ? "sick" : "leave", sub: `until ${new Date(lv.end_date + "T00:00").toLocaleDateString()}` };
+    if (lv) return { s: lv.leave_type === "Sick" && isManager(profile) ? "sick" : "leave", sub: `until ${new Date(lv.end_date + "T00:00").toLocaleDateString()}` };
     const sh = data?.shifts.filter((x) => x.user_id === id) ?? [];
     const tr = sh.find((x) => x.shift_type === "travel");
     const on = sh.find((x) => x.shift_type === "shift");
