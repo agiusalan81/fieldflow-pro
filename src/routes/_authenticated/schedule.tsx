@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CalendarDays, FileText, List, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useProfile } from "@/lib/profile";
+import { usePreviewProfile } from "@/lib/impersonation";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { PriorityBadge, timeWindow } from "@/components/job-card";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,7 @@ type Job = {
 };
 
 function Schedule() {
-  const { data: profile } = useProfile();
+  const { data: profile, isPreview } = usePreviewProfile();
   const qc = useQueryClient();
   const [view, setView] = useState<"list" | "calendar">("list");
   const [detail, setDetail] = useState<Job | null>(null);
@@ -42,10 +42,11 @@ function Schedule() {
     queryKey: ["schedule", profile?.id],
     enabled: !!profile,
     queryFn: async () => {
+      if (!profile) return [];
       const { data, error } = await supabase
         .from("jobs")
         .select("id, job_number, scheduled_date, window_start, window_end, problem_summary, priority, acknowledged_at, clients(name), sites(name, address), assets(reference_number, asset_category)")
-        .eq("assigned_technician_id", profile!.id)
+        .eq("assigned_technician_id", profile.id)
         .gte("scheduled_date", today)
         .order("scheduled_date")
         .order("window_start");
@@ -56,7 +57,7 @@ function Schedule() {
 
   /** Starting a job counts as acknowledging it — no separate step for routine work. */
   const autoAck = (j: Job) => {
-    if (j.acknowledged_at) return;
+    if (isPreview || j.acknowledged_at) return;
     void supabase.from("jobs").update({ acknowledged_at: new Date().toISOString() }).eq("id", j.id).then(({ error }) => {
       if (error) toast.error(error.message); else qc.invalidateQueries({ queryKey: ["schedule"] });
     });
@@ -65,7 +66,7 @@ function Schedule() {
   const Actions = ({ j }: { j: Job }) => (
     <div className="grid grid-cols-2 gap-2">
       <Button variant="outline" className="h-10" onClick={() => setDetail(j)}>Details</Button>
-      <Button asChild className="h-10"><Link to="/sheets/new" search={{ jobId: j.id }} onClick={() => autoAck(j)}><FileText className="mr-1 h-4 w-4" />Start job</Link></Button>
+      {isPreview ? <Button disabled className="h-10"><FileText className="mr-1 h-4 w-4" />Start job</Button> : <Button asChild className="h-10"><Link to="/sheets/new" search={{ jobId: j.id }} onClick={() => autoAck(j)}><FileText className="mr-1 h-4 w-4" />Start job</Link></Button>}
     </div>
   );
 

@@ -45,7 +45,7 @@ export function OvertimeCard({ userId }: { userId: string }) {
 }
 
 /** Hours on work that has no client job sheet (e.g. helping installers), so the day stays accounted for. */
-export function InternalWorkCard({ profile }: { profile: Profile }) {
+export function InternalWorkCard({ profile, readOnly = false }: { profile: Profile; readOnly?: boolean }) {
   const qc = useQueryClient();
   const today = iso(new Date());
   const { data: logs = [] } = useQuery({
@@ -53,9 +53,10 @@ export function InternalWorkCard({ profile }: { profile: Profile }) {
     queryFn: async () => (await supabase.from("internal_work_logs").select("*").eq("user_id", profile.id).eq("log_date", today).order("time_in")).data ?? [],
   });
   const [open, setOpen] = useState(false);
-  const blank = { activity: INTERNAL_ACTIVITIES[0]!, other: "", location: "", time_in: "", time_out: "", notes: "" };
+  const blank = { activity: INTERNAL_ACTIVITIES[0] ?? "Other", other: "", location: "", time_in: "", time_out: "", notes: "" };
   const [f, setF] = useState(blank);
   const save = async () => {
+    if (readOnly) return;
     const activity = f.activity === "Other" ? f.other.trim() : f.activity;
     if (!activity) { toast.error("Say what the work was"); return; }
     if (!f.time_in || !f.time_out || f.time_out <= f.time_in) { toast.error("Time out must be after time in"); return; }
@@ -65,13 +66,13 @@ export function InternalWorkCard({ profile }: { profile: Profile }) {
     setOpen(false); setF(blank);
     qc.invalidateQueries({ queryKey: ["internal-work", profile.id] });
   };
-  const remove = async (id: string) => { await supabase.from("internal_work_logs").delete().eq("id", id); qc.invalidateQueries({ queryKey: ["internal-work", profile.id] }); };
+  const remove = async (id: string) => { if (readOnly) return; await supabase.from("internal_work_logs").delete().eq("id", id); qc.invalidateQueries({ queryKey: ["internal-work", profile.id] }); };
   return (
     <section className="rounded-xl border bg-card p-3">
       <div className="flex items-center justify-between gap-2">
         <p className="flex items-center gap-2 text-sm font-medium text-foreground"><Wrench className="h-4 w-4 text-primary" />Other work today (no job sheet)</p>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button size="sm" variant="outline"><Plus className="mr-1 h-4 w-4" />Log work</Button></DialogTrigger>
+          <DialogTrigger asChild><Button disabled={readOnly} size="sm" variant="outline"><Plus className="mr-1 h-4 w-4" />Log work</Button></DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Log other work</DialogTitle></DialogHeader>
             <div className="space-y-3">
@@ -88,7 +89,7 @@ export function InternalWorkCard({ profile }: { profile: Profile }) {
                 <div className="space-y-1.5"><Label>Time out</Label><Input className="h-11" type="time" step={900} value={f.time_out} onChange={(e) => setF({ ...f, time_out: e.target.value })} onBlur={(e) => e.target.value && setF({ ...f, time_out: roundTo15(e.target.value) })} /></div>
               </div>
               <div className="space-y-1.5"><Label>Notes</Label><Textarea rows={2} value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} /></div>
-              <Button className="h-11 w-full" onClick={save}>Save</Button>
+              <Button disabled={readOnly} className="h-11 w-full" onClick={save}>Save</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -99,7 +100,7 @@ export function InternalWorkCard({ profile }: { profile: Profile }) {
             <li key={l.id} className="flex items-center gap-2 rounded-md border px-2 py-1.5">
               <span className="tabular-nums text-muted-foreground">{l.time_in.slice(0, 5)}–{l.time_out.slice(0, 5)}</span>
               <span className="min-w-0 flex-1 truncate text-foreground">{l.activity}{l.location ? ` · ${l.location}` : ""}</span>
-              <Button size="icon" variant="ghost" className="h-7 w-7" aria-label="Remove" onClick={() => remove(l.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+              <Button disabled={readOnly} size="icon" variant="ghost" className="h-7 w-7" aria-label="Remove" onClick={() => remove(l.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
             </li>
           ))}
         </ul>

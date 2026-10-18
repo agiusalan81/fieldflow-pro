@@ -18,6 +18,7 @@ import { fileDailyReport, emailDwr, downloadDwr } from "@/lib/dwr-report";
 import { InternalWorkCard } from "@/components/work-extras";
 import { BillingReview } from "@/components/billing-review";
 import { NoAccessButton, DepartureRequests, DepartureAlerts } from "@/components/client-notices";
+import { usePreviewProfile, useUserPreview } from "@/lib/impersonation";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -34,7 +35,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function Dashboard() {
-  const { data: profile, isLoading } = useProfile();
+  const { data: profile, isLoading, isPreview } = usePreviewProfile();
   if (isLoading) return <AppShell title="Loading…"><p className="text-muted-foreground">Loading…</p></AppShell>;
   if (!profile)
     return (
@@ -42,7 +43,7 @@ function Dashboard() {
         <EmptyState>Your account isn't linked to a company yet. Ask your company admin to add you.</EmptyState>
       </AppShell>
     );
-  return isManager(profile) ? <ManagerOverview profile={profile} /> : <TechToday profile={profile} />;
+  return isManager(profile) ? <ManagerOverview profile={profile} /> : <TechToday profile={profile} readOnly={isPreview} />;
 }
 
 function useTick() {
@@ -54,6 +55,8 @@ function useTick() {
 }
 
 export function ShiftTracker({ profile }: { profile: Profile }) {
+  const { data: actor } = useProfile();
+  const { active: readOnly } = useUserPreview(actor);
   useTick();
   const qc = useQueryClient();
   const { data: company } = useCompanyRules();
@@ -69,6 +72,7 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
   const travel = open.find((s) => s.shift_type === "travel");
 
   const toggle = async (type: "shift" | "travel", current?: { id: string; started_at: string }) => {
+    if (readOnly) return;
     const endedAt = new Date().toISOString();
     const res = current
       ? await supabase.from("shifts").update({ ended_at: endedAt }).eq("id", current.id)
@@ -100,10 +104,10 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
       </span>
       {travel && <span className="inline-flex h-7 items-center gap-1 rounded-full bg-warning/20 px-2.5 text-xs tabular-nums text-foreground"><Car className="h-3 w-3" />{formatDuration(Date.now() - new Date(travel.started_at).getTime())}</span>}
       <div className="ml-auto flex gap-2">
-        <Button size="sm" variant={travel ? "secondary" : "outline"} disabled={!shift} onClick={() => toggle("travel", travel)}>
+        <Button size="sm" variant={travel ? "secondary" : "outline"} disabled={readOnly || !shift} onClick={() => toggle("travel", travel)}>
           <Car className="mr-1 h-4 w-4" />{travel ? "Stop travel" : "Travel"}
         </Button>
-        <Button size="sm" variant={shift ? "outline" : "default"} onClick={() => toggle("shift", shift)}>
+        <Button size="sm" variant={shift ? "outline" : "default"} disabled={readOnly} onClick={() => toggle("shift", shift)}>
           {shift ? <Square className="mr-1 h-4 w-4" /> : <Play className="mr-1 h-4 w-4" />}{shift ? "Clock out" : "Clock in"}
         </Button>
       </div>
@@ -111,7 +115,7 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
   );
 }
 
-function TechToday({ profile }: { profile: Profile }) {
+function TechToday({ profile, readOnly }: { profile: Profile; readOnly: boolean }) {
   const navigate = useNavigate();
   const today = new Date().toISOString().slice(0, 10);
   const { data: jobs = [] } = useQuery({
@@ -133,10 +137,10 @@ function TechToday({ profile }: { profile: Profile }) {
     <AppShell title={`Hi, ${profile.full_name.split(" ")[0]}`}>
       <div className="mx-auto max-w-4xl space-y-6">
         <ShiftTracker profile={profile} />
-        <InternalWorkCard profile={profile} />
+        <InternalWorkCard key={profile.id} profile={profile} readOnly={readOnly} />
         <ScanQr />
-        <DepartureAlerts userId={profile.id} />
-        <NoAccessButton profile={profile} jobs={jobs} />
+        {!readOnly && <DepartureAlerts userId={profile.id} />}
+        {!readOnly && <NoAccessButton profile={profile} jobs={jobs} />}
         <section>
           <h2 className="mb-3 font-medium text-foreground">Today's jobs ({jobs.length})</h2>
           {jobs.length === 0 ? (
@@ -155,7 +159,7 @@ function TechToday({ profile }: { profile: Profile }) {
                   </div>
                   <p className="line-clamp-2 text-sm text-foreground">{j.problem_summary || "No problem summary"}</p>
                   <div className="grid grid-cols-2 gap-2">
-                    <Button className="h-11" onClick={() => navigate({ to: "/sheets/new", search: { jobId: j.id } })}><Play className="mr-1 h-4 w-4" />Start</Button>
+                    <Button disabled={readOnly} className="h-11" onClick={() => navigate({ to: "/sheets/new", search: { jobId: j.id } })}><Play className="mr-1 h-4 w-4" />Start</Button>
                     <LiftHistoryButton assetId={j.asset_id} label={`${j.assets?.reference_number ?? ""} · ${j.sites?.name ?? j.clients?.name ?? ""}`} />
                   </div>
                 </li>
@@ -229,10 +233,14 @@ function ManagerOverview({ profile }: { profile: Profile }) {
 
 /** Shift clock shown on every manager overview; hours live on the My hours page. */
 function MyHours({ profile }: { profile: Profile }) {
-  return <><ShiftTracker profile={profile} /><DepartureRequests /></>;
+  const { data: actor } = useProfile();
+  const { active } = useUserPreview(actor);
+  return <><ShiftTracker profile={profile} />{!active && <DepartureRequests />}</>;
 }
 
 function OfficeOverview({ profile }: { profile: Profile }) {
+  const { data: actor } = useProfile();
+  const { active: readOnly } = useUserPreview(actor);
   const can = useCan(profile);
   const navigate = useNavigate();
   const { data } = useOpsData();
@@ -256,7 +264,7 @@ function OfficeOverview({ profile }: { profile: Profile }) {
         {can("contracts") && (
           <section className="space-y-3">
             <div className="flex items-center justify-between"><h2 className="font-medium text-foreground">Contracts due for renewal</h2><Link to="/contracts" className="text-sm text-primary">All contracts</Link></div>
-            <RenewalList office limit={5} />
+            <RenewalList office={!readOnly} limit={5} />
           </section>
         )}
         {can("billing") && (
@@ -268,7 +276,7 @@ function OfficeOverview({ profile }: { profile: Profile }) {
                   <thead><tr className="border-b text-left text-muted-foreground"><th className="px-5 py-2 font-medium">Sheet</th><th className="px-3 py-2 font-medium">Client</th><th className="px-3 py-2 font-medium">Technician</th><th className="px-3 py-2 text-right font-medium">Std</th><th className="px-3 py-2 text-right font-medium">1.5×</th><th className="px-3 py-2 text-right font-medium">2×</th><th className="px-3 py-2 font-medium">Billing</th></tr></thead>
                   <tbody className="divide-y">
                     {billing.slice(0, 10).map(({ s, h }) => (
-                      <tr key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setReview(s.id)}>
+                      <tr key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => { if (!readOnly) setReview(s.id); }}>
                         <td className="px-5 py-2.5 font-mono text-primary">#{s.jobsheet_number}</td><td className="px-3 py-2.5 text-foreground">{s.clients?.name}</td><td className="px-3 py-2.5 text-muted-foreground">{s.users?.full_name ?? "—"}</td>
                         <td className="px-3 py-2.5 text-right tabular-nums">{h.standard}</td><td className="px-3 py-2.5 text-right tabular-nums">{h.ot15}</td><td className="px-3 py-2.5 text-right tabular-nums">{h.ot20}</td><td className="px-3 py-2.5 text-xs capitalize text-muted-foreground">{s.billing_status === "unreviewed" ? "To review" : s.billing_status}</td>
                       </tr>
@@ -280,7 +288,7 @@ function OfficeOverview({ profile }: { profile: Profile }) {
           </section>
         )}
       </div>
-      <BillingReview sheetId={review} onClose={() => setReview(null)} />
+      {!readOnly && <BillingReview sheetId={review} onClose={() => setReview(null)} />}
     </AppShell>
   );
 }

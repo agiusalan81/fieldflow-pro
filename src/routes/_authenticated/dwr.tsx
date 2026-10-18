@@ -3,7 +3,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useProfile, useCompanyUsers, isManager } from "@/lib/profile";
+import { useCompanyUsers, isManager } from "@/lib/profile";
+import { usePreviewProfile } from "@/lib/impersonation";
 import { downloadDwr } from "@/lib/dwr-report";
 import type { DwrRow } from "@/lib/dwr";
 import { AppShell, EmptyState } from "@/components/app-shell";
@@ -30,9 +31,9 @@ const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart
 const t = (s: string) => new Date(s).toTimeString().slice(0, 5);
 
 function DwrPage() {
-  const { data: profile } = useProfile();
+  const { data: profile, isPreview } = usePreviewProfile();
   const { data: users = [] } = useCompanyUsers();
-  const manager = isManager(profile);
+  const manager = isManager(profile) && !isPreview;
   const [from, setFrom] = useState(() => { const d = new Date(); d.setDate(d.getDate() - 7); return iso(d); });
   const [to, setTo] = useState(() => iso(new Date()));
   const [tech, setTech] = useState("all");
@@ -42,8 +43,9 @@ function DwrPage() {
     queryKey: ["dwr", "list", from, to, tech, manager, profile?.id],
     enabled: !!profile,
     queryFn: async () => {
+      if (!profile) return [];
       let q = supabase.from("daily_work_reports").select("*, users(full_name, employee_id)").gte("report_date", from).lte("report_date", to).order("report_date", { ascending: false }).order("shift_start", { ascending: false });
-      if (!manager) q = q.eq("user_id", profile!.id);
+      if (!manager) q = q.eq("user_id", profile.id);
       else if (tech !== "all") q = q.eq("user_id", tech);
       const { data, error } = await q;
       if (error) throw error;
