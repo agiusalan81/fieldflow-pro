@@ -1,0 +1,22 @@
+import { describe, expect, it } from "vitest";
+import { aggregatePayroll, calculateWages, DEFAULT_PAYROLL_POLICY, officePayrollAccess, validPayrollPeriod, type PayrollDwr, type PayrollLeave, type PayrollHours } from "./payroll";
+const roster = [{ effective_from: "2026-01-01", roster_start: "2026-01-01", rotation_days: 7, per_shift: 1, technician_order: ["tech"] }];
+const wage = { hourly_rate: 10, sick_full_hours: 8, sick_half_hours: 8 };
+const aggregate = (from: string, to: string, reports: PayrollDwr[] = [], leaves: PayrollLeave[] = []) => aggregatePayroll("tech",from,to,reports,leaves,wage,[DEFAULT_PAYROLL_POLICY],roster,[]);
+const leave = (type: string, start: string, end: string, hours: number, status = "approved"): PayrollLeave => ({ id: start+type, user_id: "tech", start_date: start, end_date: end, total_hours: hours, leave_type: type, status });
+describe("Payroll rules", () => {
+  it("pays 50 euros for seven assigned standby days", () => expect(aggregate("2026-10-01","2026-10-07").standbyPay).toBe(50));
+  it("prorates three assigned days to 21.43 euros", () => expect(aggregate("2026-10-01","2026-10-03").standbyPay).toBe(21.43));
+  it("uses a changed allowance only from its effective date", () => { const h=aggregatePayroll("tech","2026-10-01","2026-10-07",[],[],wage,[DEFAULT_PAYROLL_POLICY,{ ...DEFAULT_PAYROLL_POLICY,effective_from:"2026-10-04",standby_weekly_eur:70 }],roster,[]); expect(h.standbyPay).toBe(61.43); });
+  it("credits the technician taking an accepted standby swap", () => { const h=aggregatePayroll("other","2026-10-01","2026-10-01",[],[],wage,[DEFAULT_PAYROLL_POLICY],roster,[{ swap_date:"2026-10-01",requester_id:"tech",target_id:"other",status:"accepted" }]); expect(h.standbyDays).toBe(1); expect(h.standbyPay).toBe(7.14); });
+  it("includes approved annual leave in normal hours", () => expect(aggregate("2026-10-05","2026-10-06",[],[leave("Annual","2026-10-05","2026-10-06",16)]).normal).toBe(16));
+  it("excludes unapproved and unpaid leave", () => expect(aggregate("2026-10-05","2026-10-06",[],[leave("Annual","2026-10-05","2026-10-06",16,"pending"),leave("Unpaid","2026-10-05","2026-10-06",16)]).normal).toBe(0));
+  it("allocates annual full then half sick entitlements and leaves excess unpaid", () => { const h=aggregate("2026-10-05","2026-10-07",[],[leave("Sick","2026-10-05","2026-10-07",24)]); expect(h.sickFull).toBe(8);expect(h.sickHalf).toBe(8);expect(h.sickUnpaid).toBe(8);expect(h.normal).toBe(16); });
+  it("consumes earlier sick hours before the payroll period", () => { const h=aggregate("2026-10-05","2026-10-05",[],[leave("Sick","2026-01-05","2026-01-05",8),leave("Sick","2026-10-05","2026-10-05",8)]); expect(h.sickFull).toBe(0);expect(h.sickHalf).toBe(8); });
+  it("prorates leave across a period boundary", () => expect(aggregate("2026-10-01","2026-10-02",[],[leave("Annual","2026-09-30","2026-10-02",24)]).leave).toBe(16));
+  it("deduplicates daily reports for the same shift", () => { const r: PayrollDwr={id:"a",user_id:"tech",report_date:"2026-10-05",shift_id:"shift",standard_hours:8,ot15_hours:2,ot20_hours:1}; const h=aggregate("2026-10-05","2026-10-05",[r,{...r,id:"b"}]); expect(h.worked).toBe(8);expect(h.ot15).toBe(2);expect(h.ot20).toBe(1); });
+  it("calculates full, half, 1.5x and 2x wages and deductions", () => { const h: PayrollHours={...aggregate("2026-10-05","2026-10-05"),worked:8,leave:8,sickFull:8,sickHalf:8,ot15:2,ot20:3,standbyPay:50}; const t=calculateWages(h,10,{bonus:20,tax:30,nationalInsurance:10,otherDeductions:5});expect(t.halfPay).toBe(40);expect(t.ot15Pay).toBe(30);expect(t.ot20Pay).toBe(60);expect(t.gross).toBe(440);expect(t.net).toBe(395); });
+  it("blocks deductions above wages", () => expect(() => calculateWages(aggregate("2026-10-05","2026-10-05"),0,{bonus:0,tax:100,nationalInsurance:0,otherDeductions:0})).toThrow());
+  it("restricts payroll to real office roles", () => { expect(officePayrollAccess("admin")).toBe(true); expect(officePayrollAccess("superuser")).toBe(true);expect(officePayrollAccess("supervisor")).toBe(false);expect(officePayrollAccess("technician")).toBe(false); });
+  it("requires a single-year period for annual entitlement accounting", () => { expect(validPayrollPeriod("2026-10-01","2026-10-31")).toBe(true); expect(validPayrollPeriod("2025-12-01","2026-01-31")).toBe(false); });
+});
