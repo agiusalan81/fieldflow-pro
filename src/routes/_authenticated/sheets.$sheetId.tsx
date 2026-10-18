@@ -188,7 +188,12 @@ function SheetForm() {
       const snapshot: DraftSnapshot = {
         key: draftKey(profile.id, sheetId), userId: profile.id, sheetId, expected,
         form: { ...form, checklist_values: checks, photo_paths: photos, repairs_performed: logs.map((l) => l.daily_work_description.trim()).filter(Boolean).join("\n") || form.repairs_performed },
-        logs: logs.map((l, i) => ({ ...l, time_in: l.time_in || null, time_out: l.time_out || null, sort_order: i, daily_total_hours: dayLabourHours(l.time_in, l.time_out, l.traveling_time_hours, l.technician_count, l.technician_initials) })),
+        logs: logs.map((l, i) => {
+          const c = refs?.clients.find((x) => x.id === form.client_id);
+          const travel = c?.waive_transport ? 0 : l.traveling_time_hours;
+          const ph = parts.filter((p) => p.log_sort_order === i).reduce((s, p) => s + (Number(p.time_acquiring_parts_hours) || 0), 0);
+          return { ...l, traveling_time_hours: travel, time_in: l.time_in || null, time_out: l.time_out || null, sort_order: i, daily_total_hours: dayLabourHours(l.time_in, l.time_out, travel, l.technician_count, l.technician_initials, ph) };
+        }),
         parts: parts.filter((p) => p.part_description.trim()).map((p, i) => ({ ...p, sort_order: i })), savedAt: new Date().toISOString(),
       };
       void saveLocalDraft(snapshot).catch(() => toast.error("This device could not save your draft. Free storage space and try again."));
@@ -239,7 +244,10 @@ function SheetForm() {
       const snapshot: DraftSnapshot = {
         key: draftKey(profile.id, sheetId), userId: profile.id, sheetId, expected: revision.current ?? sheet.updated_at,
         form: { ...form, checklist_values: checks, photo_paths: photos, repairs_performed: repairs },
-        logs: logs.map((l, i) => ({ ...l, time_in: l.time_in || null, time_out: l.time_out || null, sort_order: i, daily_total_hours: dayLabourHours(l.time_in, l.time_out, l.traveling_time_hours, l.technician_count, l.technician_initials) })),
+        logs: logs.map((l, i) => {
+          const travel = client?.waive_transport ? 0 : l.traveling_time_hours;
+          return { ...l, traveling_time_hours: travel, time_in: l.time_in || null, time_out: l.time_out || null, sort_order: i, daily_total_hours: dayLabourHours(l.time_in, l.time_out, travel, l.technician_count, l.technician_initials, dayPartsHours(i)) };
+        }),
         parts: parts.filter((p) => p.part_description.trim()).map((p, i) => ({ ...p, sort_order: i })), savedAt: new Date().toISOString(),
       };
       if (!navigator.onLine) {
