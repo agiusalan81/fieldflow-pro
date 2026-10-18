@@ -38,3 +38,4 @@
 - Leave opening carry-forward is year-qualified on the shared balance; payslips snapshot leave without consuming it again. Why: approved requests already drive leave usage.
 
 - Payroll/opening leave save via an invoker-rights transaction; a trigger blocks issued-slip edits/deletes and mismatched totals. Why: prevent partial saves and preserve reviewed records.
+- Tenant currency, default phone country code and equipment wording live in company_settings and are read only through src/lib/locale.ts (set by AppShell). Why: each company configures its own region without code changes.

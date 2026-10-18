@@ -1,3 +1,4 @@
+import { tenantLocale } from "@/lib/locale";
 import { ClientRates } from "@/components/integrations-settings";
 import { ClientPreapproval } from "@/components/client-preapproval";
 import { createFileRoute } from "@tanstack/react-router";
@@ -86,7 +87,7 @@ function ClientsTab({ q, onOpen }: TabProps) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
   const [clientId, setClientId] = useState<string | null>(null);
-  const emptyF = { name: "", property_name: "", street_name: "", location: "", first_name: "", last_name: "", email: "", code: "+356", number: "", whatsapp: false };
+  const emptyF = { name: "", property_name: "", street_name: "", location: "", first_name: "", last_name: "", email: "", code: tenantLocale().countryCode, number: "", whatsapp: false };
   const [f, setF] = useState(emptyF);
   const refresh = () => { qc.invalidateQueries({ queryKey: ["clients-full"] }); qc.invalidateQueries({ queryKey: ["clients"] }); qc.invalidateQueries({ queryKey: ["contacts"] }); qc.invalidateQueries({ queryKey: ["sites-full"] }); qc.invalidateQueries({ queryKey: ["sheet-refs"] }); qc.invalidateQueries({ queryKey: ["entities-unified"] }); };
   const reset = (o: boolean) => { setOpen(o); if (!o) { setStep(1); setClientId(null); setF(emptyF); } };

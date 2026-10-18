@@ -352,8 +352,12 @@ export type Database = {
           company_address: string | null
           company_email: string | null
           company_id: string
+          currency: string
+          default_country_code: string
           default_rates: Json
           emergency_phone: string | null
+          equipment_categories: string[]
+          equipment_label: string
           holiday_rate: number
           idle_timeout_minutes: number
           industry: string | null
@@ -387,8 +391,12 @@ export type Database = {
           company_address?: string | null
           company_email?: string | null
           company_id: string
+          currency?: string
+          default_country_code?: string
           default_rates?: Json
           emergency_phone?: string | null
+          equipment_categories?: string[]
+          equipment_label?: string
           holiday_rate?: number
           idle_timeout_minutes?: number
           industry?: string | null
@@ -422,8 +430,12 @@ export type Database = {
           company_address?: string | null
           company_email?: string | null
           company_id?: string
+          currency?: string
+          default_country_code?: string
           default_rates?: Json
           emergency_phone?: string | null
+          equipment_categories?: string[]
+          equipment_label?: string
           holiday_rate?: number
           idle_timeout_minutes?: number
           industry?: string | null

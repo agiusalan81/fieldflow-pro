@@ -1,4 +1,5 @@
 import { standbyFor, type StandbyConfig, type Swap } from "@/lib/dwr";
+import { formatMoney } from "@/lib/locale";
 
 export type PayrollPolicy = { effective_from: string; standby_weekly_eur: number; sick_full_hours: number; sick_half_hours: number };
 export type WageSettings = { hourly_rate: number; sick_full_hours: number; sick_half_hours: number; tax_reference?: string | null };
@@ -9,7 +10,7 @@ export type PayrollHours = { worked: number; leave: number; sickFull: number; si
 export type WageAdjustments = { bonus: number; tax: number; nationalInsurance: number; otherDeductions: number };
 export const DEFAULT_PAYROLL_POLICY: PayrollPolicy = { effective_from: "2000-01-01", standby_weekly_eur: 50, sick_full_hours: 0, sick_half_hours: 0 };
 export const money = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
-export const euros = (n: number) => new Intl.NumberFormat("en-MT", { style: "currency", currency: "EUR" }).format(n);
+export const euros = (n: number) => formatMoney(n);
 export const officePayrollAccess = (realRole?: string) => realRole === "admin" || realRole === "superuser";
 export function datesBetween(from: string, to: string) {
   const start = new Date(from + "T00:00:00Z"), end = new Date(to + "T00:00:00Z");

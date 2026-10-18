@@ -1,3 +1,4 @@
+import { tenantLocale } from "@/lib/locale";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -18,7 +19,8 @@ export const EQUIPMENT_TYPES = ["Passenger Lift", "Goods Lift", "Platform Lift",
 
 export function splitPhone(p: string | null | undefined) {
   const m = (p ?? "").match(/^(\+\d{1,4})\s*(.*)$/);
-  return m ? { code: m[1] ?? "+356", number: m[2] ?? "" } : { code: "+356", number: p ?? "" };
+  const def = tenantLocale().countryCode;
+  return m ? { code: m[1] ?? def, number: m[2] ?? "" } : { code: def, number: p ?? "" };
 }
 
 /** Filters countries by name or dial code ("malta", "356", "+44"). */
@@ -63,7 +65,7 @@ export function WhatsAppBadge() {
 }
 
 type ContactDraft = { first_name: string; last_name: string; email: string; code: string; number: string; role_title: string; is_primary_contact: boolean; receives_job_sheets: boolean; has_whatsapp: boolean };
-const emptyContact: ContactDraft = { first_name: "", last_name: "", email: "", code: "+356", number: "", role_title: "", is_primary_contact: false, receives_job_sheets: false, has_whatsapp: false };
+const emptyContact = (): ContactDraft => ({ first_name: "", last_name: "", email: "", code: tenantLocale().countryCode, number: "", role_title: "", is_primary_contact: false, receives_job_sheets: false, has_whatsapp: false });
 
 /** siteId: undefined = every contact of the client, null = head-office contacts, string = that site's contacts. */
 export function ContactsManager({ clientId, companyId, siteId, title = "Contacts" }: { clientId: string; companyId: string; siteId?: string | null; title?: string }) {
@@ -134,7 +136,7 @@ export function ContactsManager({ clientId, companyId, siteId, title = "Contacts
                 <SelectContent>{others.map((c) => <SelectItem key={c.id} value={c.id}>{c.first_name} {c.last_name}{c.role_title ? ` · ${c.role_title}` : ""}</SelectItem>)}</SelectContent>
               </Select>
             )}
-            <Button size="sm" variant="outline" onClick={() => { setF(emptyContact); setEditing("new"); }}><Plus className="mr-1 h-4 w-4" />Add contact</Button>
+            <Button size="sm" variant="outline" onClick={() => { setF(emptyContact()); setEditing("new"); }}><Plus className="mr-1 h-4 w-4" />Add contact</Button>
           </div>
         )}
       </div>
