@@ -204,6 +204,13 @@
       "when": 1792309057291,
       "tag": "0028_standby_sheets_held_dwr_auto_clockout",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1792311109602,
+      "tag": "0029_client_waive_transport",
+      "breakpoints": true
     }
   ]
 }
