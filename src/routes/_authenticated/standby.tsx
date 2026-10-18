@@ -29,7 +29,6 @@ export const Route = createFileRoute("/_authenticated/standby")({
 });
 
 const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-const monday = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate() - ((d.getDay() + 6) % 7));
 const today0 = () => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); };
 const SWAP_CLS: Record<string, string> = { pending: "bg-warning/25 text-foreground", accepted: "bg-success/15 text-success", declined: "bg-destructive/10 text-destructive", cancelled: "bg-muted text-muted-foreground" };
 
