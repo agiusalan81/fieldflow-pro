@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Superuser-only read-only user testing dropdown, scoped personal pages and reset; isolated for future SaaS management
 - [x] Client-level pre-approved unsigned departure
 - [x] Monthly monitoring, sequential signing and automatic combined PDF email with hand-back screen
 - [x] Locally saved existing draft work and reconnect sync with conflict protection (signed-in save/sync verified)
