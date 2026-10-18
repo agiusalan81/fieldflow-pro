@@ -29,3 +29,5 @@
 - Combined job-sheet download/email uses the shared email PDF builder and authenticated RLS reads; only office roles can combine completed sheets for one client. Why: prevent cross-client disclosure and inconsistent client copies.
 - Field client notices (no access, left unsigned) are sent only via src/lib/client-notices.functions.ts; approval rules live in src/lib/client-notices.ts with tests, and the guard_departure trigger blocks technicians from approving their own departure. Why: technician accountability can't rely on UI.
 - job_sheets has two FKs to users; always embed as users!job_sheets_assigned_technician_id_fkey(...). Why: an unhinted embed fails.
+- Monthly signing batches are authenticated, creator-owned records finalized with transactional signing and the shared PDF builder; delivery state is stored before sending. Why: preserves partial sessions and prevents duplicate automatic emails.
+- Offline draft snapshots are account-scoped in IndexedDB and sync through an optimistic-locking transactional RPC; registration lives only in the guarded PWA wrapper. Why: avoids cross-account replay, partial saves, stale overwrites and preview caches.
