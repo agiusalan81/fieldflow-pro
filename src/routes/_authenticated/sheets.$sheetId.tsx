@@ -486,13 +486,15 @@ function SheetForm() {
                         </div>
                       );
                     })}
-                    <div className="space-y-1"><Label className="text-xs">Travel h</Label><Input type="number" step="0.25" min="0" inputMode="decimal" className="h-11" value={l.traveling_time_hours} onChange={(e) => setLog(i, { traveling_time_hours: Number(e.target.value) })} /></div>
+                    {client?.waive_transport
+                      ? <div className="space-y-1"><Label className="text-xs">Travel h</Label><p className="flex h-11 items-center rounded-md border border-dashed px-3 text-xs text-muted-foreground">Waived for this client</p></div>
+                      : <div className="space-y-1"><Label className="text-xs">Travel h</Label><NumInput step="0.25" min="0" className="h-11" value={l.traveling_time_hours} onChange={(v) => setLog(i, { traveling_time_hours: v })} /></div>}
                   </div>
                   <p className="mt-2 text-[11px] text-muted-foreground">
                     GPS in: {l.latitude_in != null ? `${l.latitude_in.toFixed(4)}, ${l.longitude_in?.toFixed(4)}` : "—"} · out: {l.latitude_out != null ? `${l.latitude_out.toFixed(4)}, ${l.longitude_out?.toFixed(4)}` : "—"}
                   </p>
                   <TechnicianPicker count={l.technician_count} selected={l.technician_initials} users={users} disabled={readOnly} onChange={(count, initials) => setLog(i, { technician_count: count, technician_initials: initials })} />
-                  <p className="mt-2 text-xs text-muted-foreground">{labourHours(l.time_in, l.time_out, l.technician_count, l.technician_initials).toFixed(2)} labour h · {l.technician_count} technicians</p>
+                  <p className="mt-2 text-xs text-muted-foreground">{day.toFixed(2)} labour h (site + travel + parts) · {l.technician_count} technicians</p>
                   <div className="mt-3 space-y-1"><Label className="text-xs">Repairs done this day</Label>
                     <Textarea rows={2} value={l.daily_work_description} onChange={(e) => setLog(i, { daily_work_description: e.target.value })} />
                     <VoiceDictation label="repairs done" disabled={readOnly} value={l.daily_work_description} onApply={(t) => setLog(i, { daily_work_description: t })} />
