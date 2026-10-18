@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { mandatoryBreaks, workedHours, matchesSheetSearch, sheetTitle, standbyFor } from "./dwr";
+import { mandatoryBreaks, workedHours, matchesSheetSearch, sheetTitle, standbyFor, validStandbyStaffing, clampStandbyStaffing } from "./dwr";
 
 const one30 = { enabled: true, count: 1, minutes: 30 };
 
@@ -20,6 +20,24 @@ describe("job sheet number search", () => {
 });
 
 describe("standby roster", () => {
+  it("does not allow staffing above the number of registered technicians", () => {
+    expect(validStandbyStaffing(3, 2)).toBe(false);
+    expect(validStandbyStaffing(2, 2)).toBe(true);
+    expect(clampStandbyStaffing(3, 2)).toBe(2);
+  });
+  it("does not allow saving a staffed roster with no registered technicians", () => {
+    expect(validStandbyStaffing(1, 0)).toBe(false);
+    expect(clampStandbyStaffing(1, 0)).toBe(0);
+  });
+  it("supports the registered team size rather than an arbitrary ten-person cap", () => {
+    expect(validStandbyStaffing(40, 40)).toBe(true);
+    expect(clampStandbyStaffing(41, 40)).toBe(40);
+  });
+  it("only accepts positive whole-person staffing", () => {
+    expect(validStandbyStaffing(1.5, 3)).toBe(false);
+    expect(validStandbyStaffing(0, 3)).toBe(false);
+    expect(validStandbyStaffing(Number.NaN, 3)).toBe(false);
+  });
   const c = { start: "2026-10-12", rotationDays: 7, perShift: 1, order: ["a", "b", "c"] };
   it("weekly: one tech per week", () => {
     expect(standbyFor("2026-10-12", c)).toEqual(["a"]);
