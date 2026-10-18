@@ -162,6 +162,13 @@
       "when": 1792304053244,
       "tag": "0022_offline_snapshot_photos",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1792305843967,
+      "tag": "0023_payroll_office_settings_and_payslips",
+      "breakpoints": true
     }
   ]
 }
