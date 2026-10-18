@@ -217,7 +217,7 @@ export function approvalBalance(b: { base: number; ph: number; taken: number; pe
   return { available, after, exceedsBy: after < 0 ? -after : 0 };
 }
 
-/** Billable hours for one day: on-site time plus travel, both multiplied by the technician count. */
-export function dayLabourHours(tin: string | null | undefined, tout: string | null | undefined, travel: number, count: number, initials: string[] = []) {
-  return +((hoursFromTimes(tin, tout) + (Number(travel) || 0)) * technicianCount(count, initials)).toFixed(2);
+/** Billable hours for one day: (on-site time + travel + time acquiring parts) × technician count. */
+export function dayLabourHours(tin: string | null | undefined, tout: string | null | undefined, travel: number, count: number, initials: string[] = [], partsHours = 0) {
+  return +((hoursFromTimes(tin, tout) + (Number(travel) || 0) + (Number(partsHours) || 0)) * technicianCount(count, initials)).toFixed(2);
 }

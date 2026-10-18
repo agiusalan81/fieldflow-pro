@@ -38,6 +38,10 @@ export function sscPerMonday(weekly:number,c:EmployeeConfig,r:StatutoryYear){
  return {employee:c.sscCategory==='B'&&c.categoryBProRata?money(weekly*.1):contribution(weekly,s.employee),employer:contribution(weekly,s.employer),maternity:contribution(weekly,s.maternity)};
 }
 export function countMondays(from:string,to:string){return datesBetween(from,to).filter(d=>new Date(d+'T00:00:00Z').getUTCDay()===1).length;}
+/** Extra leave credit (hours) for public holidays that fall on a non-working day, per Malta rules. */
+export function weekendHolidayCredit(publicHolidays:string[],workDays:number[],year:number,dailyHours=8){
+ return publicHolidays.filter(d=>d.slice(0,4)===String(year)&&!workDays.includes(new Date(d+'T00:00:00Z').getUTCDay())).length*dailyHours;
+}
 export function monthlyPayroll(h:PayrollHours,w:WageSettings,c:EmployeeConfig,r:StatutoryYear,from:string,to:string,extraTaxable=0){
  if(!Number.isFinite(extraTaxable)||extraTaxable<0)throw new Error("Enter valid additional earnings");
  if(!validStatutory(r))throw new Error('Review and save valid statutory rates for this year');
