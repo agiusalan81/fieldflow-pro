@@ -30,6 +30,7 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedStandbyRouteImport } from './routes/_authenticated/standby'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
+import { Route as ReportTokenRouteImport } from './routes/report.$token'
 import { Route as AuthenticatedAdminEntitiesRouteImport } from './routes/_authenticated/admin.entities'
 import { Route as AuthenticatedAdminFieldsRouteImport } from './routes/_authenticated/admin.fields'
 import { Route as AuthenticatedAdminInventoryRouteImport } from './routes/_authenticated/admin.inventory'
@@ -148,6 +149,11 @@ const JoinTokenRoute = JoinTokenRouteImport.update({
   path: '/join/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReportTokenRoute = ReportTokenRouteImport.update({
+  id: '/report/$token',
+  path: '/report/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminEntitiesRoute =
   AuthenticatedAdminEntitiesRouteImport.update({
     id: '/admin/entities',
@@ -239,6 +245,7 @@ export interface FileRoutesByFullPath {
   '/standby': typeof AuthenticatedStandbyRoute
   '/team': typeof AuthenticatedTeamRoute
   '/join/$token': typeof JoinTokenRoute
+  '/report/$token': typeof ReportTokenRoute
   '/admin/entities': typeof AuthenticatedAdminEntitiesRoute
   '/admin/fields': typeof AuthenticatedAdminFieldsRoute
   '/admin/inventory': typeof AuthenticatedAdminInventoryRoute
@@ -273,6 +280,7 @@ export interface FileRoutesByTo {
   '/standby': typeof AuthenticatedStandbyRoute
   '/team': typeof AuthenticatedTeamRoute
   '/join/$token': typeof JoinTokenRoute
+  '/report/$token': typeof ReportTokenRoute
   '/admin/entities': typeof AuthenticatedAdminEntitiesRoute
   '/admin/fields': typeof AuthenticatedAdminFieldsRoute
   '/admin/inventory': typeof AuthenticatedAdminInventoryRoute
@@ -309,6 +317,7 @@ export interface FileRoutesById {
   '/_authenticated/standby': typeof AuthenticatedStandbyRoute
   '/_authenticated/team': typeof AuthenticatedTeamRoute
   '/join/$token': typeof JoinTokenRoute
+  '/report/$token': typeof ReportTokenRoute
   '/_authenticated/admin/entities': typeof AuthenticatedAdminEntitiesRoute
   '/_authenticated/admin/fields': typeof AuthenticatedAdminFieldsRoute
   '/_authenticated/admin/inventory': typeof AuthenticatedAdminInventoryRoute
@@ -345,6 +354,7 @@ export interface FileRouteTypes {
     | '/standby'
     | '/team'
     | '/join/$token'
+    | '/report/$token'
     | '/admin/entities'
     | '/admin/fields'
     | '/admin/inventory'
@@ -379,6 +389,7 @@ export interface FileRouteTypes {
     | '/standby'
     | '/team'
     | '/join/$token'
+    | '/report/$token'
     | '/admin/entities'
     | '/admin/fields'
     | '/admin/inventory'
@@ -414,6 +425,7 @@ export interface FileRouteTypes {
     | '/_authenticated/standby'
     | '/_authenticated/team'
     | '/join/$token'
+    | '/report/$token'
     | '/_authenticated/admin/entities'
     | '/_authenticated/admin/fields'
     | '/_authenticated/admin/inventory'
@@ -434,6 +446,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   JoinTokenRoute: typeof JoinTokenRoute
+  ReportTokenRoute: typeof ReportTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -583,6 +596,13 @@ declare module '@tanstack/react-router' {
       path: '/join/$token'
       fullPath: '/join/$token'
       preLoaderRoute: typeof JoinTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/report/$token': {
+      id: '/report/$token'
+      path: '/report/$token'
+      fullPath: '/report/$token'
+      preLoaderRoute: typeof ReportTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/entities': {
@@ -752,6 +772,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   JoinTokenRoute: JoinTokenRoute,
+  ReportTokenRoute: ReportTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
