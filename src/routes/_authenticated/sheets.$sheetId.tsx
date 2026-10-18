@@ -10,6 +10,7 @@ import { useCompanyRules } from "@/lib/company";
 import { hoursFromTimes, missingSignOff, missingChecklist, roundTo15, shiftTime, parsePhotos, createDraftSheet, type JobPhoto, technicianCount, labourHours, dayLabourHours } from "@/lib/jobsheets";
 import { JobPhotos } from "@/components/job-photos";
 import { SpecialNotes } from "@/components/special-notes";
+import { VoiceDictation } from "@/components/voice-dictation";
 import { sendJobSheetEmail } from "@/lib/sendJobSheetEmail";
 import { TechnicianPicker } from "@/components/technician-picker";
 import { SearchSelect } from "@/components/search-select";
@@ -447,6 +448,7 @@ function SheetForm() {
             <Label>Reported fault</Label>
             {sheet.job_id && <p className="text-xs text-muted-foreground">Filled in from the assigned job card.</p>}
             <Textarea rows={2} value={(form.reported_fault as string) ?? ""} onChange={(e) => set({ reported_fault: e.target.value })} />
+            <VoiceDictation label="reported fault" disabled={readOnly} value={(form.reported_fault as string) ?? ""} onApply={(t) => set({ reported_fault: t })} />
           </div>
           <div className="space-y-3">
             {logs.map((l, i) => {
@@ -492,6 +494,7 @@ function SheetForm() {
                   <p className="mt-2 text-xs text-muted-foreground">{labourHours(l.time_in, l.time_out, l.technician_count, l.technician_initials).toFixed(2)} labour h · {l.technician_count} technicians</p>
                   <div className="mt-3 space-y-1"><Label className="text-xs">Repairs done this day</Label>
                     <Textarea rows={2} value={l.daily_work_description} onChange={(e) => setLog(i, { daily_work_description: e.target.value })} />
+                    <VoiceDictation label="repairs done" disabled={readOnly} value={l.daily_work_description} onApply={(t) => setLog(i, { daily_work_description: t })} />
                   </div>
                   <div className="mt-3 space-y-2">
                     <Label className="text-xs">Parts used</Label>
@@ -531,12 +534,14 @@ function SheetForm() {
               <Label>Pending works / future jobs</Label>
               <p className="text-xs text-muted-foreground">Goes to the admin pending queue.</p>
               <Textarea rows={3} value={(form.pending_works_future_jobs as string) ?? ""} onChange={(e) => set({ pending_works_future_jobs: e.target.value })} />
+              <VoiceDictation label="pending works" disabled={readOnly} value={(form.pending_works_future_jobs as string) ?? ""} onApply={(t) => set({ pending_works_future_jobs: t })} />
               <JobPhotos {...photoProps} scope="pending" day={null} />
             </div>
             <div className="space-y-1.5">
               <Label>Internal comments (admin only)</Label>
               <p className="text-xs text-muted-foreground">For the office team.</p>
               <Textarea rows={3} value={(form.internal_comments_admin_only as string) ?? ""} onChange={(e) => set({ internal_comments_admin_only: e.target.value })} />
+              <VoiceDictation label="internal comments" disabled={readOnly} value={(form.internal_comments_admin_only as string) ?? ""} onApply={(t) => set({ internal_comments_admin_only: t })} />
             </div>
           </div>
         </Section>

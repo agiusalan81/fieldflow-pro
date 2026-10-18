@@ -45,7 +45,14 @@ function NewSheet() {
     started.current = true;
     (async () => {
       const { data } = await supabase.from("shifts").select("shift_type").eq("user_id", profile.id).is("ended_at", null);
-      if (needsClockIn(profile.real_role, (data ?? []).map((s) => s.shift_type))) { setOffShift(true); return; }
+      if (needsClockIn(profile.real_role, (data ?? []).map((s) => s.shift_type))) {
+        // Standby technicians may open callout sheets after clocking out (tonight or after midnight).
+        const d = new Date(), y = new Date(Date.now() - 86_400_000);
+        const ymd = (x: Date) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`;
+        const [a, b] = await Promise.all([supabase.rpc("is_on_standby", { _user: profile.id, _date: ymd(d) }), supabase.rpc("is_on_standby", { _user: profile.id, _date: ymd(y) })]);
+        if (!a.data && !b.data) { setOffShift(true); return; }
+        toast.info("Standby callout — this sheet will be added to your held daily works report.");
+      }
       start();
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps

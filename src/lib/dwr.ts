@@ -95,3 +95,36 @@ export function standbyFor(date: string, c: StandbyConfig, swaps: Swap[] = []): 
   }
   return ids;
 }
+
+// ---------- Held standby DWRs and forgotten clock-outs ----------
+const localYmd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const atLocal = (ymd: string, hm: string, addDays = 0) => {
+  const [y, m, d] = ymd.split("-").map(Number);
+  const [h = 0, mi = 0] = hm.slice(0, 5).split(":").map(Number);
+  return new Date(y!, m! - 1, d! + addDays, h, mi);
+};
+
+/** A standby technician's DWR is held until the company start time on the morning after the shift. */
+export function heldDwrDueAt(shiftStartIso: string, workStart: string) {
+  return atLocal(localYmd(new Date(shiftStartIso)), workStart, 1);
+}
+
+/** An open shift is "forgotten" once the day it started has passed. */
+export function shiftForgotten(shiftStartIso: string, now: Date) {
+  return localYmd(new Date(shiftStartIso)) < localYmd(now);
+}
+
+/**
+ * Auto clock-out time: the later of the company closing time and the last recorded work
+ * (job/internal time out + travel), on the day the shift started. Never before the shift start.
+ */
+export function autoClockOutAt(shiftStartIso: string, workEnd: string, lastActivity: string | null, travelHours = 0) {
+  const start = new Date(shiftStartIso);
+  const day = localYmd(start);
+  let end = atLocal(day, workEnd);
+  if (lastActivity) {
+    const last = new Date(atLocal(day, lastActivity).getTime() + travelHours * 3_600_000);
+    if (last > end) end = last;
+  }
+  return end > start ? end : start;
+}
