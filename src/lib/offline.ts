@@ -46,9 +46,14 @@ export async function syncDraft(snapshot: DraftSnapshot) {
   const { data, error } = await supabase.rpc("save_sheet_snapshot_with_photos", { _id: snapshot.sheetId, _expected: snapshot.expected, _form: snapshot.form as Json, _logs: snapshot.logs as Json, _parts: snapshot.parts as Json });
   if (error) throw error;
   if (!data) throw new Error("Draft could not be confirmed");
-  const photos = (await (await db()).getAll("photos")) as LocalPhoto[];
-  for (const photo of photos.filter((p) => p.userId === snapshot.userId && p.sheetId === snapshot.sheetId)) await (await db()).delete("photos", photo.key);
-  await removeLocalDraft(snapshot.userId, snapshot.sheetId);
+  const current = await getLocalDraft(snapshot.userId, snapshot.sheetId);
+  if (current && current.savedAt !== snapshot.savedAt) {
+    await saveLocalDraft({ ...current, expected: data });
+  } else {
+    const photos = (await (await db()).getAll("photos")) as LocalPhoto[];
+    for (const photo of photos.filter((p) => p.userId === snapshot.userId && p.sheetId === snapshot.sheetId)) await (await db()).delete("photos", photo.key);
+    await removeLocalDraft(snapshot.userId, snapshot.sheetId);
+  }
   window.dispatchEvent(new CustomEvent("fieldops-draft-synced", { detail: { sheetId: snapshot.sheetId, updatedAt: data } }));
   return data;
 }
