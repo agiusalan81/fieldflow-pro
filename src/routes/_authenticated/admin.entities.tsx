@@ -1,6 +1,8 @@
 import { tenantLocale } from "@/lib/locale";
 import { ClientRates } from "@/components/integrations-settings";
 import { ClientPreapproval } from "@/components/client-preapproval";
+import { DocumentMasters } from "@/components/document-masters";
+import { useTerminology } from "@/lib/company";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -49,6 +51,7 @@ type RecordTab = "sites" | "contacts" | "equipment";
 type TabProps = { q: string; onOpen: (c: Open, tab: RecordTab) => void };
 
 function Entities() {
+  const word = useTerminology();
   const [q, setQ] = useState("");
   const [manage, setManage] = useState<(Open & { tab: RecordTab }) | null>(null);
   const { data: profile } = useProfile();
@@ -64,11 +67,13 @@ function Entities() {
             <Tabs defaultValue={manage.tab === "equipment" ? "equipment" : "sites"}>
               <TabsList className="mb-3">
                 <TabsTrigger value="sites">Sites & contacts</TabsTrigger>
-                <TabsTrigger value="equipment">All equipment</TabsTrigger>
+                <TabsTrigger value="equipment">{word("equipment")}</TabsTrigger>
+                {isOffice(profile) && <TabsTrigger value="documents">Documents</TabsTrigger>}
                 {isOffice(profile) && <TabsTrigger value="rates">Labour rates</TabsTrigger>}
               </TabsList>
               <TabsContent value="sites">{isOffice(profile) || profile.role === "supervisor" ? <ClientPreapproval clientId={manage.id} /> : null}<SiteHierarchy clientId={manage.id} companyId={profile.company_id} /></TabsContent>
               <TabsContent value="equipment"><EquipmentManager clientId={manage.id} companyId={profile.company_id} /></TabsContent>
+              {isOffice(profile) && <TabsContent value="documents"><DocumentMasters companyId={profile.company_id} clientId={manage.id} /></TabsContent>}
               {isOffice(profile) && <TabsContent value="rates"><ClientRates clientId={manage.id} /></TabsContent>}
             </Tabs>
           )}

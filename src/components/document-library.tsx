@@ -8,6 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { digitizeLibraryDocument } from "@/lib/document-library.functions";
+import { useServerFn } from "@tanstack/react-start";
+import { DocumentMasters } from "@/components/document-masters";
 
 const BUCKET = "company-documents";
 
@@ -32,12 +35,17 @@ type Doc = {
 const fmtSize = (b: number) => (b >= 1_000_000 ? `${(b / 1_000_000).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1000))} KB`);
 
 export function DocumentLibrary({ companyId, userId }: { companyId: string; userId: string }) {
+  const digitize = useServerFn(digitizeLibraryDocument);
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [category, setCategory] = useState<DocCategory>("checklist");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
   const [deleting, setDeleting] = useState<Doc | null>(null);
+  const [reading, setReading] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [previewName, setPreviewName] = useState("");
+  const read = async (id: string) => { setReading(id); try { await digitize({ data: { documentId: id } }); toast.success("Editable draft created — review it in Reusable documents"); qc.invalidateQueries({ queryKey: ["document-masters"] }); } catch (e) { toast.error(e instanceof Error ? e.message : "Could not digitize document"); } finally { setReading(null); } };
 
   const { data: docs = [] } = useQuery({
     queryKey: ["company-documents"],
@@ -55,21 +63,22 @@ export function DocumentLibrary({ companyId, userId }: { companyId: string; user
     const path = `${companyId}/${crypto.randomUUID()}-${safe}`;
     const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, file);
     if (upErr) { setBusy(false); toast.error(upErr.message); return; }
-    const { error } = await supabase.from("company_documents").insert({
+    const { data: uploaded, error } = await supabase.from("company_documents").insert({
       company_id: companyId, category, name: file.name, file_path: path, file_size: file.size, notes: notes.trim() || null, uploaded_by: userId,
-    });
+    }).select("id").single();
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Document uploaded");
     setNotes("");
     if (fileRef.current) fileRef.current.value = "";
     qc.invalidateQueries({ queryKey: ["company-documents"] });
+    if (uploaded && /\.(pdf|jpe?g|png|webp)$/i.test(file.name)) await read(uploaded.id);
   };
 
   const open = async (d: Doc) => {
     const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(d.file_path, 300);
     if (error || !data) { toast.error(error?.message ?? "Could not open file"); return; }
-    window.open(data.signedUrl, "_blank");
+    setPreviewName(d.name); setPreviewUrl(data.signedUrl);
   };
 
   const remove = async () => {
@@ -140,12 +149,15 @@ export function DocumentLibrary({ companyId, userId }: { companyId: string; user
             <Button type="button" variant="outline" size="sm" onClick={() => void open(d)}>
               <Download className="mr-1 h-4 w-4" />Open
             </Button>
+            <Button type="button" variant="outline" size="sm" disabled={!!reading} onClick={() => read(d.id)}>{reading === d.id ? "Reading…" : "Digitize"}</Button>
             <Button type="button" variant="ghost" size="icon" onClick={() => setDeleting(d)} aria-label={`Delete ${d.name}`}>
               <Trash2 className="h-4 w-4 text-destructive" />
             </Button>
           </div>
         ))}
       </div>
+      <DocumentMasters companyId={companyId} />
+      <Dialog open={!!previewUrl} onOpenChange={(o) => !o && setPreviewUrl("")}><DialogContent className="sm:max-w-3xl"><DialogHeader><DialogTitle>{previewName}</DialogTitle></DialogHeader>{/\.(jpe?g|png|webp)$/i.test(previewName) ? <img src={previewUrl} alt={previewName} className="max-h-[65vh] object-contain" /> : <iframe title={previewName} src={previewUrl} className="h-[65vh] w-full border" />}<a href={previewUrl} target="_blank" rel="noreferrer" className="text-sm text-primary underline">Open original</a></DialogContent></Dialog>
 
       <Dialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
         <DialogContent>
