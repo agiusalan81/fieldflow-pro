@@ -1,4 +1,5 @@
 import { ClientRates } from "@/components/integrations-settings";
+import { ClientPreapproval } from "@/components/client-preapproval";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -26,6 +27,7 @@ export const Route = createFileRoute("/_authenticated/admin/entities")({
       { name: "description", content: "Manage clients, their contacts and serviced assets." },
       { property: "og:title", content: "Clients, contacts & assets — FieldOps" },
       { property: "og:description", content: "Manage clients, contacts and assets." },
+      { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Entities,
@@ -64,7 +66,7 @@ function Entities() {
                 <TabsTrigger value="equipment">All equipment</TabsTrigger>
                 {isOffice(profile) && <TabsTrigger value="rates">Labour rates</TabsTrigger>}
               </TabsList>
-              <TabsContent value="sites"><SiteHierarchy clientId={manage.id} companyId={profile.company_id} /></TabsContent>
+              <TabsContent value="sites">{isOffice(profile) || profile.role === "supervisor" ? <ClientPreapproval clientId={manage.id} /> : null}<SiteHierarchy clientId={manage.id} companyId={profile.company_id} /></TabsContent>
               <TabsContent value="equipment"><EquipmentManager clientId={manage.id} companyId={profile.company_id} /></TabsContent>
               {isOffice(profile) && <TabsContent value="rates"><ClientRates clientId={manage.id} /></TabsContent>}
             </Tabs>

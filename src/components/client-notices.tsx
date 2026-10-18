@@ -117,11 +117,12 @@ export function NoAccessButton({ profile, jobs }: { profile: Profile; jobs: { id
 type Sheet = { id: string; departure_status: string; departure_note: string | null; signature_data: string | null; return_fee_waived?: boolean };
 
 /** Inside an unsigned job sheet: technician asks to leave, manager approves and the client is told the lift is left off. */
-export function DepartureRequest({ sheet, manager, onChange }: { sheet: Sheet; manager: boolean; onChange: () => void }) {
+export function DepartureRequest({ sheet, manager, onChange, preapproved = false }: { sheet: Sheet; manager: boolean; onChange: () => void; preapproved?: boolean }) {
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [waive, setWaive] = useState(false);
   const enabled = useNoticeEnabled("unsigned_left");
+  if (preapproved && !sheet.signature_data) return <p className="mt-4 border-t pt-3 text-sm text-success">Unattended site — pre-approved to leave without signature. Save this sheet as a draft for signing later.</p>;
   if (sheet.signature_data || (!enabled && sheet.departure_status === "none")) return null;
   const set = async (departure_status: string, extra: Record<string, unknown> = {}) => {
     const { error } = await supabase.from("job_sheets").update({ departure_status, ...extra }).eq("id", sheet.id);

@@ -1,4 +1,7 @@
 # Roadmap
+- [ ] Client-level pre-approved unsigned departure
+- [ ] Monthly monitoring, sequential signing and automatic combined PDF email with hand-back screen
+- [ ] Published offline support: locally saved draft work and reconnect sync with conflict protection
 - [x] Core technician & admin screens (brief 1)
 - [x] Brief 2: jobs & sites, extended job sheet form, time logs, parts
 - [x] Brief 2: Today's jobs, Past & draft sheets, Scheduled works, Book leave with balance, Personal settings

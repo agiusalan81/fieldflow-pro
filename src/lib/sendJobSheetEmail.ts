@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { clientPhotos, parsePhotos, labourHours, technicianCount, validateCombinedSheets, dayLabourHours } from "@/lib/jobsheets";
 import { parseTemplate, parseTerms, termsFor, visibleBlocks, type PdfTemplate } from "@/lib/documents";
 import { sheetTitle } from "@/lib/dwr";
+import { validateMonthlyQueue } from "@/lib/monthly-signing";
 
 const b64 = (s: string) =>
   btoa(Array.from(new TextEncoder().encode(s), (b) => String.fromCharCode(b)).join(""));
@@ -282,4 +283,80 @@ export const combinedJobSheets = createServerFn({ method: "POST" }).middleware([
       return { filename, base64: "", sent: true, recipients: emails };
     }
     return { filename, base64: bytesB64(pdf).replace(/\s/g, ""), sent: false, recipients: [] as string[] };
+  });
+
+export const startMonthlySigning = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+  .inputValidator((d: { clientId: string; month: string; sheetIds: string[] }) => {
+    if (!Array.isArray(d.sheetIds) || !d.sheetIds.length || d.sheetIds.length > 100) throw new Error("Select between 1 and 100 sheets");
+    return d;
+  }).handler(async ({ data, context }) => {
+    const ids = [...new Set(data.sheetIds)];
+    const { data: rows, error } = await context.supabase.from("job_sheets").select("id, client_id, created_at, status, signature_data").in("id", ids).order("created_at");
+    if (error || rows?.length !== ids.length) throw new Error("Some sheets are unavailable");
+    validateMonthlyQueue(rows, data.clientId, data.month);
+    const { data: existing } = await context.supabase.from("signing_batches").select("*").eq("created_by", context.userId).eq("client_id", data.clientId).eq("month", data.month).eq("status", "signing").order("created_at", { ascending: false }).limit(1).maybeSingle();
+    if (existing) return existing;
+    const { data: client } = await context.supabase.from("clients").select("company_id").eq("id", data.clientId).single();
+    if (!client) throw new Error("Client unavailable");
+    const { data: batch, error: insertError } = await context.supabase.from("signing_batches").insert({ company_id: client.company_id, client_id: data.clientId, created_by: context.userId, month: data.month, sheet_ids: rows.map((r) => r.id) }).select("*").single();
+    if (insertError) throw insertError; return batch;
+  });
+
+export const signMonthlySheet = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+  .inputValidator((d: { batchId: string; sheetId: string; name: string; card: string; signature: string }) => d)
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase.rpc("sign_batch_sheet", { _batch: data.batchId, _sheet: data.sheetId, _name: data.name, _card: data.card, _signature: data.signature });
+    if (error) throw error; return { signed: true };
+  });
+
+export const finishMonthlySigning = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+  .inputValidator((d: { batchId: string }) => d)
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase;
+    const { data: batch, error } = await sb.from("signing_batches").select("*").eq("id", data.batchId).eq("created_by", context.userId).single();
+    if (error || !batch) throw new Error("Signing session unavailable");
+    if (batch.status === "sent") return { sent: true, recipients: batch.recipients, count: batch.signed_ids.length };
+    if (batch.status === "sending") throw new Error("This PDF is already being sent. Check the monthly delivery status before retrying.");
+    if (!batch.signed_ids.length) {
+      await sb.from("signing_batches").update({ status: "empty" }).eq("id", batch.id);
+      return { sent: false, recipients: [] as string[], count: 0 };
+    }
+    const { data: claimed, error: claimError } = await sb.from("signing_batches").update({ status: "sending", delivery_error: null }).eq("id", batch.id).in("status", ["signing", "failed"]).select("id").maybeSingle();
+    if (claimError || !claimed) throw new Error("This session is already being processed");
+    let delivered = false;
+    try {
+      const { data: rows, error: readError } = await sb.from("job_sheets").select("id, client_id, status, created_at, signature_data").in("id", batch.signed_ids).order("created_at");
+      if (readError || rows?.length !== batch.signed_ids.length) throw new Error("Some signed sheets are no longer available");
+      validateCombinedSheets(rows);
+      if (rows.some((r) => !r.signature_data || r.created_at.slice(0, 7) !== batch.month || r.client_id !== batch.client_id)) throw new Error("Monthly selection is no longer valid");
+      const { PDFDocument } = await import("pdf-lib");
+      const doc = await PDFDocument.create();
+      const emails = new Set<string>(); let clientName = "customer";
+      for (const row of rows) {
+        const pack = await prepareSheet(sb, row.id);
+        pack.emails.forEach((email) => emails.add(email)); clientName = pack.clientName;
+        for (const attachment of pack.attachments) {
+          if (attachment.mime === "application/pdf") {
+            const source = await PDFDocument.load(attachment.data);
+            for (const page of await doc.copyPages(source, source.getPageIndices())) doc.addPage(page);
+          } else {
+            const image = attachment.data[0] === 137 ? await doc.embedPng(attachment.data) : await doc.embedJpg(attachment.data);
+            const page = doc.addPage([595, 842]);
+            const scale = Math.min(499 / image.width, 746 / image.height);
+            page.drawImage(image, { x: (595 - image.width * scale) / 2, y: (842 - image.height * scale) / 2, width: image.width * scale, height: image.height * scale });
+          }
+        }
+      }
+      const recipients = [...emails];
+      validateRecipients(recipients);
+      if (!recipients.length) throw new Error("No job-sheet email recipients selected for this client");
+      await sendMail(recipients, `Monthly job sheets — ${batch.month} — ${clientName}`, `Dear ${clientName},\n\nYour ${rows.length} signed job sheets for ${batch.month} are attached as one continuous PDF.\n\nThank you.`, [{ filename: `Job sheets - ${batch.month}.pdf`, mime: "application/pdf", data: await doc.save() }]);
+      delivered = true;
+      const { error: recordError } = await sb.from("signing_batches").update({ status: "sent", recipients, sent_at: new Date().toISOString() }).eq("id", batch.id);
+      if (recordError) throw new Error("Email sent, but delivery status could not be saved. Do not resend without checking.");
+      return { sent: true, recipients, count: rows.length };
+    } catch (e) {
+      if (!delivered) await sb.from("signing_batches").update({ status: "failed", delivery_error: e instanceof Error ? e.message : "Email failed" }).eq("id", batch.id);
+      throw e;
+    }
   });

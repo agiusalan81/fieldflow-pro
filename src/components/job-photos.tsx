@@ -3,6 +3,7 @@ import { Camera, Image as ImageIcon, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { JobPhoto } from "@/lib/jobsheets";
+import { saveLocalPhoto, localPhoto, deleteLocalPhoto } from "@/lib/offline";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
@@ -16,7 +17,9 @@ async function compress(file: File): Promise<Blob> {
     const c = document.createElement("canvas");
     c.width = Math.round(bmp.width * scale);
     c.height = Math.round(bmp.height * scale);
-    c.getContext("2d")!.drawImage(bmp, 0, 0, c.width, c.height);
+    const context = c.getContext("2d");
+    if (!context) return file;
+    context.drawImage(bmp, 0, 0, c.width, c.height);
     return await new Promise((r) => c.toBlob((b) => r(b ?? file), "image/jpeg", 0.8));
   } catch {
     return file;
@@ -48,9 +51,16 @@ export function JobPhotos({ companyId, sheetId, photos, scope, day, readOnly, on
   useEffect(() => {
     const missing = mine.map((p) => p.path).filter((p) => !urls[p]);
     if (!missing.length) return;
+    void supabase.auth.getSession().then(async ({ data }) => {
+      if (!data.session) return;
+      for (const path of missing) {
+        const blob = await localPhoto(data.session.user.id, path);
+        if (blob) setUrls((u) => ({ ...u, [path]: URL.createObjectURL(blob) }));
+      }
+    });
     supabase.storage.from(BUCKET).createSignedUrls(missing, 3600).then(({ data }) => {
       if (!data) return;
-      setUrls((u) => ({ ...u, ...Object.fromEntries(data.filter((d) => d.signedUrl && d.path).map((d) => [d.path!, d.signedUrl as string])) }));
+      setUrls((u) => ({ ...u, ...Object.fromEntries(data.flatMap((d) => d.signedUrl && d.path ? [[d.path, d.signedUrl]] : [])) }));
     });
   }, [mine.map((p) => p.path).join("|")]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -62,8 +72,10 @@ export function JobPhotos({ companyId, sheetId, photos, scope, day, readOnly, on
       for (const f of Array.from(files)) {
         const blob = await compress(f);
         const path = `${companyId}/${sheetId}/${scope}-${crypto.randomUUID()}.jpg`;
-        const { error } = await supabase.storage.from(BUCKET).upload(path, blob, { contentType: "image/jpeg" });
-        if (error) throw error;
+        const { data: auth } = await supabase.auth.getSession();
+        if (!auth.session) throw new Error("Sign in to save photos");
+        await saveLocalPhoto(auth.session.user.id, sheetId, path, blob);
+        setUrls((u) => ({ ...u, [path]: URL.createObjectURL(blob) }));
         added.push({ path, scope, kind, day });
       }
       await onChange([...photos, ...added]);
@@ -78,7 +90,8 @@ export function JobPhotos({ companyId, sheetId, photos, scope, day, readOnly, on
   };
 
   const remove = async (path: string) => {
-    await supabase.storage.from(BUCKET).remove([path]);
+    const { data } = await supabase.auth.getSession();
+    if (data.session) await deleteLocalPhoto(data.session.user.id, path);
     await onChange(photos.filter((p) => p.path !== path));
   };
 
