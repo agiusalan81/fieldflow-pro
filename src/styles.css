@@ -20,6 +20,8 @@
 
 @theme inline {
   --font-display: "Fraunces", Georgia, serif;
+  --color-document-paper: var(--document-paper);
+  --color-document-ink: var(--document-ink);
   --font-sans: "IBM Plex Sans", system-ui, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -64,6 +66,10 @@
 }
 
 :root {
+  --document-paper: oklch(1 0 0);
+  --document-ink: oklch(0.22 0.01 250);
+  --document-primary: oklch(0.45 0.08 160);
+  --document-accent: oklch(0.76 0.13 85);
   --radius: 0.625rem;
   --background: oklch(0.975 0.008 85);
   --foreground: oklch(0.129 0.042 264.695);
@@ -171,3 +177,12 @@ main label {
   font-style: var(--tenant-field-style, inherit);
   color: var(--tenant-field-color, inherit);
 }
+
+.document-paper { background: var(--document-paper); color: var(--document-ink); font-family: var(--document-font, var(--font-sans)); }
+.document-paper .document-label { color: var(--document-primary); font-family: inherit; }
+.document-header { border-bottom: 2px solid var(--document-primary); }
+.document-paper[data-style="bold"] .document-header { background: var(--document-primary); color: var(--document-paper); padding: 16px; }
+.document-paper[data-style="technical"] .document-label { border-bottom: 1px solid var(--document-accent); padding-bottom: 4px; }
+.document-paper[data-style="classic"] .document-header { border-bottom-style: double; border-bottom-width: 4px; }
+.document-paper[data-style="compact"] { font-size: 10px; }
+.document-paper[data-style="compact"] section { margin-block: 8px; }

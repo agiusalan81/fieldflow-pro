@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { clientPhotos, parsePhotos, labourHours, technicianCount, validateCombinedSheets, dayLabourHours } from "@/lib/jobsheets";
-import { parseTemplate, parseTerms, termsFor, visibleBlocks, type PdfTemplate } from "@/lib/documents";
+import { parseTemplate, parseTerms, termsFor, visibleBlocks, documentLabel, type PdfTemplate } from "@/lib/documents";
 import { sheetTitle } from "@/lib/dwr";
 import { validateMonthlyQueue } from "@/lib/monthly-signing";
 
@@ -58,12 +58,13 @@ export async function buildPdf(d: {
 }) {
   const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
   const doc = await PDFDocument.create();
-  const font = await doc.embedFont(StandardFonts.Helvetica);
-  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const font = await doc.embedFont(d.template.font === "serif" ? StandardFonts.TimesRoman : d.template.font === "mono" ? StandardFonts.Courier : StandardFonts.Helvetica);
+  const bold = await doc.embedFont(d.template.font === "serif" ? StandardFonts.TimesRomanBold : d.template.font === "mono" ? StandardFonts.CourierBold : StandardFonts.HelveticaBold);
   const W = 595, H = 842, M = 48;
   let page = doc.addPage([W, H]);
   let y = H - M;
-  const grey = rgb(0.4, 0.4, 0.45);
+  const colour = (hex: string) => rgb(parseInt(hex.slice(1, 3), 16) / 255, parseInt(hex.slice(3, 5), 16) / 255, parseInt(hex.slice(5, 7), 16) / 255);
+  const grey = colour(d.template.primaryColor);
   const need = (h: number) => { if (y - h < M) { page = doc.addPage([W, H]); y = H - M; } };
   const wrap = (text: string, size: number, width: number) => {
     const out: string[] = [];
@@ -78,7 +79,7 @@ export async function buildPdf(d: {
     return out;
   };
   const text = (t: string, x: number, size = 10, f = font, color = rgb(0.1, 0.1, 0.12)) => page.drawText(safe(t), { x, y, size, font: f, color });
-  const label = (t: string) => { need(30); y -= 8; text(t.toUpperCase(), M, 8, bold, grey); y -= 14; };
+  const label = (t: string) => { need(30); y -= d.template.stylePreset === "compact" ? 3 : 8; text(t.toUpperCase(), M, 8, bold, grey); y -= 14; };
   const para = (t: string) => { for (const l of wrap(t || "-", 10, W - 2 * M)) { need(14); text(l, M); y -= 14; } };
 
   if (d.logo?.startsWith("data:image/png")) {
@@ -86,6 +87,8 @@ export async function buildPdf(d: {
     const scale = Math.min(100 / logo.width, 45 / logo.height);
     page.drawImage(logo, { x: M, y: y - 45, width: logo.width * scale, height: logo.height * scale }); y -= 60;
   }
+  if (d.template.stylePreset === "bold") { page.drawRectangle({ x: M - 8, y: y - 36, width: W - 2 * M + 16, height: 48, color: grey, opacity: 0.12 }); }
+  if (d.template.stylePreset === "technical") page.drawLine({ start: { x: M - 8, y }, end: { x: M - 8, y: M }, thickness: 2, color: colour(d.template.accentColor) });
   para(d.company);
   text(sheetTitle(d.number), W - M - bold.widthOfTextAtSize(safe(sheetTitle(d.number)), 12), 12, bold);
   y -= 16; text("Job sheet - client copy", M, 10, font, grey); text(d.date, W - M - font.widthOfTextAtSize(safe(d.date), 10), 10, font, grey);
@@ -108,14 +111,14 @@ export async function buildPdf(d: {
     y -= 10;
   };
   for (const b of visibleBlocks(d.template)) {
-    if (b === "client") { label("Client"); para(d.client); }
-    else if (b === "address") { label("Site address"); para(d.address); }
-    else if (b === "equipment") { label("Equipment"); para(d.asset); }
-    else if (b === "fault") { label("Reported fault"); para(d.fault); }
-    else if (b === "work") { label("Work carried out"); para(d.repairs); }
-    else if (b === "notes" && d.notes) { label("Special notes"); para(d.notes); }
+    if (b === "client") { label(documentLabel(d.template, b)); para(d.client); }
+    else if (b === "address") { label(documentLabel(d.template, b)); para(d.address); }
+    else if (b === "equipment") { label(documentLabel(d.template, b)); para(d.asset); }
+    else if (b === "fault") { label(documentLabel(d.template, b)); para(d.fault); }
+    else if (b === "work") { label(documentLabel(d.template, b)); para(d.repairs); }
+    else if (b === "notes" && d.notes) { label(documentLabel(d.template, b)); para(d.notes); }
     else if (b === "timesheet" && d.logs.length) {
-      label("Time sheet");
+      label(documentLabel(d.template, b));
       const showT = d.template.showTravel;
       const heads = showT ? ["Date", "In", "Out", "Travel h", "Total h"] : ["Date", "In", "Out", "Total h"];
       const cols = [M, M + 110, M + 180, M + 250, M + 330];
@@ -128,7 +131,7 @@ export async function buildPdf(d: {
       }
     }
     else if (b === "parts" && d.parts.length) {
-      label("Parts used");
+      label(documentLabel(d.template, b));
       text("Description", M, 9, bold); text("Unit", M + 360, 9, bold); text("Qty", M + 430, 9, bold); y -= 14;
       for (const p of d.parts) {
         const lines = wrap(p.desc, 9, 340);

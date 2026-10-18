@@ -5,6 +5,7 @@ import { ArrowDown, ArrowUp, Download, FileUp, GripVertical, Loader2, Plus, Tras
 import { supabase } from "@/integrations/supabase/client";
 import { BLOCKS, DOC_TYPES, moveBlock, parsePresets, parseTemplate, parseTerms, termsFor, visibleBlocks, type NotePreset, type PdfTemplate, type Terms } from "@/lib/documents";
 import { buildPdf } from "@/lib/sendJobSheetEmail";
+import { BrandControls } from "@/components/brand-controls";
 import { extractDocumentText } from "@/lib/document-library.functions";
 import { DOC_CATEGORIES, type DocCategory } from "@/components/document-library";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,7 @@ export function DocumentSettings({ companyId }: { companyId: string }) {
     if (error) { toast.error(error.message); return; }
     toast.success("Document templates saved");
     qc.invalidateQueries({ queryKey: ["doc-settings"] });
+    qc.invalidateQueries({ queryKey: ["company-settings"] });
     qc.invalidateQueries({ queryKey: ["note-presets"] });
   };
   const toggle = (k: PdfTemplate["order"][number]) => setT({ ...t, hidden: t.hidden.includes(k) ? t.hidden.filter((x) => x !== k) : [...t.hidden, k] });
@@ -90,6 +92,7 @@ export function DocumentSettings({ companyId }: { companyId: string }) {
 
   return (
     <div className="space-y-4">
+      <BrandControls template={t} onChange={setT} logo={data?.logo_data ?? ""} />
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="space-y-4 rounded-xl border bg-card p-5">
           <div><h2 className="font-medium text-foreground">Job sheet PDF layout</h2><p className="text-sm text-muted-foreground">Drag sections to reorder. Switch off anything you don't want clients to see.</p></div>
@@ -146,7 +149,7 @@ export function DocumentSettings({ companyId }: { companyId: string }) {
                     ))}</tbody>
                   </table>
                 )}
-                {k === "timesheet" && <p className="mt-0.5 text-[10px] text-slate-500">Technicians ({SAMPLE.logs[0]!.count}): {SAMPLE.logs[0]!.techs}</p>}
+                {k === "timesheet" && <p className="mt-0.5 text-[10px] text-slate-500">Technicians ({SAMPLE.logs[0]?.count}): {SAMPLE.logs[0]?.techs}</p>}
                 {k === "parts" && (
                   <table className="mt-1 w-full text-left text-[10px]">
                     <thead><tr className="border-b border-slate-200"><th className="py-0.5 font-semibold">Description</th><th className="font-semibold">Unit</th><th className="text-right font-semibold">Qty</th></tr></thead>
