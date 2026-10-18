@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ArrowLeft, Car, Lock, MapPin, Plus, Save, Send, Trash2, ShieldAlert, PenLine } from "lucide-react";
@@ -19,6 +19,7 @@ import { AppShell, StatusBadge, BackButton } from "@/components/app-shell";
 import type { Profile } from "@/lib/profile";
 import { SignaturePad } from "@/components/signature-pad";
 import { DepartureRequest } from "@/components/client-notices";
+import { draftKey, getLocalDraft, saveLocalDraft, syncDraft, removeLocalDraft, type DraftSnapshot } from "@/lib/offline";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -97,6 +98,9 @@ function SheetForm() {
   const { data: profile } = useProfile();
   const { data: company } = useCompanyRules();
   const { data: users = [] } = useCompanyUsers();
+  const revision = useRef<string | null>(null);
+  const [localReady, setLocalReady] = useState(false);
+  const [conflict, setConflict] = useState(false);
 
   const { data } = useQuery({
     queryKey: ["sheet", sheetId],
@@ -114,7 +118,7 @@ function SheetForm() {
     queryKey: ["sheet-refs"],
     queryFn: async () => {
       const [c, s, a] = await Promise.all([
-        supabase.from("clients").select("id, name, billing_address").order("name"),
+        supabase.from("clients").select("id, name, billing_address, preapprove_departure").order("name"),
         supabase.from("sites").select("id, client_id, name, address").order("name"),
         supabase.from("assets").select("id, client_id, site_id, reference_number, asset_category, location_details, custom_attributes, serial_number"),
       ]);
@@ -152,6 +156,21 @@ function SheetForm() {
     setParts(data.parts.map((p) => ({ part_description: p.part_description, unit: p.unit ?? "", quantity: Number(p.quantity), time_acquiring_parts_hours: Number(p.time_acquiring_parts_hours), log_sort_order: p.log_sort_order })));
   }, [data, form]);
 
+  useEffect(() => {
+    if (!profile || !data?.sheet || localReady) return;
+    revision.current = data.sheet.updated_at;
+    void getLocalDraft(profile.id, sheetId).then((local) => {
+      if (local) {
+        setForm(local.form as Form); setChecks((local.form["checklist_values"] ?? {}) as Record<string, boolean>);
+        setPhotos(parsePhotos(local.form["photo_paths"]));
+        setLogs(local.logs.map((l) => ({ ...l, time_in: l["time_in"] ?? "", time_out: l["time_out"] ?? "" })) as Log[]);
+        setParts(local.parts as Part[]); revision.current = local.expected;
+        setConflict(!!local.error?.includes("CONFLICT"));
+      }
+      setLocalReady(true);
+    }).catch(() => setLocalReady(true));
+  }, [profile, data, localReady, sheetId]);
+
   if (data && !data.sheet) return <AppShell title="Job sheet"><p className="text-muted-foreground">This job sheet doesn't exist or isn't yours.</p></AppShell>;
   if (!data?.sheet || !form || !profile) return <AppShell title="Job sheet"><p className="text-muted-foreground">Loading…</p></AppShell>;
 
@@ -182,7 +201,8 @@ function SheetForm() {
   const pickAsset = (id: string) => set(assetPatch(id));
   const pickSite = (id: string) => {
     const here = refs?.assets.filter((a) => a.client_id === form.client_id && a.site_id === id) ?? [];
-    set({ site_id: id, ...(here.length === 1 ? assetPatch(here[0]!.id) : { asset_id: null }) });
+    const only = here.length === 1 ? here[0] : undefined;
+    set({ site_id: id, ...(only ? assetPatch(only.id) : { asset_id: null }) });
   };
 
   const persist = async (status?: string) => {
@@ -191,21 +211,28 @@ function SheetForm() {
     setBusy(true);
     try {
       const repairs = logs.map((l) => l.daily_work_description.trim()).filter(Boolean).join("\n") || (form.repairs_performed as string | null);
-      const { error } = await supabase.from("job_sheets").update({ ...form, checklist_values: checks, repairs_performed: repairs, ...(status ? { status } : {}) } as never).eq("id", sheetId);
-      if (error) throw error;
-      await supabase.from("jobsheet_time_logs").delete().eq("jobsheet_id", sheetId);
-      await supabase.from("jobsheet_parts").delete().eq("jobsheet_id", sheetId);
-      if (logs.length) {
-        const { error: e } = await supabase.from("jobsheet_time_logs").insert(logs.map((l, i) => ({
-          ...l, time_in: l.time_in || null, time_out: l.time_out || null, jobsheet_id: sheetId, company_id: profile.company_id, sort_order: i,
-          daily_total_hours: dayLabourHours(l.time_in, l.time_out, l.traveling_time_hours, l.technician_count, l.technician_initials),
-        })));
-        if (e) throw e;
+      const snapshot: DraftSnapshot = {
+        key: draftKey(profile.id, sheetId), userId: profile.id, sheetId, expected: revision.current ?? sheet.updated_at,
+        form: { ...form, checklist_values: checks, photo_paths: photos, repairs_performed: repairs },
+        logs: logs.map((l, i) => ({ ...l, time_in: l.time_in || null, time_out: l.time_out || null, sort_order: i, daily_total_hours: dayLabourHours(l.time_in, l.time_out, l.traveling_time_hours, l.technician_count, l.technician_initials) })),
+        parts: parts.filter((p) => p.part_description.trim()).map((p, i) => ({ ...p, sort_order: i })), savedAt: new Date().toISOString(),
+      };
+      if (!navigator.onLine) {
+        await saveLocalDraft(snapshot);
+        toast.success("Draft saved on this device — will sync when connected");
+        return !status || status === "draft";
       }
-      const ps = parts.filter((p) => p.part_description.trim());
-      if (ps.length) {
-        const { error: e } = await supabase.from("jobsheet_parts").insert(ps.map((p, i) => ({ ...p, jobsheet_id: sheetId, company_id: profile.company_id, sort_order: i })));
-        if (e) throw e;
+      try { revision.current = await syncDraft(snapshot); }
+      catch (e) {
+        const message = (e as Error).message;
+        await saveLocalDraft({ ...snapshot, error: message });
+        if (message.includes("CONFLICT")) setConflict(true);
+        throw e;
+      }
+      if (status && status !== "draft") {
+        const { data: updated, error } = await supabase.from("job_sheets").update({ status: status as "completed" | "in_transit" }).eq("id", sheetId).eq("updated_at", revision.current).select("updated_at").single();
+        if (error) throw error;
+        revision.current = updated.updated_at;
       }
       qc.invalidateQueries({ queryKey: ["sheet", sheetId] });
       qc.invalidateQueries({ queryKey: ["sheets"] });
@@ -218,7 +245,7 @@ function SheetForm() {
     }
   };
 
-  const saveDraft = async () => { if (await persist(sheet.status === "draft" ? "draft" : undefined)) toast.success("Draft saved"); };
+  const saveDraft = async () => { if (await persist(sheet.status === "draft" ? "draft" : undefined) && navigator.onLine) toast.success("Draft saved"); };
   const inTransit = async () => {
     if (await persist("in_transit")) {
       if (sheet.job_id) await supabase.from("jobs").update({ acknowledged_at: new Date().toISOString() }).eq("id", sheet.job_id);
@@ -227,6 +254,7 @@ function SheetForm() {
     }
   };
   const submit = async () => {
+    if (!navigator.onLine) { toast.error("Connect to submit and email. Save as Draft to keep work on this device."); return; }
     const missing = missingSignOff({ client_full_name: form.client_full_name as string, client_id_card_no: form.client_id_card_no as string, signature: form.signature_data as string });
     if (missing.length) { toast.error(`Can't submit — missing: ${missing.join(", ")}`); return; }
     const unticked = missingChecklist(checklistItems, checks);
@@ -266,8 +294,6 @@ function SheetForm() {
   const setPart = (i: number, patch: Partial<Part>) => setParts(parts.map((p, j) => (j === i ? { ...p, ...patch } : p)));
   const savePhotos = async (next: JobPhoto[]) => {
     setPhotos(next);
-    const { error } = await supabase.from("job_sheets").update({ photo_paths: next as never }).eq("id", sheetId);
-    if (error) toast.error(error.message);
   };
   const photoProps = { companyId: profile.company_id, sheetId, photos, readOnly, onChange: savePhotos };
   const removeDay = (i: number) => {
@@ -291,6 +317,10 @@ function SheetForm() {
       title={`Job sheet ${sheet.jobsheet_number}`}
       actions={<BackButton fallback="/sheets" />}
     >
+      {conflict && <div className="mx-auto mb-4 max-w-5xl border border-destructive p-3 text-sm"><p>This sheet changed on another device. Your local work has been kept. Compare it before saving.</p><Button variant="outline" className="mt-2" onClick={async () => {
+        if (!confirm("Discard this device's saved changes and load the latest job sheet?")) return;
+        await removeLocalDraft(profile.id, sheetId); revision.current = sheet.updated_at; setConflict(false); setForm(null); setLocalReady(false); await qc.invalidateQueries({ queryKey: ["sheet", sheetId] });
+      }}>Discard local changes &amp; reload</Button></div>}
       <fieldset disabled={readOnly || busy} className="mx-auto max-w-5xl space-y-4 pb-24">
         <div className="flex flex-wrap items-center gap-2">
           <StatusBadge status={sheet.status} />
@@ -502,7 +532,7 @@ function SheetForm() {
               <PenLine className="mr-1 h-4 w-4" />Present to client for sign-off
             </Button>
           )}
-          {!form.signature_data && <DepartureRequest sheet={{ id: sheet.id, departure_status: sheet.departure_status, departure_note: sheet.departure_note, signature_data: null, return_fee_waived: sheet.return_fee_waived }} manager={manager} onChange={() => qc.invalidateQueries({ queryKey: ["sheet", sheetId] })} />}
+          {!form.signature_data && <DepartureRequest preapproved={client?.preapprove_departure} sheet={{ id: sheet.id, departure_status: sheet.departure_status, departure_note: sheet.departure_note, signature_data: null, return_fee_waived: sheet.return_fee_waived }} manager={manager} onChange={() => qc.invalidateQueries({ queryKey: ["sheet", sheetId] })} />}
         </Section>
       </fieldset>
 

@@ -15,19 +15,20 @@ export function OfflineStatus() {
       const { data } = await supabase.auth.getSession(); const id = data.session?.user.id;
       if (!active) return;
       setUserId(id ?? null); setDrafts(id ? await pendingDrafts(id) : []);
-      if (id && navigator.onLine) await syncPending(id, qc);
     };
     void supabase.auth.getSession().then(async ({ data }) => {
       if (data.session?.user.id) await restoreOfflineCache(data.session.user.id, qc);
       await update();
+      if (data.session?.user.id && navigator.onLine) await syncPending(data.session.user.id, qc);
     }).catch(() => {});
     const changed = () => { void update().catch(() => {}); };
-    window.addEventListener("online", changed); window.addEventListener("offline", changed); window.addEventListener("fieldops-offline", changed);
+    const reconnect = () => { changed(); void supabase.auth.getSession().then(({ data }) => data.session?.user.id ? syncPending(data.session.user.id, qc) : undefined).catch(() => {}); };
+    window.addEventListener("online", reconnect); window.addEventListener("offline", changed); window.addEventListener("fieldops-offline", changed);
     const unsubscribe = qc.getQueryCache().subscribe(() => {
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => { void supabase.auth.getSession().then(({ data }) => data.session?.user.id ? persistOfflineCache(data.session.user.id, qc) : undefined).catch(() => {}); }, 500);
     });
-    return () => { active = false; if (timer) clearTimeout(timer); unsubscribe(); window.removeEventListener("online", changed); window.removeEventListener("offline", changed); window.removeEventListener("fieldops-offline", changed); };
+    return () => { active = false; if (timer) clearTimeout(timer); unsubscribe(); window.removeEventListener("online", reconnect); window.removeEventListener("offline", changed); window.removeEventListener("fieldops-offline", changed); };
   }, [qc]);
   if (online && !drafts.length) return null;
   return <aside className="fixed inset-x-0 top-0 z-50 border-b bg-background p-2 text-center text-sm" aria-live="polite">
