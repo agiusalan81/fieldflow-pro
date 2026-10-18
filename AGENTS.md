@@ -20,9 +20,8 @@
 - Tenant typography lives in company_settings.theme and is applied as --tenant-* CSS variables by AppShell (applyTypography in src/lib/company.ts). Why: one place styles every screen without touching components.
 - Pending works close automatically via the close_pending_on_followup DB trigger when the linked follow-up sheet completes. Why: works even if the technician's app closes mid-submit.
 - Client PDF layout, T&Cs and note presets live in company_settings (pdf_template/terms/note_presets) and are parsed only through src/lib/documents.ts. Why: the settings editor and the email PDF must read them identically.
-- src/lib/dwr-report.ts files DWR at clock-out; dwr_sheet_entries() matches initials for assisting time. Why: one ledger without duplicate sheets.
-- DWR, breaks, sheet search and standby rules live in tested src/lib/dwr.ts. Why: separate rules from screens.
-- Clock-in before creating a job sheet is enforced by the job_sheets_require_clock_in DB trigger for every role. Why: UI checks alone can be bypassed.
+- DWR, breaks, search, standby and auto clock-out rules live in tested src/lib/dwr.ts; src/lib/dwr-report.ts files DWRs (held for standby via shifts.dwr_held) and dwr_sheet_entries() credits assisting initials. Why: one ledger, no lost callout hours.
+- job_sheets_require_clock_in requires an open shift or is_on_standby() for every role. Why: UI checks can be bypassed.
 
 - Billing pricing rules (estimate > contract > client rate card > company default) live in src/lib/billing.ts; integrations config and message templates are parsed only through src/lib/integrations.ts. Why: review screen, settings and future exports must price and render identically.
 - Only office admins may change job-sheet billing review fields, enforced by the job_sheets_guard_billing trigger. Why: UI checks alone can be bypassed.
@@ -39,4 +38,3 @@
 - Leave opening carry-forward is year-qualified on the shared balance; payslips snapshot leave without consuming it again. Why: approved requests already drive leave usage.
 
 - Payroll/opening leave save via an invoker-rights transaction; a trigger blocks issued-slip edits/deletes and mismatched totals. Why: prevent partial saves and preserve reviewed records.
-- Standby technicians bypass clock-in via is_on_standby() in job_sheets_require_clock_in; their DWR is held (shifts.dwr_held) and forgotten shifts auto-close via reconcileShifts in src/lib/dwr-report.ts with rules tested in src/lib/dwr.ts. Why: overnight callouts and missed clock-outs must not lose hours.
