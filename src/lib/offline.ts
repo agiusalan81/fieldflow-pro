@@ -34,20 +34,22 @@ export async function uploadLocalPhotos(userId: string, sheetId: string) {
   for (const photo of (await database.getAll("photos")) as LocalPhoto[]) {
     if (photo.userId !== userId || photo.sheetId !== sheetId) continue;
     const path = photo.key.slice(userId.length + 1);
-    const { error } = await supabase.storage.from("job-photos").upload(path, photo.blob, { contentType: photo.blob.type || "image/jpeg", upsert: true });
-    if (error) throw error;
+    if (path.split("/")[1] !== sheetId) throw new Error("Photo does not belong to this job sheet");
+    const { error } = await supabase.storage.from("job-photos").upload(path, photo.blob, { contentType: photo.blob.type || "image/jpeg", upsert: false });
+    if (error && error.message !== "The resource already exists") throw error;
   }
 }
 export async function syncDraft(snapshot: DraftSnapshot) {
   const { data: identity } = await supabase.auth.getUser();
   if (identity.user?.id !== snapshot.userId) throw new Error("Sign back into the account that saved this draft");
   await uploadLocalPhotos(snapshot.userId, snapshot.sheetId);
-  const { data, error } = await supabase.rpc("save_sheet_snapshot", { _id: snapshot.sheetId, _expected: snapshot.expected, _form: snapshot.form as Json, _logs: snapshot.logs as Json, _parts: snapshot.parts as Json });
+  const { data, error } = await supabase.rpc("save_sheet_snapshot_with_photos", { _id: snapshot.sheetId, _expected: snapshot.expected, _form: snapshot.form as Json, _logs: snapshot.logs as Json, _parts: snapshot.parts as Json });
   if (error) throw error;
   if (!data) throw new Error("Draft could not be confirmed");
   const photos = (await (await db()).getAll("photos")) as LocalPhoto[];
   for (const photo of photos.filter((p) => p.userId === snapshot.userId && p.sheetId === snapshot.sheetId)) await (await db()).delete("photos", photo.key);
   await removeLocalDraft(snapshot.userId, snapshot.sheetId);
+  window.dispatchEvent(new CustomEvent("fieldops-draft-synced", { detail: { sheetId: snapshot.sheetId, updatedAt: data } }));
   return data;
 }
 let syncing = false;
@@ -63,12 +65,16 @@ export async function syncPending(userId: string, qc: QueryClient) {
     qc.invalidateQueries({ queryKey: ["sheets"] }); qc.invalidateQueries({ queryKey: ["admin-jobs"] });
   } finally { syncing = false; window.dispatchEvent(new Event("fieldops-offline")); }
 }
-const cacheKeys = new Set(["profile", "sheet", "sheet-refs", "sheets", "checklists", "company-users", "company-rules", "notice-settings"]);
+const cacheKeys = new Set(["profile", "sheet", "sheet-refs", "sheets", "checklists", "company-users", "company-settings", "notice-settings"]);
 export async function restoreOfflineCache(userId: string, qc: QueryClient) {
+  const profile = qc.getQueryData<{ id: string }>(["profile"]);
+  if (profile && profile.id !== userId) qc.clear();
   const rows = await (await db()).get("cache", userId) as { key: readonly unknown[]; data: unknown; updatedAt: number }[] | undefined;
   for (const row of rows ?? []) if (!qc.getQueryData(row.key)) qc.setQueryData(row.key, row.data, { updatedAt: row.updatedAt });
 }
 export async function persistOfflineCache(userId: string, qc: QueryClient) {
+  const profile = qc.getQueryData<{ id: string }>(["profile"]);
+  if (!profile || profile.id !== userId) return;
   const rows = qc.getQueryCache().getAll().filter((q) => cacheKeys.has(String(q.queryKey[0])) && q.state.status === "success").map((q) => ({ key: q.queryKey, data: q.state.data, updatedAt: q.state.dataUpdatedAt }));
   await (await db()).put("cache", rows, userId);
 }

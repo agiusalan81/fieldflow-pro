@@ -96,7 +96,7 @@ function BatchSigning({ session, onClose }: { session: Batch; onClose: () => voi
         <div className="grid gap-3 sm:grid-cols-2"><div><Label htmlFor="batch-name">Full name</Label><Input id="batch-name" value={name} onChange={(e) => setName(e.target.value)} /></div><div><Label htmlFor="batch-card">ID card no.</Label><Input id="batch-card" value={card} onChange={(e) => setCard(e.target.value)} /></div></div>
         <SignaturePad key={sheetId} value={signature} onChange={setSignature} />
       </>}
-      <div className="flex flex-wrap gap-2"><Button disabled={busy || !data} onClick={() => submit(false)}>Submit &amp; Next</Button><Button disabled={busy || !data} variant="outline" onClick={() => submit(true)}>Submit &amp; Finish</Button><Button disabled={busy} variant="ghost" onClick={end}>Stop</Button></div>
+      <div className="flex flex-wrap gap-2"><Button disabled={busy || !data} onClick={() => submit(false)}>Submit &amp; Next</Button><Button disabled={busy || !data} variant="outline" onClick={() => submit(true)}>Submit &amp; Finish</Button><Button disabled={busy} variant="ghost" onClick={() => { if (!signed.length || confirm("Stop signing and email the sheets signed so far? Unsigned sheets will stay as drafts.")) void end(); }}>Stop</Button></div>
     </div>}
   </DialogContent></Dialog>;
 }

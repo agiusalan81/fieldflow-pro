@@ -171,6 +171,29 @@ function SheetForm() {
     }).catch(() => setLocalReady(true));
   }, [profile, data, localReady, sheetId]);
 
+  useEffect(() => {
+    const synced = (event: Event) => {
+      const detail = (event as CustomEvent<{ sheetId: string; updatedAt: string }>).detail;
+      if (detail.sheetId === sheetId) { revision.current = detail.updatedAt; setConflict(false); }
+    };
+    window.addEventListener("fieldops-draft-synced", synced);
+    return () => window.removeEventListener("fieldops-draft-synced", synced);
+  }, [sheetId]);
+
+  useEffect(() => {
+    if (!profile || !data?.sheet || !form || !localReady || data.sheet.status === "completed" || navigator.onLine || conflict) return;
+    const timer = setTimeout(() => {
+      const snapshot: DraftSnapshot = {
+        key: draftKey(profile.id, sheetId), userId: profile.id, sheetId, expected: revision.current ?? data.sheet.updated_at,
+        form: { ...form, checklist_values: checks, photo_paths: photos, repairs_performed: logs.map((l) => l.daily_work_description.trim()).filter(Boolean).join("\n") || form.repairs_performed },
+        logs: logs.map((l, i) => ({ ...l, time_in: l.time_in || null, time_out: l.time_out || null, sort_order: i, daily_total_hours: dayLabourHours(l.time_in, l.time_out, l.traveling_time_hours, l.technician_count, l.technician_initials) })),
+        parts: parts.filter((p) => p.part_description.trim()).map((p, i) => ({ ...p, sort_order: i })), savedAt: new Date().toISOString(),
+      };
+      void saveLocalDraft(snapshot).catch(() => toast.error("This device could not save your draft. Free storage space and try again."));
+    }, 750);
+    return () => clearTimeout(timer);
+  }, [profile, data, form, logs, parts, photos, checks, localReady, conflict, sheetId]);
+
   if (data && !data.sheet) return <AppShell title="Job sheet"><p className="text-muted-foreground">This job sheet doesn't exist or isn't yours.</p></AppShell>;
   if (!data?.sheet || !form || !profile) return <AppShell title="Job sheet"><p className="text-muted-foreground">Loading…</p></AppShell>;
 
@@ -532,7 +555,7 @@ function SheetForm() {
               <PenLine className="mr-1 h-4 w-4" />Present to client for sign-off
             </Button>
           )}
-          {!form.signature_data && <DepartureRequest preapproved={client?.preapprove_departure} sheet={{ id: sheet.id, departure_status: sheet.departure_status, departure_note: sheet.departure_note, signature_data: null, return_fee_waived: sheet.return_fee_waived }} manager={manager} onChange={() => qc.invalidateQueries({ queryKey: ["sheet", sheetId] })} />}
+          {!form.signature_data && <DepartureRequest preapproved={client?.preapprove_departure ?? false} sheet={{ id: sheet.id, departure_status: sheet.departure_status, departure_note: sheet.departure_note, signature_data: null, return_fee_waived: sheet.return_fee_waived }} manager={manager} onChange={() => { revision.current = null; qc.invalidateQueries({ queryKey: ["sheet", sheetId] }); }} />}
         </Section>
       </fieldset>
 

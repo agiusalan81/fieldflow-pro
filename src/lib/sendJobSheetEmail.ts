@@ -295,7 +295,7 @@ export const startMonthlySigning = createServerFn({ method: "POST" }).middleware
     if (error || rows?.length !== ids.length) throw new Error("Some sheets are unavailable");
     validateMonthlyQueue(rows, data.clientId, data.month);
     const { data: existing } = await context.supabase.from("signing_batches").select("*").eq("created_by", context.userId).eq("client_id", data.clientId).eq("month", data.month).eq("status", "signing").order("created_at", { ascending: false }).limit(1).maybeSingle();
-    if (existing) return existing;
+    if (existing && existing.sheet_ids.length === ids.length && existing.sheet_ids.every((id) => ids.includes(id))) return existing;
     const { data: client } = await context.supabase.from("clients").select("company_id").eq("id", data.clientId).single();
     if (!client) throw new Error("Client unavailable");
     const { data: batch, error: insertError } = await context.supabase.from("signing_batches").insert({ company_id: client.company_id, client_id: data.clientId, created_by: context.userId, month: data.month, sheet_ids: rows.map((r) => r.id) }).select("*").single();

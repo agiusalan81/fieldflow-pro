@@ -16,6 +16,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { OfflineStatus } from "@/components/offline-status";
 import { registerOfflineApp } from "@/lib/pwa";
+import { clearOfflineCache } from "@/lib/offline";
 
 function NotFoundComponent() {
   return (
@@ -128,9 +129,11 @@ function RootComponent() {
   const router = useRouter();
   useEffect(() => {
     void registerOfflineApp().catch(() => {});
+    let accountId: string | undefined;
+    void supabase.auth.getSession().then(({ data }) => { accountId = data.session?.user.id; });
     const { data } = supabase.auth.onAuthStateChange((event) => {
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
-      if (event === "SIGNED_OUT") queryClient.clear();
+      if (event === "SIGNED_OUT") { queryClient.clear(); if (accountId) void clearOfflineCache(accountId); accountId = undefined; }
       else queryClient.invalidateQueries();
       router.invalidate();
     });
