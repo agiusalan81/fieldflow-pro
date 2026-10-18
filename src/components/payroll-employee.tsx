@@ -3,7 +3,9 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TAX_STATUSES,TAX_LABELS,wageBasis,suggestCategories,sscPerMonday,yearlyTax,type EmployeeConfig,type StatutoryYear,type TaxStatus } from '@/lib/payroll-statutory';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { NumInput } from '@/components/num-input';
+import { TAX_STATUSES,TAX_LABELS,SSC_DESCRIPTIONS,wageBasis,suggestCategories,sscPerMonday,yearlyTax,type EmployeeConfig,type StatutoryYear,type TaxStatus } from '@/lib/payroll-statutory';
 import { euros,type WageSettings } from '@/lib/payroll';
 export function PayrollEmployee({value,onChange,wage,rates,date}:{value:EmployeeConfig;onChange:(c:EmployeeConfig)=>void;wage:WageSettings;rates:StatutoryYear;date:string}){
  const basis=wageBasis(wage,value,rates),suggestion=suggestCategories(value,basis.weekly,date,rates);

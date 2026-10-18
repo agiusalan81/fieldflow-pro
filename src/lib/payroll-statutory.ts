@@ -6,8 +6,16 @@ export type TaxBand = { to: number | null; rate: number; subtract: number; from?
 export type Contribution = { rate: number; fixed: number | null; cap: number | null };
 export type SscRule = { employee: Contribution; employer: Contribution; maternity: Contribution };
 export type StatutoryYear = { tax: Record<TaxStatus,TaxBand[]>; ssc: Record<string,SscRule>; lowWage: number; olderCap: number; newerCap: number; birthCutoff: string; overtimeTaxRate: number; weeksPerYear: number };
-export type EmployeeConfig = { employment: 'hourly'|'full_time'|'part_time'|'casual'; grossMonthly: number; weeklyHours: number; taxStatus: TaxStatus | ''; sscCategory: string; birthDate: string; student: boolean; familyStatus: ''|'single'|'married'|'parent'; children: number; housing: number; food: number; bonuses: Record<string,number>; bonusEnabled: boolean; overtimeConcession: boolean; categoryBProRata: boolean; carriedForward: number };
-export const DEFAULT_EMPLOYEE: EmployeeConfig = { employment:'hourly',grossMonthly:0,weeklyHours:40,taxStatus:'',sscCategory:'',birthDate:'',student:false,familyStatus:'',children:0,housing:0,food:0,bonuses:{'3':121.16,'6':135.10,'9':121.16,'12':135.10},bonusEnabled:false,overtimeConcession:false,categoryBProRata:false,carriedForward:0 };
+export type EmployeeConfig = { employment: 'hourly'|'full_time'|'part_time'|'casual'; grossMonthly: number; weeklyHours: number; taxStatus: TaxStatus | ''; sscCategory: string; birthDate: string; student: boolean; familyStatus: ''|'single'|'married'|'parent'; children: number; housing: number; food: number; bonuses: Record<string,number>; bonusEnabled: boolean; overtimeConcession: boolean; categoryBProRata: boolean; carriedForward: number; idCard: string };
+export const DEFAULT_EMPLOYEE: EmployeeConfig = { employment:'hourly',grossMonthly:0,weeklyHours:40,taxStatus:'',sscCategory:'',birthDate:'',student:false,familyStatus:'',children:0,housing:0,food:0,bonuses:{'3':121.16,'6':135.10,'9':121.16,'12':135.10},bonusEnabled:false,overtimeConcession:false,categoryBProRata:false,carriedForward:0,idCard:'' };
+export const SSC_DESCRIPTIONS: Record<string,string> = {
+ A:'Under 18, weekly wage up to the A/B maximum. Fixed weekly employee and employer contribution with a small maternity share.',
+ B:'18 or over, weekly wage up to the A/B maximum. Fixed weekly contribution; part-timers may elect the 10% pro-rata option.',
+ C:'Standard rate: 10% of the basic weekly wage, between the minimum wage and the birth-group cap. Maternity is 0.3%.',
+ D:'Weekly wage at or above the cap. Fixed weekly contribution that depends on the birth group (older/newer cutoff).',
+ E:'Qualifying student-worker under 18: 10% of weekly wage, capped at a small fixed amount per week.',
+ F:'Qualifying student-worker 18 or over: 10% of weekly wage, capped slightly higher than category E.',
+};
 const fixed=(n:number):Contribution=>({rate:0,fixed:n,cap:null});
 const percent=(rate:number,cap:number|null=null):Contribution=>({rate,fixed:null,cap});
 export function defaultStatutory(): StatutoryYear {
