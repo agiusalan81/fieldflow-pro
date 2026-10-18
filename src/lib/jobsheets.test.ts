@@ -38,4 +38,9 @@ describe("travel with several technicians", () => {
     expect(dayLabourHours("08:00", "10:00", 1, 2, [], 0.5)).toBe(7);
     expect(dayLabourHours("08:00", "10:00", 0, 1, [], 1)).toBe(3);
   });
+  it("applies a 1-hour minimum charge per technician once any work is logged", () => {
+    expect(dayLabourHours("08:00", "08:20", 0.2, 1)).toBe(1);
+    expect(dayLabourHours("08:00", "08:20", 0.2, 2)).toBe(2);
+    expect(dayLabourHours(null, null, 0, 1)).toBe(0);
+  });
 });
