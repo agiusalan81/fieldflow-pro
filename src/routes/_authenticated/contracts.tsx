@@ -3,6 +3,8 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
+import { ContractTiers } from "@/components/contract-tiers";
+import { DocumentMasters } from "@/components/document-masters";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, isOffice } from "@/lib/profile";
 import { useCompanyRules, EQUIPMENT_CATEGORIES } from "@/lib/company";
@@ -42,12 +44,14 @@ function ContractsPage() {
         <TabsList className="flex-wrap">
           <TabsTrigger value="renewals">Renewals due</TabsTrigger>
           <TabsTrigger value="agreements">Client agreements</TabsTrigger>
-          <TabsTrigger value="types">Contract types</TabsTrigger>
+          <TabsTrigger value="types">Service tiers</TabsTrigger>
+          {office && <TabsTrigger value="masters">Contracts & checklist masters</TabsTrigger>}
           <TabsTrigger value="checklists">Checklists</TabsTrigger>
         </TabsList>
         <TabsContent value="renewals" className="mt-4"><Renewals office={office} /></TabsContent>
         <TabsContent value="agreements" className="mt-4"><Agreements office={office} companyId={profile?.company_id} /></TabsContent>
-        <TabsContent value="types" className="mt-4"><Types office={office} companyId={profile?.company_id} /></TabsContent>
+        <TabsContent value="types" className="mt-4">{office && profile ? <ContractTiers companyId={profile.company_id} /> : <Types office={office} companyId={profile?.company_id} />}</TabsContent>
+        {office && profile && <TabsContent value="masters" className="mt-4"><DocumentMasters companyId={profile.company_id} /></TabsContent>}
         <TabsContent value="checklists" className="mt-4"><Checklists office={office} companyId={profile?.company_id} /></TabsContent>
       </Tabs>
     </AppShell>
@@ -69,16 +73,17 @@ function Agreements({ office, companyId }: { office: boolean; companyId?: string
   const { data: opts } = useQuery({
     queryKey: ["agreement-opts"],
     queryFn: async () => {
-      const [c, t] = await Promise.all([supabase.from("clients").select("id, name").order("name"), supabase.from("contract_types").select("id, name, annual_price").order("name")]);
+      const [c, t] = await Promise.all([supabase.from("clients").select("id, name").order("name"), supabase.from("contract_types").select("id, name, annual_price").eq("lifecycle", "active").order("name")]);
       return { clients: c.data ?? [], types: t.data ?? [] };
     },
   });
   const today = new Date().toISOString().slice(0, 10);
   const [f, setF] = useState({ client_id: "", contract_type_id: "", start_date: today, end_date: "", annual_price: "" });
   const add = async () => {
+    if (!companyId) return;
     if (!f.client_id || !f.end_date) { toast.error("Choose a client and an end date"); return; }
     if (f.end_date <= f.start_date) { toast.error("End date must be after the start date"); return; }
-    const { error } = await supabase.from("maintenance_agreements").insert({ company_id: companyId!, client_id: f.client_id, contract_type_id: f.contract_type_id || null, start_date: f.start_date, end_date: f.end_date, annual_price: Number(f.annual_price) || 0 });
+    const { error } = await supabase.from("maintenance_agreements").insert({ company_id: companyId, client_id: f.client_id, contract_type_id: f.contract_type_id || null, start_date: f.start_date, end_date: f.end_date, annual_price: Number(f.annual_price) || 0 });
     if (error) { toast.error(error.message); return; }
     toast.success("Agreement added");
     setF({ ...f, client_id: "", end_date: "", annual_price: "" });
