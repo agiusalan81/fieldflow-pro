@@ -25,7 +25,7 @@ export function SearchSelect({ value, options, onChange, placeholder = "Choose�
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] min-w-64 p-0" align="start">
         <Command>
-          <CommandInput placeholder="Type to search…" value={freeText} onValueChange={onFreeText}
+          <CommandInput placeholder="Type to search…" {...(freeText !== undefined ? { value: freeText } : {})} {...(onFreeText ? { onValueChange: onFreeText } : {})}
             onKeyDown={(e) => { if (e.key === "Enter" && typed && onAddFreeText) { e.preventDefault(); onAddFreeText(typed); setOpen(false); } }} />
           <CommandList>
             <CommandEmpty>{onAddFreeText ? "No matches — press Enter to add as initials." : "No matches."}</CommandEmpty>

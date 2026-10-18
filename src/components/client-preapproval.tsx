@@ -10,7 +10,7 @@ export function ClientPreapproval({ clientId }: { clientId: string }) {
     if (result.error) throw result.error; return result.data;
   } });
   const toggle = (field: "preapprove_departure" | "waive_transport", value: boolean, ok: string) => async () => {
-    const { error } = await supabase.from("clients").update({ [field]: value }).eq("id", clientId);
+    const { error } = await supabase.from("clients").update(field === "preapprove_departure" ? { preapprove_departure: value } : { waive_transport: value }).eq("id", clientId);
     if (error) { toast.error(error.message); return; }
     await qc.invalidateQueries({ queryKey: ["client-preapproval", clientId] });
     qc.invalidateQueries({ queryKey: ["sheet-refs"] });

@@ -79,7 +79,7 @@ export function PayrollPage({ section = "hours" }: { section?: "hours" | "wages"
   const rows=(data?.users ?? []).map(u=>({user:u,wage:getWage(u.id),hours:aggregatePayroll(u.id,from,to,data?.reports ?? [],data?.leaves ?? [],getWage(u.id),data?.policies ?? [],data?.rosters ?? [],data?.swaps ?? [])}));
   const selected=rows.find(r=>r.user.id===employee);
   const open=(id:string,kind:"settings"|"pay")=>{const bal=data?.balances.find(b=>b.user_id===id);setOpeningLeave({base:Number(bal?.base_entitlement_hours??0),ph:Number(bal?.public_holiday_credit_hours??0),carried:bal?.carried_forward_year===year?Number(bal.carried_forward_hours):0});setEmployee(id);setMode(kind);const w=getWage(id),c=getConfig(id);if(!w.tax_reference&&c.idCard)w.tax_reference=c.idCard;setWage(w);setConfig(c);setAdjustments({bonus:0,tax:0,nationalInsurance:0,otherDeductions:0});setNotes("");setReviewed(false);};
-  const phSuggested=weekendHolidayCredit(company?.public_holidays??[],company?.work_days??[1,2,3,4,5],year);
+  const phSuggested=weekendHolidayCredit(company?.rules.public_holidays??[],company?.rules.work_days??[1,2,3,4,5],year);
   const refresh=()=>qc.invalidateQueries({queryKey:["payroll"]});
   const saveWage=async()=>{
     if(!profile || !employee || !allowed)return;
