@@ -137,7 +137,7 @@ function TechToday({ profile, readOnly }: { profile: Profile; readOnly: boolean 
     <AppShell title={`Hi, ${profile.full_name.split(" ")[0]}`}>
       <div className="mx-auto max-w-4xl space-y-6">
         <ShiftTracker profile={profile} />
-        <fieldset disabled={readOnly} className="min-w-0"><InternalWorkCard profile={profile} /></fieldset>
+        <InternalWorkCard key={profile.id} profile={profile} readOnly={readOnly} />
         <ScanQr />
         {!readOnly && <DepartureAlerts userId={profile.id} />}
         {!readOnly && <NoAccessButton profile={profile} jobs={jobs} />}
@@ -239,6 +239,8 @@ function MyHours({ profile }: { profile: Profile }) {
 }
 
 function OfficeOverview({ profile }: { profile: Profile }) {
+  const { data: actor } = useProfile();
+  const { active: readOnly } = useUserPreview(actor);
   const can = useCan(profile);
   const navigate = useNavigate();
   const { data } = useOpsData();
@@ -262,7 +264,7 @@ function OfficeOverview({ profile }: { profile: Profile }) {
         {can("contracts") && (
           <section className="space-y-3">
             <div className="flex items-center justify-between"><h2 className="font-medium text-foreground">Contracts due for renewal</h2><Link to="/contracts" className="text-sm text-primary">All contracts</Link></div>
-            <RenewalList office limit={5} />
+            <RenewalList office={!readOnly} limit={5} />
           </section>
         )}
         {can("billing") && (
@@ -274,7 +276,7 @@ function OfficeOverview({ profile }: { profile: Profile }) {
                   <thead><tr className="border-b text-left text-muted-foreground"><th className="px-5 py-2 font-medium">Sheet</th><th className="px-3 py-2 font-medium">Client</th><th className="px-3 py-2 font-medium">Technician</th><th className="px-3 py-2 text-right font-medium">Std</th><th className="px-3 py-2 text-right font-medium">1.5×</th><th className="px-3 py-2 text-right font-medium">2×</th><th className="px-3 py-2 font-medium">Billing</th></tr></thead>
                   <tbody className="divide-y">
                     {billing.slice(0, 10).map(({ s, h }) => (
-                      <tr key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setReview(s.id)}>
+                      <tr key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => { if (!readOnly) setReview(s.id); }}>
                         <td className="px-5 py-2.5 font-mono text-primary">#{s.jobsheet_number}</td><td className="px-3 py-2.5 text-foreground">{s.clients?.name}</td><td className="px-3 py-2.5 text-muted-foreground">{s.users?.full_name ?? "—"}</td>
                         <td className="px-3 py-2.5 text-right tabular-nums">{h.standard}</td><td className="px-3 py-2.5 text-right tabular-nums">{h.ot15}</td><td className="px-3 py-2.5 text-right tabular-nums">{h.ot20}</td><td className="px-3 py-2.5 text-xs capitalize text-muted-foreground">{s.billing_status === "unreviewed" ? "To review" : s.billing_status}</td>
                       </tr>
@@ -286,7 +288,7 @@ function OfficeOverview({ profile }: { profile: Profile }) {
           </section>
         )}
       </div>
-      <BillingReview sheetId={review} onClose={() => setReview(null)} />
+      {!readOnly && <BillingReview sheetId={review} onClose={() => setReview(null)} />}
     </AppShell>
   );
 }
