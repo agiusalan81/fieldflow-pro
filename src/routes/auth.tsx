@@ -67,7 +67,7 @@ function AuthPage() {
         password: form.password,
         options: {
           emailRedirectTo: `${window.location.origin}/dashboard`,
-          data: { company_name: form.company, full_name: form.name },
+          data: { company_name: form.company, full_name: form.name, referral_code: sessionStorage.getItem("fieldflow:referral") ?? "" },
         },
       });
       if (error) setError(error.message);

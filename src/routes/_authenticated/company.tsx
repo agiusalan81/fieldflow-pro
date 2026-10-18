@@ -12,6 +12,7 @@ import { CURRENCIES } from "@/lib/locale";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DocumentSettings } from "@/components/document-settings";
 import { DocumentLibrary } from "@/components/document-library";
+import { SafetySettings } from "@/components/safety-settings";
 import { IntegrationsSettings } from "@/components/integrations-settings";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,7 @@ function CompanyPage() {
           {office && <TabsTrigger value="profile">Profile & branding</TabsTrigger>}
           {office && <TabsTrigger value="documents">PDF & terms</TabsTrigger>}
           {office && <TabsTrigger value="library">Document library</TabsTrigger>}
+          {office && <TabsTrigger value="safety">Safety & faults</TabsTrigger>}
           {office && <TabsTrigger value="messaging">Messages & emails</TabsTrigger>}
           {office && <TabsTrigger value="integrations">Accounting</TabsTrigger>}
           {team && <TabsTrigger value="team">Team & invites</TabsTrigger>}
@@ -62,6 +64,7 @@ function CompanyPage() {
         {office && <TabsContent value="profile" className="mt-4"><ProfileTab companyId={profile.company_id} /></TabsContent>}
         {office && <TabsContent value="documents" className="mt-4"><DocumentSettings companyId={profile.company_id} /></TabsContent>}
         {office && <TabsContent value="library" className="mt-4"><DocumentLibrary companyId={profile.company_id} userId={profile.id} /></TabsContent>}
+        {office && <TabsContent value="safety" className="mt-4"><SafetySettings companyId={profile.company_id} /></TabsContent>}
         {office && <TabsContent value="integrations" className="mt-4"><IntegrationsSettings part="accounting" companyId={profile.company_id} /></TabsContent>}
         {office && <TabsContent value="messaging" className="mt-4"><IntegrationsSettings part="messaging" companyId={profile.company_id} /></TabsContent>}
         {team && <TabsContent value="team" className="mt-4"><TeamTab role={profile.role} companyId={profile.company_id} meId={profile.id} /></TabsContent>}

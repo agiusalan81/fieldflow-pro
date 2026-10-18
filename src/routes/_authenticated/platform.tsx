@@ -1,0 +1,3 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { PortfolioHQ } from "@/components/portfolio-hq";
+export const Route = createFileRoute("/_authenticated/platform")({ head: () => ({ meta: [{ title: "Portfolio HQ — FieldFlow" }, { name: "description", content: "Private multi-product company, plan and financial administration." }, { property: "og:title", content: "Portfolio HQ — FieldFlow" }, { property: "og:description", content: "Private portfolio administration." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }), component: PortfolioHQ });

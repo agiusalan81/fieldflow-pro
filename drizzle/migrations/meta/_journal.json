@@ -218,6 +218,34 @@
       "when": 1792321629606,
       "tag": "0030_tenant_locale_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1792361942271,
+      "tag": "0031_document_masters_and_portfolio_controls",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1792361992264,
+      "tag": "0032_client_reports_safety_and_checklist_snapshots",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1792362227636,
+      "tag": "0033_portfolio_directory_and_report_snapshot_guards",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1792362361746,
+      "tag": "0034_trial_registration_entitlements_and_safe_report_projection",
+      "breakpoints": true
     }
   ]
 }

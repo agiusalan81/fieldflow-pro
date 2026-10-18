@@ -1,0 +1,3 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { SubscriptionPage } from "@/components/subscription-page";
+export const Route = createFileRoute("/_authenticated/subscription")({ head: () => ({ meta: [{ title: "Plans, packs & referrals — FieldFlow" }, { name: "description", content: "Company subscriptions, optional module packs and referral links." }, { property: "og:title", content: "Plans, packs & referrals — FieldFlow" }, { property: "og:description", content: "Company subscription and referral management." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }), component: SubscriptionPage });

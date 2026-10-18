@@ -6,7 +6,8 @@ import { ArrowLeft, Car, Lock, MapPin, Plus, Save, Send, Trash2, ShieldAlert, Pe
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, useCompanyUsers, initialsOf, isManager } from "@/lib/profile";
 import { remindBreakIfDue } from "@/lib/dwr-report";
-import { useCompanyRules } from "@/lib/company";
+import { useCompanyRules, useTerminology } from "@/lib/company";
+import { ReportSharing } from "@/components/report-sharing";
 import { hoursFromTimes, missingSignOff, missingChecklist, roundTo15, shiftTime, parsePhotos, createDraftSheet, type JobPhoto, technicianCount, labourHours, dayLabourHours } from "@/lib/jobsheets";
 import { JobPhotos } from "@/components/job-photos";
 import { SpecialNotes } from "@/components/special-notes";
@@ -95,6 +96,7 @@ function Section({ n, title, children, priv }: { n: number; title: string; child
 }
 
 function SheetForm() {
+  const word = useTerminology();
   const { sheetId } = Route.useParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -143,6 +145,7 @@ function SheetForm() {
     queryKey: ["checklists"],
     queryFn: async () => (await supabase.from("checklist_templates").select("*")).data ?? [],
   });
+  const { data: faults = [] } = useQuery({ queryKey: ["fault-library"], queryFn: async () => { const r = await supabase.from("fault_library").select("*").eq("active", true).order("fault"); if (r.error) throw r.error; return r.data; } });
 
   useEffect(() => {
     if (!data?.sheet || form) return;
@@ -211,7 +214,8 @@ function SheetForm() {
   const set = (patch: Partial<Form>) => setForm({ ...form, ...patch });
   const client = refs?.clients.find((c) => c.id === form.client_id);
   const checkCat = form.asset_type === "Escalator" ? "Escalator" : form.asset_type === "Lift" ? "Elevator" : "Custom";
-  const checklistItems = form.is_maintenance ? ((checklists.find((c) => c.equipment_category === checkCat)?.items as string[] | undefined) ?? []) : [];
+  const checklistItems = form.is_maintenance ? sheet.checklist_snapshot.length ? sheet.checklist_snapshot : ((checklists.find((c) => c.equipment_category === checkCat)?.items as string[] | undefined) ?? []) : [];
+  const safetyItems = sheet.safety_snapshot;
   const sites = refs?.sites.filter((s) => s.client_id === form.client_id) ?? [];
   const site = sites.find((s) => s.id === form.site_id);
   const assets = refs?.assets.filter((a) => a.client_id === form.client_id && (!form.site_id || !a.site_id || a.site_id === form.site_id)) ?? [];
@@ -289,6 +293,7 @@ function SheetForm() {
     }
   };
   const submit = async () => {
+    if (safetyItems.some((i) => !checks[`safety:${i}`])) { toast.error("Complete the safety assessment before submitting"); return; }
     if (!navigator.onLine) { toast.error("Connect to submit and email. Save as Draft to keep work on this device."); return; }
     const missing = missingSignOff({ client_full_name: form.client_full_name as string, client_id_card_no: form.client_id_card_no as string, signature: form.signature_data as string });
     if (missing.length) { toast.error(`Can't submit — missing: ${missing.join(", ")}`); return; }
@@ -357,7 +362,9 @@ function SheetForm() {
         if (!confirm("Discard this device's saved changes and load the latest job sheet?")) return;
         await removeLocalDraft(profile.id, sheetId); revision.current = sheet.updated_at; setConflict(false); setForm(null); setLocalReady(false); await qc.invalidateQueries({ queryKey: ["sheet", sheetId] });
       }}>Discard local changes &amp; reload</Button></div>}
+      {readOnly && manager && <ReportSharing sheetId={sheetId} />}
       <fieldset disabled={readOnly || busy} className="mx-auto max-w-5xl space-y-4 pb-24">
+        {safetyItems.length > 0 && <Section n={0} title="Pre-work safety assessment"><div className="space-y-2">{safetyItems.map((i) => <label key={i} className="flex items-start gap-3 border p-3 text-sm"><Checkbox checked={!!checks[`safety:${i}`]} onCheckedChange={(v) => setChecks({ ...checks, [`safety:${i}`]: !!v })} />{i}</label>)}</div></Section>}
         <div className="flex flex-wrap items-center gap-2">
           <StatusBadge status={sheet.status} />
           {readOnly && <span className="text-sm text-muted-foreground">Completed — read-only view</span>}
@@ -368,24 +375,24 @@ function SheetForm() {
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-1.5"><Label>Job sheet no.</Label><Input value={sheet.jobsheet_number} readOnly className="h-11 font-mono" /></div>
             <div className="space-y-1.5">
-              <Label>Client</Label>
+              <Label>{word("client")}</Label>
               <SearchSelect value={form.client_id as string} placeholder="Choose client" disabled={readOnly}
                 options={(refs?.clients ?? []).map((c) => ({ value: c.id, label: c.name, hint: c.billing_address ?? undefined }))}
                 onChange={(v) => set({ client_id: v, site_id: null, asset_id: null })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Site</Label>
+              <Label>{word("site")}</Label>
               <SearchSelect value={form.site_id as string} placeholder="Choose site" disabled={readOnly}
                 options={sites.map((s) => ({ value: s.id, label: s.name, hint: s.address ?? undefined }))}
                 onChange={pickSite} />
             </div>
             <div className="space-y-1.5">
-              <Label>Lift / asset</Label>
+              <Label>{word("equipment")}</Label>
               <SearchSelect value={form.asset_id as string} placeholder="Type reference, type or serial…" disabled={readOnly}
                 options={assets.map((a) => ({ value: a.id, label: `${a.reference_number} · ${a.asset_category}`, hint: a.serial_number ?? undefined }))}
                 onChange={pickAsset} />
             </div>
-            <div className="space-y-1.5"><Label>Technician</Label><Input className="h-11" value={(form.technician_name as string) ?? ""} onChange={(e) => set({ technician_name: e.target.value })} /></div>
+            <div className="space-y-1.5"><Label>{word("technician")}</Label><Input className="h-11" value={(form.technician_name as string) ?? ""} onChange={(e) => set({ technician_name: e.target.value })} /></div>
             <div className="space-y-1.5"><Label>Date</Label><Input className="h-11" readOnly value={new Date(sheet.created_at).toLocaleDateString()} /></div>
           </div>
           {address ? (
@@ -403,18 +410,18 @@ function SheetForm() {
           ) : <p className="mt-3 flex items-start gap-1.5 text-sm text-muted-foreground"><MapPin className="mt-0.5 h-4 w-4 shrink-0" />No address on file</p>}
         </Section>
 
-        <Section n={2} title="Asset">
+        <Section n={2} title={word("equipment")}>
           <div className="grid gap-4 md:grid-cols-4">
             <div className="space-y-1.5">
-              <Label>Asset type</Label>
+              <Label>{word("asset_type")}</Label>
               <Select value={(form.asset_type as string) ?? "Lift"} onValueChange={(v) => set({ asset_type: v })}>
                 <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
                 <SelectContent>{["Lift", "Escalator", "Other"].map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             {form.asset_type === "Other" && <div className="space-y-1.5"><Label>Specify</Label><Input className="h-11" value={(form.asset_type_other as string) ?? ""} onChange={(e) => set({ asset_type_other: e.target.value })} /></div>}
-            <div className="space-y-1.5"><Label>Model</Label><Input className="h-11" value={(form.lift_model as string) ?? ""} onChange={(e) => set({ lift_model: e.target.value, requires_admin_approval: true })} /></div>
-            <div className="space-y-1.5"><Label>Serial number</Label><Input className="h-11" value={(form.serial_number as string) ?? ""} onChange={(e) => set({ serial_number: e.target.value, requires_admin_approval: true })} /></div>
+            <div className="space-y-1.5"><Label>{word("model")}</Label><Input className="h-11" value={(form.lift_model as string) ?? ""} onChange={(e) => set({ lift_model: e.target.value, requires_admin_approval: true })} /></div>
+            <div className="space-y-1.5"><Label>{word("serial")}</Label><Input className="h-11" value={(form.serial_number as string) ?? ""} onChange={(e) => set({ serial_number: e.target.value, requires_admin_approval: true })} /></div>
           </div>
           <p className="mt-2 text-xs text-muted-foreground">Filled in automatically from the chosen lift. Changing the model or serial number sends this sheet to an admin for approval.</p>
         </Section>
@@ -456,7 +463,8 @@ function SheetForm() {
 
         <Section n={4} title={`Work log · ${totalHours.toFixed(2)} h total`}>
           <div className="mb-4 space-y-1.5">
-            <Label>Reported fault</Label>
+            <Label>{word("fault")}</Label>
+            {faults.length > 0 && <SearchSelect value="" placeholder="Choose a saved fault / remedy" options={faults.map((f) => ({ value: f.id, label: f.fault, hint: f.trade }))} onChange={(id) => { const f = faults.find((x) => x.id === id); if (!f) return; set({ reported_fault: f.fault }); if (f.remedy && logs[0]) setLogs(logs.map((l, i) => i === 0 ? { ...l, daily_work_description: [l.daily_work_description, f.remedy].filter(Boolean).join("\n") } : l)); }} />}
             {sheet.job_id && <p className="text-xs text-muted-foreground">Filled in from the assigned job card.</p>}
             <Textarea rows={2} value={(form.reported_fault as string) ?? ""} onChange={(e) => set({ reported_fault: e.target.value })} />
             <VoiceDictation label="reported fault" disabled={readOnly} value={(form.reported_fault as string) ?? ""} onApply={(t) => set({ reported_fault: t })} />
@@ -545,14 +553,14 @@ function SheetForm() {
         <Section n={5} title="Internal only — never shown to client" priv>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-1.5">
-              <Label>Pending works / future jobs</Label>
+              <Label>{word("pending")}</Label>
               <p className="text-xs text-muted-foreground">Goes to the admin pending queue.</p>
               <Textarea rows={3} value={(form.pending_works_future_jobs as string) ?? ""} onChange={(e) => set({ pending_works_future_jobs: e.target.value })} />
               <VoiceDictation label="pending works" disabled={readOnly} value={(form.pending_works_future_jobs as string) ?? ""} onApply={(t) => set({ pending_works_future_jobs: t })} />
               <JobPhotos {...photoProps} scope="pending" day={null} />
             </div>
             <div className="space-y-1.5">
-              <Label>Internal comments (admin only)</Label>
+              <Label>{word("internal")} (admin only)</Label>
               <p className="text-xs text-muted-foreground">For the office team.</p>
               <Textarea rows={3} value={(form.internal_comments_admin_only as string) ?? ""} onChange={(e) => set({ internal_comments_admin_only: e.target.value })} />
               <VoiceDictation label="internal comments" disabled={readOnly} value={(form.internal_comments_admin_only as string) ?? ""} onApply={(t) => set({ internal_comments_admin_only: t })} />

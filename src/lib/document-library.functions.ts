@@ -162,3 +162,17 @@ export const extractContractDetails = createServerFn({ method: "POST" })
       end_date: iso(j.end_date),
     };
   });
+
+export const digitizeLibraryDocument = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ documentId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: role } = await context.supabase.rpc("my_role");
+    if (role !== "admin" && role !== "superuser") throw new Error("Only office admins can create document drafts");
+    const { data: source, error } = await context.supabase.from("company_documents").select("id,name,category,company_id").eq("id", data.documentId).single();
+    if (error || !source) throw new Error("Source document unavailable");
+    const text = await readDocument(context.supabase as never, source.id, source.category === "checklist" ? "Extract every checklist step as a separate plain text line, in order. Do not add steps. Ignore headers, signatures and page furniture. Return only the steps." : EXACT);
+    const { data: draft, error: writeError } = await context.supabase.from("document_masters").insert({ company_id: source.company_id, name: source.name, kind: source.category, source_document_id: source.id, body: source.category === "checklist" ? "" : text.slice(0, 20000), items: source.category === "checklist" ? text.split("\n").map((s) => s.replace(/^\s*[-•]\s*/, "").trim()).filter(Boolean).slice(0, 200) : [] }).select("id").single();
+    if (writeError) throw writeError;
+    return { draftId: draft.id };
+  });

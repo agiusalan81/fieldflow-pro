@@ -24,11 +24,15 @@ import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedOvertimeRouteImport } from './routes/_authenticated/overtime'
 import { Route as AuthenticatedPayrollRouteImport } from './routes/_authenticated/payroll'
 import { Route as AuthenticatedPendingWorksRouteImport } from './routes/_authenticated/pending-works'
+import { Route as AuthenticatedPlatformRouteImport } from './routes/_authenticated/platform'
 import { Route as AuthenticatedScheduleRouteImport } from './routes/_authenticated/schedule'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedStandbyRouteImport } from './routes/_authenticated/standby'
+import { Route as AuthenticatedSubscriptionRouteImport } from './routes/_authenticated/subscription'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
+import { Route as ReferralCodeRouteImport } from './routes/referral.$code'
+import { Route as ReportTokenRouteImport } from './routes/report.$token'
 import { Route as AuthenticatedAdminEntitiesRouteImport } from './routes/_authenticated/admin.entities'
 import { Route as AuthenticatedAdminFieldsRouteImport } from './routes/_authenticated/admin.fields'
 import { Route as AuthenticatedAdminInventoryRouteImport } from './routes/_authenticated/admin.inventory'
@@ -117,6 +121,11 @@ const AuthenticatedPendingWorksRoute =
     path: '/pending-works',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlatformRoute = AuthenticatedPlatformRouteImport.update({
+  id: '/platform',
+  path: '/platform',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedScheduleRoute = AuthenticatedScheduleRouteImport.update({
   id: '/schedule',
   path: '/schedule',
@@ -132,6 +141,12 @@ const AuthenticatedStandbyRoute = AuthenticatedStandbyRouteImport.update({
   path: '/standby',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSubscriptionRoute =
+  AuthenticatedSubscriptionRouteImport.update({
+    id: '/subscription',
+    path: '/subscription',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedTeamRoute = AuthenticatedTeamRouteImport.update({
   id: '/team',
   path: '/team',
@@ -140,6 +155,16 @@ const AuthenticatedTeamRoute = AuthenticatedTeamRouteImport.update({
 const JoinTokenRoute = JoinTokenRouteImport.update({
   id: '/join/$token',
   path: '/join/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReferralCodeRoute = ReferralCodeRouteImport.update({
+  id: '/referral/$code',
+  path: '/referral/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportTokenRoute = ReportTokenRouteImport.update({
+  id: '/report/$token',
+  path: '/report/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminEntitiesRoute =
@@ -227,11 +252,15 @@ export interface FileRoutesByFullPath {
   '/overtime': typeof AuthenticatedOvertimeRoute
   '/payroll': typeof AuthenticatedPayrollRouteWithChildren
   '/pending-works': typeof AuthenticatedPendingWorksRoute
+  '/platform': typeof AuthenticatedPlatformRoute
   '/schedule': typeof AuthenticatedScheduleRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/standby': typeof AuthenticatedStandbyRoute
+  '/subscription': typeof AuthenticatedSubscriptionRoute
   '/team': typeof AuthenticatedTeamRoute
   '/join/$token': typeof JoinTokenRoute
+  '/referral/$code': typeof ReferralCodeRoute
+  '/report/$token': typeof ReportTokenRoute
   '/admin/entities': typeof AuthenticatedAdminEntitiesRoute
   '/admin/fields': typeof AuthenticatedAdminFieldsRoute
   '/admin/inventory': typeof AuthenticatedAdminInventoryRoute
@@ -260,11 +289,15 @@ export interface FileRoutesByTo {
   '/overtime': typeof AuthenticatedOvertimeRoute
   '/payroll': typeof AuthenticatedPayrollRouteWithChildren
   '/pending-works': typeof AuthenticatedPendingWorksRoute
+  '/platform': typeof AuthenticatedPlatformRoute
   '/schedule': typeof AuthenticatedScheduleRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/standby': typeof AuthenticatedStandbyRoute
+  '/subscription': typeof AuthenticatedSubscriptionRoute
   '/team': typeof AuthenticatedTeamRoute
   '/join/$token': typeof JoinTokenRoute
+  '/referral/$code': typeof ReferralCodeRoute
+  '/report/$token': typeof ReportTokenRoute
   '/admin/entities': typeof AuthenticatedAdminEntitiesRoute
   '/admin/fields': typeof AuthenticatedAdminFieldsRoute
   '/admin/inventory': typeof AuthenticatedAdminInventoryRoute
@@ -295,11 +328,15 @@ export interface FileRoutesById {
   '/_authenticated/overtime': typeof AuthenticatedOvertimeRoute
   '/_authenticated/payroll': typeof AuthenticatedPayrollRouteWithChildren
   '/_authenticated/pending-works': typeof AuthenticatedPendingWorksRoute
+  '/_authenticated/platform': typeof AuthenticatedPlatformRoute
   '/_authenticated/schedule': typeof AuthenticatedScheduleRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/standby': typeof AuthenticatedStandbyRoute
+  '/_authenticated/subscription': typeof AuthenticatedSubscriptionRoute
   '/_authenticated/team': typeof AuthenticatedTeamRoute
   '/join/$token': typeof JoinTokenRoute
+  '/referral/$code': typeof ReferralCodeRoute
+  '/report/$token': typeof ReportTokenRoute
   '/_authenticated/admin/entities': typeof AuthenticatedAdminEntitiesRoute
   '/_authenticated/admin/fields': typeof AuthenticatedAdminFieldsRoute
   '/_authenticated/admin/inventory': typeof AuthenticatedAdminInventoryRoute
@@ -330,11 +367,15 @@ export interface FileRouteTypes {
     | '/overtime'
     | '/payroll'
     | '/pending-works'
+    | '/platform'
     | '/schedule'
     | '/settings'
     | '/standby'
+    | '/subscription'
     | '/team'
     | '/join/$token'
+    | '/referral/$code'
+    | '/report/$token'
     | '/admin/entities'
     | '/admin/fields'
     | '/admin/inventory'
@@ -363,11 +404,15 @@ export interface FileRouteTypes {
     | '/overtime'
     | '/payroll'
     | '/pending-works'
+    | '/platform'
     | '/schedule'
     | '/settings'
     | '/standby'
+    | '/subscription'
     | '/team'
     | '/join/$token'
+    | '/referral/$code'
+    | '/report/$token'
     | '/admin/entities'
     | '/admin/fields'
     | '/admin/inventory'
@@ -397,11 +442,15 @@ export interface FileRouteTypes {
     | '/_authenticated/overtime'
     | '/_authenticated/payroll'
     | '/_authenticated/pending-works'
+    | '/_authenticated/platform'
     | '/_authenticated/schedule'
     | '/_authenticated/settings'
     | '/_authenticated/standby'
+    | '/_authenticated/subscription'
     | '/_authenticated/team'
     | '/join/$token'
+    | '/referral/$code'
+    | '/report/$token'
     | '/_authenticated/admin/entities'
     | '/_authenticated/admin/fields'
     | '/_authenticated/admin/inventory'
@@ -422,6 +471,8 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   JoinTokenRoute: typeof JoinTokenRoute
+  ReferralCodeRoute: typeof ReferralCodeRoute
+  ReportTokenRoute: typeof ReportTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -531,6 +582,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPendingWorksRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform': {
+      id: '/_authenticated/platform'
+      path: '/platform'
+      fullPath: '/platform'
+      preLoaderRoute: typeof AuthenticatedPlatformRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/schedule': {
       id: '/_authenticated/schedule'
       path: '/schedule'
@@ -552,6 +610,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStandbyRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/subscription': {
+      id: '/_authenticated/subscription'
+      path: '/subscription'
+      fullPath: '/subscription'
+      preLoaderRoute: typeof AuthenticatedSubscriptionRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/team': {
       id: '/_authenticated/team'
       path: '/team'
@@ -564,6 +629,20 @@ declare module '@tanstack/react-router' {
       path: '/join/$token'
       fullPath: '/join/$token'
       preLoaderRoute: typeof JoinTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/referral/$code': {
+      id: '/referral/$code'
+      path: '/referral/$code'
+      fullPath: '/referral/$code'
+      preLoaderRoute: typeof ReferralCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/report/$token': {
+      id: '/report/$token'
+      path: '/report/$token'
+      fullPath: '/report/$token'
+      preLoaderRoute: typeof ReportTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/entities': {
@@ -680,9 +759,11 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOvertimeRoute: typeof AuthenticatedOvertimeRoute
   AuthenticatedPayrollRoute: typeof AuthenticatedPayrollRouteWithChildren
   AuthenticatedPendingWorksRoute: typeof AuthenticatedPendingWorksRoute
+  AuthenticatedPlatformRoute: typeof AuthenticatedPlatformRoute
   AuthenticatedScheduleRoute: typeof AuthenticatedScheduleRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedStandbyRoute: typeof AuthenticatedStandbyRoute
+  AuthenticatedSubscriptionRoute: typeof AuthenticatedSubscriptionRoute
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
   AuthenticatedAdminEntitiesRoute: typeof AuthenticatedAdminEntitiesRoute
   AuthenticatedAdminFieldsRoute: typeof AuthenticatedAdminFieldsRoute
@@ -707,9 +788,11 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOvertimeRoute: AuthenticatedOvertimeRoute,
   AuthenticatedPayrollRoute: AuthenticatedPayrollRouteWithChildren,
   AuthenticatedPendingWorksRoute: AuthenticatedPendingWorksRoute,
+  AuthenticatedPlatformRoute: AuthenticatedPlatformRoute,
   AuthenticatedScheduleRoute: AuthenticatedScheduleRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedStandbyRoute: AuthenticatedStandbyRoute,
+  AuthenticatedSubscriptionRoute: AuthenticatedSubscriptionRoute,
   AuthenticatedTeamRoute: AuthenticatedTeamRoute,
   AuthenticatedAdminEntitiesRoute: AuthenticatedAdminEntitiesRoute,
   AuthenticatedAdminFieldsRoute: AuthenticatedAdminFieldsRoute,
@@ -731,6 +814,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   JoinTokenRoute: JoinTokenRoute,
+  ReferralCodeRoute: ReferralCodeRoute,
+  ReportTokenRoute: ReportTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

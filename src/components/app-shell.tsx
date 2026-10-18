@@ -13,7 +13,7 @@ import { useCompanyRules, applyTypography } from "@/lib/company";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader, SheetDescription } from "@/components/ui/sheet";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { IdleLogout } from "@/components/idle-logout";
 import { helpFor } from "@/lib/help-guides";
 import { QUICK_DEFAULTS, rankActions, readUsage, recordUsage, resetUsage } from "@/lib/quick-actions";
@@ -32,6 +32,7 @@ const techNav: NavItem[] = [
   { group: "Time & roster", to: "/leave", label: "Leave", icon: CalendarDays },
   { group: "General", to: "/messages", label: "Team chat", icon: MessageSquare },
   { group: "General", to: "/settings", label: "Settings", icon: Settings },
+  { group: "General", to: "/subscription", label: "Referrals & plans", icon: Calculator },
 ];
 
 const adminNav: NavItem[] = [
@@ -55,6 +56,7 @@ const adminNav: NavItem[] = [
   { group: "Payroll", to: "/payroll/payslips", label: "Payslips", icon: Calculator, office: true },
   { group: "Administration", to: "/admin/fields", label: "Fields & lookups", icon: SlidersHorizontal, module: "fields" },
   { group: "Administration", to: "/settings", label: "Settings", icon: Settings },
+  { group: "Administration", to: "/subscription", label: "Plans & referrals", icon: Calculator },
 ];
 
 /** Extra quick-action shortcuts that aren't menu items. */
@@ -164,7 +166,9 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   const manager = isManager(profile);
   const can = useCan(profile);
   const office = isOffice(profile);
-  const items = (manager ? adminNav : techNav).filter((i) => (!i.office || office) && (!i.module || can(i.module) || (i.to === "/company" && office)));
+  const { data: platformOwner } = useQuery({ queryKey: ["platform-owner"], enabled: !!actor && !preview.active, queryFn: async () => (await supabase.rpc("is_platform_owner")).data === true });
+  const extraNav: NavItem[] = platformOwner && !preview.active ? [{ group: "Platform", to: "/platform", label: "Portfolio HQ", icon: Building2 }] : [];
+  const items = [...(manager ? adminNav : techNav), ...extraNav].filter((i) => (!i.office || office) && (!i.module || can(i.module) || (i.to === "/company" && office)));
   const canSwitch = profile && profile.real_role !== "technician" && !preview.active;
 
   const { data: company } = useCompanyRules();
