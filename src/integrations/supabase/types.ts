@@ -2921,6 +2921,14 @@ export type Database = {
           valid: boolean
         }[]
       }
+      get_referral_offer: {
+        Args: { _code: string }
+        Returns: {
+          app_url: string
+          product_name: string
+          trial_days: number
+        }[]
+      }
       has_company_role: {
         Args: { _role: Database["public"]["Enums"]["user_role"] }
         Returns: boolean
@@ -2938,6 +2946,7 @@ export type Database = {
         Returns: boolean
       }
       is_platform_owner: { Args: never; Returns: boolean }
+      my_commercial_status: { Args: never; Returns: Json }
       my_role: { Args: never; Returns: Database["public"]["Enums"]["app_role"] }
       platform_company_directory: {
         Args: never
