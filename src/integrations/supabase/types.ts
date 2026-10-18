@@ -1815,8 +1815,11 @@ export type Database = {
       }
       shifts: {
         Row: {
+          auto_close_note: string | null
+          auto_closed: boolean
           company_id: string
           created_at: string
+          dwr_held: boolean
           ended_at: string | null
           id: string
           shift_type: string
@@ -1824,8 +1827,11 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          auto_close_note?: string | null
+          auto_closed?: boolean
           company_id: string
           created_at?: string
+          dwr_held?: boolean
           ended_at?: string | null
           id?: string
           shift_type?: string
@@ -1833,8 +1839,11 @@ export type Database = {
           user_id: string
         }
         Update: {
+          auto_close_note?: string | null
+          auto_closed?: boolean
           company_id?: string
           created_at?: string
+          dwr_held?: boolean
           ended_at?: string | null
           id?: string
           shift_type?: string
@@ -2209,6 +2218,10 @@ export type Database = {
         Returns: boolean
       }
       is_company_manager: { Args: never; Returns: boolean }
+      is_on_standby: {
+        Args: { _date: string; _user: string }
+        Returns: boolean
+      }
       my_role: { Args: never; Returns: Database["public"]["Enums"]["app_role"] }
       save_employee_payroll_setup: {
         Args: {
