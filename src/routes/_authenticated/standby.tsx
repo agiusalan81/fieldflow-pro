@@ -30,6 +30,7 @@ export const Route = createFileRoute("/_authenticated/standby")({
 
 const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const monday = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate() - ((d.getDay() + 6) % 7));
+const today0 = () => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); };
 const SWAP_CLS: Record<string, string> = { pending: "bg-warning/25 text-foreground", accepted: "bg-success/15 text-success", declined: "bg-destructive/10 text-destructive", cancelled: "bg-muted text-muted-foreground" };
 
 function StandbyPage() {
@@ -37,7 +38,8 @@ function StandbyPage() {
   const { data: users = [], isLoading: usersLoading, error: usersError } = useCompanyUsers();
   const { data: company } = useCompanyRules();
   const qc = useQueryClient();
-  const [week, setWeek] = useState(() => monday(new Date()));
+  // Start at today so upcoming standby days always show the swap option.
+  const [week, setWeek] = useState(() => today0());
   const [ask, setAsk] = useState<string | null>(null);
   const [target, setTarget] = useState("");
   const { data: swaps = [] } = useQuery({
@@ -81,10 +83,10 @@ function StandbyPage() {
 
         <section className="rounded-xl border bg-card p-4">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-medium text-foreground">Week of {week.toLocaleDateString([], { day: "numeric", month: "long" })}</h2>
+            <h2 className="font-medium text-foreground">7 days from {week.toLocaleDateString([], { day: "numeric", month: "long" })}</h2>
             <div className="flex gap-1">
               <Button size="icon" variant="ghost" aria-label="Previous week" onClick={() => setWeek(new Date(week.getFullYear(), week.getMonth(), week.getDate() - 7))}><ChevronLeft className="h-4 w-4" /></Button>
-              <Button size="sm" variant="ghost" onClick={() => setWeek(monday(new Date()))}>This week</Button>
+              <Button size="sm" variant="ghost" onClick={() => setWeek(today0())}>This week</Button>
               <Button size="icon" variant="ghost" aria-label="Next week" onClick={() => setWeek(new Date(week.getFullYear(), week.getMonth(), week.getDate() + 7))}><ChevronRight className="h-4 w-4" /></Button>
             </div>
           </div>
