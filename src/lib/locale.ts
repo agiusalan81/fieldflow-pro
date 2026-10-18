@@ -7,8 +7,8 @@ let current: TenantLocale = { ...DEFAULT_LOCALE };
 export const tenantLocale = () => current;
 export function setTenantLocale(l?: Partial<TenantLocale> | null) {
   current = {
-    currency: CURRENCIES.includes(l?.currency ?? "") ? l.currency! : DEFAULT_LOCALE.currency,
-    countryCode: /^\+\d{1,4}$/.test(l?.countryCode ?? "") ? l.countryCode! : DEFAULT_LOCALE.countryCode,
+    currency: CURRENCIES.includes(l?.currency ?? "") ? l!.currency! : DEFAULT_LOCALE.currency,
+    countryCode: /^\+\d{1,4}$/.test(l?.countryCode ?? "") ? l!.countryCode! : DEFAULT_LOCALE.countryCode,
     equipmentLabel: l?.equipmentLabel?.trim() || DEFAULT_LOCALE.equipmentLabel,
   };
 }
