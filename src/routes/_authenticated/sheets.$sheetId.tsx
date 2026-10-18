@@ -119,7 +119,7 @@ function SheetForm() {
     queryKey: ["sheet-refs"],
     queryFn: async () => {
       const [c, s, a] = await Promise.all([
-        supabase.from("clients").select("id, name, billing_address, preapprove_departure").order("name"),
+        supabase.from("clients").select("id, name, billing_address, preapprove_departure, waive_transport").order("name"),
         supabase.from("sites").select("id, client_id, name, address").order("name"),
         supabase.from("assets").select("id, client_id, site_id, reference_number, asset_category, location_details, custom_attributes, serial_number"),
       ]);
@@ -332,7 +332,8 @@ function SheetForm() {
     setLog(i, which === "in" ? { latitude_in: g.lat, longitude_in: g.lng } : { latitude_out: g.lat, longitude_out: g.lng });
     toast.success(`Location ${which === "in" ? "in" : "out"} captured${g.simulated ? " (simulated)" : ""}`);
   };
-  const totalHours = logs.reduce((s, l) => s + labourHours(l.time_in, l.time_out, l.technician_count, l.technician_initials), 0);
+  const dayPartsHours = (i: number) => parts.filter((p) => p.log_sort_order === i).reduce((s, p) => s + (Number(p.time_acquiring_parts_hours) || 0), 0);
+  const totalHours = logs.reduce((s, l, i) => s + dayLabourHours(l.time_in, l.time_out, l.traveling_time_hours, l.technician_count, l.technician_initials, dayPartsHours(i)), 0);
   const manager = isManager(profile);
   const address = site?.address || asset?.location_details || client?.billing_address || "";
 
