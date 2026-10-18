@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useProfile, isManager, isOffice } from "@/lib/profile";
+import { useProfile, isManager } from "@/lib/profile";
 import { AppShell, EmptyState } from "@/components/app-shell";
 
 export const Route = createFileRoute("/_authenticated/team")({
