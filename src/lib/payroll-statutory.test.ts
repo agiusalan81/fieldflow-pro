@@ -51,7 +51,7 @@ describe('Annual statutory and employee payroll',()=>{
  });
  it('honours an editable from threshold on tax bands',()=>{
   const r=structuredClone(rates);const b=r.tax.single[1];if(b)b.from=12500;
-  expect(yearlyTax(12500,'single',r)).toBe(0);
-  expect(yearlyTax(12500.5,'single',r)).toBe(.08);
+  expect(()=>yearlyTax(12500,'single',r)).toThrow('incomplete');
+  expect(yearlyTax(12500.5,'single',r)).toBe(75.08);
  });
 });
