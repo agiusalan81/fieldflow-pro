@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { splitHours, addSplits, DEFAULT_RULES } from "@/lib/jobsheets";
 import { AssetHistory, LiftHistoryButton, PriorityBadge, timeWindow } from "@/components/job-card";
-import { fileDailyReport, emailDwr, downloadDwr } from "@/lib/dwr-report";
+import { closeShiftReport, reconcileShifts, downloadDwr } from "@/lib/dwr-report";
 import { InternalWorkCard } from "@/components/work-extras";
 import { BillingReview } from "@/components/billing-review";
 import { NoAccessButton, DepartureRequests, DepartureAlerts } from "@/components/client-notices";
@@ -68,6 +68,14 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
       return data;
     },
   });
+  const reconciled = useRef(false);
+  useEffect(() => {
+    if (readOnly || !company || reconciled.current) return;
+    reconciled.current = true;
+    reconcileShifts({ userId: profile.id, companyId: profile.company_id, company, companyName: profile.companies?.name ?? "" })
+      .then((m) => { if (m.length) { m.forEach((x) => toast.info(x, { duration: 10000 })); qc.invalidateQueries({ queryKey: ["open-shifts", profile.id] }); qc.invalidateQueries({ queryKey: ["dwr"] }); } })
+      .catch(() => {});
+  }, [readOnly, company, profile, qc]);
   const shift = open.find((s) => s.shift_type === "shift");
   const travel = open.find((s) => s.shift_type === "travel");
 
@@ -81,16 +89,16 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
     if (type === "shift" && current && travel) await supabase.from("shifts").update({ ended_at: endedAt }).eq("id", travel.id);
     qc.invalidateQueries({ queryKey: ["open-shifts", profile.id] });
     toast.success(current ? (type === "shift" ? "Clocked out" : "Travel stopped") : type === "shift" ? "Clocked in" : "Travel started");
+    if (type === "shift" && !current && company) {
+      reconcileShifts({ userId: profile.id, companyId: profile.company_id, company, companyName: profile.companies?.name ?? "", force: true }).then((m) => m.forEach((x) => toast.info(x))).catch(() => {});
+    }
     if (type === "shift" && current && company) {
       try {
-        const id = await fileDailyReport({ userId: profile.id, companyId: profile.company_id, shiftId: current.id, startedAt: current.started_at, endedAt, rules: company.rules, breaks: company.breaks });
-        const { data: r } = await supabase.from("daily_work_reports").select("*, users(full_name, employee_id)").eq("id", id).single();
+        const name = profile.companies?.name ?? "";
+        const res = await closeShiftReport({ userId: profile.id, companyId: profile.company_id, shift: { ...current, ended_at: null }, endedAt, company, companyName: name });
         qc.invalidateQueries({ queryKey: ["dwr"] });
-        if (r) {
-          const name = profile.companies?.name ?? "";
-          const mail = await emailDwr(r, name).catch(() => ({ sent: false }));
-          toast.success(mail.sent ? "Daily works report emailed to you" : "Daily works report saved", { action: { label: "Download PDF", onClick: () => downloadDwr(r, name) }, duration: 10000 });
-        }
+        if (res.held) toast.success("You're on standby tonight — callouts will be added and your daily works report sent at tomorrow's start time.", { duration: 10000 });
+        else if (res.report) { const r = res.report; toast.success(res.sent ? "Daily works report emailed to you" : "Daily works report saved", { action: { label: "Download PDF", onClick: () => downloadDwr(r, name) }, duration: 10000 }); }
       } catch (e) { toast.error(`Couldn't file the daily works report: ${(e as Error).message}`); }
     }
   };
