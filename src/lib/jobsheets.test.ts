@@ -34,4 +34,8 @@ describe("15-minute time rounding", () => {
 import { dayLabourHours } from "./jobsheets";
 describe("travel with several technicians", () => {
   it("travel is multiplied by technician count like site hours", () => expect(dayLabourHours("08:00", "10:00", 1, 2)).toBe(6));
+  it("time acquiring parts is added before multiplying by technician count", () => {
+    expect(dayLabourHours("08:00", "10:00", 1, 2, [], 0.5)).toBe(7);
+    expect(dayLabourHours("08:00", "10:00", 0, 1, [], 1)).toBe(3);
+  });
 });
