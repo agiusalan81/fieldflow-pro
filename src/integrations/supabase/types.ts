@@ -2210,6 +2210,16 @@ export type Database = {
       }
       is_company_manager: { Args: never; Returns: boolean }
       my_role: { Args: never; Returns: Database["public"]["Enums"]["app_role"] }
+      save_employee_payroll_setup: {
+        Args: {
+          _config: Json
+          _opening: Json
+          _user: string
+          _wage: Json
+          _year: number
+        }
+        Returns: undefined
+      }
       save_sheet_snapshot: {
         Args: {
           _expected: string
