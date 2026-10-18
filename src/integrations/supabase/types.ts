@@ -174,6 +174,57 @@ export type Database = {
           },
         ]
       }
+      client_reports: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string
+          expires_at: string
+          id: string
+          revoked_at: string | null
+          sheet_id: string
+          snapshot: Json
+          token_hash: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          id?: string
+          revoked_at?: string | null
+          sheet_id: string
+          snapshot: Json
+          token_hash: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          id?: string
+          revoked_at?: string | null
+          sheet_id?: string
+          snapshot?: Json
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_reports_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_reports_sheet_id_fkey"
+            columns: ["sheet_id"]
+            isOneToOne: false
+            referencedRelation: "job_sheets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           billing_address: string | null
@@ -844,6 +895,44 @@ export type Database = {
           },
         ]
       }
+      fault_library: {
+        Row: {
+          active: boolean
+          company_id: string
+          created_at: string
+          fault: string
+          id: string
+          remedy: string
+          trade: string
+        }
+        Insert: {
+          active?: boolean
+          company_id: string
+          created_at?: string
+          fault: string
+          id?: string
+          remedy?: string
+          trade?: string
+        }
+        Update: {
+          active?: boolean
+          company_id?: string
+          created_at?: string
+          fault?: string
+          id?: string
+          remedy?: string
+          trade?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fault_library_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       internal_messages: {
         Row: {
           company_id: string
@@ -1006,6 +1095,7 @@ export type Database = {
           billing_reviewed_by: string | null
           billing_source: string | null
           billing_status: string
+          checklist_snapshot: string[]
           checklist_values: Json
           client_full_name: string | null
           client_id: string
@@ -1042,6 +1132,7 @@ export type Database = {
           requires_admin_approval: boolean
           return_fee_hours: number
           return_fee_waived: boolean
+          safety_snapshot: string[]
           serial_number: string | null
           signature_data: string | null
           site_id: string | null
@@ -1066,6 +1157,7 @@ export type Database = {
           billing_reviewed_by?: string | null
           billing_source?: string | null
           billing_status?: string
+          checklist_snapshot?: string[]
           checklist_values?: Json
           client_full_name?: string | null
           client_id: string
@@ -1102,6 +1194,7 @@ export type Database = {
           requires_admin_approval?: boolean
           return_fee_hours?: number
           return_fee_waived?: boolean
+          safety_snapshot?: string[]
           serial_number?: string | null
           signature_data?: string | null
           site_id?: string | null
@@ -1126,6 +1219,7 @@ export type Database = {
           billing_reviewed_by?: string | null
           billing_source?: string | null
           billing_status?: string
+          checklist_snapshot?: string[]
           checklist_values?: Json
           client_full_name?: string | null
           client_id?: string
@@ -1162,6 +1256,7 @@ export type Database = {
           requires_admin_approval?: boolean
           return_fee_hours?: number
           return_fee_waived?: boolean
+          safety_snapshot?: string[]
           serial_number?: string | null
           signature_data?: string | null
           site_id?: string | null
@@ -2365,6 +2460,41 @@ export type Database = {
           },
         ]
       }
+      safety_templates: {
+        Row: {
+          company_id: string
+          created_at: string
+          enabled: boolean
+          id: string
+          items: string[]
+          name: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          items?: string[]
+          name: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          items?: string[]
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safety_templates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shifts: {
         Row: {
           auto_close_note: string | null
@@ -2783,6 +2913,7 @@ export type Database = {
       }
       is_platform_owner: { Args: never; Returns: boolean }
       my_role: { Args: never; Returns: Database["public"]["Enums"]["app_role"] }
+      read_client_report: { Args: { _hash: string }; Returns: Json }
       save_employee_payroll_setup: {
         Args: {
           _config: Json

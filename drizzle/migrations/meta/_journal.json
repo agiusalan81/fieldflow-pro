@@ -225,6 +225,13 @@
       "when": 1792361942271,
       "tag": "0031_document_masters_and_portfolio_controls",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1792361992264,
+      "tag": "0032_client_reports_safety_and_checklist_snapshots",
+      "breakpoints": true
     }
   ]
 }
