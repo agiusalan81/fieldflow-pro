@@ -7,7 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useProfile, isOffice, ROLE_LABEL, type Role } from "@/lib/profile";
 import { MODULES, ROLES, canSee, usePermRows, useCan, type ModuleKey } from "@/lib/permissions";
 import { useCompanyRules, FONT_CHOICES, applyTypography, DEFAULT_THEME, type Typography, type TextStyle } from "@/lib/company";
-import { PhoneInput, splitPhone } from "@/components/client-manager";
+import { PhoneInput, splitPhone, COUNTRIES } from "@/components/client-manager";
+import { CURRENCIES } from "@/lib/locale";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DocumentSettings } from "@/components/document-settings";
 import { DocumentLibrary } from "@/components/document-library";
@@ -73,17 +74,19 @@ function CompanyPage() {
 function HoursTab({ companyId }: { companyId: string }) {
   const { data } = useCompanyRules();
   const qc = useQueryClient();
-  const [f, setF] = useState<null | { work_days: number[]; work_start: string; work_end: string; after_hours_rate: number; saturday_rate: number; sunday_rate: number; holiday_rate: number; holidays: string; renewal_notice_days: number; industry: string; idle_timeout_minutes: number; break_enabled: boolean; breaks_per_shift: number; break_minutes: number }>(null);
+  const [f, setF] = useState<null | { work_days: number[]; work_start: string; work_end: string; after_hours_rate: number; saturday_rate: number; sunday_rate: number; holiday_rate: number; holidays: string; renewal_notice_days: number; industry: string; idle_timeout_minutes: number; break_enabled: boolean; breaks_per_shift: number; break_minutes: number; currency: string; default_country_code: string; equipment_label: string; equipment_categories: string }>(null);
   useEffect(() => {
-    if (data && !f) setF({ ...data.rules, holidays: data.rules.public_holidays.join(", "), renewal_notice_days: data.renewalDays, industry: data.industry, idle_timeout_minutes: data.idleTimeout, break_enabled: data.breaks.enabled, breaks_per_shift: data.breaks.count, break_minutes: data.breaks.minutes });
+    if (data && !f) setF({ ...data.rules, holidays: data.rules.public_holidays.join(", "), renewal_notice_days: data.renewalDays, industry: data.industry, idle_timeout_minutes: data.idleTimeout, break_enabled: data.breaks.enabled, breaks_per_shift: data.breaks.count, break_minutes: data.breaks.minutes, currency: data.locale.currency, default_country_code: data.locale.countryCode, equipment_label: data.locale.equipmentLabel, equipment_categories: data.equipmentCategories.join(", ") });
   }, [data, f]);
   if (!f) return null;
   const save = async () => {
     const holidays = f.holidays.split(/[,\s]+/).map((d) => d.trim()).filter(Boolean);
     if (holidays.some((d) => !/^\d{4}-\d{2}-\d{2}$/.test(d))) { toast.error("Public holidays must be dates like 2026-12-25"); return; }
     if (f.work_end <= f.work_start) { toast.error("Closing time must be after opening time"); return; }
-    const { holidays: _h, ...rest } = f;
-    const { error } = await supabase.from("company_settings").upsert({ ...rest, public_holidays: holidays, company_id: companyId });
+    const { holidays: _h, equipment_categories: cats, ...rest } = f;
+    const equipment_categories = cats.split(",").map((c) => c.trim()).filter(Boolean);
+    if (!/^\+\d{1,4}$/.test(f.default_country_code)) { toast.error("Country code must look like +356"); return; }
+    const { error } = await supabase.from("company_settings").upsert({ ...rest, equipment_categories, public_holidays: holidays, company_id: companyId });
     if (error) { toast.error(error.message); return; }
     toast.success("Company hours saved");
     qc.invalidateQueries({ queryKey: ["company-settings"] });
@@ -122,6 +125,25 @@ function HoursTab({ companyId }: { companyId: string }) {
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5"><Label>Contract renewal reminder (days before expiry)</Label><Input className="h-11" type="number" min={1} value={f.renewal_notice_days} onChange={(e) => setF({ ...f, renewal_notice_days: Number(e.target.value) || 30 })} /></div>
         <div className="space-y-1.5"><Label>Line of work</Label><Input className="h-11" placeholder="e.g. Lifts & escalators" value={f.industry} onChange={(e) => setF({ ...f, industry: e.target.value })} /></div>
+      </div>
+      <div className="space-y-3 rounded-lg border p-4">
+        <h3 className="text-sm font-medium">Region & wording</h3>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="space-y-1.5"><Label>Currency</Label>
+            <Select value={f.currency} onValueChange={(v) => setF({ ...f, currency: v })}>
+              <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+              <SelectContent>{CURRENCIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5"><Label>Default phone country</Label>
+            <Select value={f.default_country_code} onValueChange={(v) => setF({ ...f, default_country_code: v })}>
+              <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+              <SelectContent>{COUNTRIES.map(([c, n]) => <SelectItem key={c + n} value={c}>{n} ({c})</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5"><Label>Equipment word on client notes</Label><Input className="h-11" placeholder="lift, chiller, boiler…" value={f.equipment_label} onChange={(e) => setF({ ...f, equipment_label: e.target.value })} /></div>
+        </div>
+        <div className="space-y-1.5"><Label>Equipment types (comma separated)</Label><Input className="h-11" placeholder="Elevator, Escalator, Custom" value={f.equipment_categories} onChange={(e) => setF({ ...f, equipment_categories: e.target.value })} /></div>
       </div>
       <div className="space-y-1.5 sm:max-w-xs"><Label>Auto sign-out after inactivity</Label>
         <Select value={String(f.idle_timeout_minutes)} onValueChange={(v) => setF({ ...f, idle_timeout_minutes: Number(v) })}>

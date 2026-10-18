@@ -1,3 +1,4 @@
+import { tenantLocale } from "@/lib/locale";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -55,7 +56,7 @@ export function BillingReview({ sheetId, onClose }: { sheetId: string | null; on
     const e = data.estimates.find((x) => x.id === estId);
     const base = draftLines({ source: src, hours, company: data.company, client: clientRates, contractDiscountPct: discount, estimate: e ? { title: e.title, price: Number(e.client_price ?? e.quoted_amount ?? 0), fixedLabor: e.fixed_labor } : null });
     const parts: Line[] = src === "estimate" ? [] : data.s.jobsheet_parts.map((p) => ({ description: p.part_description, qty: Number(p.quantity), unit_price: 0, kind: "parts" }));
-    const fee = returnFeeLine(Number(data.s.return_fee_hours ?? 0), ratesFor(src === "estimate" ? "company" : src, data.company, clientRates));
+    const fee = returnFeeLine(Number(data.s.return_fee_hours ?? 0), ratesFor(src === "estimate" ? "company" : src, data.company, clientRates), tenantLocale().equipmentLabel);
     return [...base, ...(fee ? [fee] : []), ...parts];
   };
 
