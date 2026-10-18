@@ -14,6 +14,8 @@ import { VoiceDictation } from "@/components/voice-dictation";
 import { sendJobSheetEmail } from "@/lib/sendJobSheetEmail";
 import { TechnicianPicker } from "@/components/technician-picker";
 import { SearchSelect } from "@/components/search-select";
+import { TimePicker } from "@/components/time-picker";
+import { NumInput } from "@/components/num-input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AppShell, StatusBadge, BackButton } from "@/components/app-shell";
