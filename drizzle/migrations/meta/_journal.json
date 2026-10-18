@@ -218,6 +218,13 @@
       "when": 1792321629606,
       "tag": "0030_tenant_locale_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1792361942271,
+      "tag": "0031_document_masters_and_portfolio_controls",
+      "breakpoints": true
     }
   ]
 }

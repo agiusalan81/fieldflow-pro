@@ -474,12 +474,15 @@ export type Database = {
       contract_types: {
         Row: {
           annual_price: number
+          base_document_id: string | null
+          checklist_document_id: string | null
           company_id: string
           contract_category: string | null
           created_at: string
           equipment_category: string
           id: string
           labour_discount_pct: number
+          lifecycle: string
           name: string
           parts_discount_pct: number
           tier: string | null
@@ -487,12 +490,15 @@ export type Database = {
         }
         Insert: {
           annual_price?: number
+          base_document_id?: string | null
+          checklist_document_id?: string | null
           company_id: string
           contract_category?: string | null
           created_at?: string
           equipment_category?: string
           id?: string
           labour_discount_pct?: number
+          lifecycle?: string
           name: string
           parts_discount_pct?: number
           tier?: string | null
@@ -500,18 +506,35 @@ export type Database = {
         }
         Update: {
           annual_price?: number
+          base_document_id?: string | null
+          checklist_document_id?: string | null
           company_id?: string
           contract_category?: string | null
           created_at?: string
           equipment_category?: string
           id?: string
           labour_discount_pct?: number
+          lifecycle?: string
           name?: string
           parts_discount_pct?: number
           tier?: string | null
           visits_per_year?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "contract_types_base_document_id_fkey"
+            columns: ["base_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_masters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_types_checklist_document_id_fkey"
+            columns: ["checklist_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_masters"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "contract_types_company_id_fkey"
             columns: ["company_id"]
@@ -628,6 +651,138 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_attachments: {
+        Row: {
+          client_id: string
+          company_id: string
+          created_at: string
+          id: string
+          master_id: string
+          site_id: string | null
+          snapshot: Json
+        }
+        Insert: {
+          client_id: string
+          company_id: string
+          created_at?: string
+          id?: string
+          master_id: string
+          site_id?: string | null
+          snapshot?: Json
+        }
+        Update: {
+          client_id?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          master_id?: string
+          site_id?: string | null
+          snapshot?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_attachments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_attachments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_attachments_master_id_fkey"
+            columns: ["master_id"]
+            isOneToOne: false
+            referencedRelation: "document_masters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_attachments_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_masters: {
+        Row: {
+          body: string
+          cloned_from: string | null
+          company_id: string
+          created_at: string
+          created_by: string
+          id: string
+          items: string[]
+          kind: string
+          name: string
+          revision: number
+          source_document_id: string | null
+          state: string
+          trade: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string
+          cloned_from?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          items?: string[]
+          kind?: string
+          name: string
+          revision?: number
+          source_document_id?: string | null
+          state?: string
+          trade?: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          cloned_from?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          items?: string[]
+          kind?: string
+          name?: string
+          revision?: number
+          source_document_id?: string | null
+          state?: string
+          trade?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_masters_cloned_from_fkey"
+            columns: ["cloned_from"]
+            isOneToOne: false
+            referencedRelation: "document_masters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_masters_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_masters_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "company_documents"
             referencedColumns: ["id"]
           },
         ]
@@ -1502,6 +1657,7 @@ export type Database = {
           site_id: string | null
           start_date: string
           status: string
+          terms_snapshot: Json
         }
         Insert: {
           annual_price?: number
@@ -1520,6 +1676,7 @@ export type Database = {
           site_id?: string | null
           start_date: string
           status?: string
+          terms_snapshot?: Json
         }
         Update: {
           annual_price?: number
@@ -1538,6 +1695,7 @@ export type Database = {
           site_id?: string | null
           start_date?: string
           status?: string
+          terms_snapshot?: Json
         }
         Relationships: [
           {
@@ -1795,6 +1953,385 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_audit: {
+        Row: {
+          action: string
+          actor_id: string | null
+          after_value: Json | null
+          before_value: Json | null
+          created_at: string
+          entity: string
+          entity_id: string | null
+          id: number
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          after_value?: Json | null
+          before_value?: Json | null
+          created_at?: string
+          entity: string
+          entity_id?: string | null
+          id?: never
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          after_value?: Json | null
+          before_value?: Json | null
+          created_at?: string
+          entity?: string
+          entity_id?: string | null
+          id?: never
+        }
+        Relationships: []
+      }
+      platform_catalog: {
+        Row: {
+          branding_required: boolean
+          created_at: string
+          id: string
+          included_seats: number
+          kind: string
+          modules: string[]
+          monthly_price: number
+          name: string
+          product_id: string
+          quarterly_price: number
+          referral_reward: number
+          sort_order: number
+          state: string
+          yearly_price: number
+        }
+        Insert: {
+          branding_required?: boolean
+          created_at?: string
+          id?: string
+          included_seats?: number
+          kind?: string
+          modules?: string[]
+          monthly_price?: number
+          name: string
+          product_id: string
+          quarterly_price?: number
+          referral_reward?: number
+          sort_order?: number
+          state?: string
+          yearly_price?: number
+        }
+        Update: {
+          branding_required?: boolean
+          created_at?: string
+          id?: string
+          included_seats?: number
+          kind?: string
+          modules?: string[]
+          monthly_price?: number
+          name?: string
+          product_id?: string
+          quarterly_price?: number
+          referral_reward?: number
+          sort_order?: number
+          state?: string
+          yearly_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_catalog_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "platform_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_conversions: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string
+          referral_id: string
+          reward_amount: number
+          state: string
+          subscription_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string
+          referral_id: string
+          reward_amount?: number
+          state?: string
+          subscription_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string
+          referral_id?: string
+          reward_amount?: number
+          state?: string
+          subscription_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_conversions_referral_id_fkey"
+            columns: ["referral_id"]
+            isOneToOne: false
+            referencedRelation: "platform_referrals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_conversions_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: true
+            referencedRelation: "platform_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_ledger: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          entry_date: string
+          id: string
+          kind: string
+          notes: string
+          product_id: string
+        }
+        Insert: {
+          amount?: number
+          category?: string
+          created_at?: string
+          entry_date?: string
+          id?: string
+          kind: string
+          notes?: string
+          product_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          entry_date?: string
+          id?: string
+          kind?: string
+          notes?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_ledger_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "platform_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_overrides: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          ends_at: string
+          id: string
+          module: string
+          reason: string
+          starts_at: string
+          subscription_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          ends_at?: string
+          id?: string
+          module: string
+          reason?: string
+          starts_at?: string
+          subscription_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          ends_at?: string
+          id?: string
+          module?: string
+          reason?: string
+          starts_at?: string
+          subscription_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_overrides_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "platform_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_products: {
+        Row: {
+          active: boolean
+          app_url: string
+          created_at: string
+          currency: string
+          id: string
+          modules: string[]
+          name: string
+          slug: string
+          trial_days: number
+        }
+        Insert: {
+          active?: boolean
+          app_url?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          modules?: string[]
+          name: string
+          slug: string
+          trial_days?: number
+        }
+        Update: {
+          active?: boolean
+          app_url?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          modules?: string[]
+          name?: string
+          slug?: string
+          trial_days?: number
+        }
+        Relationships: []
+      }
+      platform_referrals: {
+        Row: {
+          code: string
+          company_id: string | null
+          created_at: string
+          id: string
+          kind: string
+          owner_id: string
+          product_id: string
+          reward_amount: number
+          reward_type: string
+          state: string
+        }
+        Insert: {
+          code?: string
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          owner_id?: string
+          product_id: string
+          reward_amount?: number
+          reward_type?: string
+          state?: string
+        }
+        Update: {
+          code?: string
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          owner_id?: string
+          product_id?: string
+          reward_amount?: number
+          reward_type?: string
+          state?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_referrals_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_referrals_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "platform_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_subscriptions: {
+        Row: {
+          agreed_price: number
+          cadence: string
+          company_id: string | null
+          created_at: string
+          external_tenant_id: string | null
+          id: string
+          pack_ids: string[]
+          plan_id: string | null
+          product_id: string
+          seats: number
+          status: string
+          tenant_name: string
+          trial_ends_at: string
+        }
+        Insert: {
+          agreed_price?: number
+          cadence?: string
+          company_id?: string | null
+          created_at?: string
+          external_tenant_id?: string | null
+          id?: string
+          pack_ids?: string[]
+          plan_id?: string | null
+          product_id: string
+          seats?: number
+          status?: string
+          tenant_name?: string
+          trial_ends_at?: string
+        }
+        Update: {
+          agreed_price?: number
+          cadence?: string
+          company_id?: string | null
+          created_at?: string
+          external_tenant_id?: string | null
+          id?: string
+          pack_ids?: string[]
+          plan_id?: string | null
+          product_id?: string
+          seats?: number
+          status?: string
+          tenant_name?: string
+          trial_ends_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_subscriptions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "platform_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_subscriptions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "platform_products"
             referencedColumns: ["id"]
           },
         ]
@@ -2102,6 +2639,7 @@ export type Database = {
           company_id: string
           created_at: string
           id: string
+          platform_owner: boolean
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
@@ -2109,6 +2647,7 @@ export type Database = {
           company_id: string
           created_at?: string
           id?: string
+          platform_owner?: boolean
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
@@ -2116,6 +2655,7 @@ export type Database = {
           company_id?: string
           created_at?: string
           id?: string
+          platform_owner?: boolean
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
@@ -2196,6 +2736,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      company_module_access: {
+        Args: { _company: string; _module: string }
+        Returns: boolean
+      }
       current_company_id: { Args: never; Returns: string }
       dwr_sheet_entries: {
         Args: { _date: string; _user: string }
@@ -2237,6 +2781,7 @@ export type Database = {
         Args: { _date: string; _user: string }
         Returns: boolean
       }
+      is_platform_owner: { Args: never; Returns: boolean }
       my_role: { Args: never; Returns: Database["public"]["Enums"]["app_role"] }
       save_employee_payroll_setup: {
         Args: {
