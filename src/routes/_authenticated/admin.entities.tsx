@@ -1,3 +1,4 @@
+import { tenantLocale } from "@/lib/locale";
 import { ClientRates } from "@/components/integrations-settings";
 import { ClientPreapproval } from "@/components/client-preapproval";
 import { createFileRoute } from "@tanstack/react-router";

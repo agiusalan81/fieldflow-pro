@@ -1,3 +1,4 @@
+import { tenantLocale } from "@/lib/locale";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -135,7 +136,7 @@ export function ContactsManager({ clientId, companyId, siteId, title = "Contacts
                 <SelectContent>{others.map((c) => <SelectItem key={c.id} value={c.id}>{c.first_name} {c.last_name}{c.role_title ? ` · ${c.role_title}` : ""}</SelectItem>)}</SelectContent>
               </Select>
             )}
-            <Button size="sm" variant="outline" onClick={() => { setF(emptyContact); setEditing("new"); }}><Plus className="mr-1 h-4 w-4" />Add contact</Button>
+            <Button size="sm" variant="outline" onClick={() => { setF(emptyContact()); setEditing("new"); }}><Plus className="mr-1 h-4 w-4" />Add contact</Button>
           </div>
         )}
       </div>
