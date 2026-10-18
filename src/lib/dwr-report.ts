@@ -7,7 +7,7 @@ export type { DwrRecord };
 const localDate = (iso: string) => { const d = new Date(iso); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 
 /** Builds and files the daily works report for a shift that just ended. */
-export async function fileDailyReport(p: { userId: string; companyId: string; shiftId: string; startedAt: string; endedAt: string; rules: OvertimeRules; breaks: BreakRules; overnightBefore?: string }) {
+export async function fileDailyReport(p: { userId: string; companyId: string; shiftId: string; startedAt: string; endedAt: string; rules: OvertimeRules; breaks: BreakRules; overnightBefore?: string | undefined }) {
   const date = localDate(p.startedAt);
   const next = localDate(new Date(new Date(p.startedAt).getTime() + 86_400_000).toISOString());
   const [{ data: day }, { data: internal }, { data: night }] = await Promise.all([
