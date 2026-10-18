@@ -49,7 +49,9 @@ const adminNav: NavItem[] = [
   { group: "My workspace", to: "/leave", label: "My leave", icon: CalendarDays },
   { group: "My workspace", to: "/messages", label: "Team chat", icon: MessageSquare },
   { group: "Administration", to: "/company", label: "Company", icon: Building2, module: "team" },
-  { group: "Administration", to: "/payroll", label: "Payroll & payslips", icon: Calculator, office: true },
+  { group: "Payroll", to: "/payroll/wages", label: "Employee wages setup", icon: Settings, office: true },
+  { group: "Payroll", to: "/payroll/hours", label: "Hours worked", icon: Clock, office: true },
+  { group: "Payroll", to: "/payroll/payslips", label: "Payslips", icon: Calculator, office: true },
   { group: "Administration", to: "/admin/fields", label: "Fields & lookups", icon: SlidersHorizontal, module: "fields" },
   { group: "Administration", to: "/settings", label: "Settings", icon: Settings },
 ];

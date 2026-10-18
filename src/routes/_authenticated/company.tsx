@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -145,7 +145,7 @@ function HoursTab({ companyId }: { companyId: string }) {
   );
 }
 
-type Phones = { office_phone: string; whatsapp_phone: string; emergency_phone: string; company_email: string; company_address: string };
+type Phones = { office_phone: string; whatsapp_phone: string; emergency_phone: string; company_email: string; company_address: string; pe_number: string };
 
 /** Shrinks an image to fit 400×400 and returns a PNG data URL, so it embeds in PDFs and emails. */
 function shrinkImage(file: File): Promise<string> {
@@ -198,7 +198,7 @@ function ProfileTab({ companyId }: { companyId: string }) {
   const qc = useQueryClient();
   const [p, setP] = useState<Phones | null>(null);
   const [t, setT] = useState<Typography | null>(null);
-  useEffect(() => { if (data && !p) { setP(data.phones); setT(data.theme); } }, [data, p]);
+  useEffect(() => { if (data && !p) { setP({...data.phones,pe_number:data.peNumber}); setT(data.theme); } }, [data, p]);
   useEffect(() => { if (t) applyTypography(t); }, [t]);
   if (!p || !t) return null;
   const save = async () => {
@@ -250,6 +250,7 @@ function ProfileTab({ companyId }: { companyId: string }) {
           {phone("emergency_phone", "24/7 emergency line")}
           <div className="space-y-1.5"><Label>Company email</Label><Input className="h-11" type="email" value={p.company_email} onChange={(e) => setP({ ...p, company_email: e.target.value })} /></div>
         </div>
+        <div className="space-y-1.5"><Label htmlFor="company-pe-number">PE number (Principal Employer)</Label><Input id="company-pe-number" value={p.pe_number} onChange={e=>setP({...p,pe_number:e.target.value})}/></div>
         <div className="space-y-1.5"><Label>Office address</Label><Input className="h-11" value={p.company_address} onChange={(e) => setP({ ...p, company_address: e.target.value })} /></div>
       </section>
       <section className="space-y-4 rounded-xl border bg-card p-5">
@@ -334,6 +335,7 @@ function TeamTab({ role, companyId, meId }: { role: Role; companyId: string; meI
               return (
                 <li key={u.id} className="flex items-center gap-3 px-5 py-3">
                   <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-foreground">{u.full_name} <span className="font-mono text-xs text-muted-foreground">{u.employee_id}</span></p><p className="truncate text-xs text-muted-foreground">{u.email}</p></div>
+                  {canEditRoles && <Button asChild size="sm" variant="outline"><Link to="/payroll/wages">Payroll setup</Link></Button>}
                   {editable ? (
                     <Select value={r} onValueChange={(v) => changeRole(u.id, v as Role)}>
                       <SelectTrigger className="h-9 w-[170px]"><SelectValue /></SelectTrigger>

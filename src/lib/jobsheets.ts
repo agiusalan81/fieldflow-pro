@@ -68,8 +68,8 @@ export function leaveHours(start: string, end: string, hoursPerDay = 8) {
   return n * hoursPerDay;
 }
 
-export function remainingBalance(b: { base: number; ph: number; taken: number; pending: number }) {
-  return b.base + b.ph - b.taken - b.pending;
+export function remainingBalance(b: { base: number; ph: number; taken: number; pending: number; carried?: number }) {
+  return b.base + b.ph + (b.carried ?? 0) - b.taken - b.pending;
 }
 
 export function missingSignOff(s: { client_full_name?: string | null; client_id_card_no?: string | null; signature?: string | null }) {
@@ -211,7 +211,7 @@ export const contractName = (category: string, tier: string) => [category, tier 
 export const needsClockIn = (_role: string, openShiftTypes: string[]) => !openShiftTypes.includes("shift");
 
 /** Applicant balance before approving one pending Annual request (its hours are already counted in pending). */
-export function approvalBalance(b: { base: number; ph: number; taken: number; pending: number }, requestHours: number) {
+export function approvalBalance(b: { base: number; ph: number; taken: number; pending: number; carried?: number }, requestHours: number) {
   const available = remainingBalance({ ...b, pending: b.pending - requestHours });
   const after = available - requestHours;
   return { available, after, exceedsBy: after < 0 ? -after : 0 };

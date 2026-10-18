@@ -359,6 +359,7 @@ export type Database = {
           note_presets: Json
           office_phone: string | null
           pdf_template: Json
+          pe_number: string | null
           public_holidays: string[]
           renewal_notice_days: number
           saturday_rate: number
@@ -393,6 +394,7 @@ export type Database = {
           note_presets?: Json
           office_phone?: string | null
           pdf_template?: Json
+          pe_number?: string | null
           public_holidays?: string[]
           renewal_notice_days?: number
           saturday_rate?: number
@@ -427,6 +429,7 @@ export type Database = {
           note_presets?: Json
           office_phone?: string | null
           pdf_template?: Json
+          pe_number?: string | null
           public_holidays?: string[]
           renewal_notice_days?: number
           saturday_rate?: number
@@ -546,6 +549,7 @@ export type Database = {
           id: string
           ot15_hours: number
           ot20_hours: number
+          overtime_rules: Json | null
           report_date: string
           rows: Json
           shift_end: string
@@ -562,6 +566,7 @@ export type Database = {
           id?: string
           ot15_hours?: number
           ot20_hours?: number
+          overtime_rules?: Json | null
           report_date: string
           rows?: Json
           shift_end: string
@@ -578,6 +583,7 @@ export type Database = {
           id?: string
           ot15_hours?: number
           ot20_hours?: number
+          overtime_rules?: Json | null
           report_date?: string
           rows?: Json
           shift_end?: string
@@ -618,6 +624,7 @@ export type Database = {
           hourly_rate: number
           id: string
           notes: string | null
+          payroll_config: Json
           sick_full_hours: number
           sick_half_hours: number
           tax_reference: string | null
@@ -630,6 +637,7 @@ export type Database = {
           hourly_rate?: number
           id?: string
           notes?: string | null
+          payroll_config?: Json
           sick_full_hours?: number
           sick_half_hours?: number
           tax_reference?: string | null
@@ -642,6 +650,7 @@ export type Database = {
           hourly_rate?: number
           id?: string
           notes?: string | null
+          payroll_config?: Json
           sick_full_hours?: number
           sick_half_hours?: number
           tax_reference?: string | null
@@ -1743,6 +1752,38 @@ export type Database = {
           },
         ]
       }
+      payroll_statutory_years: {
+        Row: {
+          company_id: string
+          config: Json
+          id: string
+          tax_year: number
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          config?: Json
+          id?: string
+          tax_year: number
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          config?: Json
+          id?: string
+          tax_year?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_statutory_years_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_permissions: {
         Row: {
           company_id: string
@@ -1987,6 +2028,8 @@ export type Database = {
       user_leave_balances: {
         Row: {
           base_entitlement_hours: number
+          carried_forward_hours: number
+          carried_forward_year: number | null
           company_id: string
           pending_hours: number
           public_holiday_credit_hours: number
@@ -1995,6 +2038,8 @@ export type Database = {
         }
         Insert: {
           base_entitlement_hours?: number
+          carried_forward_hours?: number
+          carried_forward_year?: number | null
           company_id: string
           pending_hours?: number
           public_holiday_credit_hours?: number
@@ -2003,6 +2048,8 @@ export type Database = {
         }
         Update: {
           base_entitlement_hours?: number
+          carried_forward_hours?: number
+          carried_forward_year?: number | null
           company_id?: string
           pending_hours?: number
           public_holiday_credit_hours?: number
@@ -2163,6 +2210,16 @@ export type Database = {
       }
       is_company_manager: { Args: never; Returns: boolean }
       my_role: { Args: never; Returns: Database["public"]["Enums"]["app_role"] }
+      save_employee_payroll_setup: {
+        Args: {
+          _config: Json
+          _opening: Json
+          _user: string
+          _wage: Json
+          _year: number
+        }
+        Returns: undefined
+      }
       save_sheet_snapshot: {
         Args: {
           _expected: string

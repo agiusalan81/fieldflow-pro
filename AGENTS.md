@@ -10,18 +10,18 @@
 <!-- LOVABLE:END -->
 
 ## Project rules
-- Payroll rules live in src/lib/payroll.ts with tests; confidential settings and immutable reviewed payslips use office-only tenant RLS, worked hours come only from DWR and roster changes are versioned. Why: prevent wage disclosure, double-counting and retroactive changes to issued payslips; statutory deductions are explicitly office-entered, not an automated tax engine.
-- User testing previews use isolated in-memory actor-scoped state and opt-in read profiles; the removable tenant control is gated by real superuser role, and a root boundary blocks non-preview screens. Why: inspect personal data without changing sessions, offline ownership or write/audit identity.
+- Payroll uses tested payroll.ts/payroll-statutory.ts rules, office-only tenant RLS, DWR worked hours, versioned rosters and office-approved annual tables; category suggestions require review. Why: prevent disclosure, double-counting and retrospective changes.
+- User preview is removable, real-superuser-only, in-memory and actor-scoped with opt-in reads; the root blocks other screens. Why: inspect without changing sessions, offline ownership or audit identity.
 - Tenant isolation is enforced by RLS on company_id via current_company_id(); UI never filters by company itself. Why: one source of truth for access.
-- Roles live only in public.user_roles (superuser/admin/supervisor/technician), read by has_role/has_company_role/is_company_manager in RLS; users.role is a deprecated display mirror. Why: roles on the profile table enable privilege escalation.
+- Roles live only in public.user_roles; RLS uses has_role/has_company_role/is_company_manager. users.role is a deprecated display mirror. Why: profile roles enable privilege escalation.
 - "View As" mode and the per-role module switches (role_permissions, src/lib/permissions.ts) are UI visibility only; data access always comes from user_roles in RLS. Why: a display setting must never grant data access.
 - Staff join via single-use invite tokens redeemed in the auth signup trigger. Why: role assignment must happen server-side.
-- Job sheet business rules (sign-off validation, leave hours, balance, overtime split, checklist, renewal window) live in src/lib/jobsheets.ts with tests beside it. Why: keeps rules testable apart from screens.
+- Sign-off, leave/balance, overtime, checklist and renewal rules live in tested src/lib/jobsheets.ts. Why: separate rules from screens.
 - Tenant typography lives in company_settings.theme and is applied as --tenant-* CSS variables by AppShell (applyTypography in src/lib/company.ts). Why: one place styles every screen without touching components.
 - Pending works close automatically via the close_pending_on_followup DB trigger when the linked follow-up sheet completes. Why: works even if the technician's app closes mid-submit.
 - Client PDF layout, T&Cs and note presets live in company_settings (pdf_template/terms/note_presets) and are parsed only through src/lib/documents.ts. Why: the settings editor and the email PDF must read them identically.
-- Daily works reports are filed client-side at clock-out (src/lib/dwr-report.ts) into daily_work_reports; assisting-tech time comes from dwr_sheet_entries() matching time-log initials. Why: one ledger managers can filter, no second job sheet needed.
-- DWR, mandatory-break, sheet-search and standby-rotation rules live in src/lib/dwr.ts with tests beside it. Why: keeps rules testable apart from screens.
+- src/lib/dwr-report.ts files DWR at clock-out; dwr_sheet_entries() matches initials for assisting time. Why: one ledger without duplicate sheets.
+- DWR, breaks, sheet search and standby rules live in tested src/lib/dwr.ts. Why: separate rules from screens.
 - Clock-in before creating a job sheet is enforced by the job_sheets_require_clock_in DB trigger for every role. Why: UI checks alone can be bypassed.
 
 - Billing pricing rules (estimate > contract > client rate card > company default) live in src/lib/billing.ts; integrations config and message templates are parsed only through src/lib/integrations.ts. Why: review screen, settings and future exports must price and render identically.
@@ -33,3 +33,9 @@
 - job_sheets has two FKs to users; always embed as users!job_sheets_assigned_technician_id_fkey(...). Why: an unhinted embed fails.
 - Monthly signing batches are authenticated, creator-owned records finalized with transactional signing and the shared PDF builder; delivery state is stored before sending. Why: preserves partial sessions and prevents duplicate automatic emails.
 - Offline draft snapshots are account-scoped in IndexedDB and sync through an optimistic-locking transactional RPC; registration lives only in the guarded PWA wrapper. Why: avoids cross-account replay, partial saves, stale overwrites and preview caches.
+
+- Payroll leaf routes share src/components/payroll-page.tsx. Why: one private payroll experience.
+- Overtime site details use stored DWR activity intervals and their captured rules; historical reports without rules show associated shift sites only. Why: never invent site allocation or recalculate old totals from changed rules.
+- Leave opening carry-forward is year-qualified on the shared balance; payslips snapshot leave without consuming it again. Why: approved requests already drive leave usage.
+
+- Payroll/opening leave save via an invoker-rights transaction; a trigger blocks issued-slip edits/deletes and mismatched totals. Why: prevent partial saves and preserve reviewed records.

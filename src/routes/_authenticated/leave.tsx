@@ -68,6 +68,7 @@ function LeavePage() {
   const b = {
     base: Number(bal?.base_entitlement_hours ?? 192),
     ph: Number(bal?.public_holiday_credit_hours ?? 0),
+    carried: bal?.carried_forward_year===new Date().getFullYear()?Number(bal.carried_forward_hours):0,
     taken: annual.filter((r) => r.status === "approved").reduce((s, r) => s + Number(r.total_hours), 0),
     pending: annual.filter((r) => r.status === "pending").reduce((s, r) => s + Number(r.total_hours), 0),
   };
@@ -109,7 +110,7 @@ function LeavePage() {
       <div className="space-y-5">
         <section className="rounded-xl border bg-card p-4">
           <div className="grid grid-cols-3 gap-2 text-center sm:grid-cols-5">
-            {[["Base", b.base], ["PH credit", b.ph], ["Taken", -b.taken], ["Pending", -b.pending]].map(([l, v]) => (
+            {[["Base", b.base], ["PH credit", b.ph], ["Carried forward", b.carried], ["Taken", -b.taken], ["Pending", -b.pending]].map(([l, v]) => (
               <div key={l as string} className="rounded-lg bg-muted/60 p-2">
                 <p className="text-[11px] text-muted-foreground">{l}</p>
                 <p className="font-display text-lg tabular-nums text-foreground">{(v as number) < 0 ? "−" : ""}{Math.abs(v as number).toFixed(2)}</p>
