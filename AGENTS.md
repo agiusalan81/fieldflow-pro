@@ -37,3 +37,5 @@
 - Payroll sections reuse src/components/payroll-page.tsx behind separate leaf routes; annual statutory tables and employee payroll configuration retain office-only RLS. Why: one calculation engine and private onboarding data across payroll screens.
 - Overtime site details use stored DWR activity intervals and their captured rules; historical reports without rules show associated shift sites only. Why: never invent site allocation or recalculate old totals from changed rules.
 - Leave opening carry-forward is year-qualified on the shared balance; payslips snapshot leave without consuming it again. Why: approved requests already drive leave usage.
+
+- Employee payroll and opening leave setup save through an invoker-rights transactional RPC; issued payslips have an immutable snapshot trigger with matching stored totals. Why: prevent partial saves and preserve reviewed financial records.

@@ -1,7 +1,7 @@
 # Roadmap
-- [ ] Payroll update: submenu, monthly/full-time and hourly employment, year-configurable tax/SSC, allowances/bonuses, PE number, leave-linked payslips, overtime site detail and employee category suggestions
+- [x] Payroll update: submenu, monthly/full-time and hourly employment, year-configurable tax/SSC, allowances/bonuses, PE number, leave-linked payslips, overtime site detail and employee category suggestions (91 focused tests passed; signed-out access verified)
 - [x] Payroll: office-only employee overview, normal/leave/sick/1.5×/2× hours, prorated adjustable standby allowance (33 payroll/roster tests passed)
-- [x] Payroll: annual employee sick entitlements, wage settings, reviewed wage calculations and PDF payslips; statutory deductions entered manually by office
+- [x] Payroll: annual employee sick entitlements, wage settings, reviewed wage calculations and PDF payslips; annual statutory deductions calculated from office-approved tables; additional deductions reviewed by office
 - [ ] Verify payroll settings, employee calculations and issued PDF signed in as office admin (blocked: preview sign-in; own-account session could not be minted)
 - [x] Roster setup caps technicians per shift at registered technician count, validates before saving and handles zero technicians (19 roster/DWR tests passed; signed-in save check awaits preview sign-in)
 - [x] Superuser-only read-only user testing dropdown, scoped personal pages and reset; isolated for future SaaS management (14 tests passed)
