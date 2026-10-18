@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_RULES, type OvertimeRules } from "@/lib/jobsheets";
+import { parseTemplate, documentLabel } from "@/lib/documents";
 
 export function useCompanyRules() {
   return useQuery({
@@ -17,6 +18,7 @@ export function useCompanyRules() {
         breaks: { enabled: data?.break_enabled ?? true, count: data?.breaks_per_shift ?? 1, minutes: data?.break_minutes ?? 30 },
         standby: { start: data?.standby_start ?? new Date().toISOString().slice(0, 10), rotationDays: data?.standby_rotation_days ?? 7, perShift: data?.standby_per_shift ?? 1, order: data?.standby_order ?? [] },
         theme: { ...DEFAULT_THEME, ...((data?.theme ?? {}) as Partial<Typography>) },
+        documentTemplate: parseTemplate(data?.pdf_template),
         logo: data?.logo_data ?? "",
         locale: { currency: data?.currency ?? "EUR", countryCode: data?.default_country_code ?? "+356", equipmentLabel: data?.equipment_label ?? "lift" },
         equipmentCategories: data?.equipment_categories ?? EQUIPMENT_CATEGORIES,
@@ -26,6 +28,12 @@ export function useCompanyRules() {
     },
     staleTime: 60_000,
   });
+}
+
+export function useTerminology() {
+  const { data } = useCompanyRules();
+  const t = parseTemplate(data?.documentTemplate);
+  return (key: string) => documentLabel(t, key);
 }
 
 export const EQUIPMENT_CATEGORIES = ["Elevator", "Escalator", "Custom"];

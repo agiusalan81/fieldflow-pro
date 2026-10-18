@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_TERMS, moveBlock, parseTemplate, termsFor, visibleBlocks } from "./documents";
+import { DEFAULT_TERMS, moveBlock, parseTemplate, termsFor, visibleBlocks, documentLabel, DEFAULT_TEMPLATE } from "./documents";
 
 describe("pdf template", () => {
+  it("shares company wording between entry and documents", () => { expect(documentLabel(parseTemplate({ labels: { equipment: "Chiller Unit" } }), "equipment")).toBe("Chiller Unit"); });
+  it("supports five selectable styles", () => { for (const stylePreset of ["modern", "technical", "bold", "classic", "compact"]) expect(parseTemplate({ stylePreset }).stylePreset).toBe(stylePreset); });
+  it("rejects unsafe colour and label values", () => { const t = parseTemplate({ primaryColor: "url(evil)", labels: { equipment: 1 } }); expect(t.primaryColor).toBe(DEFAULT_TEMPLATE.primaryColor); expect(documentLabel(t, "equipment")).toBe("Equipment"); });
   it("hidden blocks are not printed", () => {
     const t = parseTemplate({ order: ["work", "client"], hidden: ["client"] });
     expect(visibleBlocks(t)[0]).toBe("work");
