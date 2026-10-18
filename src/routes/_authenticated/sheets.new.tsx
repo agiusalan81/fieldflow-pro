@@ -12,6 +12,8 @@ export const Route = createFileRoute("/_authenticated/sheets/new")({
   validateSearch: (s: Record<string, unknown>): { jobId?: string | undefined } => ({ jobId: typeof s["jobId"] === "string" ? s["jobId"] : undefined }),
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "New job sheet — FieldOps" },
       { name: "description", content: "Start a new job sheet." },
       { property: "og:title", content: "New job sheet — FieldOps" },

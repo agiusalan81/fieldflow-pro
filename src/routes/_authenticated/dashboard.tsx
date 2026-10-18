@@ -22,6 +22,8 @@ import { NoAccessButton, DepartureRequests, DepartureAlerts } from "@/components
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "Dashboard — FieldOps" },
       { name: "description", content: "Your FieldOps day at a glance: shifts, jobs and operations." },
       { property: "og:title", content: "Dashboard — FieldOps" },

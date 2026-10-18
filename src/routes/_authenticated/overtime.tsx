@@ -15,6 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export const Route = createFileRoute("/_authenticated/overtime")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "Overtime & standby — FieldOps" },
       { name: "description", content: "Log weekend, after-hours and standby call-outs with travel and work hours." },
       { property: "og:title", content: "Overtime & standby — FieldOps" },

@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 export const Route = createFileRoute("/_authenticated/messages")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "Team chat — FieldOps" },
       { name: "description", content: "Message teammates directly or chat inside a job sheet thread." },
       { property: "og:title", content: "Team chat — FieldOps" },
