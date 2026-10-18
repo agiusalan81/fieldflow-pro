@@ -453,7 +453,7 @@ function SheetForm() {
           </div>
           <div className="space-y-3">
             {logs.map((l, i) => {
-              const day = dayLabourHours(l.time_in, l.time_out, l.traveling_time_hours, l.technician_count, l.technician_initials);
+              const day = dayLabourHours(l.time_in, l.time_out, l.traveling_time_hours, l.technician_count, l.technician_initials, dayPartsHours(i));
               const dayParts = parts.map((p, j) => ({ p, j })).filter(({ p }) => p.log_sort_order === i);
               return (
                 <div key={i} className="rounded-lg border p-3">
@@ -481,7 +481,7 @@ function SheetForm() {
                       return (
                         <div key={w} className="space-y-1">
                           <Label className="text-xs">Time {w}</Label>
-                          <Input type="time" step={900} className="h-11 w-full" value={l[k]} onChange={(e) => setLog(i, { [k]: e.target.value })} onBlur={(e) => e.target.value && setT(roundTo15(e.target.value))} />
+                          <TimePicker label={`Time ${w}`} disabled={readOnly} value={l[k]} onChange={(v) => setT(roundTo15(v))} />
                           {w === "out" && l.time_in && l.time_out && l.time_out < l.time_in && <p className="text-xs text-destructive">Time out must be after time in.</p>}
                         </div>
                       );
