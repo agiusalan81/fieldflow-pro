@@ -1,4 +1,10 @@
 # Roadmap
+- [ ] Section 1: Document & Brand Studio, shared form/PDF labels, five styles, palette sampling and previews
+- [ ] Section 2: Upload digitization, reusable draft/active/archived contracts/checklists, independent tiers, attachment previews and safe deletion
+- [ ] Section 3: Configurable plans/packs/trials, company promotions and referral tracking; payments require provider setup
+- [ ] Section 4: Private multi-product Portfolio HQ, tenant directory and revenue/expense comparison
+- [ ] Section 5: Revocable client report/QR, tenant safety checks and fault/remedy library
+- [ ] Verify new workflows with signed-in account and focused rule tests
 - [x] Payroll update: submenu, monthly/full-time and hourly employment, year-configurable tax/SSC, allowances/bonuses, PE number, leave-linked payslips, overtime site detail and employee category suggestions (91 focused tests passed; signed-out access verified)
 - [x] Payroll: office-only employee overview, normal/leave/sick/1.5×/2× hours, prorated adjustable standby allowance (33 payroll/roster tests passed)
 - [x] Payroll: annual employee sick entitlements, wage settings, reviewed wage calculations and PDF payslips; annual statutory deductions calculated from office-approved tables; additional deductions reviewed by office
