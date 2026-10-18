@@ -502,16 +502,17 @@ function SheetForm() {
                   <div className="mt-3 space-y-2">
                     <Label className="text-xs">Parts used</Label>
                     {dayParts.map(({ p, j }) => (
-                      <div key={j} className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 md:grid-cols-[minmax(0,1fr)_80px_80px_auto]">
+                      <div key={j} className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 md:grid-cols-[minmax(0,1fr)_70px_70px_110px_auto]">
                         <Input className="col-span-2 h-10 md:col-span-1" placeholder="Part description" value={p.part_description} onChange={(e) => setPart(j, { part_description: e.target.value })} />
-                        <div className="grid grid-cols-2 gap-2 md:contents">
+                        <div className="grid grid-cols-3 gap-2 md:contents">
                           <Input className="h-10" placeholder="Unit" value={p.unit} onChange={(e) => setPart(j, { unit: e.target.value })} />
-                          <Input className="h-10" type="number" min="0" placeholder="Qty" value={p.quantity} onChange={(e) => setPart(j, { quantity: Number(e.target.value) })} />
+                          <NumInput className="h-10" min="0" aria-label="Part quantity" placeholder="Qty" value={p.quantity} onChange={(v) => setPart(j, { quantity: v })} />
+                          <NumInput className="h-10" min="0" step="0.25" aria-label="Hours acquiring this part" placeholder="Acq. h" value={p.time_acquiring_parts_hours} onChange={(v) => setPart(j, { time_acquiring_parts_hours: v })} />
                         </div>
                         <Button type="button" size="icon" variant="ghost" aria-label="Remove part" onClick={() => setParts(parts.filter((_, x) => x !== j))}><Trash2 className="h-4 w-4" /></Button>
                       </div>
                     ))}
-                    {dayParts.length > 0 && <p className="text-[11px] text-muted-foreground">description · unit · qty</p>}
+                    {dayParts.length > 0 && <p className="text-[11px] text-muted-foreground">description · unit · qty · hours spent acquiring the part (added to labour)</p>}
                     {!readOnly && <Button type="button" size="sm" variant="ghost" onClick={() => setParts([...parts, { ...emptyPart(), log_sort_order: i }])}><Plus className="mr-1 h-4 w-4" />Add part</Button>}
                   </div>
                   <div className="mt-3 space-y-1">
