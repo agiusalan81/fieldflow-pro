@@ -1,0 +1,5 @@
+CREATE FUNCTION public.save_sheet_snapshot_with_photos(_id uuid, _expected timestamptz, _form jsonb, _logs jsonb, _parts jsonb) RETURNS timestamptz LANGUAGE plpgsql SECURITY INVOKER SET search_path=public AS $$ DECLARE stamp timestamptz; BEGIN PERFORM public.save_sheet_snapshot(_id,_expected,_form,_logs,_parts); UPDATE public.job_sheets SET photo_paths=coalesce(_form->'photo_paths',photo_paths) WHERE id=_id RETURNING updated_at INTO stamp; RETURN stamp; END $$;
+REVOKE ALL ON FUNCTION public.save_sheet_snapshot_with_photos(uuid,timestamptz,jsonb,jsonb,jsonb) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.save_sheet_snapshot_with_photos(uuid,timestamptz,jsonb,jsonb,jsonb) TO authenticated;
+REVOKE ALL ON FUNCTION public.sign_batch_sheet(uuid,uuid,text,text,text) FROM PUBLIC,anon;
+REVOKE ALL ON FUNCTION public.save_sheet_snapshot(uuid,timestamptz,jsonb,jsonb,jsonb) FROM PUBLIC,anon;
