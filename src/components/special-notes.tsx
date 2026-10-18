@@ -5,6 +5,7 @@ import { parsePresets } from "@/lib/documents";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
+import { VoiceDictation } from "@/components/voice-dictation";
 import { Button } from "@/components/ui/button";
 
 type NotesForm = { special_notes?: string | boolean | null; special_notes_in_pdf?: string | boolean | null; special_notes_in_email?: string | boolean | null };
@@ -32,6 +33,7 @@ export function SpecialNotes({ form, set, readOnly }: { form: NotesForm; set: (p
             </div>
           )}
           <Textarea rows={3} disabled={readOnly} placeholder="e.g. Warranty on replaced parts is 12 months." value={text} onChange={(e) => set({ special_notes: e.target.value })} />
+          <VoiceDictation label="special notes" disabled={readOnly} value={text} onApply={(t) => set({ special_notes: t })} />
           <div className="flex flex-wrap gap-4 text-sm">
             <label className="flex items-center gap-2"><Checkbox disabled={readOnly} checked={form.special_notes_in_pdf !== false} onCheckedChange={(c) => set({ special_notes_in_pdf: !!c })} />Include in client PDF</label>
             <label className="flex items-center gap-2"><Checkbox disabled={readOnly} checked={form.special_notes_in_email === true} onCheckedChange={(c) => set({ special_notes_in_email: !!c })} />Include in email</label>
