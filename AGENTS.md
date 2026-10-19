@@ -13,6 +13,8 @@
 - Public invitation reads use a bounded server-function lookup and Query-backed route loading; timeout covers client middleware too. Why: browser auth/storage or network stalls must not leave invitations loading forever.
 - Tenant RLS uses company_id/current_company_id(); never UI company filters. Why: one access boundary.
 - Roles live in protected user_roles; users.role is display-only. View As and permissions.ts only hide UI. Why: prevent escalation.
+- Registration state lives in protected user_roles; central helpers and restrictive tenant policies reject terminated actors, and access changes retain audited history. Why: old sessions cannot bypass revocation.
+- Invite name confirmation uses atomic named redemption; social users never need an app password. Why: save confirmed names without trusting client-supplied company or role.
 - Staff redeem single-use invites through signup triggers. Why: server-side role assignment.
 - User preview is real-superuser-only, actor-scoped, in-memory and removable; root blocks other screens/writes. Why: preserve sessions/audit identity.
 - Payroll uses tested payroll.ts/payroll-statutory.ts, office RLS, DWR hours, versioned rosters and reviewed annual tables/categories. Why: preserve reviewed payroll.

@@ -20,6 +20,7 @@ import { registerOfflineApp } from "@/lib/pwa";
 import { clearOfflineCache } from "@/lib/offline";
 import { UserPreviewBoundary } from "@/components/user-preview";
 import { clearUserPreview } from "@/lib/impersonation";
+import { MemberAccessBoundary } from "@/components/member-access-boundary";
 
 function NotFoundComponent() {
   return (
@@ -147,7 +148,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <OfflineStatus />
-      <TooltipProvider><UserPreviewBoundary><Outlet /></UserPreviewBoundary></TooltipProvider>
+      <TooltipProvider><MemberAccessBoundary><UserPreviewBoundary><Outlet /></UserPreviewBoundary></MemberAccessBoundary></TooltipProvider>
       <Toaster richColors position="top-center" />
     </QueryClientProvider>
   );
