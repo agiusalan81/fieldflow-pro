@@ -118,10 +118,10 @@
 - [x] Supervisor My day / Team tabs, Start travel on own jobs, technician-style menu + Team section
 - [x] Help guide wording with real button names + help search
 - [ ] Supervisor leave approved by office admin only
-- [ ] Continuous job-sheet autosave + "Draft saved locally"
-- [ ] Clock-out unfinished-work reconciliation
-- [ ] Notification chimes + mute toggle
-- [ ] Required personal details / next of kin onboarding
+- [x] Continuous job-sheet autosave + "Draft saved locally"
+- [x] Clock-out unfinished-work reconciliation
+- [x] Notification chimes + mute toggle
+- [x] Required personal details / next of kin onboarding
 - [ ] Lift RFQ estimate template (fields, package-supplier options), full-screen layout sketch, photos, site contacts
 - [ ] Direct supplier email + threaded reminders (needs company email domain)
 - [ ] Platform HQ toggles for each module
