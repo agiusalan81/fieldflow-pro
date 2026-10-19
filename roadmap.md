@@ -1,7 +1,8 @@
 # Roadmap
-- [ ] Current batch: refined social/email invitation signup, Registered Members with secure access revocation, and complete Standard Service Sheet preview/print/email.
+- [x] Current batch implemented: refined social/email invitation signup, Registered Members with audited access revocation, and Standard Service Sheet preview/print/email rendering. Signed-in directory, confirmation dialog, invite choices/email fields, preview and downloaded PDF checked; 20 focused tests passed; latest build OK.
+- [ ] Complete live social signup, revoke/restore and client email delivery checks (blocked: consenting new social account, employee offboarding test and approved recipient); no existing employee access changed during checks.
 - [x] Fix stalled invitation lookup with bounded loading, visible connection errors and manual retry; real unused link, simulated timeout/retry and invalid link verified; 10 focused tests passed.
-- [ ] Apply agreed updates: Team roster/invites tabs, Google/Microsoft signup, role-based welcome guide, phone entry, structured office address/VAT, Standard Service Sheet, clean labour display, owner-only Billing & Plan.
+- [x] Apply agreed updates: Team roster/invites tabs, Google/Microsoft signup choices, role-based welcome guide, phone entry, structured office address/VAT, Standard Service Sheet, clean labour display, owner-only Billing & Plan.
 - [ ] Section 1: Document & Brand Studio, shared form/PDF labels, five styles, palette sampling and previews
 - [ ] Section 2: Upload digitization, reusable draft/active/archived contracts/checklists, independent tiers, attachment previews and safe deletion
 - [ ] Section 3: Configurable plans/packs/trials, company promotions and referral tracking; payments require provider setup
