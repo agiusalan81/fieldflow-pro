@@ -34,7 +34,7 @@
 - Client notices use client-notices.functions.ts and tested client-notices.ts; guard_departure prevents self-approval. Why: accountability.
 - job_sheets embeds use users!job_sheets_assigned_technician_id_fkey. Why: two users FKs.
 - Signing batches are creator-owned, authenticated and finalized transactionally; store delivery before sending with shared PDF builder. Why: preserve partial work and prevent duplicate email.
-- Offline drafts use account-scoped IndexedDB, transactional optimistic RPC and guarded PWA registration. Why: no cross-account replay/stale writes.
+- Offline drafts use account-scoped IndexedDB, transactional optimistic RPC and guarded PWA registration. Why: no cross-account/stale writes.
 - Published document masters are immutable; attachments/agreements/sheets snapshot definitions. Why: preserve history.
 - Platform authority is protected separately in user_roles; HQ uses a narrow directory RPC, not tenant reads. Why: isolate companies.
 - Subscription/pack/promotion access uses DB write guards; missing legacy subscriptions stay writable. Why: safe rollout.
@@ -43,5 +43,5 @@
 
 - Shift locations require active-shift RLS and account-scoped consent; stale map points are labelled. Why: no off-shift visibility or fabricated GPS.
 - Receipt PDFs use a separate account/sheet-scoped IndexedDB queue and private storage, never client document projections. Why: preserve offline attachments without exposing accounting files.
-- Technical documents use private storage and active-member RLS; only supervisors/superusers publish, and AI retrieves readable approved pages through the caller client. Why: restrictions apply equally to search, files and citations.
+- Technical documents use private storage and active-member RLS; only supervisors/superusers publish, and AI retrieves readable approved pages through the caller client. Why: same restrictions everywhere.
 - Leave/profile/clock-out handover rules use tested field-rules.ts plus guard_leave_decision. Why: UI and DB agree.
