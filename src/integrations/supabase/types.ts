@@ -1142,6 +1142,7 @@ export type Database = {
           departure_decided_at: string | null
           departure_decided_by: string | null
           departure_note: string | null
+          departure_reply: string | null
           departure_requested_at: string | null
           departure_status: string
           estimate_id: string | null
@@ -1204,6 +1205,7 @@ export type Database = {
           departure_decided_at?: string | null
           departure_decided_by?: string | null
           departure_note?: string | null
+          departure_reply?: string | null
           departure_requested_at?: string | null
           departure_status?: string
           estimate_id?: string | null
@@ -1266,6 +1268,7 @@ export type Database = {
           departure_decided_at?: string | null
           departure_decided_by?: string | null
           departure_note?: string | null
+          departure_reply?: string | null
           departure_requested_at?: string | null
           departure_status?: string
           estimate_id?: string | null
