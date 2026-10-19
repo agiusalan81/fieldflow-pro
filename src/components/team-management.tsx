@@ -16,6 +16,7 @@ export function TeamManagement({ role, companyId, meId, tab }: { role: Role; com
   const qc = useQueryClient();
   const [inv, setInv] = useState({ role: "technician" as Role, full_name: "", email: "" });
   const canEditRoles = role === "superuser" || role === "admin";
+  const payrollVisible = payrollUiVisible(useProfile().data);
   const { data } = useQuery({
     queryKey: ["team"],
     queryFn: async () => {
