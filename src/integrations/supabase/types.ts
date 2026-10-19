@@ -441,6 +441,7 @@ export type Database = {
           integrations: Json
           logo_data: string | null
           note_presets: Json
+          office_address: Json
           office_phone: string | null
           pdf_template: Json
           pe_number: string | null
@@ -455,6 +456,7 @@ export type Database = {
           terms: Json
           theme: Json
           updated_at: string
+          vat_number: string
           whatsapp_phone: string | null
           work_days: number[]
           work_end: string
@@ -480,6 +482,7 @@ export type Database = {
           integrations?: Json
           logo_data?: string | null
           note_presets?: Json
+          office_address?: Json
           office_phone?: string | null
           pdf_template?: Json
           pe_number?: string | null
@@ -494,6 +497,7 @@ export type Database = {
           terms?: Json
           theme?: Json
           updated_at?: string
+          vat_number?: string
           whatsapp_phone?: string | null
           work_days?: number[]
           work_end?: string
@@ -519,6 +523,7 @@ export type Database = {
           integrations?: Json
           logo_data?: string | null
           note_presets?: Json
+          office_address?: Json
           office_phone?: string | null
           pdf_template?: Json
           pe_number?: string | null
@@ -533,6 +538,7 @@ export type Database = {
           terms?: Json
           theme?: Json
           updated_at?: string
+          vat_number?: string
           whatsapp_phone?: string | null
           work_days?: number[]
           work_end?: string
@@ -2892,6 +2898,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_company_invite: { Args: { _token: string }; Returns: string }
       company_module_access: {
         Args: { _company: string; _module: string }
         Returns: boolean
