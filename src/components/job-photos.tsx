@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Camera, Image as ImageIcon, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,6 +42,8 @@ type Props = {
 export function JobPhotos({ companyId, sheetId, photos, scope, day, readOnly, onChange }: Props) {
   const input = useRef<HTMLInputElement>(null);
   const cam = useRef<HTMLInputElement>(null);
+  const camId = useId();
+  const galId = useId();
   const [kind, setKind] = useState<JobPhoto["kind"]>(scope === "work" ? "damage" : "other");
   const [busy, setBusy] = useState(false);
   const [urls, setUrls] = useState<Record<string, string>>({});
@@ -107,15 +109,18 @@ export function JobPhotos({ companyId, sheetId, photos, scope, day, readOnly, on
               ))}
             </div>
           )}
-          <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => cam.current?.click()}>
-            {busy ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Camera className="mr-1 h-4 w-4" />}
-            {scope === "work" ? "Camera" : "Camera (internal)"}
+          {/* Native labels open the camera/gallery pickers — synthetic .click() is blocked on mobile browsers. */}
+          <Button asChild size="sm" variant="outline" className={busy ? "pointer-events-none opacity-50" : ""}>
+            <label htmlFor={camId}>
+              {busy ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Camera className="mr-1 h-4 w-4" />}
+              {scope === "work" ? "Camera" : "Camera (internal)"}
+            </label>
           </Button>
-          <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => input.current?.click()}>
-            <ImageIcon className="mr-1 h-4 w-4" />Gallery
+          <Button asChild size="sm" variant="outline" className={busy ? "pointer-events-none opacity-50" : ""}>
+            <label htmlFor={galId}><ImageIcon className="mr-1 h-4 w-4" />Gallery</label>
           </Button>
-          <input ref={cam} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => { upload(e.target.files).then(() => { if (cam.current) cam.current.value = ""; }); }} />
-          <input ref={input} type="file" accept="image/*" multiple className="hidden" onChange={(e) => upload(e.target.files)} />
+          <input id={camId} ref={cam} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => { upload(e.target.files).then(() => { if (cam.current) cam.current.value = ""; }); }} />
+          <input id={galId} ref={input} type="file" accept="image/*" multiple className="hidden" onChange={(e) => upload(e.target.files)} />
         </div>
       )}
       {mine.length > 0 && (

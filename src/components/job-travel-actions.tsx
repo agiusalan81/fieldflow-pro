@@ -5,6 +5,8 @@ import { Car, FileText, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { startJobTravel } from "@/lib/jobsheets";
+import { sendClientNotice } from "@/lib/client-notices.functions";
+import { useNoticeEnabled } from "@/components/client-notices";
 import type { Profile } from "@/lib/profile";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -13,6 +15,8 @@ export function JobTravelActions({ profile, jobId, address, readOnly = false }: 
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [startedId, setStartedId] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const noticeEnabled = useNoticeEnabled("on_my_way");
   const { data: sheet, isPending, isError } = useQuery({
     queryKey: ["job-travel-sheet", jobId],
     queryFn: async () => {
@@ -29,7 +33,20 @@ export function JobTravelActions({ profile, jobId, address, readOnly = false }: 
     try {
       const id = await startJobTravel(profile, jobId);
       setStartedId(id);
+      setNotice(null);
       await Promise.all(["job-travel-sheet", "today-jobs", "schedule", "sheets", "overview", "sheet"].map((key) => qc.invalidateQueries({ queryKey: [key] })));
+      if (!noticeEnabled) {
+        setNotice("The “on the way” message is switched off in Company settings → Messages & emails, so the client was not notified.");
+      } else {
+        try {
+          const res = await sendClientNotice({ data: { sheetId: id, event: "on_my_way" } });
+          const ok = [...new Set(res.result.filter((r) => r.ok).map((r) => (r.channel === "email" ? "email" : "WhatsApp")))];
+          const bad = res.result.filter((r) => !r.ok).map((r) => r.error).filter(Boolean);
+          setNotice(ok.length ? `Client notified by ${ok.join(" and ")}.${bad.length ? ` ${bad.join(" · ")}` : ""}` : `Client could not be notified — ${bad.join(" · ") || "no channel available"}.`);
+        } catch (e) {
+          setNotice(`Client could not be notified — ${(e as Error).message}`);
+        }
+      }
       toast.success("Travel started");
     } catch (error) { toast.error(error instanceof Error ? error.message : "Could not start travel"); }
     finally { setBusy(false); }
@@ -49,7 +66,9 @@ export function JobTravelActions({ profile, jobId, address, readOnly = false }: 
           <Button asChild variant="outline"><a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`} target="_blank" rel="noopener noreferrer"><MapPin className="mr-1 h-4 w-4" />Google Maps</a></Button>
           <Button asChild variant="outline"><a href={`https://waze.com/ul?q=${encodeURIComponent(address)}&navigate=yes`} target="_blank" rel="noopener noreferrer"><MapPin className="mr-1 h-4 w-4" />Waze</a></Button>
         </div>}
+        {notice && <p className="rounded-lg border bg-muted/50 p-3 text-sm text-foreground">{notice}</p>}
         {openSheet(startedId ?? undefined)}
+        <Button variant="ghost" onClick={() => setStartedId(null)}>Continue without navigation</Button>
       </DialogContent>
     </Dialog>
   </>;

@@ -1,0 +1,1 @@
+ALTER TABLE public.job_sheets ADD COLUMN IF NOT EXISTS departure_reply text;

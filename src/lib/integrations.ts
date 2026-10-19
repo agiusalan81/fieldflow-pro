@@ -17,12 +17,12 @@ export const ACCOUNTING = [
 export type AccountingKey = (typeof ACCOUNTING)[number]["key"];
 
 export const EVENTS = [
-  { key: "on_my_way", label: "Technician on the way", body: "Hi {{contact_name}}, technician {{technician_name}} is on the way. Should be there in approximately {{eta_window}} depending on traffic." },
+  { key: "on_my_way", label: "Technician on the way", body: "Hi {{contact_name}}, technician {{technician_name}} is on the way to {{site_name}} and will arrive as soon as traffic allows." },
   { key: "job_completed", label: "Job sheet completed", body: "Hi {{contact_name}}, {{technician_name}} has completed the service for {{asset_reference}} at {{site_name}}. Job sheet- {{jobsheet_number}} is attached. Questions? Call {{company_phone}}." },
   { key: "emergency_dispatch", label: "Emergency dispatch (in-app team chat)", body: "Urgent: job #{{job_number}} at {{site_address}} is assigned to you. Priority {{priority}}." },
   { key: "renewal_notice", label: "Contract renewal reminder", body: "Dear {{contact_name}}, your maintenance agreement for {{site_name}} expires on {{expiry_date}}. Your current contract and checklist are attached for renewal. Please review and sign digitally. Questions? Call {{company_phone}}." },
   { key: "no_access", label: "Attended — no one to open", body: "Hi {{contact_name}}, technician {{technician_name}} attended {{site_name}} for {{asset_reference}} at {{arrival_time}}, but no one was available to open. Please call {{company_phone}} to arrange access or a new visit." },
-  { key: "unsigned_left", label: "Client left — job sheet unsigned", body: "Dear {{contact_name}}, technician {{technician_name}} completed works on {{asset_reference}} at {{site_name}}, but nobody was on site to sign Job sheet- {{jobsheet_number}}. The lift has been left switched off pending your signature to approve the works done. Please call {{company_phone}} so we can return and restore service." },
+  { key: "unsigned_left", label: "Client left — job sheet unsigned", body: "Dear {{contact_name}}, technician {{technician_name}} completed works on {{asset_reference}} at {{site_name}}, but nobody was on site to sign Job sheet- {{jobsheet_number}}. The equipment has been safely isolated pending your signature to approve the works done. Please call {{company_phone}} so we can return and restore service." },
   { key: "estimate_sent", label: "Estimate sent", body: "Hello {{contact_name}}, please find estimate {{estimate_title}} for {{site_name}}. Total {{amount}}." },
 ] as const;
 export type EventKey = (typeof EVENTS)[number]["key"];

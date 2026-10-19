@@ -11,6 +11,7 @@ import { RETURN_FEE_MIN_HOURS } from "@/lib/billing";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { Profile } from "@/lib/profile";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
@@ -38,7 +39,18 @@ export function DepartureAlerts({ userId }: { userId: string }) {
   const [msg, setMsg] = useState<{ text: string; ok: boolean; sheetId: string } | null>(null);
   useEffect(() => {
     const ch = supabase.channel(`departure-${userId}`).on("postgres_changes", { event: "UPDATE", schema: "public", table: "job_sheets", filter: `assigned_technician_id=eq.${userId}` }, (p) => {
-      const n = p.new as { id: string; jobsheet_number: number; departure_status: string }; const o = p.old as { departure_status?: string };
+      const n = p.new as { id: string; jobsheet_number: number; departure_status: string; departure_reply: string | null }; const o = p.old as { departure_status?: string; departure_reply?: string | null };
+      if (o.departure_reply !== n.departure_reply && n.departure_reply) {
+        const key = `${n.id}:reply:${n.departure_reply}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          const text = `Job sheet- ${n.jobsheet_number} — message from the office: ${n.departure_reply}`;
+          setMsg({ text, ok: true, sheetId: n.id });
+          if (typeof Notification !== "undefined" && Notification.permission === "granted") new Notification("Message from the office", { body: text });
+          if (navigator.vibrate) navigator.vibrate(300);
+        }
+        return;
+      }
       const key = `${n.id}:${n.departure_status}`;
       if (o.departure_status === n.departure_status || !["approved", "rejected"].includes(n.departure_status) || seen.has(key)) return;
       seen.add(key);
@@ -130,7 +142,7 @@ export function DepartureRequest({ sheet, manager, onChange, preapproved = false
   };
   const run = (f: () => Promise<void>) => async () => { setBusy(true); try { await f(); onChange(); } catch (e) { toast.error((e as Error).message); } finally { setBusy(false); } };
   const request = run(async () => {
-    if (!note.trim()) throw new Error("Say why you are leaving (e.g. client left, lift switched off at isolator)");
+    if (!note.trim()) throw new Error("Say why you are leaving (e.g. client left, equipment switched off at isolator)");
     await set("requested", { departure_note: note.trim() });
     if (typeof Notification !== "undefined" && Notification.permission === "default") Notification.requestPermission().catch(() => {});
     toast.success("Approval requested — wait on site for a supervisor or office admin");
@@ -150,35 +162,64 @@ export function DepartureRequest({ sheet, manager, onChange, preapproved = false
           <Button size="sm" variant="outline" disabled={busy} onClick={reject}><X className="mr-1 h-4 w-4" />Decline — wait on site</Button>
         </div>}
       </>}
-      {s === "approved" && <p className="text-sm text-success">Departure approved — the client was asked to call to sign and restore the lift.</p>}
+      {s === "approved" && <p className="text-sm text-success">Departure approved — the client was asked to call to sign and restore service.</p>}
       {s === "approved" && <p className="text-xs text-muted-foreground">{sheet.return_fee_waived ? "Return-visit charge waived." : "A 1 h return-visit charge was added for billing."}</p>}
       {(s === "none" || s === "rejected") && <>
         {s === "rejected" && <p className="text-sm text-destructive">Last request was declined — please wait for the client.</p>}
         <p className="text-xs text-muted-foreground">A supervisor or office admin must approve before you leave. Once approved, the client gets the "left unsigned" message.</p>
-        <Textarea rows={2} placeholder="What happened? e.g. client left at 14:30, lift switched off at main isolator" value={note} onChange={(e) => setNote(e.target.value)} />
+        <Textarea rows={2} placeholder="What happened? e.g. client left at 14:30, equipment switched off at main isolator" value={note} onChange={(e) => setNote(e.target.value)} />
         <Button size="sm" variant="outline" disabled={busy} onClick={request}>Ask approval to leave unsigned</Button>
       </>}
     </div>
   );
 }
 
-/** Manager dashboard list of technicians waiting to leave an unsigned site. */
+/** Manager dashboard list of technicians waiting to leave an unsigned site — urgent, with a quick reply to the technician. */
 export function DepartureRequests() {
+  const [reply, setReply] = useState<Record<string, string>>({});
+  const [sending, setSending] = useState<string | null>(null);
   const { data = [] } = useQuery({
     queryKey: ["departure-requests"], refetchInterval: 20000,
     queryFn: async () => (await supabase.from("job_sheets").select("id, jobsheet_number, departure_note, departure_requested_at, clients(name), users!job_sheets_assigned_technician_id_fkey(full_name)").eq("departure_status", "requested").order("departure_requested_at")).data ?? [],
   });
+  const sendReply = async (id: string) => {
+    const text = (reply[id] ?? "").trim();
+    if (!text) return;
+    setSending(id);
+    try {
+      const { error } = await supabase.from("job_sheets").update({ departure_reply: text }).eq("id", id);
+      if (error) throw error;
+      setReply((r) => ({ ...r, [id]: "" }));
+      toast.success("Message sent to the technician");
+    } catch (e) { toast.error((e as Error).message); } finally { setSending(null); }
+  };
   if (!data.length) return null;
   return (
-    <section className="rounded-xl border border-warning bg-warning/10 p-4">
-      <h2 className="mb-2 font-medium text-foreground">Technicians asking to leave unsigned ({data.length})</h2>
+    <section className="rounded-xl border-2 border-destructive bg-destructive/10 p-4">
+      <h2 className="mb-2 flex items-center gap-2 font-medium text-foreground">
+        <span className="inline-flex animate-pulse items-center rounded-full bg-destructive px-2.5 py-0.5 text-xs font-semibold text-destructive-foreground">Urgent</span>
+        Technicians waiting to leave unsigned ({data.length})
+      </h2>
+      <p className="mb-3 text-xs text-muted-foreground">A technician is standing by on site — approve, decline or send a message right away.</p>
       <ul className="space-y-2">
-        {data.map((s) => (
-          <li key={s.id}><Link to="/sheets/$sheetId" params={{ sheetId: s.id }} className="block rounded-lg bg-card p-3 text-sm">
-            <span className="font-medium text-foreground">Job sheet- {s.jobsheet_number} · {s.clients?.name}</span>
-            <span className="block text-muted-foreground">{s.users?.full_name}: {s.departure_note}</span>
-          </Link></li>
-        ))}
+        {data.map((s) => {
+          const waiting = s.departure_requested_at ? Math.max(0, Math.round((Date.now() - new Date(s.departure_requested_at).getTime()) / 60000)) : null;
+          return (
+          <li key={s.id} className="rounded-lg bg-card p-3 text-sm">
+            <Link to="/sheets/$sheetId" params={{ sheetId: s.id }} className="block">
+              <span className="font-medium text-foreground">Job sheet- {s.jobsheet_number} · {s.clients?.name}</span>
+              {waiting != null && <span className="ml-2 rounded-full bg-destructive/15 px-2 py-0.5 text-xs font-medium text-destructive">waiting {waiting} min</span>}
+              <span className="block text-muted-foreground">{s.users?.full_name}: {s.departure_note}</span>
+            </Link>
+            <div className="mt-2 flex gap-2">
+              <Input value={reply[s.id] ?? ""} onChange={(e) => setReply((r) => ({ ...r, [s.id]: e.target.value }))}
+                placeholder='Message the technician, e.g. "Give me a minute to reach out to the client"'
+                className="h-9 text-sm" onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void sendReply(s.id); } }} />
+              <Button size="sm" variant="outline" disabled={sending === s.id || !(reply[s.id] ?? "").trim()} onClick={() => void sendReply(s.id)}>Send</Button>
+            </div>
+          </li>
+          );
+        })}
       </ul>
     </section>
   );

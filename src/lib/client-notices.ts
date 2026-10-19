@@ -1,5 +1,5 @@
 /** Rules for client notices sent from the field: "no one to open" and "client left before signing". */
-export type NoticeEvent = "no_access" | "unsigned_left";
+export type NoticeEvent = "no_access" | "unsigned_left" | "on_my_way";
 export type DepartureStatus = "none" | "requested" | "approved" | "rejected";
 
 /** Technicians may only ask; supervisors/office admins decide. */
