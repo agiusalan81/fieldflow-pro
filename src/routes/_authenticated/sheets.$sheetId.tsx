@@ -349,9 +349,10 @@ function SheetForm() {
     setParts(parts.filter((p) => p.log_sort_order !== i).map((p) => (p.log_sort_order != null && p.log_sort_order > i ? { ...p, log_sort_order: p.log_sort_order - 1 } : p)));
   };
   const gps = async (i: number, which: "in" | "out") => {
+    // Location is captured silently in the background — no popups on arrive/depart.
     try { const g = await captureGps();
     setLog(i, which === "in" ? { latitude_in: g.lat, longitude_in: g.lng } : { latitude_out: g.lat, longitude_out: g.lng });
-    toast.success(`Location ${which === "in" ? "in" : "out"} captured`); } catch(e) { toast.error(e instanceof Error ? e.message : "Location unavailable"); }
+    } catch { /* location unavailable — leave coordinates empty */ }
   };
   const dayPartsHours = (i: number) => parts.filter((p) => p.log_sort_order === i).reduce((s, p) => s + (Number(p.time_acquiring_parts_hours) || 0), 0);
   const totalHours = logs.reduce((s, l, i) => s + dayLabourHours(l.time_in, l.time_out, l.traveling_time_hours, l.technician_count, l.technician_initials, dayPartsHours(i)), 0);
