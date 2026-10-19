@@ -12,8 +12,8 @@ describe("plain-language templates", () => {
   });
   it("renders the on-my-way default wording", () => {
     const t = parseIntegrations({}).templates.on_my_way.body;
-    expect(renderTemplate(t, { contact_name: "Alan", technician_name: "Jorey Gloria", eta_window: "30 mins" }))
-      .toBe("Hi Alan, technician Jorey Gloria is on the way. Should be there in approximately 30 mins depending on traffic.");
+    expect(renderTemplate(t, { contact_name: "Alan", technician_name: "Jorey Gloria", site_name: "Tower Block A" }))
+      .toBe("Hi Alan, technician Jorey Gloria is on the way to Tower Block A and will arrive as soon as traffic allows.");
   });
   it("keeps emergency dispatch off external channels", () => {
     expect(parseIntegrations({ templates: { emergency_dispatch: { enabled: true, channels: ["sms"], body: "x" } } }).templates.emergency_dispatch.channels).toEqual([]);
