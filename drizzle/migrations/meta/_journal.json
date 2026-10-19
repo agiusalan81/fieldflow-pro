@@ -246,6 +246,13 @@
       "when": 1792362361746,
       "tag": "0034_trial_registration_entitlements_and_safe_report_projection",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1792388335519,
+      "tag": "0035_structured_address_and_oauth_invites",
+      "breakpoints": true
     }
   ]
 }

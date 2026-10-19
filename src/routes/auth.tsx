@@ -1,3 +1,4 @@
+import { SocialSignin } from "@/components/social-signin";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { Eye, EyeOff } from "lucide-react";
@@ -25,6 +26,7 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [noCompany,setNoCompany] = useState(false);
   const [mode, setMode] = useState<"signup" | "signin">("signin");
   const [idle, setIdle] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -36,7 +38,14 @@ function AuthPage() {
       setForm((f) => ({ ...f, email: saved }));
       setRemember(true);
     }
-    supabase.auth.getUser().then(({ data }) => { if (data.user) navigate({ to: "/dashboard", replace: true }); });
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (!data.user) return;
+      const pending = sessionStorage.getItem("fieldflow:pending-invite");
+      if (pending && /^[a-f0-9]{36}$/.test(pending)) { await navigate({to:"/join/$token",params:{token:pending},replace:true}); return; }
+      const { data: member } = await supabase.from("users").select("id").eq("id",data.user.id).maybeSingle();
+      if (member) navigate({ to: "/dashboard", replace: true });
+      else setNoCompany(true);
+    });
   }, [navigate]);
   const [form, setForm] = useState({ company: "", name: "", email: "", password: "" });
   const [busy, setBusy] = useState(false);
@@ -102,8 +111,10 @@ function AuthPage() {
             : "Sign in to your company workspace."}
         </p>
 
+        {noCompany && <div className="mt-6 space-y-3 border p-4"><p>You are signed in, but have not joined a company. Open your team invitation to continue.</p><Button variant="outline" onClick={async()=>{queryClient.clear();await supabase.auth.signOut();setNoCompany(false);}}>Sign out</Button></div>}
+        {!noCompany && mode === "signin" && <div className="mt-6"><SocialSignin onError={setError} onSuccess={async()=>{ const {data:auth}=await supabase.auth.getUser(); if (!auth.user) return; const {data:member}=await supabase.from("users").select("id").eq("id",auth.user.id).maybeSingle(); if(member){queryClient.clear();await navigate({to:"/dashboard"});}else setNoCompany(true); }}/></div>}
         {idle && mode === "signin" && <p className="mt-6 rounded-lg border bg-muted p-3 text-sm text-muted-foreground">You were signed out after a period of inactivity.</p>}
-        {sent ? (
+        {!noCompany && (sent ? (
           <div className="mt-8 rounded-xl border bg-card p-6 text-card-foreground">
             <p className="font-medium">Check your inbox</p>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -164,7 +175,7 @@ function AuthPage() {
               {busy ? "Please wait…" : mode === "signup" ? "Create company" : "Sign in"}
             </Button>
           </form>
-        )}
+        ))}
 
         <button
           type="button"

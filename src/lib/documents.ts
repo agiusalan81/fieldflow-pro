@@ -26,13 +26,13 @@ export type PdfTemplate = {
   header: string;
   footer: string;
   showTravel: boolean;
-  stylePreset: "modern" | "technical" | "bold" | "classic" | "compact";
+  stylePreset: "modern" | "technical" | "bold" | "classic" | "compact" | "service";
   primaryColor: string;
   accentColor: string;
   font: "sans" | "serif" | "mono";
   labels: Record<string, string>;
 };
-export const DOCUMENT_STYLES = ["modern", "technical", "bold", "classic", "compact"] as const;
+export const DOCUMENT_STYLES = ["modern", "technical", "bold", "classic", "compact", "service"] as const;
 export const DEFAULT_TEMPLATE: PdfTemplate = { order: BLOCKS.map((b) => b.key), hidden: [], header: "", footer: "", showTravel: true, stylePreset: "modern", primaryColor: "#246654", accentColor: "#e4ad37", font: "sans", labels: {} };
 export const FIELD_LABELS: Record<string, string> = { ...Object.fromEntries(BLOCKS.map((b) => [b.key, b.label])), site: "Site", model: "Model", serial: "Serial number", technician: "Technician", client_name: "Client name", asset_type: "Equipment type", internal: "Internal comments", pending: "Pending works", date: "Date", number: "Job sheet no." };
 export const validColor = (v: unknown, fallback: string) => typeof v === "string" && /^#[\da-f]{6}$/i.test(v) ? v : fallback;
