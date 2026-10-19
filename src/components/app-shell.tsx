@@ -260,7 +260,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
 
   return (
     <div className="min-h-screen bg-background lg:grid lg:grid-cols-[240px_minmax(0,1fr)]">
-      {actor && !preview.active && <><NotificationSounds profile={actor} /><ProfileCompletionGate profile={actor} /></>}
+      {actor && !preview.active && <NotificationSounds profile={actor} />}
       {profile && company && <IdleLogout userId={profile.id} realRole={profile.real_role} timeoutMin={company.idleTimeout} />}
       <aside className="sticky top-0 hidden h-screen flex-col gap-6 border-r border-sidebar-border bg-sidebar py-6 px-3 lg:flex">
         {brand}
@@ -307,6 +307,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
           </div>
         </header>
         <UserPreviewBanner />
+        {actor && !preview.active && <ProfileCompletionGate profile={actor} />}
         <main className="flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
           {profile && path === "/dashboard" && !preview.active && <QuickActions items={items} uid={profile.id} role={profile.role} manager={manager} />}
           {!preview.active && <LocationSharing />}
