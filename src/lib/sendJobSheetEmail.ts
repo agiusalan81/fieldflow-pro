@@ -3,7 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { clientPhotos, parsePhotos, labourHours, technicianCount, validateCombinedSheets, dayLabourHours } from "@/lib/jobsheets";
 import { parseTemplate, parseTerms, termsFor, visibleBlocks, documentLabel, type PdfTemplate } from "@/lib/documents";
 import { buildServicePdf } from "@/lib/service-sheet-pdf";
-import type { PdfSheetData } from "@/lib/service-sheet";
+import { serviceEquipment, type PdfSheetData } from "@/lib/service-sheet";
 import { formatOfficeAddress, parseOfficeAddress } from "@/lib/contact-details";
 import { sheetTitle } from "@/lib/dwr";
 import { validateMonthlyQueue } from "@/lib/monthly-signing";
@@ -183,7 +183,7 @@ async function prepareSheet(supabase: AuthClient, sheetId: string, recipients?: 
       workType: [sheet.is_tech_assistance && "Technical assistance",sheet.is_maintenance && "Maintenance",sheet.is_installation && "Installation",sheet.job_type_other].filter(Boolean).join(", "), technicianSignature: technicianProfile?.signature_on_file,
 
       company, logo: settings?.logo_data ?? "", number: sheet.jobsheet_number, date, client: client?.name ?? "-", address: address || "-",
-      asset: [assetType, asset?.reference_number, sheet.lift_model && `Model ${sheet.lift_model}`, sheet.serial_number && `S/N ${sheet.serial_number}`].filter(Boolean).join("  ·  ").replace(/·/g, "-") || "-",
+      asset: serviceEquipment(assetType, asset?.reference_number, sheet.lift_model, sheet.serial_number),
       fault: sheet.reported_fault ?? "", repairs: sheet.repairs_performed ?? "", technician: sheet.technician_name ?? "",
       signedBy: sheet.client_full_name ?? "", idCard: sheet.client_id_card_no ?? "", signature: sheet.signature_data,
       logs: (logs ?? []).map((l) => {

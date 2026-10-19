@@ -50,14 +50,6 @@ export async function buildServicePdf(d: PdfSheetData) {
   if(d.template.header) { para(d.template.header); y-=5; }
   const visible=visibleBlocks(d.template);
   const fields: Record<string,string>={client:d.client,address:d.address,equipment:[d.asset,d.workType].filter(Boolean).join("\n"),fault:d.fault,work:d.repairs,notes:d.notes || ""};
-  const details=visible.filter(k=>["client","address","equipment"].includes(k));
-  if(details.length) {
-    const col=width/details.length;
-    const values=details.map(k=>wrap(fields[k] || "-",col-16));
-    const h=Math.max(...values.map(v=>v.length))*12+30; need(h);
-    details.forEach((k,i)=>{text(documentLabel(d.template,k).toUpperCase(),M+i*col+8,y-12,8,true); values[i]?.forEach((v,j)=>text(v,M+i*col+8,y-27-j*12));line(M+i*col,y,M+i*col,y-h);});
-    line(M,y,W-M,y);line(M,y-h,W-M,y-h);line(W-M,y,W-M,y-h);y-=h+5;
-  }
   const table = (headers: string[], rows: string[][], ratios: number[]) => {
     const widths=ratios.map(r=>r*width);
     const drawRow=(cells:string[],head=false) => {
@@ -73,7 +65,7 @@ export async function buildServicePdf(d: PdfSheetData) {
     };
     need(50);drawRow(headers,true);for(const row of rows)drawRow(row);
   };
-  for(const key of visible.filter(k=>!["client","address","equipment"].includes(k))) {
+  for(const key of visible) {
     if(key==="notes" && !d.notes)continue;
     if(key==="timesheet") {
       label(documentLabel(d.template,key));
