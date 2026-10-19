@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { approvalBalance } from "@/lib/jobsheets";
+import { useProfile } from "@/lib/profile";
+import { canDecideLeave, type AppRole } from "@/lib/field-rules";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 
@@ -26,6 +28,7 @@ const STATUS_CLS: Record<string, string> = { pending: "bg-warning/25 text-warnin
 
 function LeaveApprovals() {
   const qc = useQueryClient();
+  const { data: me } = useProfile();
   const [month, setMonth] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
   const { data: reqs = [] } = useQuery({
     queryKey: ["leave", "team"],
@@ -84,10 +87,10 @@ function LeaveApprovals() {
                       {isAnnual && <span className="rounded-full bg-muted px-2 py-0.5 tabular-nums">{bal.after.toFixed(2)} h after this</span>}
                       {bal.exceedsBy > 0 && <span className="rounded-full bg-warning/25 px-2 py-0.5 text-warning-foreground">Exceeds balance by {bal.exceedsBy.toFixed(2)} h</span>}
                     </div>
-                    <div className="flex gap-1">
+                    {me && canDecideLeave(me.real_role as AppRole, (r.users?.role ?? "technician") as AppRole, r.user_id === me.id) ? <div className="flex gap-1">
                       <Button size="sm" onClick={() => decide(r.id, "approved")}>Approve</Button>
                       <Button size="sm" variant="outline" onClick={() => decide(r.id, "rejected")}>Reject</Button>
-                    </div>
+                    </div> : <p className="text-xs text-muted-foreground">{r.user_id === me?.id ? "Your own request — an Office Admin decides this." : "Awaiting an Office Admin decision."}</p>}
                   </li>
                 );
               })}
