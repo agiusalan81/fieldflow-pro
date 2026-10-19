@@ -453,6 +453,7 @@ export type Database = {
           standby_rotation_days: number
           standby_start: string
           sunday_rate: number
+          technical_structure: Json
           terms: Json
           theme: Json
           updated_at: string
@@ -494,6 +495,7 @@ export type Database = {
           standby_rotation_days?: number
           standby_start?: string
           sunday_rate?: number
+          technical_structure?: Json
           terms?: Json
           theme?: Json
           updated_at?: string
@@ -535,6 +537,7 @@ export type Database = {
           standby_rotation_days?: number
           standby_start?: string
           sunday_rate?: number
+          technical_structure?: Json
           terms?: Json
           theme?: Json
           updated_at?: string
@@ -1500,6 +1503,51 @@ export type Database = {
           },
           {
             foreignKeyName: "jobsheet_parts_jobsheet_id_fkey"
+            columns: ["jobsheet_id"]
+            isOneToOne: false
+            referencedRelation: "job_sheets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jobsheet_receipts: {
+        Row: {
+          company_id: string
+          created_at: string
+          file_path: string
+          id: string
+          jobsheet_id: string
+          page_count: number
+          uploaded_by: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          file_path: string
+          id?: string
+          jobsheet_id: string
+          page_count?: number
+          uploaded_by?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          file_path?: string
+          id?: string
+          jobsheet_id?: string
+          page_count?: number
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobsheet_receipts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobsheet_receipts_jobsheet_id_fkey"
             columns: ["jobsheet_id"]
             isOneToOne: false
             referencedRelation: "job_sheets"
@@ -2786,6 +2834,136 @@ export type Database = {
           },
         ]
       }
+      technical_documents: {
+        Row: {
+          asset_id: string | null
+          classification: Json
+          company_id: string
+          content_tags: string[]
+          created_at: string
+          file_path: string
+          id: string
+          keywords: string
+          notes: string
+          page_count: number
+          pages: Json
+          restricted: boolean
+          site_id: string | null
+          status: string
+          title: string
+          updated_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          asset_id?: string | null
+          classification?: Json
+          company_id: string
+          content_tags?: string[]
+          created_at?: string
+          file_path: string
+          id?: string
+          keywords?: string
+          notes?: string
+          page_count?: number
+          pages?: Json
+          restricted?: boolean
+          site_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          uploaded_by?: string
+        }
+        Update: {
+          asset_id?: string | null
+          classification?: Json
+          company_id?: string
+          content_tags?: string[]
+          created_at?: string
+          file_path?: string
+          id?: string
+          keywords?: string
+          notes?: string
+          page_count?: number
+          pages?: Json
+          restricted?: boolean
+          site_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technical_documents_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "technical_documents_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "technical_documents_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      technician_locations: {
+        Row: {
+          accuracy: number
+          company_id: string
+          latitude: number
+          longitude: number
+          recorded_at: string
+          shift_id: string
+          speed: number | null
+          user_id: string
+        }
+        Insert: {
+          accuracy: number
+          company_id: string
+          latitude: number
+          longitude: number
+          recorded_at?: string
+          shift_id: string
+          speed?: number | null
+          user_id: string
+        }
+        Update: {
+          accuracy?: number
+          company_id?: string
+          latitude?: number
+          longitude?: number
+          recorded_at?: string
+          shift_id?: string
+          speed?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technician_locations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "technician_locations_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_leave_balances: {
         Row: {
           base_entitlement_hours: number
@@ -3065,6 +3243,39 @@ export type Database = {
           _parts: Json
         }
         Returns: string
+      }
+      search_technical_documents: {
+        Args: {
+          _asset?: string
+          _query?: string
+          _site?: string
+          _status?: string
+        }
+        Returns: {
+          asset_id: string | null
+          classification: Json
+          company_id: string
+          content_tags: string[]
+          created_at: string
+          file_path: string
+          id: string
+          keywords: string
+          notes: string
+          page_count: number
+          pages: Json
+          restricted: boolean
+          site_id: string | null
+          status: string
+          title: string
+          updated_at: string
+          uploaded_by: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "technical_documents"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       set_member_access: {
         Args: { _active: boolean; _reason?: string; _user: string }
