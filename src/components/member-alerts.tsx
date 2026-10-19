@@ -11,13 +11,25 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
-/** Blocks the app until the member's required personal details and next of kin are filled in. */
+const GRACE_MS = 7 * 86_400_000;
+/** Amber reminder with a 7-day countdown; the details form only blocks the app once the grace period ends. */
 export function ProfileCompletionGate({ profile }: { profile: Profile }) {
   const qc = useQueryClient();
   const missing = missingProfileFields(profile);
   const [f, setF] = useState({ phone: profile.phone_number ?? "", address: profile.home_address ?? "", kin: (profile.next_of_kin_1 ?? {}) as Kin, kin2: (profile.next_of_kin_2 ?? {}) as Kin });
   const [busy, setBusy] = useState(false);
-  if (!missing.length) return null;
+  const [open, setOpen] = useState(false);
+  const [dueAt, setDueAt] = useState<number | null>(null);
+  useEffect(() => {
+    const key = `fieldflow:details-due:${profile.id}`;
+    let due = Number(localStorage.getItem(key));
+    if (!due) { due = Date.now() + GRACE_MS; localStorage.setItem(key, String(due)); }
+    setDueAt(due);
+  }, [profile.id]);
+  if (!missing.length || dueAt === null) return null;
+  const left = dueAt - Date.now();
+  const expired = left <= 0;
+  const days = Math.floor(left / 86_400_000), hours = Math.floor((left % 86_400_000) / 3_600_000);
   const still = missingProfileFields({ phone_number: f.phone, home_address: f.address, next_of_kin_1: f.kin });
   const save = async (e: React.FormEvent) => {
     e.preventDefault(); if (still.length) return; setBusy(true);
@@ -25,15 +37,21 @@ export function ProfileCompletionGate({ profile }: { profile: Profile }) {
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Personal details saved");
+    setOpen(false);
     await qc.invalidateQueries({ queryKey: ["profile"] });
   };
   const kinInput = (k: "name" | "relationship", v: Kin, set: (k: Kin) => void, req: boolean) => (
     <div className="space-y-1.5"><Label className="capitalize">{k}{req && " *"}</Label><Input className="h-11" required={req} value={v[k] ?? ""} onChange={(e) => set({ ...v, [k]: e.target.value })} /></div>
   );
   return (
-    <Dialog open>
-      <DialogContent className="max-h-[92dvh] overflow-y-auto [&>button]:hidden" onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
-        <DialogHeader><DialogTitle>Complete your personal details</DialogTitle><DialogDescription>Your company needs these before you start. They are only visible to your managers. Fields marked * are required.</DialogDescription></DialogHeader>
+    <>
+    {!expired && <div role="status" className="mx-4 mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-warning bg-warning/15 px-4 py-3 text-sm text-foreground">
+      <p className="min-w-0 flex-1"><span className="font-medium">Please fill in your personal details and next of kin.</span> {days > 0 ? `${days} day${days === 1 ? "" : "s"} ` : ""}{hours} h left before this becomes required.</p>
+      <Button size="sm" className="bg-warning text-warning-foreground hover:bg-warning/90" onClick={() => setOpen(true)}>Fill in now</Button>
+    </div>}
+    <Dialog open={expired || open} onOpenChange={(o) => { if (!expired) setOpen(o); }}>
+      <DialogContent className={`max-h-[92dvh] overflow-y-auto ${expired ? "[&>button]:hidden" : ""}`} onPointerDownOutside={(e) => expired && e.preventDefault()} onEscapeKeyDown={(e) => expired && e.preventDefault()}>
+        <DialogHeader><DialogTitle>Complete your personal details</DialogTitle><DialogDescription>{expired ? "The 7 days are up — please fill these in to keep using the app." : "Your company needs these."} They are only visible to your managers. Fields marked * are required.</DialogDescription></DialogHeader>
         <form className="space-y-4" onSubmit={save}>
           <div className="space-y-1.5"><Label>Mobile phone *</Label><PhoneInput required code={splitPhone(f.phone).code} number={splitPhone(f.phone).number} onChange={(c, n) => setF({ ...f, phone: `${c} ${n}`.trim() })} /></div>
           <div className="space-y-1.5"><Label>Home address *</Label><Input className="h-11" required value={f.address} onChange={(e) => setF({ ...f, address: e.target.value })} /></div>
@@ -50,6 +68,7 @@ export function ProfileCompletionGate({ profile }: { profile: Profile }) {
         </form>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
 
