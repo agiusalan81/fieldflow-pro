@@ -122,6 +122,7 @@
 - [x] Clock-out unfinished-work reconciliation
 - [x] Notification chimes + mute toggle
 - [x] Required personal details / next of kin onboarding
-- [ ] Lift RFQ estimate template (fields, package-supplier options), full-screen layout sketch, photos, site contacts
-- [ ] Direct supplier email + threaded reminders (needs company email domain)
-- [ ] Platform HQ toggles for each module
+- [x] Lift RFQ estimate template (fields, package-supplier options), full-screen layout sketch, photos, site contacts
+- [x] Supplier request + "Re:" reminders via the phone's email app, reminder schedule in Company settings
+- [ ] Automatic supplier emails/reminders sent by the app (needs company email domain)
+- [x] Platform HQ toggles for each module (menu hiding + estimate write guard)

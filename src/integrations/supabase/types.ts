@@ -435,6 +435,7 @@ export type Database = {
           emergency_phone: string | null
           equipment_categories: string[]
           equipment_label: string
+          estimate_config: Json
           holiday_rate: number
           idle_timeout_minutes: number
           industry: string | null
@@ -477,6 +478,7 @@ export type Database = {
           emergency_phone?: string | null
           equipment_categories?: string[]
           equipment_label?: string
+          estimate_config?: Json
           holiday_rate?: number
           idle_timeout_minutes?: number
           industry?: string | null
@@ -519,6 +521,7 @@ export type Database = {
           emergency_phone?: string | null
           equipment_categories?: string[]
           equipment_label?: string
+          estimate_config?: Json
           holiday_rate?: number
           idle_timeout_minutes?: number
           industry?: string | null
@@ -1709,8 +1712,15 @@ export type Database = {
           events: Json
           fixed_labor: boolean
           id: string
+          last_reminder_at: string | null
+          photos: string[]
           quoted_amount: number | null
+          reminders_paused: boolean
+          reminders_sent: number
+          rfq: Json
+          sent_at: string | null
           site_id: string | null
+          sketch: string | null
           specs: string | null
           status: string
           supplier_email: string | null
@@ -1727,8 +1737,15 @@ export type Database = {
           events?: Json
           fixed_labor?: boolean
           id?: string
+          last_reminder_at?: string | null
+          photos?: string[]
           quoted_amount?: number | null
+          reminders_paused?: boolean
+          reminders_sent?: number
+          rfq?: Json
+          sent_at?: string | null
           site_id?: string | null
+          sketch?: string | null
           specs?: string | null
           status?: string
           supplier_email?: string | null
@@ -1745,8 +1762,15 @@ export type Database = {
           events?: Json
           fixed_labor?: boolean
           id?: string
+          last_reminder_at?: string | null
+          photos?: string[]
           quoted_amount?: number | null
+          reminders_paused?: boolean
+          reminders_sent?: number
+          rfq?: Json
+          sent_at?: string | null
           site_id?: string | null
+          sketch?: string | null
           specs?: string | null
           status?: string
           supplier_email?: string | null
