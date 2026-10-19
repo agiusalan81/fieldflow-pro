@@ -8,7 +8,7 @@ export const MODULES = [
   { key: "dispatch", label: "Schedule & dispatch" },
   { key: "approvals", label: "Asset & overtime approvals" },
   { key: "pending_works", label: "Pending works" },
-  { key: "estimates", label: "New lift estimates & supplier quotes" },
+  { key: "estimates", label: "New lift estimates & supplier estimates" },
   { key: "contracts", label: "Contracts, checklists & renewals" },
   { key: "billing", label: "Billing & overtime hours" },
   { key: "clients", label: "Clients & assets" },

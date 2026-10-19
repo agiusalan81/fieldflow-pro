@@ -332,7 +332,7 @@ function SupervisorOverview({ profile }: { profile: Profile }) {
           {can("live_status") && <Card to="/dashboard" title="Technicians active" icon={Play} value={techs.filter((t) => t.on).length} sub={`of ${techs.length} team members`} />}
           {can("dispatch") && <Card to="/admin/jobs" title="Today's jobs" icon={CalendarDays} value={data?.jobs.length ?? 0} sub={`${done} sheets completed today`} />}
           {can("approvals") && <Card to="/admin/jobs" title="Asset approvals" icon={AlertTriangle} value={approvals} sub="Model / serial changes to check" />}
-          {can("pending_works") && <Card to="/pending-works" title="Pending works" icon={ClipboardList} value={pending} sub="Follow-ups to schedule or quote" />}
+          {can("pending_works") && <Card to="/pending-works" title="Pending works" icon={ClipboardList} value={pending} sub="Follow-ups to schedule or estimate" />}
         </div>
         <div className="grid gap-4 lg:grid-cols-2">
           {can("live_status") && (
