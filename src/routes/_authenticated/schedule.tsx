@@ -40,7 +40,7 @@ const SCHED: Record<string, [string, string]> = {
   in_progress: ["In progress", "bg-primary/15 text-primary"],
   completed: ["Closed", "bg-success/15 text-success"],
 };
-const schedStatus = (j: Job) => SCHED[j.sheet?.status ?? "open"] ?? SCHED.open!;
+const schedStatus = (j: Job) => SCHED[j.sheet?.status ?? "open"] ?? SCHED["open"]!;
 
 function Schedule() {
   const { data: profile, isPreview } = usePreviewProfile();
