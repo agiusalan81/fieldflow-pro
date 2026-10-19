@@ -132,6 +132,17 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
           {shift ? <Square className="mr-1 h-4 w-4" /> : <Play className="mr-1 h-4 w-4" />}{shift ? "Clock out" : "Clock in"}
         </Button>
       </div>
+      <Dialog open={plateOpen} onOpenChange={setPlateOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Shift clock-in</DialogTitle></DialogHeader>
+          <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); if (!validPlate(plate)) return; setPlateOpen(false); void toggle("shift", undefined, normalizePlate(plate)); }}>
+            <label className="block text-sm font-medium" htmlFor="vehicle-plate">Vehicle registration</label>
+            <Input id="vehicle-plate" autoFocus inputMode="text" autoCapitalize="characters" placeholder="ABC 123" value={formatPlate(plate)} onChange={(e) => setPlate(normalizePlate(e.target.value))} className="h-12 text-center text-lg tracking-widest" />
+            <p className={`text-xs ${plate && !validPlate(plate) ? "text-destructive" : "text-muted-foreground"}`}>3 letters and 3 numbers. Filled in from your last shift — change it if you're in a different vehicle.</p>
+            <Button type="submit" className="h-12 w-full" disabled={!validPlate(plate)}><Play className="mr-1 h-4 w-4" />Clock in</Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
