@@ -32,3 +32,5 @@ export function relevantPages(docs: { id: string; title: string; pages: IndexedP
 }
 export function shouldShareLocation(consent: boolean, shift: { ended_at: string | null } | undefined) { return consent && !!shift && shift.ended_at === null; }
 export function locationIsFresh(recordedAt: string, now: number) { return now - new Date(recordedAt).getTime() < 120000; }
+
+export function missingPayrollMembers<T extends {id:string;registration_status:string}>(members:T[], configured:{user_id:string}[]) { return members.filter(m=>m.registration_status === "active" && !configured.some(s=>s.user_id===m.id)); }
