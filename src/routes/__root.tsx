@@ -132,6 +132,23 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
   useEffect(() => {
+    // Stale chunk after an app update/dev re-optimisation: reload once instead of a blank screen.
+    const onChunkError = (e: Event) => {
+      const key = "chunk-reload-at";
+      const last = Number(sessionStorage.getItem(key) ?? 0);
+      if (Date.now() - last < 10_000) return;
+      e.preventDefault();
+      sessionStorage.setItem(key, String(Date.now()));
+      window.location.reload();
+    };
+    const onRejection = (e: PromiseRejectionEvent) => {
+      if (/Failed to fetch dynamically imported module|Importing a module script failed/i.test(String(e.reason?.message ?? e.reason))) onChunkError(e);
+    };
+    window.addEventListener("vite:preloadError", onChunkError);
+    window.addEventListener("unhandledrejection", onRejection);
+    return () => { window.removeEventListener("vite:preloadError", onChunkError); window.removeEventListener("unhandledrejection", onRejection); };
+  }, []);
+  useEffect(() => {
     void registerOfflineApp().catch(() => {});
     let accountId: string | undefined;
     void supabase.auth.getSession().then(({ data }) => { accountId = data.session?.user.id; });
