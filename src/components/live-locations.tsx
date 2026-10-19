@@ -1,0 +1,8 @@
+import {lazy,Suspense} from 'react';
+import {useQuery} from '@tanstack/react-query';
+import {supabase} from '@/integrations/supabase/client';
+import {useProfile} from '@/lib/profile';
+import {useUserPreview} from '@/lib/impersonation';
+import {locationIsFresh} from '@/lib/field-documents';
+const Map=lazy(()=>import('@/components/live-location-map'));
+export function LiveLocations(){const{data:profile}=useProfile();const{active}=useUserPreview(profile);const query=useQuery({queryKey:['live-locations'],enabled:!!profile&&!active&&profile.role!=='technician',refetchInterval:15000,queryFn:async()=>{const[locations,users]=await Promise.all([supabase.from('technician_locations').select('*'),supabase.from('users').select('id,full_name')]);if(locations.error)throw locations.error;return locations.data.map(p=>({...p,name:users.data?.find(u=>u.id===p.user_id)?.full_name??'Team member'}));}});if(active||profile?.role==='technician')return null;return <section className="space-y-3"><h2 className="font-medium">Live team locations</h2>{query.error?<p role="alert" className="text-destructive">{query.error.message}</p>:<><Suspense fallback={<div className="h-80 bg-muted"/>}><Map points={query.data??[]}/></Suspense><ul className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-foreground">{query.data?.map(p=><li key={p.user_id}>{p.name} · {locationIsFresh(p.recorded_at,Date.now())?'Live':'Last known'} · {new Date(p.recorded_at).toLocaleTimeString()}</li>)}</ul>{!query.data?.length&&<p className="text-sm text-muted-foreground">No clocked-in team members are sharing a location.</p>}</>}</section>;}
