@@ -30,6 +30,7 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedStandbyRouteImport } from './routes/_authenticated/standby'
 import { Route as AuthenticatedSubscriptionRouteImport } from './routes/_authenticated/subscription'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
+import { Route as AuthenticatedTechnicalLibraryRouteImport } from './routes/_authenticated/technical-library'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as ReferralCodeRouteImport } from './routes/referral.$code'
 import { Route as ReportTokenRouteImport } from './routes/report.$token'
@@ -152,6 +153,12 @@ const AuthenticatedTeamRoute = AuthenticatedTeamRouteImport.update({
   path: '/team',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTechnicalLibraryRoute =
+  AuthenticatedTechnicalLibraryRouteImport.update({
+    id: '/technical-library',
+    path: '/technical-library',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const JoinTokenRoute = JoinTokenRouteImport.update({
   id: '/join/$token',
   path: '/join/$token',
@@ -258,6 +265,7 @@ export interface FileRoutesByFullPath {
   '/standby': typeof AuthenticatedStandbyRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/team': typeof AuthenticatedTeamRoute
+  '/technical-library': typeof AuthenticatedTechnicalLibraryRoute
   '/join/$token': typeof JoinTokenRoute
   '/referral/$code': typeof ReferralCodeRoute
   '/report/$token': typeof ReportTokenRoute
@@ -295,6 +303,7 @@ export interface FileRoutesByTo {
   '/standby': typeof AuthenticatedStandbyRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/team': typeof AuthenticatedTeamRoute
+  '/technical-library': typeof AuthenticatedTechnicalLibraryRoute
   '/join/$token': typeof JoinTokenRoute
   '/referral/$code': typeof ReferralCodeRoute
   '/report/$token': typeof ReportTokenRoute
@@ -334,6 +343,7 @@ export interface FileRoutesById {
   '/_authenticated/standby': typeof AuthenticatedStandbyRoute
   '/_authenticated/subscription': typeof AuthenticatedSubscriptionRoute
   '/_authenticated/team': typeof AuthenticatedTeamRoute
+  '/_authenticated/technical-library': typeof AuthenticatedTechnicalLibraryRoute
   '/join/$token': typeof JoinTokenRoute
   '/referral/$code': typeof ReferralCodeRoute
   '/report/$token': typeof ReportTokenRoute
@@ -373,6 +383,7 @@ export interface FileRouteTypes {
     | '/standby'
     | '/subscription'
     | '/team'
+    | '/technical-library'
     | '/join/$token'
     | '/referral/$code'
     | '/report/$token'
@@ -410,6 +421,7 @@ export interface FileRouteTypes {
     | '/standby'
     | '/subscription'
     | '/team'
+    | '/technical-library'
     | '/join/$token'
     | '/referral/$code'
     | '/report/$token'
@@ -448,6 +460,7 @@ export interface FileRouteTypes {
     | '/_authenticated/standby'
     | '/_authenticated/subscription'
     | '/_authenticated/team'
+    | '/_authenticated/technical-library'
     | '/join/$token'
     | '/referral/$code'
     | '/report/$token'
@@ -624,6 +637,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTeamRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/technical-library': {
+      id: '/_authenticated/technical-library'
+      path: '/technical-library'
+      fullPath: '/technical-library'
+      preLoaderRoute: typeof AuthenticatedTechnicalLibraryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/join/$token': {
       id: '/join/$token'
       path: '/join/$token'
@@ -765,6 +785,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedStandbyRoute: typeof AuthenticatedStandbyRoute
   AuthenticatedSubscriptionRoute: typeof AuthenticatedSubscriptionRoute
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
+  AuthenticatedTechnicalLibraryRoute: typeof AuthenticatedTechnicalLibraryRoute
   AuthenticatedAdminEntitiesRoute: typeof AuthenticatedAdminEntitiesRoute
   AuthenticatedAdminFieldsRoute: typeof AuthenticatedAdminFieldsRoute
   AuthenticatedAdminInventoryRoute: typeof AuthenticatedAdminInventoryRoute
@@ -794,6 +815,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedStandbyRoute: AuthenticatedStandbyRoute,
   AuthenticatedSubscriptionRoute: AuthenticatedSubscriptionRoute,
   AuthenticatedTeamRoute: AuthenticatedTeamRoute,
+  AuthenticatedTechnicalLibraryRoute: AuthenticatedTechnicalLibraryRoute,
   AuthenticatedAdminEntitiesRoute: AuthenticatedAdminEntitiesRoute,
   AuthenticatedAdminFieldsRoute: AuthenticatedAdminFieldsRoute,
   AuthenticatedAdminInventoryRoute: AuthenticatedAdminInventoryRoute,
