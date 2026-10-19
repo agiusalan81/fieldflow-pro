@@ -15,7 +15,7 @@ const invitationQuery = (token: string) => queryOptions({
   queryFn: () => withInviteTimeout((signal) => getInvitation({ data: { token }, signal })),
   retry: false,
   staleTime: 0,
-  gcTime: 0,
+  gcTime: 5 * 60_000,
   refetchOnWindowFocus: false,
 });
 
