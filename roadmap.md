@@ -126,3 +126,6 @@
 - [x] Supplier request + "Re:" reminders via the phone's email app, reminder schedule in Company settings
 - [ ] Automatic supplier emails/reminders sent by the app (needs company email domain)
 - [x] Platform HQ toggles for each module (menu hiding + estimate write guard)
+
+## Open defect — reported failure on the user's phone (19 Oct 2026)
+- [ ] Job sheet Camera / Gallery and client signature box reported not working on the user's phone (View as Technician). Simulated iPhone + Android on a real draft sheet (#007623): pickers open, photo added, signature draws — not reproduced. Blocked on: which app/browser and link the user tested in, and what happens on tap.
