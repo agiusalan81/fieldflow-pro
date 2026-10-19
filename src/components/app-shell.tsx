@@ -19,7 +19,8 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader, SheetDescription } from "@/components/ui/sheet";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { IdleLogout } from "@/components/idle-logout";
-import { helpFor } from "@/lib/help-guides";
+import { helpFor, searchHelp, type HelpGuide } from "@/lib/help-guides";
+import { Input } from "@/components/ui/input";
 import { QUICK_DEFAULTS, MENU_ONLY, rankActions, readUsage, recordUsage, resetUsage } from "@/lib/quick-actions";
 import { useUserPreview, clearUserPreview } from "@/lib/impersonation";
 import { UserPreviewControl, UserPreviewBanner } from "@/components/user-preview";
@@ -163,19 +164,35 @@ function QuickActions({ items, uid, role, manager }: { items: NavItem[]; uid: st
   );
 }
 
+function GuideBody({ g }: { g: HelpGuide }) {
+  return (
+    <div className="space-y-4">
+      <div><p className="mb-2 font-medium text-foreground">How to use it</p><ol className="list-decimal space-y-1.5 pl-5 text-muted-foreground">{g.steps.map((s) => <li key={s}>{s}</li>)}</ol></div>
+      {g.roles && <div><p className="mb-1 font-medium text-foreground">Who can do what</p><p className="text-muted-foreground">{g.roles}</p></div>}
+      {g.tips?.length ? <div><p className="mb-1 font-medium text-foreground">Tips</p><ul className="list-disc space-y-1 pl-5 text-muted-foreground">{g.tips.map((t) => <li key={t}>{t}</li>)}</ul></div> : null}
+    </div>
+  );
+}
+
 function HelpButton() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const g = helpFor(path);
-  if (!g) return null;
+  const [q, setQ] = useState("");
+  const results = searchHelp(q);
   return (
-    <Sheet>
-      <SheetTrigger asChild><Button variant="ghost" size="icon" aria-label="Help for this page"><HelpCircle className="h-5 w-5" /></Button></SheetTrigger>
+    <Sheet onOpenChange={(o) => { if (!o) setQ(""); }}>
+      <SheetTrigger asChild><Button variant="ghost" size="icon" aria-label="Help"><HelpCircle className="h-5 w-5" /></Button></SheetTrigger>
       <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
-        <SheetHeader><SheetTitle>Help · {g.title}</SheetTitle><SheetDescription>{g.purpose}</SheetDescription></SheetHeader>
-        <div className="mt-4 space-y-5 px-4 pb-6 text-sm">
-          <div><p className="mb-2 font-medium text-foreground">How to use it</p><ol className="list-decimal space-y-1.5 pl-5 text-muted-foreground">{g.steps.map((s) => <li key={s}>{s}</li>)}</ol></div>
-          {g.roles && <div><p className="mb-1 font-medium text-foreground">Who can do what</p><p className="text-muted-foreground">{g.roles}</p></div>}
-          {g.tips?.length ? <div><p className="mb-1 font-medium text-foreground">Tips</p><ul className="list-disc space-y-1 pl-5 text-muted-foreground">{g.tips.map((t) => <li key={t}>{t}</li>)}</ul></div> : null}
+        <SheetHeader><SheetTitle>Help{!q && g ? ` · ${g.title}` : ""}</SheetTitle><SheetDescription>{!q && g ? g.purpose : "Search every help guide."}</SheetDescription></SheetHeader>
+        <div className="mt-2 space-y-5 px-4 pb-6 text-sm">
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search help (e.g. clock in, travel, waze, receipt, standby)…" aria-label="Search help" />
+          {q ? (results.length ? results.map((r) => (
+            <section key={r.path} className="space-y-2 border-b pb-4">
+              <Link to={r.path} className="font-medium text-primary underline-offset-2 hover:underline">{r.guide.title}</Link>
+              <p className="text-muted-foreground">{r.guide.purpose}</p>
+              <GuideBody g={r.guide} />
+            </section>
+          )) : <p className="text-muted-foreground">No help matches “{q}”.</p>) : g ? <GuideBody g={g} /> : <p className="text-muted-foreground">Type above to search the help guides.</p>}
         </div>
       </SheetContent>
     </Sheet>
