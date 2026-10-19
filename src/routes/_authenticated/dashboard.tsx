@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { splitHours, addSplits, DEFAULT_RULES } from "@/lib/jobsheets";
 import { AssetHistory, LiftHistoryButton, PriorityBadge, timeWindow } from "@/components/job-card";
+import { normalizePlate, validPlate, formatPlate } from "@/lib/dwr";
 import { closeShiftReport, reconcileShifts, downloadDwr } from "@/lib/dwr-report";
 import { InternalWorkCard } from "@/components/work-extras";
 import { BillingReview } from "@/components/billing-review";
@@ -81,12 +82,18 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
   const shift = open.find((s) => s.shift_type === "shift");
   const travel = open.find((s) => s.shift_type === "travel");
 
-  const toggle = async (type: "shift" | "travel", current?: { id: string; started_at: string }) => {
+  const [plateOpen, setPlateOpen] = useState(false);
+  const [plate, setPlate] = useState("");
+  const openClockIn = async () => {
+    const { data } = await supabase.from("shifts").select("vehicle_reg").eq("user_id", profile.id).eq("shift_type", "shift").not("vehicle_reg", "is", null).order("started_at", { ascending: false }).limit(1).maybeSingle();
+    setPlate(data?.vehicle_reg ?? ""); setPlateOpen(true);
+  };
+  const toggle = async (type: "shift" | "travel", current?: { id: string; started_at: string }, vehicle?: string) => {
     if (readOnly) return;
     const endedAt = new Date().toISOString();
     const res = current
       ? await supabase.from("shifts").update({ ended_at: endedAt }).eq("id", current.id)
-      : await supabase.from("shifts").insert({ shift_type: type, company_id: profile.company_id, user_id: profile.id });
+      : await supabase.from("shifts").insert({ shift_type: type, company_id: profile.company_id, user_id: profile.id, ...(vehicle ? { vehicle_reg: vehicle } : {}) });
     if (res.error) { toast.error(res.error.message); return; }
     if (type === "shift" && !current && (profile.real_role === "technician" || profile.real_role === "supervisor") && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(() => { localStorage.setItem(`location-consent:${profile.id}`, "yes"); window.dispatchEvent(new Event("location-consent")); }, () => toast.warning("Location is off — turn it on in your browser settings so your shift location can be shared."), { timeout: 20000 });
@@ -113,6 +120,7 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
       <span className={`inline-flex h-7 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium ${shift ? "bg-success/20 text-foreground" : "bg-muted text-muted-foreground"}`}>
         <span className={`h-2 w-2 rounded-full ${shift ? "bg-success" : "bg-muted-foreground"}`} />
         {shift ? "On shift" : "Off shift"}
+        {shift?.vehicle_reg && <span className="text-muted-foreground">· {formatPlate(shift.vehicle_reg)}</span>}
         <span className="tabular-nums">{shift ? formatDuration(Date.now() - new Date(shift.started_at).getTime()) : ""}</span>
       </span>
       {travel && <span className="inline-flex h-7 items-center gap-1 rounded-full bg-warning/20 px-2.5 text-xs tabular-nums text-foreground"><Car className="h-3 w-3" />{formatDuration(Date.now() - new Date(travel.started_at).getTime())}</span>}
@@ -120,7 +128,7 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
         <Button size="sm" variant={travel ? "secondary" : "outline"} disabled={readOnly || !shift} onClick={() => toggle("travel", travel)}>
           <Car className="mr-1 h-4 w-4" />{travel ? "Stop travel" : "Travel"}
         </Button>
-        <Button size="sm" variant={shift ? "outline" : "default"} disabled={readOnly} onClick={() => toggle("shift", shift)}>
+        <Button size="sm" variant={shift ? "outline" : "default"} disabled={readOnly} onClick={() => (shift ? toggle("shift", shift) : openClockIn())}>
           {shift ? <Square className="mr-1 h-4 w-4" /> : <Play className="mr-1 h-4 w-4" />}{shift ? "Clock out" : "Clock in"}
         </Button>
       </div>
