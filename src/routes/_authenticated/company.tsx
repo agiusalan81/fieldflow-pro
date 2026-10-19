@@ -1,13 +1,13 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Copy, Link2, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useProfile, isOffice, ROLE_LABEL, type Role } from "@/lib/profile";
-import { MODULES, ROLES, canSee, usePermRows, useCan, type ModuleKey } from "@/lib/permissions";
+import { useProfile, isOffice } from "@/lib/profile";
+import { MODULES, ROLES, canSee, usePermRows, type ModuleKey } from "@/lib/permissions";
 import { useCompanyRules, FONT_CHOICES, applyTypography, DEFAULT_THEME, type Typography, type TextStyle } from "@/lib/company";
 import { PhoneInput, splitPhone, COUNTRIES } from "@/components/client-manager";
+import { formatOfficeAddress, type OfficeAddress } from "@/lib/contact-details";
 import { CURRENCIES } from "@/lib/locale";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DocumentSettings } from "@/components/document-settings";
@@ -26,9 +26,9 @@ export const Route = createFileRoute("/_authenticated/company")({
   head: () => ({
     meta: [
       { title: "Company settings — FieldOps" },
-      { name: "description", content: "Working hours, overtime rules, role access and team invites for your company." },
+      { name: "description", content: "Working hours, overtime rules, role access and branding for your company." },
       { property: "og:title", content: "Company settings — FieldOps" },
-      { property: "og:description", content: "Working hours, overtime, role access and team." },
+      { property: "og:description", content: "Working hours, overtime, role access and branding." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -40,15 +40,13 @@ const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 function CompanyPage() {
   const { data: profile } = useProfile();
-  const can = useCan(profile);
   if (!profile) return <AppShell title="Company"><p className="text-muted-foreground">Loading…</p></AppShell>;
   const office = isOffice(profile);
   const superuser = profile.role === "superuser";
-  const team = can("team");
-  const def = office ? "hours" : "team";
+  if (!office) return <AppShell title="Company settings"><EmptyState>Company settings are available to office staff.</EmptyState></AppShell>;
   return (
     <AppShell title="Company settings">
-      <Tabs defaultValue={def} className="mx-auto max-w-5xl">
+      <Tabs defaultValue="hours" className="mx-auto max-w-5xl">
         <TabsList className="h-auto flex-wrap">
           {office && <TabsTrigger value="hours">Hours & overtime</TabsTrigger>}
           {office && <TabsTrigger value="profile">Profile & branding</TabsTrigger>}
@@ -57,7 +55,6 @@ function CompanyPage() {
           {office && <TabsTrigger value="safety">Safety & faults</TabsTrigger>}
           {office && <TabsTrigger value="messaging">Messages & emails</TabsTrigger>}
           {office && <TabsTrigger value="integrations">Accounting</TabsTrigger>}
-          {team && <TabsTrigger value="team">Team & invites</TabsTrigger>}
           {superuser && <TabsTrigger value="access">Role access</TabsTrigger>}
         </TabsList>
         {office && <TabsContent value="hours" className="mt-4"><HoursTab companyId={profile.company_id} /></TabsContent>}
@@ -67,7 +64,6 @@ function CompanyPage() {
         {office && <TabsContent value="safety" className="mt-4"><SafetySettings companyId={profile.company_id} /></TabsContent>}
         {office && <TabsContent value="integrations" className="mt-4"><IntegrationsSettings part="accounting" companyId={profile.company_id} /></TabsContent>}
         {office && <TabsContent value="messaging" className="mt-4"><IntegrationsSettings part="messaging" companyId={profile.company_id} /></TabsContent>}
-        {team && <TabsContent value="team" className="mt-4"><TeamTab role={profile.role} companyId={profile.company_id} meId={profile.id} /></TabsContent>}
         {superuser && <TabsContent value="access" className="mt-4"><AccessTab companyId={profile.company_id} /></TabsContent>}
       </Tabs>
     </AppShell>
@@ -170,7 +166,7 @@ function HoursTab({ companyId }: { companyId: string }) {
   );
 }
 
-type Phones = { office_phone: string; whatsapp_phone: string; emergency_phone: string; company_email: string; company_address: string; pe_number: string };
+type Phones = { office_phone: string; whatsapp_phone: string; emergency_phone: string; company_email: string; company_address: string; pe_number: string; office_address: OfficeAddress; vat_number: string };
 
 /** Shrinks an image to fit 400×400 and returns a PNG data URL, so it embeds in PDFs and emails. */
 function shrinkImage(file: File): Promise<string> {
@@ -180,7 +176,9 @@ function shrinkImage(file: File): Promise<string> {
       const s = Math.min(1, 400 / Math.max(img.width, img.height));
       const c = document.createElement("canvas");
       c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
-      c.getContext("2d")!.drawImage(img, 0, 0, c.width, c.height);
+      const context = c.getContext("2d");
+      if (!context) { reject(new Error("Image processing unavailable")); return; }
+      context.drawImage(img, 0, 0, c.width, c.height);
       URL.revokeObjectURL(img.src);
       resolve(c.toDataURL("image/png"));
     };
@@ -223,11 +221,11 @@ function ProfileTab({ companyId }: { companyId: string }) {
   const qc = useQueryClient();
   const [p, setP] = useState<Phones | null>(null);
   const [t, setT] = useState<Typography | null>(null);
-  useEffect(() => { if (data && !p) { setP({...data.phones,pe_number:data.peNumber}); setT(data.theme); } }, [data, p]);
+  useEffect(() => { if (data && !p) { setP({...data.phones,pe_number:data.peNumber,office_address:data.officeAddress,vat_number:data.vatNumber}); setT(data.theme); } }, [data, p]);
   useEffect(() => { if (t) applyTypography(t); }, [t]);
   if (!p || !t) return null;
   const save = async () => {
-    const { error } = await supabase.from("company_settings").upsert({ company_id: companyId, ...p, theme: t as never });
+    const { error } = await supabase.from("company_settings").upsert({ company_id: companyId, ...p, company_address: formatOfficeAddress(p.office_address), office_address: p.office_address as never, theme: t as never });
     if (error) { toast.error(error.message); return; }
     toast.success("Company profile saved");
     qc.invalidateQueries({ queryKey: ["company-settings"] });
@@ -276,7 +274,7 @@ function ProfileTab({ companyId }: { companyId: string }) {
           <div className="space-y-1.5"><Label>Company email</Label><Input className="h-11" type="email" value={p.company_email} onChange={(e) => setP({ ...p, company_email: e.target.value })} /></div>
         </div>
         <div className="space-y-1.5"><Label htmlFor="company-pe-number">PE number (Principal Employer)</Label><Input id="company-pe-number" value={p.pe_number} onChange={e=>setP({...p,pe_number:e.target.value})}/></div>
-        <div className="space-y-1.5"><Label>Office address</Label><Input className="h-11" value={p.company_address} onChange={(e) => setP({ ...p, company_address: e.target.value })} /></div>
+        <div className="space-y-3"><h3 className="font-medium">Office address</h3><div className="grid gap-3 sm:grid-cols-2">{([['building','Building name / number'],['street','Street address'],['city','City / locality'],['postalCode','Postal code']] as const).map(([key,label])=><div key={key} className="space-y-1.5"><Label htmlFor={`office-${key}`}>{label}</Label><Input id={`office-${key}`} className="h-11" maxLength={200} value={p.office_address[key]} onChange={e=>setP({...p,office_address:{...p.office_address,[key]:e.target.value}})} /></div>)}</div><p className="text-sm text-muted-foreground">{formatOfficeAddress(p.office_address)}</p></div><div className="space-y-1.5"><Label htmlFor="company-vat">VAT / Tax number</Label><Input id="company-vat" className="h-11" maxLength={60} value={p.vat_number} onChange={e=>setP({...p,vat_number:e.target.value})}/></div>
       </section>
       <section className="space-y-4 rounded-xl border bg-card p-5">
         <div><h2 className="font-medium text-foreground">Fonts</h2><p className="text-sm text-muted-foreground">Changes preview live across the app. Save to apply for everyone in your company.</p></div>
@@ -284,95 +282,6 @@ function ProfileTab({ companyId }: { companyId: string }) {
         <Button type="button" variant="outline" size="sm" onClick={() => setT(DEFAULT_THEME)}>Reset fonts</Button>
       </section>
       <Button className="h-11" onClick={save}>Save profile & branding</Button>
-    </div>
-  );
-}
-
-const invitable = (r: Role): Role[] => r === "superuser" ? ["technician", "supervisor", "admin", "superuser"] : r === "admin" ? ["technician", "supervisor", "admin"] : ["technician", "supervisor"];
-
-function TeamTab({ role, companyId, meId }: { role: Role; companyId: string; meId: string }) {
-  const qc = useQueryClient();
-  const [inv, setInv] = useState({ role: "technician" as Role, full_name: "", email: "" });
-  const canEditRoles = role === "superuser" || role === "admin";
-  const { data } = useQuery({
-    queryKey: ["team"],
-    queryFn: async () => {
-      const [u, r, i] = await Promise.all([
-        supabase.from("users").select("id, full_name, email, employee_id").order("full_name"),
-        supabase.from("user_roles").select("user_id, role"),
-        supabase.from("company_invites").select("*").is("used_at", null).order("created_at", { ascending: false }),
-      ]);
-      return { users: u.data ?? [], roles: new Map((r.data ?? []).map((x) => [x.user_id, x.role as Role])), invites: i.data ?? [] };
-    },
-  });
-  const link = (t: string) => `${window.location.origin}/join/${t}`;
-  const copy = async (t: string) => { await navigator.clipboard.writeText(link(t)); toast.success("Invite link copied"); };
-  const create = async () => {
-    const { data: row, error } = await supabase.from("company_invites").insert({ company_id: companyId, role: inv.role, full_name: inv.full_name || null, email: inv.email || null }).select("token").single();
-    if (error) { toast.error(error.message); return; }
-    await copy(row.token).catch(() => toast.success("Invite link created"));
-    setInv({ ...inv, full_name: "", email: "" });
-    qc.invalidateQueries({ queryKey: ["team"] });
-  };
-  const revoke = async (id: string) => {
-    const { error } = await supabase.from("company_invites").delete().eq("id", id);
-    if (error) toast.error(error.message); else qc.invalidateQueries({ queryKey: ["team"] });
-  };
-  const changeRole = async (userId: string, r: Role) => {
-    const { error } = await supabase.from("user_roles").update({ role: r }).eq("user_id", userId);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Role updated");
-    qc.invalidateQueries({ queryKey: ["team"] });
-  };
-  return (
-    <div className="space-y-5">
-      <section className="space-y-3 rounded-xl border bg-card p-5">
-        <h2 className="flex items-center gap-2 font-medium text-foreground"><Link2 className="h-4 w-4" />Create a join link</h2>
-        <p className="text-sm text-muted-foreground">Send the link to a new team member. They pick a password and join with the role you choose. Links expire after 14 days and work once. Employee IDs are created automatically.</p>
-        <div className="grid gap-2 sm:grid-cols-[180px_minmax(0,1fr)_minmax(0,1fr)_auto]">
-          <Select value={inv.role} onValueChange={(v) => setInv({ ...inv, role: v as Role })}>
-            <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-            <SelectContent>{invitable(role).map((r) => <SelectItem key={r} value={r}>{ROLE_LABEL[r]}</SelectItem>)}</SelectContent>
-          </Select>
-          <Input className="h-11" placeholder="Name (optional)" value={inv.full_name} onChange={(e) => setInv({ ...inv, full_name: e.target.value })} />
-          <Input className="h-11" type="email" placeholder="Email (optional)" value={inv.email} onChange={(e) => setInv({ ...inv, email: e.target.value })} />
-          <Button className="h-11" onClick={create}>Create & copy link</Button>
-        </div>
-        {data?.invites.length ? (
-          <ul className="divide-y rounded-lg border">
-            {data.invites.map((i) => (
-              <li key={i.id} className="flex items-center gap-3 px-3 py-2 text-sm">
-                <span className="min-w-0 flex-1 truncate">{i.full_name || i.email || "Open invite"} · {ROLE_LABEL[i.role as Role]} · expires {new Date(i.expires_at).toLocaleDateString()}</span>
-                <Button size="sm" variant="outline" onClick={() => copy(i.token)}><Copy className="mr-1 h-3.5 w-3.5" />Copy</Button>
-                <Button size="icon" variant="ghost" aria-label="Revoke invite" onClick={() => revoke(i.id)}><Trash2 className="h-4 w-4" /></Button>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-      </section>
-      <section className="rounded-xl border bg-card">
-        <h2 className="border-b px-5 py-3 font-medium text-foreground">Team ({data?.users.length ?? 0})</h2>
-        {!data?.users.length ? <div className="p-5"><EmptyState>No team members yet.</EmptyState></div> : (
-          <ul className="divide-y">
-            {data.users.map((u) => {
-              const r = data.roles.get(u.id) ?? "technician";
-              const editable = canEditRoles && u.id !== meId && (role === "superuser" || r !== "superuser");
-              return (
-                <li key={u.id} className="flex items-center gap-3 px-5 py-3">
-                  <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-foreground">{u.full_name} <span className="font-mono text-xs text-muted-foreground">{u.employee_id}</span></p><p className="truncate text-xs text-muted-foreground">{u.email}</p></div>
-                  {canEditRoles && <Button asChild size="sm" variant="outline"><Link to="/payroll/wages">Payroll setup</Link></Button>}
-                  {editable ? (
-                    <Select value={r} onValueChange={(v) => changeRole(u.id, v as Role)}>
-                      <SelectTrigger className="h-9 w-[170px]"><SelectValue /></SelectTrigger>
-                      <SelectContent>{invitable(role).map((x) => <SelectItem key={x} value={x}>{ROLE_LABEL[x]}</SelectItem>)}</SelectContent>
-                    </Select>
-                  ) : <span className="text-sm text-muted-foreground">{ROLE_LABEL[r]}</span>}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
     </div>
   );
 }

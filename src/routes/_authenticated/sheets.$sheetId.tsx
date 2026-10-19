@@ -512,7 +512,7 @@ function SheetForm() {
                     GPS in: {l.latitude_in != null ? `${l.latitude_in.toFixed(4)}, ${l.longitude_in?.toFixed(4)}` : "—"} · out: {l.latitude_out != null ? `${l.latitude_out.toFixed(4)}, ${l.longitude_out?.toFixed(4)}` : "—"}
                   </p>
                   <TechnicianPicker count={l.technician_count} selected={l.technician_initials} users={users} disabled={readOnly} onChange={(count, initials) => setLog(i, { technician_count: count, technician_initials: initials })} />
-                  <p className="mt-2 text-xs text-muted-foreground">{day.toFixed(2)} labour h (site + travel + parts) · {l.technician_count} technicians</p>
+                  <p className="mt-2 text-xs text-muted-foreground">{day.toFixed(2)} labour h · {l.technician_count} {l.technician_count === 1 ? "technician" : "technicians"}</p>
                   <div className="mt-3 space-y-1"><Label className="text-xs">Repairs done this day</Label>
                     <Textarea rows={2} value={l.daily_work_description} onChange={(e) => setLog(i, { daily_work_description: e.target.value })} />
                     <VoiceDictation label="repairs done" disabled={readOnly} value={l.daily_work_description} onApply={(t) => setLog(i, { daily_work_description: t })} />

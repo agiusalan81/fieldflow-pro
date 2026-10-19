@@ -1,3 +1,4 @@
+import { WelcomeGuide } from "@/components/welcome-guide";
 import { setTenantLocale } from "@/lib/locale";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
@@ -32,7 +33,7 @@ const techNav: NavItem[] = [
   { group: "Time & roster", to: "/leave", label: "Leave", icon: CalendarDays },
   { group: "General", to: "/messages", label: "Team chat", icon: MessageSquare },
   { group: "General", to: "/settings", label: "Settings", icon: Settings },
-  { group: "General", to: "/subscription", label: "Referrals & plans", icon: Calculator },
+  { group: "General", to: "/subscription", label: "Billing & Plan", icon: Calculator },
 ];
 
 const adminNav: NavItem[] = [
@@ -40,7 +41,7 @@ const adminNav: NavItem[] = [
   { group: "Operations", to: "/admin/jobs", label: "Job sheets", icon: ClipboardList },
   { group: "Operations", to: "/pending-works", label: "Pending works", icon: Hammer, module: "pending_works" },
   { group: "Operations", to: "/admin/inventory", label: "Inventory", icon: Package, module: "inventory" },
-  { group: "Team & roster", to: "/team", label: "Team availability", icon: UserCheck },
+  { group: "Team & roster", to: "/team", label: "Team", icon: UserCheck },
   { group: "Team & roster", to: "/standby", label: "Standby roster", icon: PhoneCall },
   { group: "Team & roster", to: "/dwr", label: "Daily works reports", icon: FileText },
   { group: "Team & roster", to: "/admin/leave", label: "Leave approvals", icon: CalendarDays, module: "leave_approvals" },
@@ -56,7 +57,7 @@ const adminNav: NavItem[] = [
   { group: "Payroll", to: "/payroll/payslips", label: "Payslips", icon: Calculator, office: true },
   { group: "Administration", to: "/admin/fields", label: "Fields & lookups", icon: SlidersHorizontal, module: "fields" },
   { group: "Administration", to: "/settings", label: "Settings", icon: Settings },
-  { group: "Administration", to: "/subscription", label: "Plans & referrals", icon: Calculator },
+  { group: "Administration", to: "/subscription", label: "Billing & Plan", icon: Calculator },
 ];
 
 /** Extra quick-action shortcuts that aren't menu items. */
@@ -168,7 +169,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   const office = isOffice(profile);
   const { data: platformOwner } = useQuery({ queryKey: ["platform-owner"], enabled: !!actor && !preview.active, queryFn: async () => (await supabase.rpc("is_platform_owner")).data === true });
   const extraNav: NavItem[] = platformOwner && !preview.active ? [{ group: "Platform", to: "/platform", label: "Portfolio HQ", icon: Building2 }] : [];
-  const items = [...(manager ? adminNav : techNav), ...extraNav].filter((i) => (!i.office || office) && (!i.module || can(i.module) || (i.to === "/company" && office)));
+  const items = [...(manager ? adminNav : techNav), ...extraNav].filter((i) => (i.to !== "/subscription" || profile?.role === "superuser") && (i.to !== "/company" || office) && (!i.office || office) && (!i.module || can(i.module) || (i.to === "/company" && office)));
   const canSwitch = profile && profile.real_role !== "technician" && !preview.active;
 
   const { data: company } = useCompanyRules();
@@ -236,6 +237,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
           <h1 className="min-w-0 flex-1 truncate font-display text-xl text-foreground sm:text-2xl">{title}</h1>
           <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-2">
             <HelpButton />
+            {actor && !preview.active && actor.role === actor.real_role && <WelcomeGuide profile={actor} allowed={items.map(i=>i.to)} />}
             <UserPreviewControl />
             {canSwitch && (
               <Select value={profile.role} onValueChange={(v) => { setViewAs(v === profile.real_role ? null : (v as ViewAs)); navigate({ to: "/dashboard" }); }}>

@@ -1,3 +1,4 @@
+import { parsePhone } from "@/lib/contact-details";
 import { tenantLocale } from "@/lib/locale";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -18,9 +19,7 @@ export const COUNTRY_CODES = COUNTRIES.map((c) => c[0]);
 export const EQUIPMENT_TYPES = ["Passenger Lift", "Goods Lift", "Platform Lift", "Escalator", "Dumbwaiter", "HVAC", "Generator", "Other"];
 
 export function splitPhone(p: string | null | undefined) {
-  const m = (p ?? "").match(/^(\+\d{1,4})\s*(.*)$/);
-  const def = tenantLocale().countryCode;
-  return m ? { code: m[1] ?? def, number: m[2] ?? "" } : { code: def, number: p ?? "" };
+  return parsePhone(p, tenantLocale().countryCode, COUNTRY_CODES);
 }
 
 /** Filters countries by name or dial code ("malta", "356", "+44"). */
@@ -37,10 +36,10 @@ export function PhoneInput({ code, number, onChange, required }: { code: string;
   const custom = /^\+?\d{1,4}$/.test(q.trim()) && !list.some(([c]) => c === `+${q.trim().replace(/^\+/, "")}`) ? `+${q.trim().replace(/^\+/, "")}` : null;
   const pick = (c: string) => { onChange(c, number); setOpen(false); setQ(""); };
   return (
-    <div className="flex gap-2">
+    <div className="flex min-w-0 gap-2">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button type="button" variant="outline" className="w-28 shrink-0 justify-between px-3 font-normal" aria-label="Country code">{code}<ChevronDown className="h-4 w-4 opacity-50" /></Button>
+          <Button type="button" variant="outline" className="h-11 w-20 shrink-0 justify-between px-2 font-normal" aria-label="Country code">{code}<ChevronDown className="h-4 w-4 opacity-50" /></Button>
         </PopoverTrigger>
         <PopoverContent className="w-64 p-2" align="start">
           <Input autoFocus placeholder="Search country or code" value={q} onChange={(e) => setQ(e.target.value)} className="mb-2 h-9" />
@@ -55,7 +54,7 @@ export function PhoneInput({ code, number, onChange, required }: { code: string;
           </div>
         </PopoverContent>
       </Popover>
-      <Input required={required} type="tel" inputMode="tel" pattern="[0-9 ]{4,}" title="Digits only" placeholder="Phone number" value={number} onChange={(e) => onChange(code, e.target.value)} />
+      <Input className="h-11 min-w-0 flex-1" aria-label="Phone number" required={required} type="tel" inputMode="tel" pattern="[0-9 ]{4,}" title="Digits only" placeholder="Phone number" value={number} onChange={(e) => onChange(code, e.target.value)} />
     </div>
   );
 }

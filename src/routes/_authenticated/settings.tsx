@@ -35,7 +35,7 @@ function KinFields({ title, v, onChange }: { title: string; v: Kin; onChange: (k
       <p className="text-sm font-medium text-foreground">{title}</p>
       <div className="grid gap-3 sm:grid-cols-2">
         {(["name", "relationship", "phone", "email"] as const).map((k) => (
-          <div key={k} className="space-y-1.5">
+          <div key={k} className={`space-y-1.5 ${k === "phone" ? "sm:col-span-2" : ""}`}>
             <Label className="capitalize">{k}</Label>
             {k === "phone" ? <PhoneInput code={splitPhone(v.phone).code} number={splitPhone(v.phone).number} onChange={(c, n) => onChange({ ...v, phone: `${c} ${n}`.trim() })} />
               : <Input className="h-11" type={k === "email" ? "email" : "text"} value={v[k] ?? ""} onChange={(e) => onChange({ ...v, [k]: e.target.value })} />}
@@ -99,7 +99,7 @@ function Settings() {
           <section className="space-y-4 rounded-xl border bg-card p-5">
             <h2 className="font-medium text-foreground">Contact details</h2>
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5"><Label>Phone number</Label><PhoneInput code={splitPhone(f.phone_number).code} number={splitPhone(f.phone_number).number} onChange={(c, n) => setF({ ...f, phone_number: `${c} ${n}`.trim() })} /></div>
+              <div className="space-y-1.5 sm:col-span-2"><Label>Phone number</Label><PhoneInput code={splitPhone(f.phone_number).code} number={splitPhone(f.phone_number).number} onChange={(c, n) => setF({ ...f, phone_number: `${c} ${n}`.trim() })} /></div>
               <div className="space-y-1.5"><Label>Home address</Label><Input className="h-11" value={f.home_address} onChange={(e) => setF({ ...f, home_address: e.target.value })} /></div>
             </div>
             <KinFields title="Next of kin 1" v={f.next_of_kin_1} onChange={(k) => setF({ ...f, next_of_kin_1: k })} />

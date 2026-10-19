@@ -1,3 +1,5 @@
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TeamManagement } from "@/components/team-management";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,7 +27,7 @@ const CLS: Record<Status, string> = {
   leave: "bg-primary/10 text-primary", available: "bg-muted text-muted-foreground",
 };
 
-function TeamPage() {
+function LiveAvailability() {
   const { data: profile } = useProfile();
   const today = new Date().toISOString().slice(0, 10);
   const { data } = useQuery({
@@ -55,7 +57,7 @@ function TeamPage() {
   const rows = (data?.users ?? []).map((u) => ({ u, ...statusOf(u.id) }));
   const counts = (Object.keys(LABEL) as Status[]).map((k) => [k, rows.filter((r) => r.s === k).length] as const);
   return (
-    <AppShell title="Team availability">
+    <>
       <div className="mx-auto max-w-4xl space-y-4">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
           {counts.map(([k, n]) => <div key={k} className="rounded-xl border bg-card p-3"><p className="font-display text-2xl text-foreground">{n}</p><p className="text-xs text-muted-foreground">{LABEL[k]}</p></div>)}
@@ -70,6 +72,13 @@ function TeamPage() {
           ))}
         </ul>
       </div>
-    </AppShell>
+    </>
   );
+}
+
+function TeamPage() {
+ const { data: profile } = useProfile();
+ if (!profile) return <AppShell title="Team"><p className="text-muted-foreground">Loading…</p></AppShell>;
+ if (!isManager(profile)) return <AppShell title="Team"><EmptyState>Team management is available to supervisors and office staff.</EmptyState></AppShell>;
+ return <AppShell title="Team"><Tabs defaultValue="availability" className="mx-auto max-w-5xl"><TabsList className="h-auto flex-wrap"><TabsTrigger value="availability">Live Availability</TabsTrigger><TabsTrigger value="roster">Team Roster</TabsTrigger><TabsTrigger value="invites">Invites</TabsTrigger></TabsList><TabsContent value="availability" className="mt-4"><LiveAvailability /></TabsContent>{(["roster","invites"] as const).map(tab=><TabsContent key={tab} value={tab} className="mt-4"><TeamManagement role={profile.role} companyId={profile.company_id} meId={profile.id} tab={tab}/></TabsContent>)}</Tabs></AppShell>;
 }
