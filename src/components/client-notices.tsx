@@ -1,3 +1,4 @@
+import { playChime } from "@/lib/chime";
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -45,7 +46,7 @@ export function DepartureAlerts({ userId }: { userId: string }) {
         if (!seen.has(key)) {
           seen.add(key);
           const text = `Job sheet- ${n.jobsheet_number} — message from the office: ${n.departure_reply}`;
-          setMsg({ text, ok: true, sheetId: n.id });
+          setMsg({ text, ok: true, sheetId: n.id }); playChime("message", userId);
           if (typeof Notification !== "undefined" && Notification.permission === "granted") new Notification("Message from the office", { body: text });
           if (navigator.vibrate) navigator.vibrate(300);
         }
@@ -56,7 +57,7 @@ export function DepartureAlerts({ userId }: { userId: string }) {
       seen.add(key);
       const ok = n.departure_status === "approved";
       const text = ok ? `Job sheet- ${n.jobsheet_number}: you may leave site. The client has been notified.` : `Job sheet- ${n.jobsheet_number}: leaving was declined — please wait for the client.`;
-      setMsg({ text, ok, sheetId: n.id });
+      setMsg({ text, ok, sheetId: n.id }); playChime("approval", userId);
       if (typeof Notification !== "undefined" && Notification.permission === "granted") new Notification(ok ? "Departure approved" : "Departure declined", { body: text });
       if (navigator.vibrate) navigator.vibrate(300);
     }).subscribe();

@@ -181,7 +181,7 @@ function SheetForm() {
   }, [sheetId]);
 
   useEffect(() => {
-    if (!profile || !data?.sheet || !form || !localReady || data.sheet.status === "completed" || navigator.onLine || conflict) return;
+    if (!profile || !data?.sheet || !form || !localReady || data.sheet.status === "completed" || conflict) return;
     const expected = revision.current ?? data.sheet.updated_at;
     const timer = setTimeout(() => {
       const snapshot: DraftSnapshot = {
@@ -195,7 +195,7 @@ function SheetForm() {
         }),
         parts: parts.filter((p) => p.part_description.trim()).map((p, i) => ({ ...p, sort_order: i })), savedAt: new Date().toISOString(),
       };
-      void saveLocalDraft(snapshot).catch(() => toast.error("This device could not save your draft. Free storage space and try again."));
+      void saveLocalDraft(snapshot).then(() => setSavedLocally(new Date())).catch(() => toast.error("This device could not save your draft. Free storage space and try again."));
     }, 750);
     return () => clearTimeout(timer);
   }, [profile, data, form, logs, parts, photos, checks, localReady, conflict, sheetId]);

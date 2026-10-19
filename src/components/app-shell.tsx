@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader, SheetDescription } from "@/components/ui/sheet";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { IdleLogout } from "@/components/idle-logout";
+import { NotificationSounds, ProfileCompletionGate } from "@/components/member-alerts";
 import { helpFor, searchHelp, type HelpGuide } from "@/lib/help-guides";
 import { Input } from "@/components/ui/input";
 import { QUICK_DEFAULTS, MENU_ONLY, rankActions, readUsage, recordUsage, resetUsage } from "@/lib/quick-actions";
@@ -257,6 +258,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
 
   return (
     <div className="min-h-screen bg-background lg:grid lg:grid-cols-[240px_minmax(0,1fr)]">
+      {actor && !preview.active && <><NotificationSounds profile={actor} /><ProfileCompletionGate profile={actor} /></>}
       {profile && company && <IdleLogout userId={profile.id} realRole={profile.real_role} timeoutMin={company.idleTimeout} />}
       <aside className="sticky top-0 hidden h-screen flex-col gap-6 border-r border-sidebar-border bg-sidebar py-6 px-3 lg:flex">
         {brand}
