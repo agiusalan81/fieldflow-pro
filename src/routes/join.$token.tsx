@@ -74,7 +74,7 @@ function JoinPage() {
     const { data, error } = await withInviteTimeout(() => supabase.auth.getUser());
     if (error) throw error;
     if (!data.user) return;
-    const name = splitMemberName(String(data.user.user_metadata.full_name ?? data.user.user_metadata.name ?? invite?.full_name ?? ""));
+    const name = splitMemberName(String(data.user.user_metadata["full_name"] ?? data.user.user_metadata["name"] ?? invite?.full_name ?? ""));
     setF((current) => ({ ...current, firstName: current.firstName || name.firstName, surname: current.surname || name.surname, email: data.user.email ?? current.email }));
     setSignedIn(true);
   };
