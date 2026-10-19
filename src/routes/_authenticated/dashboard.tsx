@@ -103,7 +103,7 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
         const res = await closeShiftReport({ userId: profile.id, companyId: profile.company_id, shift: { ...current, ended_at: null }, endedAt, company, companyName: name });
         qc.invalidateQueries({ queryKey: ["dwr"] });
         if (res.held) toast.success("You're on standby tonight — callouts will be added and your daily works report sent at tomorrow's start time.", { duration: 10000 });
-        else if (res.report) { const r = res.report; toast.success(res.sent ? "Daily works report emailed to you" : "Daily works report saved", { action: { label: "Download PDF", onClick: () => downloadDwr(r, name) }, duration: 10000 }); }
+        else if (res.report) { const r = res.report; toast.success("Daily works report filed — ready to view in My daily reports", { action: { label: "View PDF", onClick: () => downloadDwr(r, name) }, duration: 10000 }); }
       } catch (e) { toast.error(`Couldn't file the daily works report: ${(e as Error).message}`); }
     }
   };

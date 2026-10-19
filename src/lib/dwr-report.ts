@@ -87,8 +87,8 @@ export async function closeShiftReport(p: { userId: string; companyId: string; s
 async function fileAndEmail(p: { userId: string; companyId: string; shift: Sh; endedAt: string; company: Company; companyName: string; overnight: boolean }) {
   const id = await fileDailyReport({ userId: p.userId, companyId: p.companyId, shiftId: p.shift.id, startedAt: p.shift.started_at, endedAt: p.endedAt, rules: p.company.rules, breaks: p.company.breaks, overnightBefore: p.overnight ? p.company.rules.work_start : undefined });
   const { data: r } = await supabase.from("daily_work_reports").select("*, users(full_name, employee_id)").eq("id", id).single();
-  const mail = r ? await emailDwr(r, p.companyName).catch(() => ({ sent: false })) : { sent: false };
-  return { report: r, sent: mail.sent };
+  // DWRs are not emailed — the technician is told it is ready in My daily reports.
+  return { report: r, sent: false };
 }
 
 /**
