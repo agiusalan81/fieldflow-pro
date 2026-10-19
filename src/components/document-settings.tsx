@@ -5,6 +5,8 @@ import { ArrowDown, ArrowUp, Download, FileUp, GripVertical, Loader2, Plus, Tras
 import { supabase } from "@/integrations/supabase/client";
 import { BLOCKS, DOC_TYPES, moveBlock, parsePresets, parseTemplate, parseTerms, termsFor, visibleBlocks, type NotePreset, type PdfTemplate, type Terms } from "@/lib/documents";
 import { buildPdf } from "@/lib/sendJobSheetEmail";
+import { ServiceSheet } from "@/components/service-sheet";
+import { formatOfficeAddress, parseOfficeAddress } from "@/lib/contact-details";
 import { BrandControls } from "@/components/brand-controls";
 import { extractDocumentText } from "@/lib/document-library.functions";
 import { DOC_CATEGORIES, type DocCategory } from "@/components/document-library";
@@ -21,7 +23,7 @@ export function DocumentSettings({ companyId }: { companyId: string }) {
   const qc = useQueryClient();
   const { data } = useQuery({
     queryKey: ["doc-settings"],
-    queryFn: async () => (await supabase.from("company_settings").select("pdf_template, terms, note_presets, logo_data").maybeSingle()).data,
+    queryFn: async () => (await supabase.from("company_settings").select("pdf_template, terms, note_presets, logo_data, office_address, company_address, vat_number, office_phone, company_email").maybeSingle()).data,
   });
   const [t, setT] = useState<PdfTemplate | null>(null);
   const [terms, setTerms] = useState<Terms | null>(null);
@@ -79,6 +81,7 @@ export function DocumentSettings({ companyId }: { companyId: string }) {
   const downloadSample = async () => {
     try {
       const pdf = await buildPdf({
+        officeAddress: formatOfficeAddress(parseOfficeAddress(data?.office_address, data?.company_address ?? "")), vatNumber: data?.vat_number ?? "", contact: [data?.office_phone, data?.company_email].filter(Boolean).join("\n"),
         company: SAMPLE.company, logo: data?.logo_data ?? "", number: SAMPLE.number, date: SAMPLE.date, client: SAMPLE.client,
         address: SAMPLE.address, asset: SAMPLE.asset, fault: SAMPLE.fault, repairs: SAMPLE.repairs, technician: SAMPLE.technician,
         signedBy: SAMPLE.signedBy, idCard: SAMPLE.idCard, signature: null, logs: SAMPLE.logs, parts: SAMPLE.parts,
@@ -118,7 +121,7 @@ export function DocumentSettings({ companyId }: { companyId: string }) {
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Live preview — what the client receives</p>
             <Button size="sm" variant="outline" onClick={downloadSample}><Download className="mr-1 h-3.5 w-3.5" />Sample PDF</Button>
           </div>
-          <div className="mx-auto max-w-md space-y-4 rounded-lg border bg-white p-6 text-[11px] leading-relaxed text-slate-800 shadow">
+          {t.stylePreset === "service" ? <ServiceSheet data={{ ...SAMPLE, logo: data?.logo_data ?? "", officeAddress: formatOfficeAddress(parseOfficeAddress(data?.office_address,data?.company_address ?? "")), vatNumber: data?.vat_number ?? "", contact: [data?.office_phone,data?.company_email].filter(Boolean).join("\n"), template: t, signature: null, terms: termsFor(terms,"job_sheet") }}/> : <div className="mx-auto max-w-md space-y-4 rounded-lg border bg-white p-6 text-[11px] leading-relaxed text-slate-800 shadow">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2">
                 {data?.logo_data && <img src={data.logo_data} alt="" className="h-10 max-w-24 object-contain" />}
@@ -166,7 +169,7 @@ export function DocumentSettings({ companyId }: { companyId: string }) {
             ))}
             {termsFor(terms, "job_sheet") && <div><p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">Terms & conditions</p><p className="whitespace-pre-wrap text-[9px] text-slate-500">{termsFor(terms, "job_sheet")}</p></div>}
             {t.footer && <p className="border-t border-slate-200 pt-2 text-center text-[10px] text-slate-500">{t.footer}</p>}
-          </div>
+          </div>}
           <p className="mt-2 text-xs text-muted-foreground">Sample data shown. Download the sample PDF to see the exact file the client receives by email.</p>
         </section>
       </div>

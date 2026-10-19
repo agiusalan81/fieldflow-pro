@@ -5,6 +5,10 @@ import { Printer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, isManager } from "@/lib/profile";
 import { labourHours, technicianCount } from "@/lib/jobsheets";
+import { ServiceSheet } from "@/components/service-sheet";
+import { formatOfficeAddress } from "@/lib/contact-details";
+import { parseTemplate, parseTerms, termsFor } from "@/lib/documents";
+import { dayLabourHours } from "@/lib/jobsheets";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/print/$sheetId")({
@@ -29,11 +33,13 @@ function PrintSheet() {
     queryKey: ["print", sheetId],
     queryFn: async () => {
       const [s, l, p] = await Promise.all([
-        supabase.from("job_sheets").select("jobsheet_number, created_at, asset_type, asset_type_other, lift_model, serial_number, is_tech_assistance, is_maintenance, is_installation, job_type_other, maintenance_agreement_type, reported_fault, repairs_performed, technician_name, client_full_name, client_id_card_no, signature_data, clients(name, billing_address), sites(name, address), assets(reference_number), companies(name)").eq("id", sheetId).maybeSingle(),
+        supabase.from("job_sheets").select("jobsheet_number, created_at, asset_type, asset_type_other, lift_model, serial_number, is_tech_assistance, is_maintenance, is_installation, job_type_other, maintenance_agreement_type, reported_fault, repairs_performed, technician_name, client_full_name, client_id_card_no, signature_data, assigned_technician_id, special_notes, special_notes_in_pdf, clients(name, billing_address), sites(name, address), assets(reference_number), companies(name)").eq("id", sheetId).maybeSingle(),
         supabase.from("jobsheet_time_logs").select("*").eq("jobsheet_id", sheetId).order("sort_order"),
         supabase.from("jobsheet_parts").select("*").eq("jobsheet_id", sheetId).order("sort_order"),
       ]);
-      return { s: s.data, logs: l.data ?? [], parts: p.data ?? [] };
+      const { data: settings } = await supabase.from("company_settings").select("terms").maybeSingle();
+      const { data: technician } = s.data?.assigned_technician_id ? await supabase.from("users").select("signature_on_file").eq("id",s.data.assigned_technician_id).maybeSingle() : { data: null };
+      return { s: s.data, logs: l.data ?? [], parts: p.data ?? [], terms: settings?.terms, technicianSignature: technician?.signature_on_file };
     },
   });
   if (profile && !isManager(profile)) return <p className="p-8 text-muted-foreground">Client copies are available to supervisors and office admins.</p>;
@@ -45,7 +51,13 @@ function PrintSheet() {
       <div className="mx-auto mb-4 flex max-w-3xl justify-end print:hidden">
         <Button onClick={() => window.print()}><Printer className="mr-1 h-4 w-4" />Save as PDF / Print</Button>
       </div>
-      <article className="mx-auto max-w-3xl space-y-6 bg-card p-10 text-sm text-card-foreground shadow print:shadow-none">
+      {company?.documentTemplate.stylePreset === "service" ? <div className="mx-auto max-w-3xl"><ServiceSheet data={{
+        company: s.companies?.name ?? "", logo: company.logo, officeAddress: formatOfficeAddress(company.officeAddress), vatNumber: company.vatNumber, contact: [company.phones.office_phone,company.phones.company_email].filter(Boolean).join("\n"),
+        number: s.jobsheet_number, date: new Date(s.created_at).toLocaleDateString("en-GB"), client: s.clients?.name ?? "", address: [s.sites?.name,s.sites?.address || s.clients?.billing_address].filter(Boolean).join(", "), asset: [s.asset_type === "Other" ? s.asset_type_other : s.asset_type,s.assets?.reference_number,s.lift_model,s.serial_number].filter(Boolean).join(" · "), workType: types,
+        fault: s.reported_fault ?? "", repairs: s.repairs_performed ?? "", technician: s.technician_name ?? "", technicianSignature: data.technicianSignature, signedBy: s.client_full_name ?? "", idCard: s.client_id_card_no ?? "", signature: s.signature_data,
+        logs: data.logs.map(l=>({ date: l.log_date,in:l.time_in?.slice(0,5) ?? "",out:l.time_out?.slice(0,5) ?? "",travel:Number(l.traveling_time_hours),total:dayLabourHours(l.time_in,l.time_out,Number(l.traveling_time_hours),l.technician_count,l.technician_initials),techs:l.technician_initials.join(", "),count:technicianCount(l.technician_count,l.technician_initials) })),
+        parts: data.parts.map(p=>({desc:p.part_description,unit:p.unit ?? "",qty:Number(p.quantity)})),notes:s.special_notes_in_pdf ? s.special_notes : null,terms:termsFor(parseTerms(data.terms),"job_sheet"),template:parseTemplate(company.documentTemplate),
+      }}/></div> : <article className="mx-auto max-w-3xl space-y-6 bg-card p-10 text-sm text-card-foreground shadow print:shadow-none">
         <header className="flex items-start justify-between border-b pb-4">
           <div className="flex items-center gap-3">{company?.logo && <img src={company.logo} alt="" className="h-14 max-w-32 object-contain" />}<div><p className="font-display text-2xl">{s.companies?.name}</p><p className="text-muted-foreground">Job sheet</p></div></div>
           <div className="text-right"><p className="font-mono text-lg">Job sheet- {s.jobsheet_number}</p><p className="text-muted-foreground">{new Date(s.created_at).toLocaleDateString()}</p></div>
@@ -82,7 +94,7 @@ function PrintSheet() {
             {s.signature_data && <img src={s.signature_data} alt="Client signature" className="mt-1 h-20" />}
           </div>
         </footer>
-      </article>
+      </article>}
     </div>
   );
 }
