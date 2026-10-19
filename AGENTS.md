@@ -37,7 +37,7 @@
 - Offline drafts use account-scoped IndexedDB, transactional optimistic RPC and guarded PWA registration. Why: no cross-account/stale writes.
 - Published document masters are immutable; attachments/agreements/sheets snapshot definitions. Why: preserve history.
 - Platform authority is protected separately in user_roles; HQ uses a narrow directory RPC, not tenant reads. Why: isolate companies.
-- Subscription/pack/promotion access uses DB write guards; missing legacy subscriptions stay writable. Why: safe rollout.
+- Plan access: DB write guards + plan-features.ts menu gating; legacy stays on. RFQ rules in lift-rfq.ts. Why: safe rollout.
 - Client reports use immutable DB-built safe snapshots and hashed expiring/revocable links; photo paths stay server-only. Why: no internal disclosure.
 - Sheet safety/checklist snapshots are checked at completion; safety keys share checklist_values. Why: preserve offline saves.
 
