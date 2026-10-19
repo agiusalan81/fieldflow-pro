@@ -59,14 +59,14 @@ function Estimates() {
   type E = (typeof data)[number];
 
   const log = (e: E, status: string) => [...((e.events as Ev[]) ?? []), { at: new Date().toISOString(), status, by: sender }];
-  const update = async (e: E, patch: Record<string, unknown>) => {
+  const update = async (e: E, patch: Parameters<ReturnType<typeof supabase.from<"lift_estimates">>["update"]>[0]) => {
     const { error } = await supabase.from("lift_estimates").update(patch).eq("id", e.id);
     if (error) { toast.error(error.message); return false; }
     qc.invalidateQueries({ queryKey: ["estimates"] }); return true;
   };
-  const move = (e: E, status: string, extra: Record<string, unknown> = {}) => update(e, { status, events: log(e, status), ...extra });
+  const move = (e: E, status: string, extra: Parameters<typeof update>[1] = {}) => update(e, { status, events: log(e, status), ...extra });
   const rfqOf = (e: E) => (e.rfq ?? {}) as Rfq;
-  const subjectOf = (e: E) => rfqSubject(rfqOf(e).values?.lift_ref ?? "", e.title, company);
+  const subjectOf = (e: E) => rfqSubject(rfqOf(e).values?.["lift_ref"] ?? "", e.title, company);
 
   const sendToSupplier = async (e: E) => {
     if (!e.supplier_email) { toast.error("Add the supplier's email first (Edit)"); return; }
@@ -147,7 +147,7 @@ function EstimateForm({ form, setForm, cfg, companyId, sender, onSaved }: { form
 
   useEffect(() => {
     const missing = f.photos.filter((p) => !urls[p]); if (!missing.length) return;
-    supabase.storage.from("job-photos").createSignedUrls(missing, 3600).then(({ data }) => { if (data) setUrls((u) => ({ ...u, ...Object.fromEntries(data.filter((d) => d.signedUrl).map((d) => [d.path!, d.signedUrl])) })); });
+    supabase.storage.from("job-photos").createSignedUrls(missing, 3600).then(({ data }) => { if (data) setUrls((u) => ({ ...u, ...Object.fromEntries(data.filter((d) => d.signedUrl && d.path).map((d) => [d.path as string, d.signedUrl as string])) })); });
   }, [f.photos, urls]);
 
   const upload = async (files: FileList | null) => {
@@ -195,10 +195,10 @@ function EstimateForm({ form, setForm, cfg, companyId, sender, onSaved }: { form
                 {s.fields.map((field) => {
                   const val = f.values[field.key] ?? "";
                   const label = <Label className="text-xs">{field.label}{field.unit ? ` (${field.unit})` : ""}</Label>;
-                  if (field.type !== "select") return <div key={field.key} className="space-y-1">{label}<Input className="h-10" inputMode={field.type === "number" ? "numeric" : undefined} placeholder={field.key === "persons" ? String(suggestedPersons(f.values.load ?? "") ?? "") : undefined} value={val} onChange={(e) => setVal(field.key, e.target.value)} />{field.key === "pit" && Number(val) > 0 && Number(val) < 1000 && <p className="text-xs text-destructive">Below 1000 mm — check EN 81-20 reduced pit measures.</p>}</div>;
+                  if (field.type !== "select") return <div key={field.key} className="space-y-1">{label}<Input className="h-10" inputMode={field.type === "number" ? "numeric" : undefined} placeholder={field.key === "persons" ? String(suggestedPersons(f.values["load"] ?? "") ?? "") : undefined} value={val} onChange={(e) => setVal(field.key, e.target.value)} />{field.key === "pit" && Number(val) > 0 && Number(val) < 1000 && <p className="text-xs text-destructive">Below 1000 mm — check EN 81-20 reduced pit measures.</p>}</div>;
                   const opts = optionsFor(field, cfg, f.supplier_name);
-                  const only = !f.supplier_name ? suppliersOffering(field, val, cfg) : [];
-                  return <div key={field.key} className="space-y-1">{label}<Select value={val || "none"} onValueChange={(v) => setVal(field.key, v === "none" ? "" : v)}><SelectTrigger className="h-10"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">—</SelectItem>{[...new Set(val && !opts.includes(val) ? [...opts, val] : opts)].map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select>{only.length === 1 && <button type="button" className="text-left text-xs text-primary underline" onClick={() => { const sup = cfg.suppliers.find((x) => x.name === only[0]); set({ supplier_name: only[0], supplier_email: sup?.email || f.supplier_email, values: alignToSupplier(f.values, cfg, only[0]) }); }}>Only from {only[0]} — use this supplier</button>}</div>;
+                  const only = !f.supplier_name ? suppliersOffering(field, val, cfg) : []; const one = only.length === 1 ? only[0]! : null;
+                  return <div key={field.key} className="space-y-1">{label}<Select value={val || "none"} onValueChange={(v) => setVal(field.key, v === "none" ? "" : v)}><SelectTrigger className="h-10"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">—</SelectItem>{[...new Set(val && !opts.includes(val) ? [...opts, val] : opts)].map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent></Select>{one && <button type="button" className="text-left text-xs text-primary underline" onClick={() => { const sup = cfg.suppliers.find((x) => x.name === one); set({ supplier_name: one, supplier_email: sup?.email || f.supplier_email, values: alignToSupplier(f.values, cfg, one) }); }}>Only from {one} — use this supplier</button>}</div>;
                 })}
               </div>
             </fieldset>

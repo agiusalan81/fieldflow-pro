@@ -80,7 +80,7 @@ export function parseEstimateConfig(v: unknown): EstimateConfig {
 
 /** Options a field offers: a package supplier's list for its category wins, else the company's list, else the built-in list. */
 export function optionsFor(field: RfqField, cfg: EstimateConfig, supplierName?: string | null): string[] {
-  const base = cfg.options[field.key]?.length ? cfg.options[field.key] : field.options ?? [];
+  const own = cfg.options[field.key]; const base: string[] = own?.length ? own : field.options ?? [];
   if (!field.category || !supplierName) return base;
   const s = cfg.suppliers.find((x) => x.name === supplierName);
   const list = s?.package ? s.options[field.category] : undefined;
@@ -96,7 +96,7 @@ export function suppliersOffering(field: RfqField, value: string, cfg: EstimateC
 /** Clears chosen values the newly selected package supplier does not offer. */
 export function alignToSupplier(values: Record<string, string>, cfg: EstimateConfig, supplierName: string): Record<string, string> {
   const out = { ...values };
-  for (const f of RFQ_FIELDS) if (f.category && out[f.key] && !optionsFor(f, cfg, supplierName).includes(out[f.key])) delete out[f.key];
+  for (const f of RFQ_FIELDS) if (f.category && out[f.key] && !optionsFor(f, cfg, supplierName).includes(out[f.key]!)) delete out[f.key];
   return out;
 }
 
@@ -120,13 +120,13 @@ export function rfqSubject(liftRef: string, title: string, company: string) {
   return `Estimate Request — ${liftRef || title} — ${company}`;
 }
 
-export function rfqBody(o: { title: string; values: Record<string, string>; contact?: Record<string, string>; site?: string; company: string; sender: string; notes?: string }) {
+export function rfqBody(o: { title: string; values: Record<string, string>; contact?: Record<string, string> | undefined; site?: string | undefined; company: string; sender: string; notes?: string | undefined }) {
   const lines = RFQ_SECTIONS.flatMap((s) => {
     const rows = s.fields.filter((f) => o.values[f.key]).map((f) => `  ${f.label}: ${o.values[f.key]}${f.unit ? ` ${f.unit}` : ""}`);
     return rows.length ? [`${s.title}`, ...rows, ""] : [];
   });
   const c = o.contact ?? {};
-  const contact = [c.name, c.role, c.phone, c.email].filter(Boolean).join(" · ");
+  const contact = [c["name"], c["role"], c["phone"], c["email"]].filter(Boolean).join(" · ");
   return [`Dear supplier,`, ``, `Please send your estimate and lead time for: ${o.title}${o.site ? ` (${o.site})` : ""}.`, ``, ...lines, ...(o.notes ? [`Notes`, `  ${o.notes}`, ``] : []), ...(contact ? [`Site contact: ${contact}`, ``] : []), `Kind regards,`, o.sender, o.company].join("\n");
 }
 
