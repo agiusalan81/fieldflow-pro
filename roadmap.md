@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Move technician travel to assigned jobs, retain map navigation, and show arrival on the job sheet; verify focused workflow.
 - [ ] Verify bundled shift/map, receipt upload/reconnect, library approval/restriction and member payroll editing with signed-in actors (blocked: managed preview signed out and own-account mint failed).
 - [ ] Image-only technical scans: automatic OCR/search indexing remains to implement; reader and selected-page printing are available.
 - [ ] Verify actual service-sheet email delivery with an approved recipient; pure PDF generation passed.
