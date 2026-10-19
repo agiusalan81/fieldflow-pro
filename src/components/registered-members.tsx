@@ -6,7 +6,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ShieldOff, RotateCcw, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { ROLE_LABEL, type Role } from "@/lib/profile";
+import { ROLE_LABEL, useProfile, type Role } from "@/lib/profile";
 import { canManageMember, registrationDuration } from "@/lib/member-registration";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export function RegisteredMembers({ role, meId }: { role: Role; meId: string }) {
   const qc = useQueryClient();
   const payroll = usePayrollSetup();
+  const payrollVisible = payrollUiVisible(useProfile().data);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [target, setTarget] = useState<{ id: string; full_name: string; active: boolean } | null>(null);
