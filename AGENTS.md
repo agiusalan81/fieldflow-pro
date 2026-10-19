@@ -44,3 +44,4 @@
 - Shift locations require active-shift RLS and account-scoped consent; stale map points are labelled. Why: no off-shift visibility or fabricated GPS.
 - Receipt PDFs use a separate account/sheet-scoped IndexedDB queue and private storage, never client document projections. Why: preserve offline attachments without exposing accounting files.
 - Technical documents use private storage and active-member RLS; only supervisors/superusers publish, and AI retrieves readable approved pages through the caller client. Why: restrictions apply equally to search, files and citations.
+- Leave decisions, profile completion and clock-out handover use tested field-rules.ts; guard_leave_decision trigger enforces supervisor→technician-only approval. Why: UI and database agree.
