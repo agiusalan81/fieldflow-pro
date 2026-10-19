@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,19 +20,20 @@ export function UnfinishedWorkDialog({ profile, onCancel, onDone }: { profile: P
   const [pick, setPick] = useState<Record<string, Choice>>({});
   const [busy, setBusy] = useState(false);
   const today = localToday();
+  const done = useRef(onDone); done.current = onDone;
   useEffect(() => {
     void (async () => {
       const { data: js } = await supabase.from("jobs").select("id, job_number, problem_summary, clients(name)").eq("assigned_technician_id", profile.id).eq("scheduled_date", today);
       const list = (js ?? []) as Job[];
       const { data: sheets } = list.length ? await supabase.from("job_sheets").select("job_id, status").in("job_id", list.map((j) => j.id)) : { data: [] };
       const open = unfinishedJobs(list, sheets ?? []);
-      if (!open.length) { onDone(); return; }
+      if (!open.length) { done.current(); return; }
       setJobs(open);
       const { data: people } = await supabase.from("users").select("id, full_name").neq("id", profile.id);
       const on = await Promise.all((people ?? []).map(async (u) => ((await supabase.rpc("is_on_standby", { _user: u.id, _date: today })).data ? u : null)));
       setStandby(on.filter((u): u is { id: string; full_name: string } => !!u));
     })();
-  }, [profile.id, today, onDone]);
+  }, [profile.id, today]);
   if (!jobs) return null;
   const c = (id: string): Choice => pick[id] ?? { action: "", reason: "", standby: "" };
   const set = (id: string, p: Partial<Choice>) => setPick({ ...pick, [id]: { ...c(id), ...p } });
