@@ -4,7 +4,7 @@ export const hhmm = (iso: string) => new Date(iso).toTimeString().slice(0, 5);
 
 export type DwrRecord = {
   report_date: string; shift_start: string; shift_end: string; rows: unknown; break_minutes: number;
-  worked_hours: number; standard_hours: number; ot15_hours: number; ot20_hours: number;
+  worked_hours: number; vehicle_reg?: string | null; standard_hours: number; ot15_hours: number; ot20_hours: number;
   users?: { full_name: string; employee_id: string | null } | null;
 };
 
@@ -23,7 +23,7 @@ export async function dwrPdf(r: DwrRecord, company: string) {
   const t = (s: string, x: number, size = 9, f = font, c = rgb(0.1, 0.1, 0.12)) => page.drawText(safe(s).slice(0, 70), { x, y, size, font: f, color: c });
   t(company, M, 16, bold); y -= 18;
   t(`Daily works report - ${r.report_date}`, M, 12, bold); y -= 14;
-  t(`${r.users?.full_name ?? ""}${r.users?.employee_id ? ` (${r.users.employee_id})` : ""}  ·  Shift ${hhmm(r.shift_start)} - ${hhmm(r.shift_end)}`, M, 10, font, grey); y -= 20;
+  t(`${r.users?.full_name ?? ""}${r.users?.employee_id ? ` (${r.users.employee_id})` : ""}  ·  Shift ${hhmm(r.shift_start)} - ${hhmm(r.shift_end)}${r.vehicle_reg ? `  ·  Vehicle: ${r.vehicle_reg.slice(0, 3)} ${r.vehicle_reg.slice(3)}` : ""}`, M, 10, font, grey); y -= 20;
   const cols = [M, M + 75, M + 205, M + 375];
   ["Time", "Activity", "Client / site / location", "Notes"].forEach((h, i) => t(h, cols[i]!, 9, bold)); y -= 6;
   page.drawLine({ start: { x: M, y }, end: { x: W - M, y }, thickness: 0.5, color: grey }); y -= 12;

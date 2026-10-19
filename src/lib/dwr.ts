@@ -128,3 +128,9 @@ export function autoClockOutAt(shiftStartIso: string, workEnd: string, lastActiv
   }
   return end > start ? end : start;
 }
+
+// ---------- Vehicle registration ----------
+/** Normalises typed input to 3 letters + 3 numbers ("abc 123" -> "ABC123"). */
+export const normalizePlate = (s: string) => s.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+export const validPlate = (s: string) => /^[A-Z]{3}[0-9]{3}$/.test(normalizePlate(s));
+export const formatPlate = (s: string | null | undefined) => (s && s.length === 6 ? `${s.slice(0, 3)} ${s.slice(3)}` : s ?? "");

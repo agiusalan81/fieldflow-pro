@@ -1,0 +1,2 @@
+ALTER TABLE public.shifts ADD COLUMN IF NOT EXISTS vehicle_reg text CHECK (vehicle_reg IS NULL OR vehicle_reg ~ '^[A-Z]{3}[0-9]{3}$');
+ALTER TABLE public.daily_work_reports ADD COLUMN IF NOT EXISTS vehicle_reg text;
