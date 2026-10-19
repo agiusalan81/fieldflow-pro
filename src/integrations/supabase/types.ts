@@ -681,6 +681,7 @@ export type Database = {
           shift_start: string
           standard_hours: number
           user_id: string
+          vehicle_reg: string | null
           worked_hours: number
         }
         Insert: {
@@ -698,6 +699,7 @@ export type Database = {
           shift_start: string
           standard_hours?: number
           user_id: string
+          vehicle_reg?: string | null
           worked_hours?: number
         }
         Update: {
@@ -715,6 +717,7 @@ export type Database = {
           shift_start?: string
           standard_hours?: number
           user_id?: string
+          vehicle_reg?: string | null
           worked_hours?: number
         }
         Relationships: [
@@ -2628,6 +2631,7 @@ export type Database = {
           shift_type: string
           started_at: string
           user_id: string
+          vehicle_reg: string | null
         }
         Insert: {
           auto_close_note?: string | null
@@ -2640,6 +2644,7 @@ export type Database = {
           shift_type?: string
           started_at?: string
           user_id: string
+          vehicle_reg?: string | null
         }
         Update: {
           auto_close_note?: string | null
@@ -2652,6 +2657,7 @@ export type Database = {
           shift_type?: string
           started_at?: string
           user_id?: string
+          vehicle_reg?: string | null
         }
         Relationships: [
           {

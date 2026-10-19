@@ -281,6 +281,13 @@
       "when": 1792424658198,
       "tag": "0039_add_departure_reply",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1792429829645,
+      "tag": "0040_vehicle_registration",
+      "breakpoints": true
     }
   ]
 }
