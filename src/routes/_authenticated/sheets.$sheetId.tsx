@@ -235,16 +235,16 @@ function SheetForm() {
     set({ site_id: id, ...(only ? assetPatch(only.id) : { asset_id: null }) });
   };
 
-  const persist = async (status?: string) => {
-    const bad = logs.findIndex((l) => l.time_in && l.time_out && l.time_out < l.time_in);
+  const persist = async (status?: string, savedLogs = logs) => {
+    const bad = savedLogs.findIndex((l) => l.time_in && l.time_out && l.time_out < l.time_in);
     if (bad >= 0) { toast.error(`Day ${bad + 1}: time out must be after time in`); return false; }
     setBusy(true);
     try {
-      const repairs = logs.map((l) => l.daily_work_description.trim()).filter(Boolean).join("\n") || (form.repairs_performed as string | null);
+      const repairs = savedLogs.map((l) => l.daily_work_description.trim()).filter(Boolean).join("\n") || (form.repairs_performed as string | null);
       const snapshot: DraftSnapshot = {
         key: draftKey(profile.id, sheetId), userId: profile.id, sheetId, expected: revision.current ?? sheet.updated_at,
         form: { ...form, checklist_values: checks, photo_paths: photos, repairs_performed: repairs },
-        logs: logs.map((l, i) => {
+        logs: savedLogs.map((l, i) => {
           const travel = client?.waive_transport ? 0 : l.traveling_time_hours;
           return { ...l, traveling_time_hours: travel, time_in: l.time_in || null, time_out: l.time_out || null, sort_order: i, daily_total_hours: dayLabourHours(l.time_in, l.time_out, travel, l.technician_count, l.technician_initials, dayPartsHours(i)) };
         }),
@@ -263,7 +263,7 @@ function SheetForm() {
         throw e;
       }
       if (status && status !== "draft") {
-        const { data: updated, error } = await supabase.from("job_sheets").update({ status: status as "completed" | "in_transit" }).eq("id", sheetId).eq("updated_at", revision.current).select("updated_at").single();
+        const { data: updated, error } = await supabase.from("job_sheets").update({ status: status as "completed" | "in_progress", ...(status === "in_progress" ? { work_start_time: sheet.work_start_time ?? new Date().toISOString() } : {}) }).eq("id", sheetId).eq("updated_at", revision.current).select("updated_at").single();
         if (error) throw error;
         revision.current = updated.updated_at;
       }
@@ -279,11 +279,21 @@ function SheetForm() {
   };
 
   const saveDraft = async () => { if (await persist(sheet.status === "draft" ? "draft" : undefined) && navigator.onLine) toast.success("Draft saved"); };
-  const inTransit = async () => {
-    if (await persist("in_transit")) {
-      if (sheet.job_id) await supabase.from("jobs").update({ acknowledged_at: new Date().toISOString() }).eq("id", sheet.job_id);
-      toast.success(`SMS / WhatsApp sent to ${client?.name ?? "client"}: “Your technician is on the way.” (simulated)`);
-      setForm(null);
+  const arrive = async (index?: number) => {
+    if (!navigator.onLine) { toast.error("Connect to confirm arrival. Your draft can still be saved on this device."); return; }
+    const today = new Date().toISOString().slice(0, 10);
+    const target = index ?? logs.findIndex((l) => l.log_date === today && !l.time_out);
+    const i = target < 0 ? logs.length : target;
+    const next = target < 0 ? [...logs, { ...emptyLog(), technician_initials: [initialsOf(profile)] }] : logs.map((l) => ({ ...l }));
+    const log = next[i];
+    if (!log) return;
+    log.time_in ||= roundTo15(nowHM());
+    if (await persist("in_progress", next)) {
+      setLogs(next);
+      void gps(i, "in");
+      toast.success("Arrived on site");
+      qc.invalidateQueries({ queryKey: ["overview"] });
+      qc.invalidateQueries({ queryKey: ["job-travel-sheet"] });
     }
   };
   const submit = async () => {
@@ -364,6 +374,7 @@ function SheetForm() {
         {safetyItems.length > 0 && <Section n={0} title="Pre-work safety assessment"><div className="space-y-2">{safetyItems.map((i) => <label key={i} className="flex items-start gap-3 border p-3 text-sm"><Checkbox checked={!!checks[`safety:${i}`]} onCheckedChange={(v) => setChecks({ ...checks, [`safety:${i}`]: !!v })} />{i}</label>)}</div></Section>}
         <div className="flex flex-wrap items-center gap-2">
           <StatusBadge status={sheet.status} />
+          {sheet.status === "in_transit" && <Button type="button" className="h-11" disabled={busy || !localReady} onClick={() => arrive()}><MapPin className="mr-1 h-4 w-4" />Arrive on site</Button>}
           {readOnly && <span className="text-sm text-muted-foreground">Completed — read-only view</span>}
           {form.requires_admin_approval && <span className="inline-flex items-center gap-1 rounded-full bg-warning/25 px-2.5 py-0.5 text-xs text-warning-foreground"><ShieldAlert className="h-3 w-3" />Needs admin approval</span>}
         </div>
@@ -479,7 +490,7 @@ function SheetForm() {
                   {!readOnly && (!l.time_in || !l.time_out) && (
                     <div className="mb-3 grid grid-cols-2 gap-2">
                       <Button type="button" className="h-11" variant={l.time_in ? "outline" : "default"} disabled={!!l.time_in}
-                        onClick={() => { setLog(i, { time_in: roundTo15(nowHM()) }); gps(i, "in"); }}>
+                        onClick={() => { if (sheet.status === "in_transit") void arrive(i); else { setLog(i, { time_in: roundTo15(nowHM()) }); gps(i, "in"); } }}>
                         <MapPin className="mr-1 h-4 w-4" />{l.time_in ? `Arrived ${l.time_in}` : "Arrive on site"}
                       </Button>
                       <Button type="button" className="h-11" variant={l.time_in ? "default" : "outline"} disabled={!l.time_in}
@@ -634,7 +645,7 @@ function SheetForm() {
 
       {!readOnly && (
         <div className="fixed inset-x-0 bottom-16 z-20 border-t bg-card/95 p-3 backdrop-blur lg:bottom-0 lg:left-[240px]">
-          <div className="mx-auto grid max-w-5xl grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="mx-auto grid max-w-5xl grid-cols-2 gap-2 sm:grid-cols-3">
             <Button variant="outline" className="h-11" disabled={busy} onClick={saveDraft}><Save className="mr-1 h-4 w-4" />Save as Draft</Button>
             <AlertDialog>
               <AlertDialogTrigger asChild><Button variant="outline" className="h-11" disabled={busy}><Trash2 className="mr-1 h-4 w-4" />{sheet.status === "draft" ? "Discard Draft" : "Clear Form"}</Button></AlertDialogTrigger>
@@ -649,8 +660,7 @@ function SheetForm() {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-            <Button variant="secondary" className="h-11" disabled={busy || sheet.status === "in_transit"} onClick={inTransit}><Car className="mr-1 h-4 w-4" />In Transit</Button>
-            <Button className="h-11" disabled={busy} onClick={submit}><Send className="mr-1 h-4 w-4" />Submit & Send Email</Button>
+            <Button className="col-span-2 h-11 sm:col-span-1" disabled={busy} onClick={submit}><Send className="mr-1 h-4 w-4" />Submit & Send Email</Button>
           </div>
         </div>
       )}

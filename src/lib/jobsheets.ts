@@ -44,6 +44,21 @@ export async function createDraftSheet(profile: Profile, jobId?: string) {
   return data.id;
 }
 
+/** Start a scheduled journey without resetting a sheet already on site or completed. */
+export async function startJobTravel(profile: Profile, jobId: string) {
+  const id = await createDraftSheet(profile, jobId);
+  const { data: sheet, error: readError } = await supabase.from("job_sheets").select("status").eq("id", id).single();
+  if (readError) throw readError;
+  if (sheet.status === "in_progress" || sheet.status === "completed") throw new Error("This job is already on site or completed. Open its job sheet instead.");
+  if (sheet.status !== "in_transit") {
+    const { error } = await supabase.from("job_sheets").update({ status: "in_transit", travel_start_time: new Date().toISOString() }).eq("id", id).eq("status", sheet.status).select("id").single();
+    if (error) throw error;
+  }
+  const { error } = await supabase.from("jobs").update({ acknowledged_at: new Date().toISOString() }).eq("id", jobId).is("acknowledged_at", null);
+  if (error) throw error;
+  return id;
+}
+
 /** Hours between two HH:MM times on the same day (handles overnight). */
 export function hoursFromTimes(tin?: string | null, tout?: string | null) {
   if (!tin || !tout) return 0;

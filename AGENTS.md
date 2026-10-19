@@ -10,6 +10,7 @@
 <!-- LOVABLE:END -->
 
 ## Project rules
+- Assigned-job travel actions share one component and startJobTravel helper; sheet arrival saves its time log before changing to on-site status. Why: keep Today and Schedule consistent without treating travel as arrival.
 - Public invitation reads use a bounded server-function lookup and Query-backed route loading; timeout covers client middleware too. Why: browser auth/storage or network stalls must not leave invitations loading forever.
 - Tenant RLS uses company_id/current_company_id(); never UI company filters. Why: one access boundary.
 - Roles live in protected user_roles; users.role is display-only. View As and permissions.ts only hide UI. Why: prevent escalation.

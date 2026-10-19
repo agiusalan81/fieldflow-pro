@@ -9,6 +9,7 @@ import { AppShell, EmptyState } from "@/components/app-shell";
 import { PriorityBadge, timeWindow } from "@/components/job-card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { JobTravelActions } from "@/components/job-travel-actions";
 
 export const Route = createFileRoute("/_authenticated/schedule")({
   head: () => ({
@@ -66,7 +67,7 @@ function Schedule() {
   const Actions = ({ j }: { j: Job }) => (
     <div className="grid grid-cols-2 gap-2">
       <Button variant="outline" className="h-10" onClick={() => setDetail(j)}>Details</Button>
-      {isPreview ? <Button disabled className="h-10"><FileText className="mr-1 h-4 w-4" />Start job</Button> : <Button asChild className="h-10"><Link to="/sheets/new" search={{ jobId: j.id }} onClick={() => autoAck(j)}><FileText className="mr-1 h-4 w-4" />Start job</Link></Button>}
+      {profile?.role === "technician" ? <JobTravelActions profile={profile} jobId={j.id} address={j.sites?.address} readOnly={isPreview} /> : isPreview ? <Button disabled className="h-10"><FileText className="mr-1 h-4 w-4" />Start job</Button> : <Button asChild className="h-10"><Link to="/sheets/new" search={{ jobId: j.id }} onClick={() => autoAck(j)}><FileText className="mr-1 h-4 w-4" />Start job</Link></Button>}
     </div>
   );
 
