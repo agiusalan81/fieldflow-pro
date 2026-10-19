@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Apply agreed updates: Team roster/invites tabs, Google/Microsoft signup, role-based welcome guide, phone entry, structured office address/VAT, Standard Service Sheet, clean labour display, owner-only Billing & Plan.
 - [ ] Section 1: Document & Brand Studio, shared form/PDF labels, five styles, palette sampling and previews
 - [ ] Section 2: Upload digitization, reusable draft/active/archived contracts/checklists, independent tiers, attachment previews and safe deletion
 - [ ] Section 3: Configurable plans/packs/trials, company promotions and referral tracking; payments require provider setup
