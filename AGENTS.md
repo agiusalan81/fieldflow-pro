@@ -24,6 +24,7 @@
 - Overtime site details use captured DWR intervals/rules; older reports show associated sites only. Why: never invent allocation.
 - Tenant typography uses company_settings.theme via applyTypography/AppShell CSS variables; locale uses locale.ts. Why: tenant-configured presentation.
 - Documents/styles/labels/terms/presets use company_settings and documents.ts across forms/PDFs. Why: consistent client wording.
+- Standard Service Sheet shares a typed safe document projection and service renderers across previews, print and email PDFs. Why: preserve tenant labels and client-safe content consistently.
 - Pending works close via close_pending_on_followup trigger; sheet creation requires clock-in or standby. Why: enforce without UI.
 - Billing uses billing.ts precedence: estimate > contract > client > company default. Integration config uses integrations.ts; job_sheets_guard_billing allows only office review changes. Why: uniform protected prices.
 - WhatsApp rules use tested whatsapp-templates.ts; AI/Meta calls use manager-only whatsapp-templates.functions.ts. Why: validate consistently.

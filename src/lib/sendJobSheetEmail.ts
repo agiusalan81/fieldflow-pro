@@ -2,6 +2,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { clientPhotos, parsePhotos, labourHours, technicianCount, validateCombinedSheets, dayLabourHours } from "@/lib/jobsheets";
 import { parseTemplate, parseTerms, termsFor, visibleBlocks, documentLabel, type PdfTemplate } from "@/lib/documents";
+import { buildServicePdf } from "@/lib/service-sheet-pdf";
+import type { PdfSheetData } from "@/lib/service-sheet";
+import { formatOfficeAddress, parseOfficeAddress } from "@/lib/contact-details";
 import { sheetTitle } from "@/lib/dwr";
 import { validateMonthlyQueue } from "@/lib/monthly-signing";
 
@@ -49,13 +52,8 @@ export function rawEmail(to: string[], subject: string, body: string, attachment
 const safe = (s: unknown) =>
   String(s ?? "").replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/[–—]/g, "-").replace(/[^\x0A\x20-\x7E\xA0-\xFF]/g, "?");
 
-export async function buildPdf(d: {
-  company: string; logo?: string; number: string | number; date: string; client: string; address: string; asset: string;
-  fault: string; repairs: string; technician: string; signedBy: string; idCard: string; signature: string | null;
-  logs: { date: string; in: string; out: string; travel: number; total: number; techs: string; count: number }[];
-  parts: { desc: string; unit: string; qty: number }[];
-  notes: string | null; terms: string | null; template: PdfTemplate;
-}) {
+export async function buildPdf(d: PdfSheetData) {
+  if (d.template.stylePreset === "service") return buildServicePdf(d);
   const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
   const doc = await PDFDocument.create();
   const font = await doc.embedFont(d.template.font === "serif" ? StandardFonts.TimesRoman : d.template.font === "mono" ? StandardFonts.Courier : StandardFonts.Helvetica);
@@ -153,7 +151,7 @@ async function prepareSheet(supabase: AuthClient, sheetId: string, recipients?: 
 
     const { data: sheet, error } = await supabase
       .from("job_sheets")
-      .select("client_id, site_id, company_id, special_notes, special_notes_in_pdf, special_notes_in_email, jobsheet_number, status, reported_fault, repairs_performed, technician_name, client_full_name, client_id_card_no, signature_data, photo_paths, asset_type, asset_type_other, lift_model, serial_number, created_at, clients(name, billing_address, property_name, street_name, location), sites(name, address), assets(reference_number, serial_number), companies(name)")
+      .select("client_id, site_id, company_id, special_notes, special_notes_in_pdf, special_notes_in_email, jobsheet_number, status, reported_fault, repairs_performed, technician_name, client_full_name, client_id_card_no, signature_data, photo_paths, asset_type, asset_type_other, lift_model, serial_number, created_at, is_tech_assistance, is_maintenance, is_installation, job_type_other, assigned_technician_id, clients(name, billing_address, property_name, street_name, location), sites(name, address), assets(reference_number, serial_number), companies(name)")
       .eq("id", sheetId)
       .single();
     if (error || !sheet) throw new Error("Job sheet not found");
@@ -161,7 +159,7 @@ async function prepareSheet(supabase: AuthClient, sheetId: string, recipients?: 
 
     const { data: contacts } = await supabase
       .from("client_contacts").select("email, site_id").eq("client_id", sheet.client_id).eq("receives_job_sheets", true);
-    const { data: settings } = await supabase.from("company_settings").select("pdf_template, terms, logo_data").eq("company_id", sheet.company_id).maybeSingle();
+    const { data: settings } = await supabase.from("company_settings").select("pdf_template, terms, logo_data, office_address, company_address, vat_number, office_phone, company_email").eq("company_id", sheet.company_id).maybeSingle();
     const notes = sheet.special_notes?.trim() || null;
     const emails = recipients?.length ? [...new Set(recipients.map((e) => e.trim()))] : (contacts ?? []).filter((c) => !c.site_id || !sheet.site_id || c.site_id === sheet.site_id).map((c) => c.email).filter((e): e is string => !!e);
 
@@ -179,7 +177,11 @@ async function prepareSheet(supabase: AuthClient, sheetId: string, recipients?: 
     ]);
 
     const assetType = sheet.asset_type === "Other" ? sheet.asset_type_other : sheet.asset_type;
+    const { data: technicianProfile } = sheet.assigned_technician_id ? await supabase.from("users").select("signature_on_file").eq("id",sheet.assigned_technician_id).maybeSingle() : { data: null };
     const pdf = await buildPdf({
+      officeAddress: formatOfficeAddress(parseOfficeAddress(settings?.office_address,settings?.company_address ?? "")), vatNumber: settings?.vat_number ?? "", contact: [settings?.office_phone, settings?.company_email].filter(Boolean).join("\n"),
+      workType: [sheet.is_tech_assistance && "Technical assistance",sheet.is_maintenance && "Maintenance",sheet.is_installation && "Installation",sheet.job_type_other].filter(Boolean).join(", "), technicianSignature: technicianProfile?.signature_on_file,
+
       company, logo: settings?.logo_data ?? "", number: sheet.jobsheet_number, date, client: client?.name ?? "-", address: address || "-",
       asset: [assetType, asset?.reference_number, sheet.lift_model && `Model ${sheet.lift_model}`, sheet.serial_number && `S/N ${sheet.serial_number}`].filter(Boolean).join("  ·  ").replace(/·/g, "-") || "-",
       fault: sheet.reported_fault ?? "", repairs: sheet.repairs_performed ?? "", technician: sheet.technician_name ?? "",
