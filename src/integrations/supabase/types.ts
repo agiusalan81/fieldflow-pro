@@ -1855,6 +1855,44 @@ export type Database = {
           },
         ]
       }
+      member_access_events: {
+        Row: {
+          action: string
+          actor_id: string
+          company_id: string
+          created_at: string
+          id: string
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          company_id: string
+          created_at?: string
+          id?: string
+          reason?: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          reason?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_access_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       overtime_logs: {
         Row: {
           call_type: string
@@ -2802,7 +2840,11 @@ export type Database = {
           created_at: string
           id: string
           platform_owner: boolean
+          registration_status: string
           role: Database["public"]["Enums"]["app_role"]
+          terminated_at: string | null
+          terminated_by: string | null
+          termination_reason: string | null
           user_id: string
         }
         Insert: {
@@ -2810,7 +2852,11 @@ export type Database = {
           created_at?: string
           id?: string
           platform_owner?: boolean
+          registration_status?: string
           role: Database["public"]["Enums"]["app_role"]
+          terminated_at?: string | null
+          terminated_by?: string | null
+          termination_reason?: string | null
           user_id: string
         }
         Update: {
@@ -2818,7 +2864,11 @@ export type Database = {
           created_at?: string
           id?: string
           platform_owner?: boolean
+          registration_status?: string
           role?: Database["public"]["Enums"]["app_role"]
+          terminated_at?: string | null
+          terminated_by?: string | null
+          termination_reason?: string | null
           user_id?: string
         }
         Relationships: [
@@ -2899,6 +2949,10 @@ export type Database = {
     }
     Functions: {
       accept_company_invite: { Args: { _token: string }; Returns: string }
+      accept_company_invite_named: {
+        Args: { _first_name: string; _surname: string; _token: string }
+        Returns: string
+      }
       company_module_access: {
         Args: { _company: string; _module: string }
         Returns: boolean
@@ -2953,7 +3007,9 @@ export type Database = {
         Returns: boolean
       }
       is_platform_owner: { Args: never; Returns: boolean }
+      member_is_active: { Args: { _user: string }; Returns: boolean }
       my_commercial_status: { Args: never; Returns: Json }
+      my_registration_status: { Args: never; Returns: string }
       my_role: { Args: never; Returns: Database["public"]["Enums"]["app_role"] }
       platform_company_directory: {
         Args: never
@@ -2964,6 +3020,22 @@ export type Database = {
         }[]
       }
       read_client_report: { Args: { _hash: string }; Returns: Json }
+      registered_members: {
+        Args: never
+        Returns: {
+          created_at: string
+          email: string
+          employee_id: string
+          full_name: string
+          id: string
+          platform_owner: boolean
+          providers: string[]
+          registration_status: string
+          role: Database["public"]["Enums"]["app_role"]
+          terminated_at: string
+          termination_reason: string
+        }[]
+      }
       save_employee_payroll_setup: {
         Args: {
           _config: Json
@@ -2993,6 +3065,10 @@ export type Database = {
           _parts: Json
         }
         Returns: string
+      }
+      set_member_access: {
+        Args: { _active: boolean; _reason?: string; _user: string }
+        Returns: undefined
       }
       sign_batch_sheet: {
         Args: {

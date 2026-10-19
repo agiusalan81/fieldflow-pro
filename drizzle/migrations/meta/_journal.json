@@ -253,6 +253,13 @@
       "when": 1792388335519,
       "tag": "0035_structured_address_and_oauth_invites",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1792390738194,
+      "tag": "0036_tenant_member_registration_and_revocation",
+      "breakpoints": true
     }
   ]
 }
