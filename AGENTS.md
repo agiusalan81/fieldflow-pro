@@ -33,7 +33,7 @@
 - Combined PDFs use email PDF builder/RLS; office roles combine completed sheets for one client. Why: prevent disclosure.
 - Client notices use client-notices.functions.ts and tested client-notices.ts; guard_departure prevents self-approval. Why: accountability.
 - job_sheets embeds use users!job_sheets_assigned_technician_id_fkey. Why: two users FKs.
-- Signing batches are creator-owned, authenticated and finalized transactionally; store delivery before sending with shared PDF builder. Why: preserve partial work and prevent duplicate email.
+- Signing batches are creator-owned, authenticated and finalized transactionally; store delivery before sending with shared PDF builder. Why: no partial loss or duplicate email.
 - Offline drafts use account-scoped IndexedDB, transactional optimistic RPC and guarded PWA registration. Why: no cross-account/stale writes.
 - Published document masters are immutable; attachments/agreements/sheets snapshot definitions. Why: preserve history.
 - Platform authority is protected separately in user_roles; HQ uses a narrow directory RPC, not tenant reads. Why: isolate companies.
