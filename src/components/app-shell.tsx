@@ -52,7 +52,7 @@ const adminNav: NavItem[] = [
   { group: "Team & roster", to: "/admin/leave", label: "Leave approvals", icon: CalendarDays, module: "leave_approvals" },
   { group: "Clients & commercial", to: "/admin/entities", label: "Clients & assets", icon: Users, module: "clients" },
   { group: "Clients & commercial", to: "/contracts", label: "Contracts", icon: FileSignature, module: "contracts" },
-  { group: "Clients & commercial", to: "/estimates", label: "Lift estimates", icon: Calculator, module: "estimates" },
+  { group: "Clients & commercial", to: "/estimates", label: "Estimates", icon: Calculator, module: "estimates" },
   { group: "My workspace", to: "/hours", label: "My hours", icon: Clock },
   { group: "My workspace", to: "/leave", label: "My leave", icon: CalendarDays },
   { group: "My workspace", to: "/messages", label: "Team chat", icon: MessageSquare },
@@ -63,6 +63,27 @@ const adminNav: NavItem[] = [
   { group: "Administration", to: "/admin/fields", label: "Fields & lookups", icon: SlidersHorizontal, module: "fields" },
   { group: "Administration", to: "/settings", label: "Settings", icon: Settings },
   { group: "Administration", to: "/subscription", label: "Billing & Plan", icon: Calculator },
+];
+
+/** Supervisors follow the technician menu for their own day, plus a team section. */
+const supervisorNav: NavItem[] = [
+  { group: "Field work", to: "/dashboard", label: "Today & team", icon: LayoutDashboard },
+  { group: "Field work", to: "/sheets", label: "My job sheets", icon: ClipboardList },
+  { group: "Field work", to: "/schedule", label: "My schedule", icon: CalendarClock },
+  { group: "Field work", to: "/technical-library", label: "Technical library", icon: FileText },
+  { group: "Field work", to: "/messages", label: "Team chat", icon: MessageSquare },
+  { group: "Team", to: "/admin/jobs", label: "Team job sheets & dispatch", icon: Send },
+  { group: "Team", to: "/team", label: "Team", icon: UserCheck },
+  { group: "Team", to: "/standby", label: "Standby roster", icon: PhoneCall },
+  { group: "Team", to: "/admin/leave", label: "Leave approvals", icon: CalendarDays, module: "leave_approvals" },
+  { group: "Team", to: "/pending-works", label: "Pending works", icon: Hammer, module: "pending_works" },
+  { group: "Clients & estimates", to: "/admin/entities", label: "Clients & assets", icon: Users, module: "clients" },
+  { group: "Clients & estimates", to: "/estimates", label: "Estimates", icon: Calculator, module: "estimates" },
+  { group: "Clients & estimates", to: "/admin/inventory", label: "Inventory", icon: Package, module: "inventory" },
+  { group: "Time & roster", to: "/dwr", label: "Daily reports", icon: FileText },
+  { group: "Time & roster", to: "/leave", label: "My leave", icon: CalendarDays },
+  { group: "Time & roster", to: "/hours", label: "My hours", icon: Clock },
+  { group: "General", to: "/settings", label: "Settings", icon: Settings },
 ];
 
 /** Extra quick-action shortcuts that aren't menu items. */
@@ -174,7 +195,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   const office = isOffice(profile);
   const { data: platformOwner } = useQuery({ queryKey: ["platform-owner"], enabled: !!actor && !preview.active, queryFn: async () => (await supabase.rpc("is_platform_owner")).data === true });
   const extraNav: NavItem[] = [];
-  const items = [...(manager ? adminNav : techNav), ...extraNav].filter((i) => (i.to !== "/subscription" || profile?.role === "superuser") && (i.to !== "/company" || office) && (!i.office || office) && (!i.module || can(i.module) || (i.to === "/company" && office)));
+  const items = [...(profile?.role === "supervisor" ? supervisorNav : manager ? adminNav : techNav), ...extraNav].filter((i) => (i.to !== "/subscription" || profile?.role === "superuser") && (i.to !== "/company" || office) && (!i.office || office) && (!i.module || can(i.module) || (i.to === "/company" && office)));
   const canSwitch = profile && profile.real_role !== "technician" && !preview.active;
 
   const { data: company } = useCompanyRules();
