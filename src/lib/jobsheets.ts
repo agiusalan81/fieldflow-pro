@@ -46,6 +46,9 @@ export async function createDraftSheet(profile: Profile, jobId?: string) {
 
 /** Start a scheduled journey without resetting a sheet already on site or completed. */
 export async function startJobTravel(profile: Profile, jobId: string) {
+  const { data: latest, error: latestError } = await supabase.from("job_sheets").select("id, status").eq("job_id", jobId).order("created_at", { ascending: false }).limit(1).maybeSingle();
+  if (latestError) throw latestError;
+  if (latest?.status === "in_progress" || latest?.status === "completed") throw new Error("This job is already on site or completed. Open its job sheet instead.");
   const id = await createDraftSheet(profile, jobId);
   const { data: sheet, error: readError } = await supabase.from("job_sheets").select("status").eq("id", id).single();
   if (readError) throw readError;

@@ -9,7 +9,7 @@ import type { Profile } from "@/lib/profile";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-export function JobTravelActions({ profile, jobId, address, readOnly = false }: { profile: Profile; jobId: string; address?: string | null; readOnly?: boolean }) {
+export function JobTravelActions({ profile, jobId, address, readOnly = false }: { profile: Profile; jobId: string; address?: string | null | undefined; readOnly?: boolean }) {
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [startedId, setStartedId] = useState<string | null>(null);
