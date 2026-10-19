@@ -113,7 +113,7 @@ function Settings() {
             </label>
             <label className="flex items-center justify-between rounded-lg border p-4">
               <span className="flex items-center gap-2 text-sm"><Volume2 className="h-4 w-4" />Notification sounds</span>
-              <Switch checked={sounds} onCheckedChange={(c) => { setSounds(c); setSoundsOn(profile.id, c); if (c) playChime("message"); }} />
+              <Switch checked={sounds} onCheckedChange={(c) => { setSounds(c); if (profile) setSoundsOn(profile.id, c); if (c) playChime("message"); }} />
             </label>
           </section>
           <div className="grid gap-2 sm:grid-cols-3">
