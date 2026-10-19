@@ -42,6 +42,8 @@ type Props = {
 export function JobPhotos({ companyId, sheetId, photos, scope, day, readOnly, onChange }: Props) {
   const input = useRef<HTMLInputElement>(null);
   const cam = useRef<HTMLInputElement>(null);
+  const camId = useId();
+  const galId = useId();
   const [kind, setKind] = useState<JobPhoto["kind"]>(scope === "work" ? "damage" : "other");
   const [busy, setBusy] = useState(false);
   const [urls, setUrls] = useState<Record<string, string>>({});
