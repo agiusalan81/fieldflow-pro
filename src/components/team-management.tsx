@@ -84,7 +84,7 @@ export function TeamManagement({ role, companyId, meId, tab }: { role: Role; com
               return (
                 <li key={u.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
                   <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-foreground">{u.full_name} <span className="font-mono text-xs text-muted-foreground">{u.employee_id}</span></p><p className="truncate text-xs text-muted-foreground">{u.email}</p></div>
-                  {canEditRoles && <Button asChild size="sm" variant="outline"><Link to="/payroll/wages">Payroll setup</Link></Button>}
+                  {canEditRoles && payrollVisible && <Button asChild size="sm" variant="outline"><Link to="/payroll/wages">Payroll setup</Link></Button>}
                   {editable ? (
                     <Select value={r} onValueChange={(v) => changeRole(u.id, v as Role)}>
                       <SelectTrigger className="h-9 w-[170px]"><SelectValue /></SelectTrigger>
