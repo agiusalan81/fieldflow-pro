@@ -1,3 +1,4 @@
+import { TechnicalStructure } from "@/components/technical-structure";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -52,6 +53,7 @@ function CompanyPage() {
           {office && <TabsTrigger value="profile">Profile & branding</TabsTrigger>}
           {office && <TabsTrigger value="documents">PDF & terms</TabsTrigger>}
           {office && <TabsTrigger value="library">Document library</TabsTrigger>}
+          {office && <TabsTrigger value="technical">Technical data structure</TabsTrigger>}
           {office && <TabsTrigger value="safety">Safety & faults</TabsTrigger>}
           {office && <TabsTrigger value="messaging">Messages & emails</TabsTrigger>}
           {office && <TabsTrigger value="integrations">Accounting</TabsTrigger>}
@@ -61,6 +63,7 @@ function CompanyPage() {
         {office && <TabsContent value="profile" className="mt-4"><ProfileTab companyId={profile.company_id} /></TabsContent>}
         {office && <TabsContent value="documents" className="mt-4"><DocumentSettings companyId={profile.company_id} /></TabsContent>}
         {office && <TabsContent value="library" className="mt-4"><DocumentLibrary companyId={profile.company_id} userId={profile.id} /></TabsContent>}
+        {office && <TabsContent value="technical" className="mt-4"><TechnicalStructure companyId={profile.company_id} /></TabsContent>}
         {office && <TabsContent value="safety" className="mt-4"><SafetySettings companyId={profile.company_id} /></TabsContent>}
         {office && <TabsContent value="integrations" className="mt-4"><IntegrationsSettings part="accounting" companyId={profile.company_id} /></TabsContent>}
         {office && <TabsContent value="messaging" className="mt-4"><IntegrationsSettings part="messaging" companyId={profile.company_id} /></TabsContent>}

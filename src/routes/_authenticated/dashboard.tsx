@@ -1,3 +1,4 @@
+import { LiveLocations } from "@/components/live-locations";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -146,6 +147,7 @@ function TechToday({ profile, readOnly }: { profile: Profile; readOnly: boolean 
       <div className="mx-auto max-w-4xl space-y-6">
         <ShiftTracker profile={profile} />
         <InternalWorkCard key={profile.id} profile={profile} readOnly={readOnly} />
+        <Button asChild variant="outline" className="h-12 w-full"><Link to="/technical-library"><ClipboardList className="mr-2 h-5 w-5" />Technical library</Link></Button>
         <ScanQr />
         {!readOnly && <DepartureAlerts userId={profile.id} />}
         {!readOnly && <NoAccessButton profile={profile} jobs={jobs} />}
@@ -263,6 +265,7 @@ function OfficeOverview({ profile }: { profile: Profile }) {
     <AppShell title={profile.companies?.name ?? "Overview"} actions={<Button asChild size="sm" variant="outline"><Link to="/company">Company settings</Link></Button>}>
       <div className="space-y-6">
         <MyHours profile={profile} />
+        <LiveLocations />
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {can("billing") && <Card to="/admin/jobs" title="Completed (30 days)" icon={ClipboardList} value={completed.length} sub={`${tot.standard} h std · ${tot.ot15} h 1.5× · ${tot.ot20} h 2×`} />}
           {can("billing") && <Card to="/admin/jobs" title="Overtime hours" icon={Clock} value={(tot.ot15 + tot.ot20).toFixed(2)} sub="1.5× and 2× in the last 30 days" />}
@@ -310,7 +313,7 @@ function SupervisorOverview({ profile }: { profile: Profile }) {
   const pending = sheets.filter((s) => (s.pending_works_future_jobs ?? "").trim() && s.pending_status !== "done").length;
   const name = (id: string | null) => data?.users.find((u) => u.id === id)?.full_name ?? "Unassigned";
   const techs = (data?.users ?? []).map((u) => {
-    const sh = data!.shifts.filter((x) => x.user_id === u.id);
+    const sh = (data?.shifts ?? []).filter((x) => x.user_id === u.id);
     const active = sheets.find((s) => s.assigned_technician_id === u.id && (s.status === "in_transit" || s.status === "in_progress"));
     const status = active?.status === "in_progress" ? `On site · ${active.clients?.name}` : active?.status === "in_transit" || sh.some((x) => x.shift_type === "travel") ? `Travelling${active ? ` · ${active.clients?.name}` : ""}` : sh.some((x) => x.shift_type === "shift") ? "On shift · available" : "Off shift";
     return { u, status, on: sh.length > 0 || !!active };
@@ -320,6 +323,7 @@ function SupervisorOverview({ profile }: { profile: Profile }) {
     <AppShell title="Field command" actions={<Button asChild size="sm" variant="outline"><Link to="/admin/jobs" search={{ new: true }}>Dispatch job</Link></Button>}>
       <div className="space-y-6">
         <MyHours profile={profile} />
+        <LiveLocations />
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {can("live_status") && <Card to="/dashboard" title="Technicians active" icon={Play} value={techs.filter((t) => t.on).length} sub={`of ${techs.length} team members`} />}
           {can("dispatch") && <Card to="/admin/jobs" title="Today's jobs" icon={CalendarDays} value={data?.jobs.length ?? 0} sub={`${done} sheets completed today`} />}

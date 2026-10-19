@@ -1,4 +1,8 @@
 # Roadmap
+- [ ] Verify bundled shift/map, receipt upload/reconnect, library approval/restriction and member payroll editing with signed-in actors (blocked: managed preview signed out and own-account mint failed).
+- [ ] Image-only technical scans: automatic OCR/search indexing remains to implement; reader and selected-page printing are available.
+- [ ] Verify actual service-sheet email delivery with an approved recipient; pure PDF generation passed.
+- [x] Bundled implementation (35 focused tests and live AI citation probe passed; mobile dropdown/signature isolated browser check passed): shift-only location sharing and manager live map; receipt photo-to-PDF with account-scoped offline queue; mobile dropdown/signature/button fixes; office payroll setup alerts/member edits; tenant Technical Library with configurable optional taxonomy, content checklist, restricted access, scans/review, reader/page printing and cited AI search; Standard Service Sheet verification.
 - [x] Current batch implemented: refined social/email invitation signup, Registered Members with audited access revocation, and Standard Service Sheet preview/print/email rendering. Signed-in directory, confirmation dialog, invite choices/email fields, preview and downloaded PDF checked; 20 focused tests passed; latest build OK.
 - [ ] Complete live social signup, revoke/restore and client email delivery checks (blocked: consenting new social account, employee offboarding test and approved recipient); no existing employee access changed during checks.
 - [x] Fix stalled invitation lookup with bounded loading, visible connection errors and manual retry; real unused link, simulated timeout/retry and invalid link verified; 10 focused tests passed.

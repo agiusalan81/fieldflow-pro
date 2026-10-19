@@ -9,3 +9,4 @@ export type PdfSheetData = {
   parts: { desc: string; unit: string; qty: number }[];
   notes: string | null; terms: string | null; template: PdfTemplate;
 };
+export function serviceEquipment(type: string | null, reference: string | null | undefined, model: string | null, serial: string | null) { return [type, reference, model && `Model ${model}`, serial && `S/N ${serial}`].filter(Boolean).join(" - ") || "-"; }
