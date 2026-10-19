@@ -53,6 +53,7 @@ export function ProfileCompletionGate({ profile }: { profile: Profile }) {
   );
 }
 
+const heard = new Set<string>();
 /** Plays a chime for new chat messages, leave decisions and (for managers) urgent unsigned-departure requests. */
 export function NotificationSounds({ profile }: { profile: Profile }) {
   const qc = useQueryClient();
@@ -75,8 +76,9 @@ export function NotificationSounds({ profile }: { profile: Profile }) {
       })
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "job_sheets" }, (p) => {
         if (profile.real_role === "technician") return;
-        const n = p.new as { departure_status: string }, o = p.old as { departure_status?: string };
-        if (n.departure_status === "requested" && o.departure_status !== "requested") { playChime("urgent", uid); qc.invalidateQueries({ queryKey: ["departure-requests"] }); }
+        const n = p.new as { id: string; departure_status: string; departure_requested_at: string | null };
+        const k = `${n.id}:${n.departure_requested_at}`;
+        if (n.departure_status === "requested" && !heard.has(k)) { heard.add(k); playChime("urgent", uid); qc.invalidateQueries({ queryKey: ["departure-requests"] }); }
       })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
