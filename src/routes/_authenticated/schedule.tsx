@@ -28,8 +28,19 @@ export const Route = createFileRoute("/_authenticated/schedule")({
 type Job = {
   id: string; job_number: number; scheduled_date: string; window_start: string | null; window_end: string | null;
   problem_summary: string | null; priority: string; acknowledged_at: string | null;
+  sheet?: { id: string; status: string; jobsheet_number: string | null } | null;
   clients: { name: string } | null; sites: { name: string; address: string | null } | null; assets: { reference_number: string; asset_category: string } | null;
 };
+
+const SCHED: Record<string, [string, string]> = {
+  open: ["Open", "bg-muted text-muted-foreground"],
+  draft: ["Open", "bg-muted text-muted-foreground"],
+  pending: ["Open", "bg-muted text-muted-foreground"],
+  in_transit: ["In transit", "bg-warning/25 text-warning-foreground"],
+  in_progress: ["In progress", "bg-primary/15 text-primary"],
+  completed: ["Closed", "bg-success/15 text-success"],
+};
+const schedStatus = (j: Job) => SCHED[j.sheet?.status ?? "open"] ?? SCHED["open"]!;
 
 function Schedule() {
   const { data: profile, isPreview } = usePreviewProfile();
@@ -52,7 +63,9 @@ function Schedule() {
         .order("scheduled_date")
         .order("window_start");
       if (error) throw error;
-      return data as Job[];
+      const ids = (data ?? []).map((j) => j.id);
+      const { data: sheets } = ids.length ? await supabase.from("job_sheets").select("id, job_id, status, jobsheet_number").in("job_id", ids) : { data: [] };
+      return (data as Job[]).map((j) => ({ ...j, sheet: (sheets ?? []).find((s) => s.job_id === j.id) ?? null }));
     },
   });
 
@@ -67,7 +80,7 @@ function Schedule() {
   const Actions = ({ j }: { j: Job }) => (
     <div className="grid grid-cols-2 gap-2">
       <Button variant="outline" className="h-10" onClick={() => setDetail(j)}>Details</Button>
-      {profile?.role === "technician" ? <JobTravelActions profile={profile} jobId={j.id} address={j.sites?.address} readOnly={isPreview} /> : isPreview ? <Button disabled className="h-10"><FileText className="mr-1 h-4 w-4" />Start job</Button> : <Button asChild className="h-10"><Link to="/sheets/new" search={{ jobId: j.id }} onClick={() => autoAck(j)}><FileText className="mr-1 h-4 w-4" />Start job</Link></Button>}
+      {j.sheet && j.sheet.status !== "draft" ? <Button asChild className="h-10" variant={j.sheet.status === "completed" ? "outline" : "default"}><Link to="/sheets/$sheetId" params={{ sheetId: j.sheet.id }}><FileText className="mr-1 h-4 w-4" />Open sheet{j.sheet.jobsheet_number ? ` #${j.sheet.jobsheet_number}` : ""}</Link></Button> : profile?.role === "technician" || profile?.role === "supervisor" ? <JobTravelActions profile={profile} jobId={j.id} address={j.sites?.address} readOnly={isPreview} /> : isPreview ? <Button disabled className="h-10"><FileText className="mr-1 h-4 w-4" />Start job</Button> : <Button asChild className="h-10"><Link to="/sheets/new" search={{ jobId: j.id }} onClick={() => autoAck(j)}><FileText className="mr-1 h-4 w-4" />Start job</Link></Button>}
     </div>
   );
 
@@ -96,7 +109,7 @@ function Schedule() {
                       <p className="text-xs text-muted-foreground">{new Date(j.scheduled_date + "T00:00").toLocaleDateString([], { weekday: "short", day: "numeric", month: "short" })} · {timeWindow(j.window_start, j.window_end)}</p>
                       <p className="truncate font-medium text-foreground">{j.clients?.name}{j.sites ? ` · ${j.sites.name}` : ""}</p>
                     </div>
-                    <PriorityBadge p={j.priority} />
+                    <div className="flex flex-col items-end gap-1"><PriorityBadge p={j.priority} /><span className={`rounded-full px-2 py-0.5 text-xs font-medium ${schedStatus(j)[1]}`}>{schedStatus(j)[0]}</span></div>
                   </div>
                   <p className="line-clamp-2 text-sm text-muted-foreground">{j.problem_summary || "No summary"}</p>
                   <Actions j={j} />
@@ -122,7 +135,7 @@ function Schedule() {
                   <div key={i} className={`min-h-16 rounded-md border p-1 sm:min-h-24 ${iso(i + 1) === today ? "border-primary" : ""}`}>
                     <p className="text-[11px] text-foreground">{i + 1}</p>
                     {list.map((j) => (
-                      <button key={j.id} onClick={() => setDetail(j)} className="mt-0.5 block w-full truncate rounded bg-primary/15 px-1 text-left text-[10px] text-primary">
+                      <button key={j.id} onClick={() => setDetail(j)} className={`mt-0.5 block w-full truncate rounded px-1 text-left text-[10px] ${schedStatus(j)[1]}`}>
                         {j.window_start?.slice(0, 5)} {j.clients?.name}
                       </button>
                     ))}

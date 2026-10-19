@@ -109,3 +109,19 @@
 - [x] On/off switches for "no one to open" and "unsigned departure" (Messages & emails → On)
 - [x] Travel hours multiplied by technician count
 - [x] Forgot password flow + email trimming on sign-in (fixes mobile 'invalid credentials')
+
+## Supervisor & field batch (Oct 2026)
+- [x] Live map no longer covers the menu
+- [x] DWR not emailed — in-app "ready in My daily reports" notice
+- [x] "Quote" → "Estimate" wording
+- [x] Schedule status labels (Open / In transit / In progress / Closed) + Open sheet button
+- [x] Supervisor My day / Team tabs, Start travel on own jobs, technician-style menu + Team section
+- [x] Help guide wording with real button names + help search
+- [ ] Supervisor leave approved by office admin only
+- [ ] Continuous job-sheet autosave + "Draft saved locally"
+- [ ] Clock-out unfinished-work reconciliation
+- [ ] Notification chimes + mute toggle
+- [ ] Required personal details / next of kin onboarding
+- [ ] Lift RFQ estimate template (fields, package-supplier options), full-screen layout sketch, photos, site contacts
+- [ ] Direct supplier email + threaded reminders (needs company email domain)
+- [ ] Platform HQ toggles for each module

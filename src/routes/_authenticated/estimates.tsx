@@ -16,9 +16,9 @@ export const Route = createFileRoute("/_authenticated/estimates")({
   head: () => ({
     meta: [
       { title: "New lift estimates — FieldOps" },
-      { name: "description", content: "Compile new lift specs, request supplier quotes and track every step." },
+      { name: "description", content: "Compile new lift specs, request supplier estimates and track every step." },
       { property: "og:title", content: "New lift estimates — FieldOps" },
-      { property: "og:description", content: "Supplier quote requests with tracking." },
+      { property: "og:description", content: "Supplier estimate requests with tracking." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -29,7 +29,7 @@ export const Route = createFileRoute("/_authenticated/estimates")({
 const STEPS = [
   { key: "draft", label: "Draft" },
   { key: "sent", label: "Sent to supplier" },
-  { key: "quoted", label: "Quote received" },
+  { key: "quoted", label: "Estimate received" },
   { key: "client_ready", label: "Client estimate ready" },
   { key: "won", label: "Won" },
   { key: "lost", label: "Lost" },
@@ -61,9 +61,9 @@ function Estimates() {
     qc.invalidateQueries({ queryKey: ["estimates"] });
   };
   const copyRequest = async (e: (typeof data)[number]) => {
-    const text = `Quote request — ${e.title}\n${e.clients?.name ? `Project: ${e.clients.name}\n` : ""}\nSpecification:\n${e.specs ?? ""}\n\nPlease send your quotation with lead time.\n${profile?.companies?.name ?? ""}`;
+    const text = `Estimate request — ${e.title}\n${e.clients?.name ? `Project: ${e.clients.name}\n` : ""}\nSpecification:\n${e.specs ?? ""}\n\nPlease send your estimate with lead time.\n${profile?.companies?.name ?? ""}`;
     await navigator.clipboard.writeText(text);
-    toast.success("Quote request copied — paste it into an email to the supplier");
+    toast.success("Estimate request copied — paste it into an email to the supplier");
   };
 
   return (
@@ -98,10 +98,10 @@ function Estimates() {
                   {((e.events as Ev[]) ?? []).map((ev, i) => <li key={i}>{new Date(ev.at).toLocaleString()} — {STEPS.find((s) => s.key === ev.status)?.label ?? ev.status} · {ev.by}</li>)}
                 </ol>
                 <div className="flex flex-wrap gap-2">
-                  <Button size="sm" variant="outline" onClick={() => copyRequest(e)}><Copy className="mr-1 h-4 w-4" />Copy quote request</Button>
+                  <Button size="sm" variant="outline" onClick={() => copyRequest(e)}><Copy className="mr-1 h-4 w-4" />Copy estimate request</Button>
                   {next && e.status !== "won" && e.status !== "lost" && next.key !== "lost" && (
                     next.key === "quoted"
-                      ? <Button size="sm" onClick={() => { const v = window.prompt("Supplier quote amount (€)"); if (v) move(e, "quoted", { quoted_amount: Number(v) || null }); }}>Mark quote received</Button>
+                      ? <Button size="sm" onClick={() => { const v = window.prompt("Supplier estimate amount (€)"); if (v) move(e, "quoted", { quoted_amount: Number(v) || null }); }}>Mark estimate received</Button>
                       : <Button size="sm" onClick={() => move(e, next.key)}>Mark: {next.label}</Button>
                   )}
                   {e.status === "client_ready" && <Button size="sm" variant="outline" onClick={() => move(e, "lost")}>Mark lost</Button>}

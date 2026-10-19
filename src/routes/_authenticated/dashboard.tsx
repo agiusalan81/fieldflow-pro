@@ -1,6 +1,6 @@
 import { LiveLocations } from "@/components/live-locations";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { QrCode, Car, Play, Square, AlertTriangle, CalendarDays, ClipboardList, Clock } from "lucide-react";
@@ -103,7 +103,7 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
         const res = await closeShiftReport({ userId: profile.id, companyId: profile.company_id, shift: { ...current, ended_at: null }, endedAt, company, companyName: name });
         qc.invalidateQueries({ queryKey: ["dwr"] });
         if (res.held) toast.success("You're on standby tonight — callouts will be added and your daily works report sent at tomorrow's start time.", { duration: 10000 });
-        else if (res.report) { const r = res.report; toast.success(res.sent ? "Daily works report emailed to you" : "Daily works report saved", { action: { label: "Download PDF", onClick: () => downloadDwr(r, name) }, duration: 10000 }); }
+        else if (res.report) { const r = res.report; toast.success("Daily works report filed — ready to view in My daily reports", { action: { label: "View PDF", onClick: () => downloadDwr(r, name) }, duration: 10000 }); }
       } catch (e) { toast.error(`Couldn't file the daily works report: ${(e as Error).message}`); }
     }
   };
@@ -128,7 +128,7 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
   );
 }
 
-function TechToday({ profile, readOnly }: { profile: Profile; readOnly: boolean }) {
+function TechToday({ profile, readOnly, switcher }: { profile: Profile; readOnly: boolean; switcher?: ReactNode }) {
   const navigate = useNavigate();
   const today = new Date().toISOString().slice(0, 10);
   const { data: jobs = [] } = useQuery({
@@ -147,9 +147,9 @@ function TechToday({ profile, readOnly }: { profile: Profile; readOnly: boolean 
 
 
   return (
-    <AppShell title={`Hi, ${profile.full_name.split(" ")[0]}`}>
+    <AppShell title={`Hi, ${profile.full_name.split(" ")[0]}`} actions={switcher}>
       <div className="mx-auto max-w-4xl space-y-6">
-        <ShiftTracker profile={profile} />
+        <ShiftTracker profile={profile} />{switcher && !readOnly && <DepartureRequests />}
         <InternalWorkCard key={profile.id} profile={profile} readOnly={readOnly} />
         <Button asChild variant="outline" className="h-12 w-full"><Link to="/technical-library"><ClipboardList className="mr-2 h-5 w-5" />Technical library</Link></Button>
         <ScanQr />
@@ -242,7 +242,22 @@ function useOpsData() {
 }
 
 function ManagerOverview({ profile }: { profile: Profile }) {
-  return isOffice(profile) ? <OfficeOverview profile={profile} /> : <SupervisorOverview profile={profile} />;
+  return isOffice(profile) ? <OfficeOverview profile={profile} /> : <SupervisorHome profile={profile} />;
+}
+
+/** Supervisors switch between their own day (same as a technician) and team command. */
+function SupervisorHome({ profile }: { profile: Profile }) {
+  const { isPreview } = usePreviewProfile();
+  const [tab, setTab] = useState<"mine" | "team">("mine");
+  useEffect(() => { const v = localStorage.getItem("supervisor-tab"); if (v === "team" || v === "mine") setTab(v); }, []);
+  const pick = (v: "mine" | "team") => { setTab(v); localStorage.setItem("supervisor-tab", v); };
+  const switcher = (
+    <div className="flex rounded-md border" role="tablist" aria-label="Dashboard view">
+      <Button size="sm" role="tab" aria-selected={tab === "mine"} variant={tab === "mine" ? "secondary" : "ghost"} onClick={() => pick("mine")}>My day</Button>
+      <Button size="sm" role="tab" aria-selected={tab === "team"} variant={tab === "team" ? "secondary" : "ghost"} onClick={() => pick("team")}>Team</Button>
+    </div>
+  );
+  return tab === "mine" ? <TechToday profile={profile} readOnly={isPreview} switcher={switcher} /> : <SupervisorOverview profile={profile} switcher={switcher} />;
 }
 
 /** Shift clock shown on every manager overview; hours live on the My hours page. */
@@ -308,7 +323,7 @@ function OfficeOverview({ profile }: { profile: Profile }) {
   );
 }
 
-function SupervisorOverview({ profile }: { profile: Profile }) {
+function SupervisorOverview({ profile, switcher }: { profile: Profile; switcher?: ReactNode }) {
   const can = useCan(profile);
   const navigate = useNavigate();
   const { data } = useOpsData();
@@ -324,7 +339,7 @@ function SupervisorOverview({ profile }: { profile: Profile }) {
   }).sort((a, b) => Number(b.on) - Number(a.on));
   const done = sheets.filter((s) => s.status === "completed" && s.updated_at.slice(0, 10) === new Date().toISOString().slice(0, 10)).length;
   return (
-    <AppShell title="Field command" actions={<Button asChild size="sm" variant="outline"><Link to="/admin/jobs" search={{ new: true }}>Dispatch job</Link></Button>}>
+    <AppShell title="Field command" actions={<>{switcher}<Button asChild size="sm" variant="outline"><Link to="/admin/jobs" search={{ new: true }}>Dispatch job</Link></Button></>}>
       <div className="space-y-6">
         <MyHours profile={profile} />
         <LiveLocations />
@@ -332,7 +347,7 @@ function SupervisorOverview({ profile }: { profile: Profile }) {
           {can("live_status") && <Card to="/dashboard" title="Technicians active" icon={Play} value={techs.filter((t) => t.on).length} sub={`of ${techs.length} team members`} />}
           {can("dispatch") && <Card to="/admin/jobs" title="Today's jobs" icon={CalendarDays} value={data?.jobs.length ?? 0} sub={`${done} sheets completed today`} />}
           {can("approvals") && <Card to="/admin/jobs" title="Asset approvals" icon={AlertTriangle} value={approvals} sub="Model / serial changes to check" />}
-          {can("pending_works") && <Card to="/pending-works" title="Pending works" icon={ClipboardList} value={pending} sub="Follow-ups to schedule or quote" />}
+          {can("pending_works") && <Card to="/pending-works" title="Pending works" icon={ClipboardList} value={pending} sub="Follow-ups to schedule or estimate" />}
         </div>
         <div className="grid gap-4 lg:grid-cols-2">
           {can("live_status") && (
