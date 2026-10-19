@@ -1,6 +1,6 @@
 import { LiveLocations } from "@/components/live-locations";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { QrCode, Car, Play, Square, AlertTriangle, CalendarDays, ClipboardList, Clock } from "lucide-react";
@@ -128,7 +128,7 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
   );
 }
 
-function TechToday({ profile, readOnly, switcher }: { profile: Profile; readOnly: boolean; switcher?: React.ReactNode }) {
+function TechToday({ profile, readOnly, switcher }: { profile: Profile; readOnly: boolean; switcher?: ReactNode }) {
   const navigate = useNavigate();
   const today = new Date().toISOString().slice(0, 10);
   const { data: jobs = [] } = useQuery({
@@ -323,7 +323,7 @@ function OfficeOverview({ profile }: { profile: Profile }) {
   );
 }
 
-function SupervisorOverview({ profile, switcher }: { profile: Profile; switcher?: React.ReactNode }) {
+function SupervisorOverview({ profile, switcher }: { profile: Profile; switcher?: ReactNode }) {
   const can = useCan(profile);
   const navigate = useNavigate();
   const { data } = useOpsData();
