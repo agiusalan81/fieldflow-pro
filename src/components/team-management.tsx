@@ -4,7 +4,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Copy, Link2, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { ROLE_LABEL, type Role } from "@/lib/profile";
+import { ROLE_LABEL, useProfile, type Role } from "@/lib/profile";
+import { payrollUiVisible } from "@/lib/payroll";
 import { EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +16,7 @@ export function TeamManagement({ role, companyId, meId, tab }: { role: Role; com
   const qc = useQueryClient();
   const [inv, setInv] = useState({ role: "technician" as Role, full_name: "", email: "" });
   const canEditRoles = role === "superuser" || role === "admin";
+  const payrollVisible = payrollUiVisible(useProfile().data);
   const { data } = useQuery({
     queryKey: ["team"],
     queryFn: async () => {
@@ -82,7 +84,7 @@ export function TeamManagement({ role, companyId, meId, tab }: { role: Role; com
               return (
                 <li key={u.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
                   <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-foreground">{u.full_name} <span className="font-mono text-xs text-muted-foreground">{u.employee_id}</span></p><p className="truncate text-xs text-muted-foreground">{u.email}</p></div>
-                  {canEditRoles && <Button asChild size="sm" variant="outline"><Link to="/payroll/wages">Payroll setup</Link></Button>}
+                  {canEditRoles && payrollVisible && <Button asChild size="sm" variant="outline"><Link to="/payroll/wages">Payroll setup</Link></Button>}
                   {editable ? (
                     <Select value={r} onValueChange={(v) => changeRole(u.id, v as Role)}>
                       <SelectTrigger className="h-9 w-[170px]"><SelectValue /></SelectTrigger>

@@ -12,6 +12,8 @@ export const DEFAULT_PAYROLL_POLICY: PayrollPolicy = { effective_from: "2000-01-
 export const money = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 export const euros = (n: number) => formatMoney(n);
 export const officePayrollAccess = (realRole?: string) => realRole === "admin" || realRole === "superuser";
+/** Payroll surfaces need the account's real office role *and* the role actually being displayed, so "View As: Technician" never reveals them. */
+export const payrollUiVisible = (p?: { real_role?: string; role?: string } | null) => officePayrollAccess(p?.real_role) && officePayrollAccess(p?.role);
 export function datesBetween(from: string, to: string) {
   const start = new Date(from + "T00:00:00Z"), end = new Date(to + "T00:00:00Z");
   if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || end < start || (end.getTime() - start.getTime()) / 86400000 > 366) return [];

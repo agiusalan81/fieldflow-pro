@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { aggregatePayroll, calculateWages, DEFAULT_PAYROLL_POLICY, officePayrollAccess, validPayrollPeriod, type PayrollDwr, type PayrollLeave, type PayrollHours } from "./payroll";
+import { aggregatePayroll, calculateWages, DEFAULT_PAYROLL_POLICY, officePayrollAccess, payrollUiVisible, validPayrollPeriod, type PayrollDwr, type PayrollLeave, type PayrollHours } from "./payroll";
 const roster = [{ effective_from: "2026-01-01", roster_start: "2026-01-01", rotation_days: 7, per_shift: 1, technician_order: ["tech"] }];
 const wage = { hourly_rate: 10, sick_full_hours: 8, sick_half_hours: 8 };
 const aggregate = (from: string, to: string, reports: PayrollDwr[] = [], leaves: PayrollLeave[] = []) => aggregatePayroll("tech",from,to,reports,leaves,wage,[DEFAULT_PAYROLL_POLICY],roster,[]);
@@ -18,5 +18,13 @@ describe("Payroll rules", () => {
   it("calculates full, half, 1.5x and 2x wages and deductions", () => { const h: PayrollHours={...aggregate("2026-10-05","2026-10-05"),worked:8,leave:8,sickFull:8,sickHalf:8,ot15:2,ot20:3,standbyPay:50}; const t=calculateWages(h,10,{bonus:20,tax:30,nationalInsurance:10,otherDeductions:5});expect(t.halfPay).toBe(40);expect(t.ot15Pay).toBe(30);expect(t.ot20Pay).toBe(60);expect(t.gross).toBe(440);expect(t.net).toBe(395); });
   it("blocks deductions above wages", () => expect(() => calculateWages(aggregate("2026-10-05","2026-10-05"),0,{bonus:0,tax:100,nationalInsurance:0,otherDeductions:0})).toThrow());
   it("restricts payroll to real office roles", () => { expect(officePayrollAccess("admin")).toBe(true); expect(officePayrollAccess("superuser")).toBe(true);expect(officePayrollAccess("supervisor")).toBe(false);expect(officePayrollAccess("technician")).toBe(false); });
+  it("hides payroll surfaces from technician and supervisor views", () => {
+    expect(payrollUiVisible({ real_role: "superuser", role: "technician" })).toBe(false);
+    expect(payrollUiVisible({ real_role: "admin", role: "technician" })).toBe(false);
+    expect(payrollUiVisible({ real_role: "supervisor", role: "admin" })).toBe(false);
+    expect(payrollUiVisible({ real_role: "technician", role: "technician" })).toBe(false);
+    expect(payrollUiVisible({ real_role: "admin", role: "admin" })).toBe(true);
+    expect(payrollUiVisible({ real_role: "superuser", role: "superuser" })).toBe(true);
+  });
   it("requires a single-year period for annual entitlement accounting", () => { expect(validPayrollPeriod("2026-10-01","2026-10-31")).toBe(true); expect(validPayrollPeriod("2025-12-01","2026-01-31")).toBe(false); });
 });
