@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useProfile, isOffice } from "@/lib/profile";
+import { useProfile, isOffice, ROLE_LABEL, type Role } from "@/lib/profile";
 import { MODULES, ROLES, canSee, usePermRows, type ModuleKey } from "@/lib/permissions";
 import { useCompanyRules, FONT_CHOICES, applyTypography, DEFAULT_THEME, type Typography, type TextStyle } from "@/lib/company";
 import { PhoneInput, splitPhone, COUNTRIES } from "@/components/client-manager";
