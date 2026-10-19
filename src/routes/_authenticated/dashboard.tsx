@@ -22,6 +22,7 @@ import { BillingReview } from "@/components/billing-review";
 import { NoAccessButton, DepartureRequests, DepartureAlerts } from "@/components/client-notices";
 import { usePreviewProfile, useUserPreview } from "@/lib/impersonation";
 import { JobTravelActions } from "@/components/job-travel-actions";
+import { UnfinishedWorkDialog } from "@/components/unfinished-work";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -83,6 +84,7 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
   const travel = open.find((s) => s.shift_type === "travel");
 
   const [plateOpen, setPlateOpen] = useState(false);
+  const [closeOpen, setCloseOpen] = useState(false);
   const [plate, setPlate] = useState("");
   const openClockIn = async () => {
     const { data } = await supabase.from("shifts").select("vehicle_reg").eq("user_id", profile.id).eq("shift_type", "shift").not("vehicle_reg", "is", null).order("started_at", { ascending: false }).limit(1).maybeSingle();
@@ -128,10 +130,11 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
         <Button size="sm" variant={travel ? "secondary" : "outline"} disabled={readOnly || !shift} onClick={() => toggle("travel", travel)}>
           <Car className="mr-1 h-4 w-4" />{travel ? "Stop travel" : "Travel"}
         </Button>
-        <Button size="sm" variant={shift ? "outline" : "default"} disabled={readOnly} onClick={() => (shift ? toggle("shift", shift) : openClockIn())}>
+        <Button size="sm" variant={shift ? "outline" : "default"} disabled={readOnly} onClick={() => (shift ? setCloseOpen(true) : openClockIn())}>
           {shift ? <Square className="mr-1 h-4 w-4" /> : <Play className="mr-1 h-4 w-4" />}{shift ? "Clock out" : "Clock in"}
         </Button>
       </div>
+      {closeOpen && shift && <UnfinishedWorkDialog profile={profile} onCancel={() => setCloseOpen(false)} onDone={() => { setCloseOpen(false); void toggle("shift", shift); }} />}
       <Dialog open={plateOpen} onOpenChange={setPlateOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>Shift clock-in</DialogTitle></DialogHeader>
