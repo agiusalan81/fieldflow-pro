@@ -1,4 +1,6 @@
 # Roadmap
+- [x] Move technician travel to Today/Schedule assigned jobs, retain Google Maps/Waze, remove sheet-bottom In Transit and save on-site arrival; 38 focused tests passed.
+- [ ] Verify technician Start travel → navigation → Arrive on site using a real assigned job (blocked: own-account preview sign-in unavailable).
 - [ ] Verify bundled shift/map, receipt upload/reconnect, library approval/restriction and member payroll editing with signed-in actors (blocked: managed preview signed out and own-account mint failed).
 - [ ] Image-only technical scans: automatic OCR/search indexing remains to implement; reader and selected-page printing are available.
 - [ ] Verify actual service-sheet email delivery with an approved recipient; pure PDF generation passed.

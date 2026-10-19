@@ -20,6 +20,7 @@ import { InternalWorkCard } from "@/components/work-extras";
 import { BillingReview } from "@/components/billing-review";
 import { NoAccessButton, DepartureRequests, DepartureAlerts } from "@/components/client-notices";
 import { usePreviewProfile, useUserPreview } from "@/lib/impersonation";
+import { JobTravelActions } from "@/components/job-travel-actions";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -172,7 +173,7 @@ function TechToday({ profile, readOnly }: { profile: Profile; readOnly: boolean 
                   </div>
                   <p className="line-clamp-2 text-sm text-foreground">{j.problem_summary || "No problem summary"}</p>
                   <div className="grid grid-cols-2 gap-2">
-                    <Button disabled={readOnly} className="h-11" onClick={() => navigate({ to: "/sheets/new", search: { jobId: j.id } })}><Play className="mr-1 h-4 w-4" />Start</Button>
+                    <JobTravelActions profile={profile} jobId={j.id} address={j.sites?.address} readOnly={readOnly} />
                     <LiftHistoryButton assetId={j.asset_id} label={`${j.assets?.reference_number ?? ""} · ${j.sites?.name ?? j.clients?.name ?? ""}`} />
                   </div>
                 </li>
