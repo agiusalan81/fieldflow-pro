@@ -350,9 +350,12 @@ function SheetForm() {
     setParts(parts.filter((p) => p.log_sort_order !== i).map((p) => (p.log_sort_order != null && p.log_sort_order > i ? { ...p, log_sort_order: p.log_sort_order - 1 } : p)));
   };
   const gps = async (i: number, which: "in" | "out") => {
-    // Location is captured silently in the background — no popups on arrive/depart.
-    try { const g = await captureGps();
-    setLog(i, which === "in" ? { latitude_in: g.lat, longitude_in: g.lng } : { latitude_out: g.lat, longitude_out: g.lng });
+    // Only record location when permission was already granted at Clock in — never prompt from the job sheet.
+    try {
+      const perm = await navigator.permissions?.query({ name: "geolocation" as PermissionName });
+      if (!perm || perm.state !== "granted") return;
+      const g = await captureGps();
+      setLog(i, which === "in" ? { latitude_in: g.lat, longitude_in: g.lng } : { latitude_out: g.lat, longitude_out: g.lng });
     } catch { /* location unavailable — leave coordinates empty */ }
   };
   const dayPartsHours = (i: number) => parts.filter((p) => p.log_sort_order === i).reduce((s, p) => s + (Number(p.time_acquiring_parts_hours) || 0), 0);

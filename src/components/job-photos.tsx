@@ -27,6 +27,7 @@ async function compress(file: File): Promise<Blob> {
 }
 
 const KIND_LABEL: Record<JobPhoto["kind"], string> = { damage: "Damage", part: "Part replaced", other: "Photo" };
+const pickerCls = "relative inline-flex h-9 cursor-pointer items-center gap-1 rounded-md border border-input bg-background px-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground";
 
 type Props = {
   companyId: string;
@@ -109,18 +110,16 @@ export function JobPhotos({ companyId, sheetId, photos, scope, day, readOnly, on
               ))}
             </div>
           )}
-          {/* Native labels open the camera/gallery pickers — synthetic .click() is blocked on mobile browsers. */}
-          <Button asChild size="sm" variant="outline" className={busy ? "pointer-events-none opacity-50" : ""}>
-            <label htmlFor={camId}>
-              {busy ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Camera className="mr-1 h-4 w-4" />}
-              {scope === "work" ? "Camera" : "Camera (internal)"}
-            </label>
-          </Button>
-          <Button asChild size="sm" variant="outline" className={busy ? "pointer-events-none opacity-50" : ""}>
-            <label htmlFor={galId}><ImageIcon className="mr-1 h-4 w-4" />Gallery</label>
-          </Button>
-          <input id={camId} ref={cam} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => { upload(e.target.files).then(() => { if (cam.current) cam.current.value = ""; }); }} />
-          <input id={galId} ref={input} type="file" accept="image/*" multiple className="hidden" onChange={(e) => upload(e.target.files)} />
+          {/* Inputs live inside plain labels (sr-only, not display:none) so iOS/Android open the native pickers. */}
+          <label htmlFor={camId} className={`${pickerCls} ${busy ? "pointer-events-none opacity-50" : ""}`}>
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+            {scope === "work" ? "Camera" : "Camera (internal)"}
+            <input id={camId} ref={cam} type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e) => { upload(e.target.files).then(() => { if (cam.current) cam.current.value = ""; }); }} />
+          </label>
+          <label htmlFor={galId} className={`${pickerCls} ${busy ? "pointer-events-none opacity-50" : ""}`}>
+            <ImageIcon className="h-4 w-4" />Gallery
+            <input id={galId} ref={input} type="file" accept="image/*" multiple className="sr-only" onChange={(e) => upload(e.target.files)} />
+          </label>
         </div>
       )}
       {mine.length > 0 && (
