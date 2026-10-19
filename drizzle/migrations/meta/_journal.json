@@ -267,6 +267,13 @@
       "when": 1792402855181,
       "tag": "0037_shift_locations_technical_library_receipt_attachments",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1792403142261,
+      "tag": "0038_field_attachment_and_location_guards",
+      "breakpoints": true
     }
   ]
 }
