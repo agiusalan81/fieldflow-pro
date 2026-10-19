@@ -3,7 +3,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { KeyRound, LogOut, Moon, Sun } from "lucide-react";
+import { KeyRound, LogOut, Moon, Sun, Volume2 } from "lucide-react";
+import { playChime, setSoundsOn, soundsOn } from "@/lib/chime";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, initialsOf, type Kin } from "@/lib/profile";
 import { AppShell } from "@/components/app-shell";
@@ -50,6 +51,8 @@ function Settings() {
   const { data: profile } = useProfile();
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const [sounds, setSounds] = useState(true);
+  useEffect(() => { if (profile) setSounds(soundsOn(profile.id)); }, [profile?.id]);
   const [f, setF] = useState({ phone_number: "", home_address: "", next_of_kin_1: {} as Kin, next_of_kin_2: {} as Kin, app_theme_preference: "light" });
   const [pw, setPw] = useState({ a: "", b: "" });
   const [pwOpen, setPwOpen] = useState(false);
@@ -107,6 +110,10 @@ function Settings() {
             <label className="flex items-center justify-between rounded-lg border p-4">
               <span className="flex items-center gap-2 text-sm">{f.app_theme_preference === "dark" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}Dark theme</span>
               <Switch checked={f.app_theme_preference === "dark"} onCheckedChange={(c) => setF({ ...f, app_theme_preference: c ? "dark" : "light" })} />
+            </label>
+            <label className="flex items-center justify-between rounded-lg border p-4">
+              <span className="flex items-center gap-2 text-sm"><Volume2 className="h-4 w-4" />Notification sounds</span>
+              <Switch checked={sounds} onCheckedChange={(c) => { setSounds(c); if (profile) setSoundsOn(profile.id, c); if (c) playChime("message"); }} />
             </label>
           </section>
           <div className="grid gap-2 sm:grid-cols-3">

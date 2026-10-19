@@ -1386,6 +1386,9 @@ export type Database = {
           client_id: string
           company_id: string
           created_at: string
+          handover_action: string | null
+          handover_at: string | null
+          handover_note: string | null
           id: string
           job_number: number
           priority: string
@@ -1402,6 +1405,9 @@ export type Database = {
           client_id: string
           company_id: string
           created_at?: string
+          handover_action?: string | null
+          handover_at?: string | null
+          handover_note?: string | null
           id?: string
           job_number?: number
           priority?: string
@@ -1418,6 +1424,9 @@ export type Database = {
           client_id?: string
           company_id?: string
           created_at?: string
+          handover_action?: string | null
+          handover_at?: string | null
+          handover_note?: string | null
           id?: string
           job_number?: number
           priority?: string

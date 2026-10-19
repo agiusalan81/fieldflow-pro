@@ -99,6 +99,7 @@ function SheetForm() {
   const { data: users = [] } = useCompanyUsers();
   const revision = useRef<string | null>(null);
   const [localReady, setLocalReady] = useState(false);
+  const [savedLocally, setSavedLocally] = useState<Date | null>(null);
   const [conflict, setConflict] = useState(false);
 
   const { data } = useQuery({
@@ -181,7 +182,7 @@ function SheetForm() {
   }, [sheetId]);
 
   useEffect(() => {
-    if (!profile || !data?.sheet || !form || !localReady || data.sheet.status === "completed" || navigator.onLine || conflict) return;
+    if (!profile || !data?.sheet || !form || !localReady || data.sheet.status === "completed" || conflict) return;
     const expected = revision.current ?? data.sheet.updated_at;
     const timer = setTimeout(() => {
       const snapshot: DraftSnapshot = {
@@ -195,7 +196,7 @@ function SheetForm() {
         }),
         parts: parts.filter((p) => p.part_description.trim()).map((p, i) => ({ ...p, sort_order: i })), savedAt: new Date().toISOString(),
       };
-      void saveLocalDraft(snapshot).catch(() => toast.error("This device could not save your draft. Free storage space and try again."));
+      void saveLocalDraft(snapshot).then(() => setSavedLocally(new Date())).catch(() => toast.error("This device could not save your draft. Free storage space and try again."));
     }, 750);
     return () => clearTimeout(timer);
   }, [profile, data, form, logs, parts, photos, checks, localReady, conflict, sheetId]);
@@ -646,6 +647,7 @@ function SheetForm() {
 
       {!readOnly && (
         <div className="fixed inset-x-0 bottom-16 z-20 border-t bg-card/95 p-3 backdrop-blur lg:bottom-0 lg:left-[240px]">
+          {savedLocally && <p className="mx-auto mb-1.5 max-w-5xl text-[11px] text-muted-foreground" aria-live="polite">Draft saved on this phone · {savedLocally.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</p>}
           <div className="mx-auto grid max-w-5xl grid-cols-2 gap-2 sm:grid-cols-3">
             <Button variant="outline" className="h-11" disabled={busy} onClick={saveDraft}><Save className="mr-1 h-4 w-4" />Save as Draft</Button>
             <AlertDialog>
