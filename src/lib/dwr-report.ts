@@ -123,7 +123,7 @@ export async function reconcileShifts(p: { userId: string; companyId: string; co
     if (!p.force && now < heldDwrDueAt(s.started_at, p.company.rules.work_start)) continue;
     await supabase.from("shifts").update({ dwr_held: false }).eq("id", s.id);
     const { sent } = await fileAndEmail({ ...p, shift: s, endedAt: s.ended_at!, overnight: true });
-    msgs.push(sent ? "Standby daily works report emailed" : "Standby daily works report saved");
+    msgs.push(sent ? "Standby daily works report filed — ready in My daily reports" : "Standby daily works report filed — ready in My daily reports");
   }
   return msgs;
 }
