@@ -11,6 +11,7 @@ import { RETURN_FEE_MIN_HOURS } from "@/lib/billing";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { Profile } from "@/lib/profile";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
@@ -173,23 +174,52 @@ export function DepartureRequest({ sheet, manager, onChange, preapproved = false
   );
 }
 
-/** Manager dashboard list of technicians waiting to leave an unsigned site. */
+/** Manager dashboard list of technicians waiting to leave an unsigned site — urgent, with a quick reply to the technician. */
 export function DepartureRequests() {
+  const [reply, setReply] = useState<Record<string, string>>({});
+  const [sending, setSending] = useState<string | null>(null);
   const { data = [] } = useQuery({
     queryKey: ["departure-requests"], refetchInterval: 20000,
     queryFn: async () => (await supabase.from("job_sheets").select("id, jobsheet_number, departure_note, departure_requested_at, clients(name), users!job_sheets_assigned_technician_id_fkey(full_name)").eq("departure_status", "requested").order("departure_requested_at")).data ?? [],
   });
+  const sendReply = async (id: string) => {
+    const text = (reply[id] ?? "").trim();
+    if (!text) return;
+    setSending(id);
+    try {
+      const { error } = await supabase.from("job_sheets").update({ departure_reply: text }).eq("id", id);
+      if (error) throw error;
+      setReply((r) => ({ ...r, [id]: "" }));
+      toast.success("Message sent to the technician");
+    } catch (e) { toast.error((e as Error).message); } finally { setSending(null); }
+  };
   if (!data.length) return null;
   return (
-    <section className="rounded-xl border border-warning bg-warning/10 p-4">
-      <h2 className="mb-2 font-medium text-foreground">Technicians asking to leave unsigned ({data.length})</h2>
+    <section className="rounded-xl border-2 border-destructive bg-destructive/10 p-4">
+      <h2 className="mb-2 flex items-center gap-2 font-medium text-foreground">
+        <span className="inline-flex animate-pulse items-center rounded-full bg-destructive px-2.5 py-0.5 text-xs font-semibold text-destructive-foreground">Urgent</span>
+        Technicians waiting to leave unsigned ({data.length})
+      </h2>
+      <p className="mb-3 text-xs text-muted-foreground">A technician is standing by on site — approve, decline or send a message right away.</p>
       <ul className="space-y-2">
-        {data.map((s) => (
-          <li key={s.id}><Link to="/sheets/$sheetId" params={{ sheetId: s.id }} className="block rounded-lg bg-card p-3 text-sm">
-            <span className="font-medium text-foreground">Job sheet- {s.jobsheet_number} · {s.clients?.name}</span>
-            <span className="block text-muted-foreground">{s.users?.full_name}: {s.departure_note}</span>
-          </Link></li>
-        ))}
+        {data.map((s) => {
+          const waiting = s.departure_requested_at ? Math.max(0, Math.round((Date.now() - new Date(s.departure_requested_at).getTime()) / 60000)) : null;
+          return (
+          <li key={s.id} className="rounded-lg bg-card p-3 text-sm">
+            <Link to="/sheets/$sheetId" params={{ sheetId: s.id }} className="block">
+              <span className="font-medium text-foreground">Job sheet- {s.jobsheet_number} · {s.clients?.name}</span>
+              {waiting != null && <span className="ml-2 rounded-full bg-destructive/15 px-2 py-0.5 text-xs font-medium text-destructive">waiting {waiting} min</span>}
+              <span className="block text-muted-foreground">{s.users?.full_name}: {s.departure_note}</span>
+            </Link>
+            <div className="mt-2 flex gap-2">
+              <Input value={reply[s.id] ?? ""} onChange={(e) => setReply((r) => ({ ...r, [s.id]: e.target.value }))}
+                placeholder='Message the technician, e.g. "Give me a minute to reach out to the client"'
+                className="h-9 text-sm" onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void sendReply(s.id); } }} />
+              <Button size="sm" variant="outline" disabled={sending === s.id || !(reply[s.id] ?? "").trim()} onClick={() => void sendReply(s.id)}>Send</Button>
+            </div>
+          </li>
+          );
+        })}
       </ul>
     </section>
   );
