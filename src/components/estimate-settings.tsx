@@ -24,7 +24,7 @@ export function EstimateSettings({ companyId }: { companyId: string }) {
   const v = draft ?? q.data; if (!v) return <p>{q.error?.message ?? "Loading…"}</p>;
   const set = (n: Partial<EstimateConfig>) => setDraft({ ...v, ...n });
   const f = RFQ_FIELDS.find((x) => x.key === field)!;
-  const save = async () => { setBusy(true); const r = await supabase.from("company_settings").update({ estimate_config: v as unknown as Json }).eq("company_id", companyId); setBusy(false); if (r.error) return toast.error(r.error.message); setDraft(null); qc.invalidateQueries({ queryKey: ["estimate-config"] }); toast.success("Estimate settings saved"); };
+  const save = async () => { setBusy(true); const r = await supabase.from("company_settings").update({ estimate_config: v as unknown as Json }).eq("company_id", companyId); setBusy(false); if (r.error) { toast.error(r.error.message); return; } setDraft(null); qc.invalidateQueries({ queryKey: ["estimate-config"] }); toast.success("Estimate settings saved"); };
   return (
     <div className="space-y-6">
       <section className="space-y-3">

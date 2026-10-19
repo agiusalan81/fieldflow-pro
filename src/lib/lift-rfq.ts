@@ -7,7 +7,7 @@ export const SUPPLIER_CATEGORIES: { key: SupplierCategory; label: string }[] = [
   { key: "fixtures", label: "Fixtures available" },
 ];
 
-export type RfqField = { key: string; label: string; type: "select" | "number" | "text"; options?: string[]; unit?: string; category?: SupplierCategory };
+export type RfqField = { key: string; label: string; type: "select" | "number" | "text"; options?: string[] | undefined; unit?: string | undefined; category?: SupplierCategory | undefined };
 export type RfqSection = { title: string; fields: RfqField[] };
 
 const sel = (key: string, label: string, options: string[], category?: SupplierCategory): RfqField => ({ key, label, type: "select", options, category });
@@ -141,7 +141,7 @@ export function mailto(to: string, subject: string, body: string) {
 /** Freehand strokes that are nearly straight snap to a straight line. */
 export function straighten(points: { x: number; y: number }[], tolerance = 0.06) {
   if (points.length < 3) return points;
-  const a = points[0], b = points[points.length - 1];
+  const a = points[0]!, b = points[points.length - 1]!;
   const len = Math.hypot(b.x - a.x, b.y - a.y);
   if (len < 20) return points;
   const dev = Math.max(...points.map((p) => Math.abs((b.y - a.y) * p.x - (b.x - a.x) * p.y + b.x * a.y - b.y * a.x) / len));

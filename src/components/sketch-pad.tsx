@@ -46,7 +46,7 @@ export function SketchPad({ open, initial, onClose, onSave }: { open: boolean; i
     if (mode === "text") { const at = pos(e); const text = window.prompt("Text or dimension (e.g. 1650 mm, CW rear, Door A)"); if (text) setStrokes((s) => [...s, { kind: "text", at, text }]); return; }
     (e.target as HTMLElement).setPointerCapture(e.pointerId); cur.current = [pos(e)];
   };
-  const move = (e: React.PointerEvent) => { if (!cur.current) return; const p = pos(e); cur.current = mode === "line" ? [cur.current[0], p] : [...cur.current, p]; draw(cur.current); };
+  const move = (e: React.PointerEvent) => { if (!cur.current) return; const p = pos(e); const c = cur.current; const n = mode === "line" ? [c[0]!, p] : [...c, p]; cur.current = n; draw(n); };
   const up = () => { const pts = cur.current; cur.current = null; if (!pts || pts.length < 2) return; setStrokes((s) => [...s, { kind: "line", pts: mode === "line" ? pts : straighten(pts) }]); };
 
   return (
