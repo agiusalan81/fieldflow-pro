@@ -38,7 +38,18 @@ export function DepartureAlerts({ userId }: { userId: string }) {
   const [msg, setMsg] = useState<{ text: string; ok: boolean; sheetId: string } | null>(null);
   useEffect(() => {
     const ch = supabase.channel(`departure-${userId}`).on("postgres_changes", { event: "UPDATE", schema: "public", table: "job_sheets", filter: `assigned_technician_id=eq.${userId}` }, (p) => {
-      const n = p.new as { id: string; jobsheet_number: number; departure_status: string }; const o = p.old as { departure_status?: string };
+      const n = p.new as { id: string; jobsheet_number: number; departure_status: string; departure_reply: string | null }; const o = p.old as { departure_status?: string; departure_reply?: string | null };
+      if (o.departure_reply !== n.departure_reply && n.departure_reply) {
+        const key = `${n.id}:reply:${n.departure_reply}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          const text = `Job sheet- ${n.jobsheet_number} — message from the office: ${n.departure_reply}`;
+          setMsg({ text, ok: true, sheetId: n.id });
+          if (typeof Notification !== "undefined" && Notification.permission === "granted") new Notification("Message from the office", { body: text });
+          if (navigator.vibrate) navigator.vibrate(300);
+        }
+        return;
+      }
       const key = `${n.id}:${n.departure_status}`;
       if (o.departure_status === n.departure_status || !["approved", "rejected"].includes(n.departure_status) || seen.has(key)) return;
       seen.add(key);
@@ -130,7 +141,7 @@ export function DepartureRequest({ sheet, manager, onChange, preapproved = false
   };
   const run = (f: () => Promise<void>) => async () => { setBusy(true); try { await f(); onChange(); } catch (e) { toast.error((e as Error).message); } finally { setBusy(false); } };
   const request = run(async () => {
-    if (!note.trim()) throw new Error("Say why you are leaving (e.g. client left, lift switched off at isolator)");
+    if (!note.trim()) throw new Error("Say why you are leaving (e.g. client left, equipment switched off at isolator)");
     await set("requested", { departure_note: note.trim() });
     if (typeof Notification !== "undefined" && Notification.permission === "default") Notification.requestPermission().catch(() => {});
     toast.success("Approval requested — wait on site for a supervisor or office admin");
@@ -150,12 +161,12 @@ export function DepartureRequest({ sheet, manager, onChange, preapproved = false
           <Button size="sm" variant="outline" disabled={busy} onClick={reject}><X className="mr-1 h-4 w-4" />Decline — wait on site</Button>
         </div>}
       </>}
-      {s === "approved" && <p className="text-sm text-success">Departure approved — the client was asked to call to sign and restore the lift.</p>}
+      {s === "approved" && <p className="text-sm text-success">Departure approved — the client was asked to call to sign and restore service.</p>}
       {s === "approved" && <p className="text-xs text-muted-foreground">{sheet.return_fee_waived ? "Return-visit charge waived." : "A 1 h return-visit charge was added for billing."}</p>}
       {(s === "none" || s === "rejected") && <>
         {s === "rejected" && <p className="text-sm text-destructive">Last request was declined — please wait for the client.</p>}
         <p className="text-xs text-muted-foreground">A supervisor or office admin must approve before you leave. Once approved, the client gets the "left unsigned" message.</p>
-        <Textarea rows={2} placeholder="What happened? e.g. client left at 14:30, lift switched off at main isolator" value={note} onChange={(e) => setNote(e.target.value)} />
+        <Textarea rows={2} placeholder="What happened? e.g. client left at 14:30, equipment switched off at main isolator" value={note} onChange={(e) => setNote(e.target.value)} />
         <Button size="sm" variant="outline" disabled={busy} onClick={request}>Ask approval to leave unsigned</Button>
       </>}
     </div>
