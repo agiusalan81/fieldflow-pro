@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Camera, Copy, ImagePlus, Mail, PencilRuler, Phone, Pause, Play, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Json } from "@/integrations/supabase/types";
+import type { Database, Json } from "@/integrations/supabase/types";
 import { useProfile } from "@/lib/profile";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { SketchPad } from "@/components/sketch-pad";
@@ -59,7 +59,7 @@ function Estimates() {
   type E = (typeof data)[number];
 
   const log = (e: E, status: string) => [...((e.events as Ev[]) ?? []), { at: new Date().toISOString(), status, by: sender }];
-  const update = async (e: E, patch: Parameters<ReturnType<typeof supabase.from<"lift_estimates">>["update"]>[0]) => {
+  const update = async (e: E, patch: Database["public"]["Tables"]["lift_estimates"]["Update"]) => {
     const { error } = await supabase.from("lift_estimates").update(patch).eq("id", e.id);
     if (error) { toast.error(error.message); return false; }
     qc.invalidateQueries({ queryKey: ["estimates"] }); return true;
