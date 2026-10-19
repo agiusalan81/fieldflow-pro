@@ -87,6 +87,9 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
       ? await supabase.from("shifts").update({ ended_at: endedAt }).eq("id", current.id)
       : await supabase.from("shifts").insert({ shift_type: type, company_id: profile.company_id, user_id: profile.id });
     if (res.error) { toast.error(res.error.message); return; }
+    if (type === "shift" && !current && (profile.real_role === "technician" || profile.real_role === "supervisor") && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(() => { localStorage.setItem(`location-consent:${profile.id}`, "yes"); window.dispatchEvent(new Event("location-consent")); }, () => toast.warning("Location is off — turn it on in your browser settings so your shift location can be shared."), { timeout: 20000 });
+    }
     if (type === "shift" && current && travel) await supabase.from("shifts").update({ ended_at: endedAt }).eq("id", travel.id);
     qc.invalidateQueries({ queryKey: ["open-shifts", profile.id] });
     toast.success(current ? (type === "shift" ? "Clocked out" : "Travel stopped") : type === "shift" ? "Clocked in" : "Travel started");

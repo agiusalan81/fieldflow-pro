@@ -20,7 +20,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader, SheetDescri
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { IdleLogout } from "@/components/idle-logout";
 import { helpFor } from "@/lib/help-guides";
-import { QUICK_DEFAULTS, rankActions, readUsage, recordUsage, resetUsage } from "@/lib/quick-actions";
+import { QUICK_DEFAULTS, MENU_ONLY, rankActions, readUsage, recordUsage, resetUsage } from "@/lib/quick-actions";
 import { useUserPreview, clearUserPreview } from "@/lib/impersonation";
 import { UserPreviewControl, UserPreviewBanner } from "@/components/user-preview";
 
@@ -28,14 +28,14 @@ type NavItem = { to: string; label: string; icon: typeof Clock; module?: ModuleK
 
 const techNav: NavItem[] = [
   { group: "Field work", to: "/dashboard", label: "Today", icon: LayoutDashboard },
-  { group: "Field work", to: "/technical-library", label: "Technical library", icon: FileText },
-  { group: "Field work", to: "/sheets", label: "Sheets", icon: ClipboardList },
+  { group: "Field work", to: "/sheets", label: "Job sheets", icon: ClipboardList },
   { group: "Field work", to: "/schedule", label: "Schedule", icon: CalendarClock },
-  { group: "Time & roster", to: "/hours", label: "My hours", icon: Clock },
+  { group: "Field work", to: "/technical-library", label: "Technical library", icon: FileText },
+  { group: "Field work", to: "/messages", label: "Team chat", icon: MessageSquare },
   { group: "Time & roster", to: "/dwr", label: "My daily reports", icon: FileText },
   { group: "Time & roster", to: "/standby", label: "Standby", icon: PhoneCall },
   { group: "Time & roster", to: "/leave", label: "Leave", icon: CalendarDays },
-  { group: "General", to: "/messages", label: "Team chat", icon: MessageSquare },
+  { group: "Time & roster", to: "/hours", label: "My hours", icon: Clock },
   { group: "General", to: "/settings", label: "Settings", icon: Settings },
   { group: "General", to: "/subscription", label: "Billing & Plan", icon: Calculator },
 ];
@@ -123,7 +123,7 @@ function QuickActions({ items, uid, role, manager }: { items: NavItem[]; uid: st
   const [usage, setUsage] = useState<Record<string, number>>({});
   useEffect(() => { setUsage(readUsage(uid)); }, [uid]);
   const meta = (to: string) => EXTRA[to] ?? items.find((i) => i.to === to);
-  const allowed = [...Object.keys(EXTRA).filter((k) => !EXTRA[k]?.manager || manager), ...items.map((i) => i.to).filter((t) => t !== "/dashboard")];
+  const allowed = [...Object.keys(EXTRA).filter((k) => !EXTRA[k]?.manager || manager), ...items.map((i) => i.to).filter((t) => t !== "/dashboard" && !(MENU_ONLY[role] ?? []).includes(t))];
   const list = rankActions(QUICK_DEFAULTS[role].filter((t) => t !== "/dashboard"), allowed, usage, 6);
   return (
     <section className="mb-5 lg:hidden">
@@ -173,7 +173,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   const can = useCan(profile);
   const office = isOffice(profile);
   const { data: platformOwner } = useQuery({ queryKey: ["platform-owner"], enabled: !!actor && !preview.active, queryFn: async () => (await supabase.rpc("is_platform_owner")).data === true });
-  const extraNav: NavItem[] = platformOwner && !preview.active ? [{ group: "Platform", to: "/platform", label: "Portfolio HQ", icon: Building2 }] : [];
+  const extraNav: NavItem[] = [];
   const items = [...(manager ? adminNav : techNav), ...extraNav].filter((i) => (i.to !== "/subscription" || profile?.role === "superuser") && (i.to !== "/company" || office) && (!i.office || office) && (!i.module || can(i.module) || (i.to === "/company" && office)));
   const canSwitch = profile && profile.real_role !== "technician" && !preview.active;
 
@@ -214,7 +214,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
     </div>
   );
 
-  const second = manager ? { to: "/team", label: "Team", icon: UserCheck } : { to: "/hours", label: "Hours", icon: Clock };
+  const second = manager ? { to: "/team", label: "Team", icon: UserCheck } : { to: "/schedule", label: "Schedule", icon: CalendarClock };
   const tab = "flex flex-col items-center gap-1 py-2.5 text-[11px] text-muted-foreground";
 
   return (
@@ -246,6 +246,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
             <HelpButton />
             {actor && !preview.active && actor.role === actor.real_role && <WelcomeGuide profile={actor} allowed={items.map(i=>i.to)} />}
             <UserPreviewControl />
+            {platformOwner && !preview.active && path !== "/platform" && <Button asChild size="sm" variant="ghost"><Link to="/platform"><Building2 className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Platform HQ</span></Link></Button>}
             {canSwitch && (
               <Select value={profile.role} onValueChange={(v) => { setViewAs(v === profile.real_role ? null : (v as ViewAs)); navigate({ to: "/dashboard" }); }}>
                 <SelectTrigger className="h-9 w-[150px] border-dashed text-xs" aria-label="View As mode"><span className="hidden text-muted-foreground xl:inline">View as:&nbsp;</span><SelectValue /></SelectTrigger>
@@ -274,7 +275,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
 
       <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 items-end border-t bg-card lg:hidden">
         <Link to="/dashboard" className={tab} activeProps={{ className: "text-primary font-medium" }} activeOptions={{ exact: true }}><LayoutDashboard className="h-5 w-5" />Home</Link>
-        <Link to={manager ? "/admin/jobs" : "/sheets"} className={tab} activeProps={{ className: "text-primary font-medium" }}><ClipboardList className="h-5 w-5" />Jobs</Link>
+        <Link to={manager ? "/admin/jobs" : "/sheets"} className={tab} activeProps={{ className: "text-primary font-medium" }}><ClipboardList className="h-5 w-5" />Job sheets</Link>
         {preview.active ? <Link to="/hours" className={tab}><Clock className="h-5 w-5" />Hours</Link> : <Link to="/sheets/new" search={{}} aria-label="Create new job sheet" className="mx-auto -mt-5 mb-1.5 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg"><Plus className="h-7 w-7" /></Link>}
         <Link to={second.to} className={tab} activeProps={{ className: "text-primary font-medium" }}><second.icon className="h-5 w-5" />{second.label}</Link>
         <button type="button" className={tab} onClick={() => setMenuOpen(true)}><MoreHorizontal className="h-5 w-5" />More</button>
