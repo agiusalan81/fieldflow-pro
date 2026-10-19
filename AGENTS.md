@@ -11,7 +11,7 @@
 
 ## Project rules
 - Assigned-job travel actions share one component and startJobTravel helper; sheet arrival saves its time log before changing to on-site status. Why: keep Today and Schedule consistent without treating travel as arrival.
-- Public invitation reads use a bounded server-function lookup and Query-backed route loading; timeout covers client middleware too. Why: browser auth/storage or network stalls must not leave invitations loading forever.
+- Public invitation reads use a bounded server-function lookup and Query-backed route loading; timeout covers client middleware too. Why: stalls must not hang invitations.
 - Tenant RLS uses company_id/current_company_id(); never UI company filters. Why: one access boundary.
 - Roles live in protected user_roles; users.role is display-only. View As and permissions.ts only hide UI. Why: prevent escalation.
 - Registration state lives in protected user_roles; central helpers and restrictive tenant policies reject terminated actors, and access changes retain audited history. Why: old sessions cannot bypass revocation.
@@ -25,7 +25,7 @@
 - Overtime site details use captured DWR intervals/rules; older reports show associated sites only. Why: never invent allocation.
 - Tenant typography uses company_settings.theme via applyTypography/AppShell CSS variables; locale uses locale.ts. Why: tenant-configured presentation.
 - Documents/styles/labels/terms/presets use company_settings and documents.ts across forms/PDFs. Why: consistent client wording.
-- Standard Service Sheet shares a typed safe document projection and service renderers across previews, print and email PDFs. Why: preserve tenant labels and client-safe content consistently.
+- Standard Service Sheet shares a typed safe document projection and service renderers across previews, print and email PDFs. Why: consistent client-safe output.
 - Pending works close via close_pending_on_followup trigger; sheet creation requires clock-in or standby. Why: enforce without UI.
 - Billing uses billing.ts precedence: estimate > contract > client > company default. Integration config uses integrations.ts; job_sheets_guard_billing allows only office review changes. Why: uniform protected prices.
 - WhatsApp rules use tested whatsapp-templates.ts; AI/Meta calls use manager-only whatsapp-templates.functions.ts. Why: validate consistently.
@@ -44,4 +44,4 @@
 - Shift locations require active-shift RLS and account-scoped consent; stale map points are labelled. Why: no off-shift visibility or fabricated GPS.
 - Receipt PDFs use a separate account/sheet-scoped IndexedDB queue and private storage, never client document projections. Why: preserve offline attachments without exposing accounting files.
 - Technical documents use private storage and active-member RLS; only supervisors/superusers publish, and AI retrieves readable approved pages through the caller client. Why: restrictions apply equally to search, files and citations.
-- Leave decisions, profile completion and clock-out handover use tested field-rules.ts; guard_leave_decision trigger enforces supervisor→technician-only approval. Why: UI and database agree.
+- Leave/profile/clock-out handover rules use tested field-rules.ts plus guard_leave_decision. Why: UI and DB agree.
