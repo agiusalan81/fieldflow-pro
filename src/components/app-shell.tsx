@@ -1,3 +1,6 @@
+import { LocationSharing } from "@/components/location-sharing";
+import { PayrollSetupAlert } from "@/components/payroll-setup-alert";
+import { syncReceipts } from "@/lib/receipt-queue";
 import { WelcomeGuide } from "@/components/welcome-guide";
 import { setTenantLocale } from "@/lib/locale";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
@@ -25,6 +28,7 @@ type NavItem = { to: string; label: string; icon: typeof Clock; module?: ModuleK
 
 const techNav: NavItem[] = [
   { group: "Field work", to: "/dashboard", label: "Today", icon: LayoutDashboard },
+  { group: "Field work", to: "/technical-library", label: "Technical library", icon: FileText },
   { group: "Field work", to: "/sheets", label: "Sheets", icon: ClipboardList },
   { group: "Field work", to: "/schedule", label: "Schedule", icon: CalendarClock },
   { group: "Time & roster", to: "/hours", label: "My hours", icon: Clock },
@@ -38,6 +42,7 @@ const techNav: NavItem[] = [
 
 const adminNav: NavItem[] = [
   { group: "Operations", to: "/dashboard", label: "Overview", icon: LayoutDashboard },
+  { group: "Operations", to: "/technical-library", label: "Technical library", icon: FileText },
   { group: "Operations", to: "/admin/jobs", label: "Job sheets", icon: ClipboardList },
   { group: "Operations", to: "/pending-works", label: "Pending works", icon: Hammer, module: "pending_works" },
   { group: "Operations", to: "/admin/inventory", label: "Inventory", icon: Package, module: "inventory" },
@@ -179,6 +184,8 @@ export function AppShell({ title, actions, children }: { title: string; actions?
     document.documentElement.classList.toggle("dark", profile?.app_theme_preference === "dark");
   }, [profile?.app_theme_preference]);
 
+  useEffect(() => { if (!actor || preview.active) return; const sync = () => { void syncReceipts(actor.id).catch(() => {}); }; sync(); window.addEventListener("online", sync); return () => window.removeEventListener("online", sync); }, [actor?.id, preview.active]);
+
   const signOut = async () => {
     clearUserPreview();
     setViewAs(null);
@@ -259,6 +266,8 @@ export function AppShell({ title, actions, children }: { title: string; actions?
         <UserPreviewBanner />
         <main className="flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
           {profile && path === "/dashboard" && !preview.active && <QuickActions items={items} uid={profile.id} role={profile.role} manager={manager} />}
+          {!preview.active && <LocationSharing />}
+          {path === "/dashboard" && !preview.active && <PayrollSetupAlert />}
           {children}
         </main>
       </div>

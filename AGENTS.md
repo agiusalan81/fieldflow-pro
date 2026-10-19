@@ -39,3 +39,7 @@
 - Subscription/pack/promotion access uses DB write guards; missing legacy subscriptions stay writable. Why: safe rollout.
 - Client reports use immutable DB-built safe snapshots and hashed expiring/revocable links; photo paths stay server-only. Why: no internal disclosure.
 - Sheet safety/checklist snapshots are checked at completion; safety keys share checklist_values. Why: preserve offline saves.
+
+- Shift locations require active-shift RLS and account-scoped consent; stale map points are labelled. Why: no off-shift visibility or fabricated GPS.
+- Receipt PDFs use a separate account/sheet-scoped IndexedDB queue and private storage, never client document projections. Why: preserve offline attachments without exposing accounting files.
+- Technical documents use private storage and active-member RLS; only supervisors/superusers publish, and AI retrieves readable approved pages through the caller client. Why: restrictions apply equally to search, files and citations.

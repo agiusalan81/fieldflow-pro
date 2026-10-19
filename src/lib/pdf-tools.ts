@@ -17,7 +17,7 @@ export async function photosToPdf(files: File[]): Promise<Blob> {
 }
 export async function pdfEngine(){const pdfjs=await import('pdfjs-dist'); const {default:worker}=await import('pdfjs-dist/build/pdf.worker.min.mjs?url');pdfjs.GlobalWorkerOptions.workerSrc=worker;return pdfjs;}
 export async function indexPdf(blob:Blob){
- const engine=await pdfEngine();const pdf=await engine.getDocument({data:new Uint8Array(await blob.arrayBuffer())}).promise;
+ const engine=await pdfEngine();const loading=engine.getDocument({data:new Uint8Array(await blob.arrayBuffer())});const pdf=await loading.promise;
  const pages=[];for(let page=1;page<=pdf.numPages;page++){const p=await pdf.getPage(page);const content=await p.getTextContent();pages.push({page,text:content.items.map(i=>'str'in i?i.str:'').join(' ')});}
- const count=pdf.numPages;await pdf.destroy();return {pages,count};
+ const count=pdf.numPages;await loading.destroy();return {pages,count};
 }

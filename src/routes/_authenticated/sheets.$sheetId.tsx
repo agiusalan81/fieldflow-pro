@@ -1,3 +1,5 @@
+import { JobReceipts } from "@/components/job-receipts";
+import { pendingReceipts, syncReceipts } from "@/lib/receipt-queue";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -71,16 +73,8 @@ const FIELDS = [
 ] as const;
 type Form = Record<(typeof FIELDS)[number], string | boolean | null>;
 
-function captureGps(): Promise<{ lat: number; lng: number; simulated: boolean }> {
-  return new Promise((resolve) => {
-    const fallback = () => resolve({ lat: 35.9 + Math.random() * 0.05, lng: 14.45 + Math.random() * 0.05, simulated: true });
-    if (!navigator.geolocation) return fallback();
-    navigator.geolocation.getCurrentPosition(
-      (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude, simulated: false }),
-      fallback,
-      { timeout: 5000 },
-    );
-  });
+function captureGps(): Promise<{ lat: number; lng: number }> {
+ return new Promise((resolve,reject)=>{if(!navigator.geolocation){reject(new Error("Location unavailable"));return;}navigator.geolocation.getCurrentPosition(p=>resolve({lat:p.coords.latitude,lng:p.coords.longitude}),()=>reject(new Error("Location permission unavailable. No location was recorded.")),{timeout:10000,maximumAge:30000});});
 }
 
 function Section({ n, title, children, priv }: { n: number; title: string; children: React.ReactNode; priv?: boolean }) {
@@ -299,6 +293,8 @@ function SheetForm() {
     if (missing.length) { toast.error(`Can't submit — missing: ${missing.join(", ")}`); return; }
     const unticked = missingChecklist(checklistItems, checks);
     if (unticked.length) { toast.error(`Can't submit — maintenance checklist not complete (${unticked.length} item${unticked.length > 1 ? "s" : ""} left)`); return; }
+    await syncReceipts(profile.id);
+    if ((await pendingReceipts(profile.id, sheetId)).length) { toast.error("Upload pending receipt PDFs before submitting this sheet."); return; }
     if (await persist("completed")) {
       await supabase.from("job_sheets").update({ work_end_time: new Date().toISOString() }).eq("id", sheetId);
       try {
@@ -343,9 +339,9 @@ function SheetForm() {
     setParts(parts.filter((p) => p.log_sort_order !== i).map((p) => (p.log_sort_order != null && p.log_sort_order > i ? { ...p, log_sort_order: p.log_sort_order - 1 } : p)));
   };
   const gps = async (i: number, which: "in" | "out") => {
-    const g = await captureGps();
+    try { const g = await captureGps();
     setLog(i, which === "in" ? { latitude_in: g.lat, longitude_in: g.lng } : { latitude_out: g.lat, longitude_out: g.lng });
-    toast.success(`Location ${which === "in" ? "in" : "out"} captured${g.simulated ? " (simulated)" : ""}`);
+    toast.success(`Location ${which === "in" ? "in" : "out"} captured`); } catch(e) { toast.error(e instanceof Error ? e.message : "Location unavailable"); }
   };
   const dayPartsHours = (i: number) => parts.filter((p) => p.log_sort_order === i).reduce((s, p) => s + (Number(p.time_acquiring_parts_hours) || 0), 0);
   const totalHours = logs.reduce((s, l, i) => s + dayLabourHours(l.time_in, l.time_out, l.traveling_time_hours, l.technician_count, l.technician_initials, dayPartsHours(i)), 0);
@@ -363,6 +359,7 @@ function SheetForm() {
         await removeLocalDraft(profile.id, sheetId); revision.current = sheet.updated_at; setConflict(false); setForm(null); setLocalReady(false); await qc.invalidateQueries({ queryKey: ["sheet", sheetId] });
       }}>Discard local changes &amp; reload</Button></div>}
       {readOnly && manager && <ReportSharing sheetId={sheetId} />}
+      <JobReceipts userId={profile.id} companyId={profile.company_id} sheetId={sheetId} readOnly={readOnly || busy} />
       <fieldset disabled={readOnly || busy} className="mx-auto max-w-5xl space-y-4 pb-24">
         {safetyItems.length > 0 && <Section n={0} title="Pre-work safety assessment"><div className="space-y-2">{safetyItems.map((i) => <label key={i} className="flex items-start gap-3 border p-3 text-sm"><Checkbox checked={!!checks[`safety:${i}`]} onCheckedChange={(v) => setChecks({ ...checks, [`safety:${i}`]: !!v })} />{i}</label>)}</div></Section>}
         <div className="flex flex-wrap items-center gap-2">

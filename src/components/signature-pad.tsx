@@ -1,71 +1,11 @@
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-
 export function SignaturePad({ value, onChange }: { value: string | null; onChange: (v: string | null) => void }) {
-  const ref = useRef<HTMLCanvasElement>(null);
-  const drawing = useRef(false);
-
-  useEffect(() => {
-    const c = ref.current!;
-    const ratio = window.devicePixelRatio || 1;
-    c.width = c.offsetWidth * ratio;
-    c.height = c.offsetHeight * ratio;
-    const ctx = c.getContext("2d")!;
-    ctx.scale(ratio, ratio);
-    ctx.lineWidth = 2.2;
-    ctx.lineCap = "round";
-    ctx.strokeStyle = getComputedStyle(c).color;
-    if (value) {
-      const img = new Image();
-      img.onload = () => ctx.drawImage(img, 0, 0, c.offsetWidth, c.offsetHeight);
-      img.src = value;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const pos = (e: React.PointerEvent) => {
-    const r = ref.current!.getBoundingClientRect();
-    return [e.clientX - r.left, e.clientY - r.top] as const;
-  };
-
-  return (
-    <div className="space-y-2">
-      <canvas
-        ref={ref}
-        className="h-[55dvh] min-h-64 w-full touch-none rounded-lg border border-dashed bg-card text-foreground sm:h-56"
-        onPointerDown={(e) => {
-          drawing.current = true;
-          ref.current!.setPointerCapture(e.pointerId);
-          const ctx = ref.current!.getContext("2d")!;
-          const [x, y] = pos(e);
-          ctx.beginPath();
-          ctx.moveTo(x, y);
-        }}
-        onPointerMove={(e) => {
-          if (!drawing.current) return;
-          const ctx = ref.current!.getContext("2d")!;
-          const [x, y] = pos(e);
-          ctx.lineTo(x, y);
-          ctx.stroke();
-        }}
-        onPointerUp={() => {
-          drawing.current = false;
-          onChange(ref.current!.toDataURL("image/png"));
-        }}
-      />
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span>Customer signs above</span>
-        <Button
-          type="button" variant="ghost" size="sm"
-          onClick={() => {
-            const c = ref.current!;
-            c.getContext("2d")!.clearRect(0, 0, c.width, c.height);
-            onChange(null);
-          }}
-        >
-          Clear
-        </Button>
-      </div>
-    </div>
-  );
+ const ref=useRef<HTMLCanvasElement>(null),drawing=useRef(false),saved=useRef(value);
+ useEffect(()=>{saved.current=value;},[value]);
+ useEffect(()=>{const c=ref.current;if(!c)return;let image:HTMLImageElement|null=null;
+ const resize=()=>{const rect=c.getBoundingClientRect();if(rect.width<=0||rect.height<=0)return;const ratio=window.devicePixelRatio||1;const w=Math.round(rect.width*ratio),h=Math.round(rect.height*ratio);if(c.width===w&&c.height===h)return;const previous=saved.current;c.width=w;c.height=h;const ctx=c.getContext('2d');if(!ctx)return;ctx.setTransform(ratio,0,0,ratio,0,0);ctx.lineWidth=2.2;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=getComputedStyle(c).color;if(previous){image=new Image();image.onload=()=>ctx.drawImage(image as HTMLImageElement,0,0,rect.width,rect.height);image.src=previous;}};
+ const observer=new ResizeObserver(resize);observer.observe(c);resize();return()=>{observer.disconnect();if(image)image.onload=null;};},[]);
+ const finish=()=>{if(!drawing.current)return;drawing.current=false;const c=ref.current;if(c){saved.current=c.toDataURL('image/png');onChange(saved.current);}};
+ return <div className="space-y-2"><canvas ref={ref} aria-label="Client signature" className="h-[45dvh] min-h-56 w-full touch-none rounded-lg border border-dashed bg-card text-foreground sm:h-56" onPointerDown={e=>{if(e.pointerType==='mouse'&&e.button!==0)return;const c=e.currentTarget,ctx=c.getContext('2d');if(!ctx)return;e.preventDefault();drawing.current=true;try{c.setPointerCapture(e.pointerId);}catch{}const r=c.getBoundingClientRect();ctx.beginPath();ctx.moveTo(e.clientX-r.left,e.clientY-r.top);ctx.lineTo(e.clientX-r.left+0.1,e.clientY-r.top+0.1);ctx.stroke();}} onPointerMove={e=>{if(!drawing.current)return;e.preventDefault();const c=e.currentTarget,ctx=c.getContext('2d');if(!ctx)return;const r=c.getBoundingClientRect();ctx.lineTo(e.clientX-r.left,e.clientY-r.top);ctx.stroke();}} onPointerUp={finish} onPointerCancel={finish} onLostPointerCapture={finish}/><div className="flex items-center justify-between text-xs text-muted-foreground"><span>Customer signs above</span><Button type="button" variant="ghost" size="sm" onClick={()=>{drawing.current=false;const c=ref.current,ctx=c?.getContext('2d');if(c&&ctx)ctx.clearRect(0,0,c.width,c.height);saved.current=null;onChange(null);}}>Clear</Button></div></div>;
 }

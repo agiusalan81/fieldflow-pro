@@ -209,3 +209,6 @@ main label {
   .service-details { grid-template-columns: repeat(3, minmax(0,1fr)); }
   .service-section, .service-signatures, .service-table tr { break-inside: avoid; }
 }
+
+.location-marker { stroke: var(--primary); fill: var(--primary); fill-opacity: 0.7; }
+.location-marker-stale { stroke: var(--muted-foreground); fill: var(--muted-foreground); fill-opacity: 0.4; }

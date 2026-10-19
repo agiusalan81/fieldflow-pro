@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, FileCheck, Settings2 } from "lucide-react";
 import { toast } from "sonner";
@@ -30,7 +30,7 @@ function NumberField({ label, value, onChange }: { label: string; value: number;
   return <div className="space-y-1.5"><Label htmlFor={id}>{label}</Label><NumInput id={id} min="0" step="0.01" value={value} onChange={onChange} /></div>;
 }
 
-export function PayrollPage({ section = "hours" }: { section?: "hours" | "wages" | "payslips" }) {
+export function PayrollPage({ section = "hours", initialEmployee }: { section?: "hours" | "wages" | "payslips"; initialEmployee?: string | undefined }) {
   const { data: profile }=useProfile(), qc=useQueryClient();
   const allowed=officePayrollAccess(profile?.real_role);
   const monthEnd = new Date(Date.UTC(Number(today.slice(0,4)),Number(today.slice(5,7)),0)).toISOString().slice(0,10);
@@ -79,6 +79,8 @@ export function PayrollPage({ section = "hours" }: { section?: "hours" | "wages"
   const rows=(data?.users ?? []).map(u=>({user:u,wage:getWage(u.id),hours:aggregatePayroll(u.id,from,to,data?.reports ?? [],data?.leaves ?? [],getWage(u.id),data?.policies ?? [],data?.rosters ?? [],data?.swaps ?? [])}));
   const selected=rows.find(r=>r.user.id===employee);
   const open=(id:string,kind:"settings"|"pay")=>{const bal=data?.balances.find(b=>b.user_id===id);setOpeningLeave({base:Number(bal?.base_entitlement_hours??0),ph:Number(bal?.public_holiday_credit_hours??0),carried:bal?.carried_forward_year===year?Number(bal.carried_forward_hours):0});setEmployee(id);setMode(kind);const w=getWage(id),c=getConfig(id);if(!w.tax_reference&&c.idCard)w.tax_reference=c.idCard;setWage(w);setConfig(c);setAdjustments({bonus:0,tax:0,nationalInsurance:0,otherDeductions:0});setNotes("");setReviewed(false);};
+  const opened = useRef<string | undefined>(undefined);
+  useEffect(() => { if (initialEmployee && data && opened.current !== initialEmployee && data.users.some(u => u.id === initialEmployee)) { opened.current = initialEmployee; open(initialEmployee, "settings"); } }, [initialEmployee, data]);
   const phSuggested=weekendHolidayCredit(company?.rules.public_holidays??[],company?.rules.work_days??[1,2,3,4,5],year);
   const refresh=()=>qc.invalidateQueries({queryKey:["payroll"]});
   const saveWage=async()=>{
@@ -86,7 +88,7 @@ export function PayrollPage({ section = "hours" }: { section?: "hours" | "wages"
     if(![wage.hourly_rate,wage.sick_full_hours,wage.sick_half_hours].every(v=>Number.isFinite(v)&&v>=0)){toast.error("Enter non-negative wage and sick-hour values.");return;}
     if(!Object.values(openingLeave).every(v=>Number.isFinite(v)&&v>=0)){toast.error("Enter valid non-negative opening leave hours");return;}
     if(![config.grossMonthly,config.weeklyHours,config.housing,config.food,...Object.values(config.bonuses)].every(v=>Number.isFinite(v)&&v>=0) || config.weeklyHours<=0){toast.error("Enter valid employee wage amounts and positive weekly hours");return;}
-    setBusy(true);try{const {error}=await supabase.rpc("save_employee_payroll_setup",{_user:employee,_year:year,_wage:wage as unknown as Json,_config:config as unknown as Json,_opening:openingLeave as unknown as Json});if(error)throw error;await refresh();qc.invalidateQueries({queryKey:["leave-balance"]});qc.invalidateQueries({queryKey:["leave-balances-team"]});setEmployee(null);toast.success("Employee payroll settings saved");}catch(e){toast.error(e instanceof Error?e.message:"Unable to save employee settings");}finally{setBusy(false);}
+    setBusy(true);try{const {error}=await supabase.rpc("save_employee_payroll_setup",{_user:employee,_year:year,_wage:wage as unknown as Json,_config:config as unknown as Json,_opening:openingLeave as unknown as Json});if(error)throw error;await refresh();qc.invalidateQueries({queryKey:["payroll-setup"]});qc.invalidateQueries({queryKey:["leave-balance"]});qc.invalidateQueries({queryKey:["leave-balances-team"]});setEmployee(null);toast.success("Employee payroll settings saved");}catch(e){toast.error(e instanceof Error?e.message:"Unable to save employee settings");}finally{setBusy(false);}
   };
   const savePolicy=async()=>{
     if(!profile || !allowed)return;
