@@ -28,7 +28,7 @@ export const Route = createFileRoute("/_authenticated/schedule")({
 type Job = {
   id: string; job_number: number; scheduled_date: string; window_start: string | null; window_end: string | null;
   problem_summary: string | null; priority: string; acknowledged_at: string | null;
-  sheet?: { status: string; jobsheet_number: number | null } | null;
+  sheet?: { id: string; status: string; jobsheet_number: number | null } | null;
   clients: { name: string } | null; sites: { name: string; address: string | null } | null; assets: { reference_number: string; asset_category: string } | null;
 };
 
@@ -64,7 +64,7 @@ function Schedule() {
         .order("window_start");
       if (error) throw error;
       const ids = (data ?? []).map((j) => j.id);
-      const { data: sheets } = ids.length ? await supabase.from("job_sheets").select("job_id, status, jobsheet_number").in("job_id", ids) : { data: [] };
+      const { data: sheets } = ids.length ? await supabase.from("job_sheets").select("id, job_id, status, jobsheet_number").in("job_id", ids) : { data: [] };
       return (data as Job[]).map((j) => ({ ...j, sheet: (sheets ?? []).find((s) => s.job_id === j.id) ?? null }));
     },
   });
@@ -80,7 +80,7 @@ function Schedule() {
   const Actions = ({ j }: { j: Job }) => (
     <div className="grid grid-cols-2 gap-2">
       <Button variant="outline" className="h-10" onClick={() => setDetail(j)}>Details</Button>
-      {j.sheet && j.sheet.status !== "draft" ? <Button asChild className="h-10"><Link to="/sheets/$sheetId" params={{ sheetId: "" }} search={{} as never} disabled>{""}</Link></Button> : profile?.role === "technician" || profile?.role === "supervisor" ? <JobTravelActions profile={profile} jobId={j.id} address={j.sites?.address} readOnly={isPreview} /> : isPreview ? <Button disabled className="h-10"><FileText className="mr-1 h-4 w-4" />Start job</Button> : <Button asChild className="h-10"><Link to="/sheets/new" search={{ jobId: j.id }} onClick={() => autoAck(j)}><FileText className="mr-1 h-4 w-4" />Start job</Link></Button>}
+      {j.sheet && j.sheet.status !== "draft" ? <Button asChild className="h-10" variant={j.sheet.status === "completed" ? "outline" : "default"}><Link to="/sheets/$sheetId" params={{ sheetId: j.sheet.id }}><FileText className="mr-1 h-4 w-4" />Open sheet{j.sheet.jobsheet_number ? ` #${String(j.sheet.jobsheet_number).padStart(6, "0")}` : ""}</Link></Button> : profile?.role === "technician" || profile?.role === "supervisor" ? <JobTravelActions profile={profile} jobId={j.id} address={j.sites?.address} readOnly={isPreview} /> : isPreview ? <Button disabled className="h-10"><FileText className="mr-1 h-4 w-4" />Start job</Button> : <Button asChild className="h-10"><Link to="/sheets/new" search={{ jobId: j.id }} onClick={() => autoAck(j)}><FileText className="mr-1 h-4 w-4" />Start job</Link></Button>}
     </div>
   );
 
