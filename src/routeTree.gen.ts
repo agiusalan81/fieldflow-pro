@@ -18,6 +18,7 @@ import { Route as AuthenticatedContractsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedDwrRouteImport } from './routes/_authenticated/dwr'
 import { Route as AuthenticatedEstimatesRouteImport } from './routes/_authenticated/estimates'
+import { Route as AuthenticatedFleetRouteImport } from './routes/_authenticated/fleet'
 import { Route as AuthenticatedHoursRouteImport } from './routes/_authenticated/hours'
 import { Route as AuthenticatedLeaveRouteImport } from './routes/_authenticated/leave'
 import { Route as AuthenticatedLiveMapRouteImport } from './routes/_authenticated/live-map'
@@ -91,6 +92,11 @@ const AuthenticatedDwrRoute = AuthenticatedDwrRouteImport.update({
 const AuthenticatedEstimatesRoute = AuthenticatedEstimatesRouteImport.update({
   id: '/estimates',
   path: '/estimates',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFleetRoute = AuthenticatedFleetRouteImport.update({
+  id: '/fleet',
+  path: '/fleet',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedHoursRoute = AuthenticatedHoursRouteImport.update({
@@ -266,6 +272,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/dwr': typeof AuthenticatedDwrRoute
   '/estimates': typeof AuthenticatedEstimatesRoute
+  '/fleet': typeof AuthenticatedFleetRoute
   '/hours': typeof AuthenticatedHoursRoute
   '/leave': typeof AuthenticatedLeaveRoute
   '/live-map': typeof AuthenticatedLiveMapRoute
@@ -306,6 +313,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/dwr': typeof AuthenticatedDwrRoute
   '/estimates': typeof AuthenticatedEstimatesRoute
+  '/fleet': typeof AuthenticatedFleetRoute
   '/hours': typeof AuthenticatedHoursRoute
   '/leave': typeof AuthenticatedLeaveRoute
   '/live-map': typeof AuthenticatedLiveMapRoute
@@ -348,6 +356,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/dwr': typeof AuthenticatedDwrRoute
   '/_authenticated/estimates': typeof AuthenticatedEstimatesRoute
+  '/_authenticated/fleet': typeof AuthenticatedFleetRoute
   '/_authenticated/hours': typeof AuthenticatedHoursRoute
   '/_authenticated/leave': typeof AuthenticatedLeaveRoute
   '/_authenticated/live-map': typeof AuthenticatedLiveMapRoute
@@ -390,6 +399,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dwr'
     | '/estimates'
+    | '/fleet'
     | '/hours'
     | '/leave'
     | '/live-map'
@@ -430,6 +440,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dwr'
     | '/estimates'
+    | '/fleet'
     | '/hours'
     | '/leave'
     | '/live-map'
@@ -471,6 +482,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/dwr'
     | '/_authenticated/estimates'
+    | '/_authenticated/fleet'
     | '/_authenticated/hours'
     | '/_authenticated/leave'
     | '/_authenticated/live-map'
@@ -576,6 +588,13 @@ declare module '@tanstack/react-router' {
       path: '/estimates'
       fullPath: '/estimates'
       preLoaderRoute: typeof AuthenticatedEstimatesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/fleet': {
+      id: '/_authenticated/fleet'
+      path: '/fleet'
+      fullPath: '/fleet'
+      preLoaderRoute: typeof AuthenticatedFleetRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/hours': {
@@ -812,6 +831,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDwrRoute: typeof AuthenticatedDwrRoute
   AuthenticatedEstimatesRoute: typeof AuthenticatedEstimatesRoute
+  AuthenticatedFleetRoute: typeof AuthenticatedFleetRoute
   AuthenticatedHoursRoute: typeof AuthenticatedHoursRoute
   AuthenticatedLeaveRoute: typeof AuthenticatedLeaveRoute
   AuthenticatedLiveMapRoute: typeof AuthenticatedLiveMapRoute
@@ -844,6 +864,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDwrRoute: AuthenticatedDwrRoute,
   AuthenticatedEstimatesRoute: AuthenticatedEstimatesRoute,
+  AuthenticatedFleetRoute: AuthenticatedFleetRoute,
   AuthenticatedHoursRoute: AuthenticatedHoursRoute,
   AuthenticatedLeaveRoute: AuthenticatedLeaveRoute,
   AuthenticatedLiveMapRoute: AuthenticatedLiveMapRoute,
