@@ -45,3 +45,5 @@
 - Receipt PDFs use a separate account/sheet-scoped IndexedDB queue and private storage, never client document projections. Why: preserve offline attachments without exposing accounting files.
 - Technical library uses private storage/RLS; publishing UI checks real and displayed supervisor/superuser roles; AI reads approved pages as caller. Why: secure access and consistent View As.
 - Leave/profile/clock-out handover rules use tested field-rules.ts plus guard_leave_decision. Why: UI and DB agree.
+
+- Company commercial lookups share the explicit company-app product identity and only fall back to a single active product; signup/referral links use the configured application URL, and product checkboxes use PLAN_FEATURES. Why: avoid cross-product entitlements and keep HQ links aligned with company registration.
