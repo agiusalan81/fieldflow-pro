@@ -3418,8 +3418,16 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      set_catalog_module: {
+        Args: { _catalog: string; _enabled: boolean; _module: string }
+        Returns: undefined
+      }
       set_member_access: {
         Args: { _active: boolean; _reason?: string; _user: string }
+        Returns: undefined
+      }
+      set_subscription_pack: {
+        Args: { _enabled: boolean; _pack: string; _subscription: string }
         Returns: undefined
       }
       sign_batch_sheet: {
