@@ -147,3 +147,13 @@
 - [x] Team invite links use the FieldBridge domain
 - [x] "Edit with Lovable" badge hidden on the published site
 - [ ] Mobile site switching to desktop layout after login — needs the user's phone/browser details to reproduce
+
+## Departure, branding & commercial batch (20 Oct 2026)
+- [x] Supervisor dashboard: Approve / Decline / waive return charge directly on urgent unsigned-departure cards
+- [x] Technician departure alerts on every screen; tapping banner or phone notification opens the job sheet; supervisor message shown on the sheet
+- [x] HQ button hidden from tenant top bar (private access by typing /platform)
+- [x] Default app title FieldBridge; custom app title via HQ feature "custom_app_title" (switch off for Basic in HQ)
+- [x] Editable company name in Company settings → Profile & branding
+- [ ] Phase 1: HQ 4 tiers (Basic/Plus/Pro/Enterprise) + 4 packs (Bronze/Silver/Gold/Diamond), feature toggle matrix in Plans & Packs, per-company pack chips
+- [ ] Phase 2: International payroll — payroll_mode (universal_gross / statutory_malta), universal gross engine, Gross Pay Summary PDF, CSV export
+- [ ] Phase 3: Tenant branding & PDF canvas (fonts, backgrounds, field colours) with locked "Available in Pro / Bronze Pack" badges
