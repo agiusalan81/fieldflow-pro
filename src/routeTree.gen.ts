@@ -18,6 +18,7 @@ import { Route as AuthenticatedContractsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedDwrRouteImport } from './routes/_authenticated/dwr'
 import { Route as AuthenticatedEstimatesRouteImport } from './routes/_authenticated/estimates'
+import { Route as AuthenticatedFleetRouteImport } from './routes/_authenticated/fleet'
 import { Route as AuthenticatedHoursRouteImport } from './routes/_authenticated/hours'
 import { Route as AuthenticatedLeaveRouteImport } from './routes/_authenticated/leave'
 import { Route as AuthenticatedLiveMapRouteImport } from './routes/_authenticated/live-map'
@@ -31,6 +32,7 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedStandbyRouteImport } from './routes/_authenticated/standby'
 import { Route as AuthenticatedSubscriptionRouteImport } from './routes/_authenticated/subscription'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
+import { Route as AuthenticatedTeamInvitesRouteImport } from './routes/_authenticated/team-invites'
 import { Route as AuthenticatedTechnicalLibraryRouteImport } from './routes/_authenticated/technical-library'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as ReferralCodeRouteImport } from './routes/referral.$code'
@@ -90,6 +92,11 @@ const AuthenticatedDwrRoute = AuthenticatedDwrRouteImport.update({
 const AuthenticatedEstimatesRoute = AuthenticatedEstimatesRouteImport.update({
   id: '/estimates',
   path: '/estimates',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFleetRoute = AuthenticatedFleetRouteImport.update({
+  id: '/fleet',
+  path: '/fleet',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedHoursRoute = AuthenticatedHoursRouteImport.update({
@@ -159,6 +166,12 @@ const AuthenticatedTeamRoute = AuthenticatedTeamRouteImport.update({
   path: '/team',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTeamInvitesRoute =
+  AuthenticatedTeamInvitesRouteImport.update({
+    id: '/team-invites',
+    path: '/team-invites',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedTechnicalLibraryRoute =
   AuthenticatedTechnicalLibraryRouteImport.update({
     id: '/technical-library',
@@ -259,6 +272,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/dwr': typeof AuthenticatedDwrRoute
   '/estimates': typeof AuthenticatedEstimatesRoute
+  '/fleet': typeof AuthenticatedFleetRoute
   '/hours': typeof AuthenticatedHoursRoute
   '/leave': typeof AuthenticatedLeaveRoute
   '/live-map': typeof AuthenticatedLiveMapRoute
@@ -272,6 +286,7 @@ export interface FileRoutesByFullPath {
   '/standby': typeof AuthenticatedStandbyRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/team': typeof AuthenticatedTeamRoute
+  '/team-invites': typeof AuthenticatedTeamInvitesRoute
   '/technical-library': typeof AuthenticatedTechnicalLibraryRoute
   '/join/$token': typeof JoinTokenRoute
   '/referral/$code': typeof ReferralCodeRoute
@@ -298,6 +313,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/dwr': typeof AuthenticatedDwrRoute
   '/estimates': typeof AuthenticatedEstimatesRoute
+  '/fleet': typeof AuthenticatedFleetRoute
   '/hours': typeof AuthenticatedHoursRoute
   '/leave': typeof AuthenticatedLeaveRoute
   '/live-map': typeof AuthenticatedLiveMapRoute
@@ -311,6 +327,7 @@ export interface FileRoutesByTo {
   '/standby': typeof AuthenticatedStandbyRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/team': typeof AuthenticatedTeamRoute
+  '/team-invites': typeof AuthenticatedTeamInvitesRoute
   '/technical-library': typeof AuthenticatedTechnicalLibraryRoute
   '/join/$token': typeof JoinTokenRoute
   '/referral/$code': typeof ReferralCodeRoute
@@ -339,6 +356,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/dwr': typeof AuthenticatedDwrRoute
   '/_authenticated/estimates': typeof AuthenticatedEstimatesRoute
+  '/_authenticated/fleet': typeof AuthenticatedFleetRoute
   '/_authenticated/hours': typeof AuthenticatedHoursRoute
   '/_authenticated/leave': typeof AuthenticatedLeaveRoute
   '/_authenticated/live-map': typeof AuthenticatedLiveMapRoute
@@ -352,6 +370,7 @@ export interface FileRoutesById {
   '/_authenticated/standby': typeof AuthenticatedStandbyRoute
   '/_authenticated/subscription': typeof AuthenticatedSubscriptionRoute
   '/_authenticated/team': typeof AuthenticatedTeamRoute
+  '/_authenticated/team-invites': typeof AuthenticatedTeamInvitesRoute
   '/_authenticated/technical-library': typeof AuthenticatedTechnicalLibraryRoute
   '/join/$token': typeof JoinTokenRoute
   '/referral/$code': typeof ReferralCodeRoute
@@ -380,6 +399,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dwr'
     | '/estimates'
+    | '/fleet'
     | '/hours'
     | '/leave'
     | '/live-map'
@@ -393,6 +413,7 @@ export interface FileRouteTypes {
     | '/standby'
     | '/subscription'
     | '/team'
+    | '/team-invites'
     | '/technical-library'
     | '/join/$token'
     | '/referral/$code'
@@ -419,6 +440,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dwr'
     | '/estimates'
+    | '/fleet'
     | '/hours'
     | '/leave'
     | '/live-map'
@@ -432,6 +454,7 @@ export interface FileRouteTypes {
     | '/standby'
     | '/subscription'
     | '/team'
+    | '/team-invites'
     | '/technical-library'
     | '/join/$token'
     | '/referral/$code'
@@ -459,6 +482,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/dwr'
     | '/_authenticated/estimates'
+    | '/_authenticated/fleet'
     | '/_authenticated/hours'
     | '/_authenticated/leave'
     | '/_authenticated/live-map'
@@ -472,6 +496,7 @@ export interface FileRouteTypes {
     | '/_authenticated/standby'
     | '/_authenticated/subscription'
     | '/_authenticated/team'
+    | '/_authenticated/team-invites'
     | '/_authenticated/technical-library'
     | '/join/$token'
     | '/referral/$code'
@@ -565,6 +590,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEstimatesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/fleet': {
+      id: '/_authenticated/fleet'
+      path: '/fleet'
+      fullPath: '/fleet'
+      preLoaderRoute: typeof AuthenticatedFleetRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/hours': {
       id: '/_authenticated/hours'
       path: '/hours'
@@ -654,6 +686,13 @@ declare module '@tanstack/react-router' {
       path: '/team'
       fullPath: '/team'
       preLoaderRoute: typeof AuthenticatedTeamRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/team-invites': {
+      id: '/_authenticated/team-invites'
+      path: '/team-invites'
+      fullPath: '/team-invites'
+      preLoaderRoute: typeof AuthenticatedTeamInvitesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/technical-library': {
@@ -792,6 +831,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDwrRoute: typeof AuthenticatedDwrRoute
   AuthenticatedEstimatesRoute: typeof AuthenticatedEstimatesRoute
+  AuthenticatedFleetRoute: typeof AuthenticatedFleetRoute
   AuthenticatedHoursRoute: typeof AuthenticatedHoursRoute
   AuthenticatedLeaveRoute: typeof AuthenticatedLeaveRoute
   AuthenticatedLiveMapRoute: typeof AuthenticatedLiveMapRoute
@@ -805,6 +845,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedStandbyRoute: typeof AuthenticatedStandbyRoute
   AuthenticatedSubscriptionRoute: typeof AuthenticatedSubscriptionRoute
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
+  AuthenticatedTeamInvitesRoute: typeof AuthenticatedTeamInvitesRoute
   AuthenticatedTechnicalLibraryRoute: typeof AuthenticatedTechnicalLibraryRoute
   AuthenticatedAdminEntitiesRoute: typeof AuthenticatedAdminEntitiesRoute
   AuthenticatedAdminFieldsRoute: typeof AuthenticatedAdminFieldsRoute
@@ -823,6 +864,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDwrRoute: AuthenticatedDwrRoute,
   AuthenticatedEstimatesRoute: AuthenticatedEstimatesRoute,
+  AuthenticatedFleetRoute: AuthenticatedFleetRoute,
   AuthenticatedHoursRoute: AuthenticatedHoursRoute,
   AuthenticatedLeaveRoute: AuthenticatedLeaveRoute,
   AuthenticatedLiveMapRoute: AuthenticatedLiveMapRoute,
@@ -836,6 +878,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedStandbyRoute: AuthenticatedStandbyRoute,
   AuthenticatedSubscriptionRoute: AuthenticatedSubscriptionRoute,
   AuthenticatedTeamRoute: AuthenticatedTeamRoute,
+  AuthenticatedTeamInvitesRoute: AuthenticatedTeamInvitesRoute,
   AuthenticatedTechnicalLibraryRoute: AuthenticatedTechnicalLibraryRoute,
   AuthenticatedAdminEntitiesRoute: AuthenticatedAdminEntitiesRoute,
   AuthenticatedAdminFieldsRoute: AuthenticatedAdminFieldsRoute,
