@@ -3,7 +3,7 @@ import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 export function SocialSignin({ onSuccess, onError, inviteToken }: { onSuccess: () => void | Promise<void>; onError: (message: string) => void; inviteToken?: string }) {
   const [busy,setBusy] = useState<string | null>(null);
-  const signIn = async (provider: "google" | "microsoft" | "lovable") => {
+  const signIn = async (provider: "google" | "microsoft") => {
     setBusy(provider);
     try {
       if (inviteToken) sessionStorage.setItem("fieldflow:pending-invite",inviteToken);
@@ -14,6 +14,6 @@ export function SocialSignin({ onSuccess, onError, inviteToken }: { onSuccess: (
     } catch(e) { onError(e instanceof Error?e.message:"Could not sign in. Please try again."); }
     finally { setBusy(null); }
   };
-  const providers = inviteToken ? (["google", "microsoft"] as const) : (["google", "microsoft", "lovable"] as const);
-  return <div className="grid gap-2">{providers.map(provider=><Button key={provider} type="button" variant="outline" className="h-11 w-full" disabled={busy!==null} onClick={()=>signIn(provider)}>{busy===provider?"Connecting…":`Continue with ${provider==="google"?"Google":provider==="microsoft"?"Microsoft":"Lovable"}`}</Button>)}</div>;
+  const providers = ["google", "microsoft"] as const;
+  return <div className="grid gap-2">{providers.map(provider=><Button key={provider} type="button" variant="outline" className="h-11 w-full" disabled={busy!==null} onClick={()=>signIn(provider)}>{busy===provider?"Connecting…":`Continue with ${provider==="google"?"Google":"Microsoft"}`}</Button>)}</div>;
 }
