@@ -446,6 +446,7 @@ export type Database = {
           note_presets: Json
           office_address: Json
           office_phone: string | null
+          payroll_mode: string
           pdf_template: Json
           pe_number: string | null
           public_holidays: string[]
@@ -491,6 +492,7 @@ export type Database = {
           note_presets?: Json
           office_address?: Json
           office_phone?: string | null
+          payroll_mode?: string
           pdf_template?: Json
           pe_number?: string | null
           public_holidays?: string[]
@@ -536,6 +538,7 @@ export type Database = {
           note_presets?: Json
           office_address?: Json
           office_phone?: string | null
+          payroll_mode?: string
           pdf_template?: Json
           pe_number?: string | null
           public_holidays?: string[]
