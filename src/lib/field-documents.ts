@@ -9,7 +9,7 @@ export function technicalStructure(raw: unknown): TechStructure {
   const r = raw && typeof raw === 'object' ? raw as Partial<TechStructure> : {};
   return { labels: { ...DEFAULT_TECH_STRUCTURE.labels, ...r.labels }, options: { ...DEFAULT_TECH_STRUCTURE.options, ...r.options }, tags: Array.isArray(r.tags) ? r.tags : DEFAULT_TECH_STRUCTURE.tags };
 }
-export function canPublishTechnical(role?: string) { return role === 'superuser' || role === 'supervisor'; }
+export function canPublishTechnical(role?: string, displayedRole: string | undefined = role) { return (role === 'superuser' || role === 'supervisor') && (displayedRole === 'superuser' || displayedRole === 'supervisor'); }
 export function canReadTechnical(role: string, d: { status: string; restricted: boolean; uploaded_by: string }, userId: string) {
   return ['superuser','supervisor','admin'].includes(role) || (!d.restricted && (d.status === 'approved' || (d.status === 'pending' && d.uploaded_by === userId)));
 }

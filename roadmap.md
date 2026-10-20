@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Hide technical-document restriction/categorisation controls in Technician view and rename Technical library search/social branding to FieldBridgeApp.
 - [x] Move technician travel to Today/Schedule assigned jobs, retain Google Maps/Waze, remove sheet-bottom In Transit and save on-site arrival; 38 focused tests passed.
 - [x] Travel start sends/acknowledges the "on the way" client notice (WhatsApp/email per toggles) with confirmation in the navigation dialog; unsigned-departure requests shown as urgent with waiting timer and supervisor quick-reply to the technician; silent GPS on arrive/depart; technician-count free typing; native camera/gallery buttons; trade-neutral default wording; 245 tests passed, build OK.
 - [ ] Verify technician Start travel → navigation → Arrive on site using a real assigned job (blocked: own-account preview sign-in unavailable).
