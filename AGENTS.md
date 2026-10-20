@@ -46,4 +46,4 @@
 - Technical library uses private storage/RLS; publishing UI checks real and displayed supervisor/superuser roles; AI reads approved pages as caller. Why: secure access and consistent View As.
 - Leave/profile/clock-out handover rules use tested field-rules.ts plus guard_leave_decision. Why: UI and DB agree.
 
-- Commercial identity falls back to one active product; links use app_url, modules PLAN_FEATURES. HQ uses NativeSelect and Cancel. Why: isolation; avoid popup locks.
+- HQ uses single-active fallback, app_url, PLAN_FEATURES and NativeSelect/Cancel; owner-only row-locked toggle RPCs refresh access. Why: isolation; preserve prices/seats.

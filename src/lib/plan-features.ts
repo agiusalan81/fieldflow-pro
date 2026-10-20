@@ -17,6 +17,14 @@ export const PLAN_FEATURES = [
   { key: "reports", label: "Client reports" },
   { key: "digitization", label: "Document digitization" },
   { key: "custom_app_title", label: "Custom app title (replaces FieldBridge)" },
+  { key: "branding_basic", label: "Basic company branding" },
+  { key: "branding_advanced", label: "Brand Studio: themes & backgrounds" },
+  { key: "branding_fonts", label: "Extended document font library" },
+  { key: "branding_custom_fonts", label: "Custom font uploads" },
+  { key: "branding_documents", label: "Document Studio: frames & styling" },
+  { key: "branding_industry", label: "Industry Experience: icons & wording" },
+  { key: "client_presentation", label: "Branded client presentation" },
+  { key: "payroll_statutory_mt", label: "Malta statutory payroll" },
 ] as const;
 export type PlanFeature = (typeof PLAN_FEATURES)[number]["key"];
 
@@ -41,6 +49,8 @@ export function usePlanFeatures(enabled = true) {
     queryKey: ["plan-features"],
     enabled,
     staleTime: 60_000,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: "always",
     queryFn: async () => { const { data, error } = await supabase.rpc("my_commercial_status"); if (error) throw error; return data as Status; },
   });
   return (key: string) => featureOn(q.data, key);

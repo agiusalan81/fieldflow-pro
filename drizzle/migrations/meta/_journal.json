@@ -351,6 +351,13 @@
       "when": 1792507683868,
       "tag": "0049_company_app_title",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1792511704188,
+      "tag": "0050_hq_atomic_feature_and_pack_toggles",
+      "breakpoints": true
     }
   ]
 }
