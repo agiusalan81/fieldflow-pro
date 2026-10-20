@@ -156,5 +156,5 @@
 - [x] Editable company name in Company settings → Profile & branding
 - [x] Phase 1: HQ 4 draft tiers (Basic/Plus/Pro/Enterprise) + 4 draft packs (Bronze/Silver/Gold/Diamond), feature toggle matrix in Plans & Packs, per-company pack switches
 - [x] Phase 1 verification: HQ owner saved a matrix switch and reloaded; temporary external-customer pack assignment/removal persisted with 7 seats and agreed price 123 unchanged; fixtures removed and Bronze restored to draft. SQL catalog regression and 20 unit tests passed. Automated checkout remains separate; prices await owner decisions.
-- [ ] Phase 2: International payroll — payroll_mode (universal_gross / statutory_malta), universal gross engine, Gross Pay Summary PDF, CSV export
+- [ ] Phase 2 (in progress): International payroll — payroll_mode (universal_gross / statutory_malta), preserve existing Malta settings and immutable issued slips, universal gross engine, Gross Pay Summary PDF, CSV export, HQ compliance gating and signed-in verification
 - [ ] Phase 3: Tenant branding & PDF canvas (fonts, backgrounds, field colours) with locked "Available in Pro / Bronze Pack" badges
