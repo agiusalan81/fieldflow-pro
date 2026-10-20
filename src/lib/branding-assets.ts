@@ -24,7 +24,8 @@ export function documentFontSource(t: PdfTemplate) { return t.documentFont === "
 export function documentFontFamily(t: PdfTemplate) { return t.documentFont && t.documentFont !== "standard" ? `"FieldBridgeDocument-${t.documentFont}", sans-serif` : t.font === "serif" ? '"Lora", Georgia, serif' : t.font === "mono" ? '"IBM Plex Mono", monospace' : '"IBM Plex Sans", sans-serif'; }
 export async function loadDocumentFont(t: PdfTemplate) {
   const source = documentFontSource(t); if (!source || typeof document === "undefined") return;
-  const face = new FontFace(`FieldBridgeDocument-${t.documentFont}`, `url("${source}")`);
+  const family = `FieldBridgeDocument-${t.documentFont}`;
+  const face = new FontFace(family, `url("${source}")`);
   await face.load(); document.fonts.add(face); return () => document.fonts.delete(face);
 }
 export async function pdfFonts(doc: import("pdf-lib").PDFDocument, t: PdfTemplate) {
@@ -33,7 +34,7 @@ export async function pdfFonts(doc: import("pdf-lib").PDFDocument, t: PdfTemplat
   if (source) {
     const fontkit = (await import("@pdf-lib/fontkit")).default;
     doc.registerFontkit(fontkit);
-    const url = source.startsWith("/") ? `https://fieldbridgeapp.com${source}` : source;
+    const url = source.startsWith("/") ? (typeof window === "undefined" ? `https://fieldbridgeapp.com${source}` : source) : source;
     const response = await fetch(url); if (!response.ok) throw new Error("Could not load document font");
     const font = await doc.embedFont(await response.arrayBuffer(), { subset: true }); return { font, bold: font };
   }
