@@ -11,6 +11,7 @@ import { formatOfficeAddress } from "@/lib/contact-details";
 import { parseTemplate, parseTerms, termsFor } from "@/lib/documents";
 import { dayLabourHours } from "@/lib/jobsheets";
 import { Button } from "@/components/ui/button";
+import { documentVariables } from "@/components/document-preview";
 
 export const Route = createFileRoute("/_authenticated/print/$sheetId")({
   head: () => ({
@@ -57,8 +58,8 @@ function PrintSheet() {
         number: s.jobsheet_number, date: new Date(s.created_at).toLocaleDateString("en-GB"), client: s.clients?.name ?? "", address: [s.sites?.name,s.sites?.address || s.clients?.billing_address].filter(Boolean).join(", "), asset: serviceEquipment(s.asset_type === "Other" ? s.asset_type_other : s.asset_type,s.assets?.reference_number,s.lift_model,s.serial_number), workType: types,
         fault: s.reported_fault ?? "", repairs: s.repairs_performed ?? "", technician: s.technician_name ?? "", technicianSignature: data.technicianSignature, signedBy: s.client_full_name ?? "", idCard: s.client_id_card_no ?? "", signature: s.signature_data,
         logs: data.logs.map(l=>({ date: l.log_date,in:l.time_in?.slice(0,5) ?? "",out:l.time_out?.slice(0,5) ?? "",travel:Number(l.traveling_time_hours),total:dayLabourHours(l.time_in,l.time_out,Number(l.traveling_time_hours),l.technician_count,l.technician_initials),techs:l.technician_initials.join(", "),count:technicianCount(l.technician_count,l.technician_initials) })),
-        parts: data.parts.map(p=>({desc:p.part_description,unit:p.unit ?? "",qty:Number(p.quantity)})),notes:s.special_notes_in_pdf ? s.special_notes : null,terms:termsFor(parseTerms(data.terms),"job_sheet"),template:parseTemplate(company.documentTemplate),
-      }}/></div> : <article className="mx-auto max-w-3xl space-y-6 bg-card p-10 text-sm text-card-foreground shadow print:shadow-none">
+        parts: data.parts.map(p=>({desc:p.part_description,unit:p.unit ?? "",qty:Number(p.quantity)})),notes:s.special_notes_in_pdf ? s.special_notes : null,terms:termsFor(parseTerms(data.terms),"job_sheet"),template:company.documentTemplate,
+      }}/></div> : <article style={company ? documentVariables(company.documentTemplate) : undefined} data-frame={company?.documentTemplate.frame} data-style={company?.documentTemplate.stylePreset} className="document-paper mx-auto max-w-3xl space-y-6 p-10 text-sm shadow print:shadow-none">
         <header className="flex items-start justify-between border-b pb-4">
           <div className="flex items-center gap-3">{company?.logo && <img src={company.logo} alt="" className="h-14 max-w-32 object-contain" />}<div><p className="font-display text-2xl">{s.companies?.name}</p><p className="text-muted-foreground">Job sheet</p></div></div>
           <div className="text-right"><p className="font-mono text-lg">Job sheet- {s.jobsheet_number}</p><p className="text-muted-foreground">{new Date(s.created_at).toLocaleDateString()}</p></div>

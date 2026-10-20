@@ -17,7 +17,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useEffect, useState } from "react";
 import { useCompanyRules, applyTypography } from "@/lib/company";
 import { appearanceVariables, industrySheetLabel } from "@/lib/branding";
-import { loadDocumentFont } from "@/lib/branding-assets";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader, SheetDescription } from "@/components/ui/sheet";
