@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_TRIAL_DAYS, monthlyEquivalent, trialAccess, costPerUser, estimatePhotoStorage, effectiveModules } from "./platform";
+import { COMPANY_PRODUCT_KEY, companyProduct, productLink, DEFAULT_TRIAL_DAYS, monthlyEquivalent, trialAccess, costPerUser, estimatePhotoStorage, effectiveModules } from "./platform";
 describe("configurable commercial controls", () => {
+  it("uses the renamed fieldbridge product key", () => expect(COMPANY_PRODUCT_KEY).toBe("fieldbridge"));
+  it("prefers FieldBridge over another active product", () => expect(companyProduct([{ slug: "other", active: true }, { slug: "fieldbridge", active: true }])?.slug).toBe("fieldbridge"));
+  it("falls back only to a single active product", () => { expect(companyProduct([{ slug: "other", active: true }])?.slug).toBe("other"); expect(companyProduct([{ slug: "one", active: true }, { slug: "two", active: true }])).toBeNull(); });
+  it("builds company registration links on the configured application URL", () => expect(productLink("https://fieldbridgeapp.com/", "/auth?mode=signup")).toBe("https://fieldbridgeapp.com/auth?mode=signup"));
+  it("builds referral links on the configured application URL", () => expect(productLink("https://fieldbridgeapp.com/", "/referral/abc")).toBe("https://fieldbridgeapp.com/referral/abc"));
   it("defaults to a 60-day no-card trial", () => expect(DEFAULT_TRIAL_DAYS).toBe(60));
   it("quarterly prices cover three months", () => expect(monthlyEquivalent(300, "quarterly")).toBe(100));
   it("yearly prices cover twelve months", () => expect(monthlyEquivalent(1200, "yearly")).toBe(100));
