@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] FieldBridge setup batch: migrate product identity without changing existing subscriptions/prices; seed all available modules and configurable 60-day trial; update commercial lookups, clickable module selection and registration/referral links; run focused tests and signed-in checks.
 - [x] New-sheet clock-in shares Today’s editable vehicle plate prompt and location-consent helper; 11 tests passed and both signed-in prompts verified. No test shift/job sheet created in the real account.
 - [x] Hide technical-document restriction/categorisation controls in Technician view and rename Technical library search/social branding to FieldBridgeApp; signed-in scan form and metadata verified, 9 tests passed, build OK.
 - [x] Move technician travel to Today/Schedule assigned jobs, retain Google Maps/Waze, remove sheet-bottom In Transit and save on-site arrival; 38 focused tests passed.
