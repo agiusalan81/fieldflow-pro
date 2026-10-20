@@ -365,6 +365,13 @@
       "when": 1792512334090,
       "tag": "0051_international_payroll_mode",
       "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1792514550075,
+      "tag": "0052_tenant_branding_guards_and_offers",
+      "breakpoints": true
     }
   ]
 }

@@ -1,14 +1,17 @@
 import { documentLabel, visibleBlocks } from "@/lib/documents";
 import type { PdfSheetData } from "@/lib/service-sheet";
 import type { CSSProperties } from "react";
+import { useEffect } from "react";
+import { documentFontFamily, loadDocumentFont } from "@/lib/branding-assets";
 
 export function ServiceSheet({ data: d }: { data: PdfSheetData }) {
   const t = d.template;
+  useEffect(() => { let active = true; let dispose: (() => unknown) | undefined; void loadDocumentFont(t).then(fn => { if (active) dispose = fn; else fn?.(); }).catch(() => {}); return () => { active = false; dispose?.(); }; }, [t.documentFont, t.fontData]);
   const visible = visibleBlocks(t);
-  const style = { "--document-primary": t.primaryColor, "--document-accent": t.accentColor, "--document-font": t.font === "serif" ? '"Lora", Georgia, serif' : t.font === "mono" ? '"IBM Plex Mono", monospace' : '"IBM Plex Sans", sans-serif' } as CSSProperties;
+  const style = { "--document-primary": t.primaryColor, "--document-accent": t.accentColor, "--document-font": documentFontFamily(t), "--document-field-background": t.fieldBackground, "--document-field-text": t.fieldText, "--document-background-image": t.backgroundData ? `url("${t.backgroundData}")` : "none" } as CSSProperties;
   const text: Record<string, string> = { client: d.client, address: d.address, equipment: d.asset, fault: d.fault, work: d.repairs, notes: d.notes ?? "" };
   const section = (key: string) => <section key={key} className="service-section"><h3 className="document-label mb-1 font-semibold uppercase">{documentLabel(t, key)}</h3><p className="whitespace-pre-wrap break-words">{text[key] || "—"}</p>{key === "equipment" && d.workType && <p className="mt-2">{d.workType}</p>}</section>;
-  return <article style={style} data-style="service" className="document-paper service-sheet mx-auto w-full border p-5 text-xs leading-relaxed sm:p-7">
+  return <article style={style} data-frame={t.frame} data-style="service" className="document-paper service-sheet mx-auto w-full border p-5 text-xs leading-relaxed sm:p-7">
     <header className="document-header service-header"><div><p className="text-base font-semibold">{d.company}</p><p className="whitespace-pre-wrap">{d.officeAddress}</p>{d.vatNumber && <p>VAT / Tax: {d.vatNumber}</p>}</div><div className="flex items-center justify-center">{d.logo && <img src={d.logo} alt="Company logo" className="max-h-16 max-w-full object-contain"/>}</div><div className="whitespace-pre-wrap break-words text-right">{d.contact}</div></header>
     <div className="my-3 flex flex-wrap items-center justify-between gap-2 border-b pb-2"><h2 className="font-semibold">Job sheet- {d.number}</h2><p>{d.date}</p></div>
     {t.header && <p className="mb-3 whitespace-pre-wrap">{t.header}</p>}

@@ -7,6 +7,7 @@ import { serviceEquipment, type PdfSheetData } from "@/lib/service-sheet";
 import { formatOfficeAddress, parseOfficeAddress } from "@/lib/contact-details";
 import { sheetTitle } from "@/lib/dwr";
 import { validateMonthlyQueue } from "@/lib/monthly-signing";
+import { pdfFonts, pdfPageDecoration, resolveDocumentAssets } from "@/lib/branding-assets";
 
 const b64 = (s: string) =>
   btoa(Array.from(new TextEncoder().encode(s), (b) => String.fromCharCode(b)).join(""));
@@ -56,14 +57,15 @@ export async function buildPdf(d: PdfSheetData) {
   if (d.template.stylePreset === "service") return buildServicePdf(d);
   const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
   const doc = await PDFDocument.create();
-  const font = await doc.embedFont(d.template.font === "serif" ? StandardFonts.TimesRoman : d.template.font === "mono" ? StandardFonts.Courier : StandardFonts.Helvetica);
-  const bold = await doc.embedFont(d.template.font === "serif" ? StandardFonts.TimesRomanBold : d.template.font === "mono" ? StandardFonts.CourierBold : StandardFonts.HelveticaBold);
+  const { font, bold } = await pdfFonts(doc, d.template);
+  const decorate = await pdfPageDecoration(doc, d.template);
   const W = 595, H = 842, M = 48;
   let page = doc.addPage([W, H]);
+  decorate(page);
   let y = H - M;
   const colour = (hex: string) => rgb(parseInt(hex.slice(1, 3), 16) / 255, parseInt(hex.slice(3, 5), 16) / 255, parseInt(hex.slice(5, 7), 16) / 255);
   const grey = colour(d.template.primaryColor);
-  const need = (h: number) => { if (y - h < M) { page = doc.addPage([W, H]); y = H - M; } };
+  const need = (h: number) => { if (y - h < M) { page = doc.addPage([W, H]); decorate(page); y = H - M; } };
   const wrap = (text: string, size: number, width: number) => {
     const out: string[] = [];
     for (const para of safe(text).split("\n")) {
@@ -76,9 +78,9 @@ export async function buildPdf(d: PdfSheetData) {
     }
     return out;
   };
-  const text = (t: string, x: number, size = 10, f = font, color = rgb(0.1, 0.1, 0.12)) => page.drawText(safe(t), { x, y, size, font: f, color });
+  const text = (t: string, x: number, size = 10, f = font, color = colour(d.template.fieldText ?? "#202020")) => page.drawText(safe(t), { x, y, size, font: f, color });
   const label = (t: string) => { need(30); y -= d.template.stylePreset === "compact" ? 3 : 8; text(t.toUpperCase(), M, 8, bold, grey); y -= 14; };
-  const para = (t: string) => { for (const l of wrap(t || "-", 10, W - 2 * M)) { need(14); text(l, M); y -= 14; } };
+  const para = (t: string) => { for (const l of wrap(t || "-", 10, W - 2 * M)) { need(14); page.drawRectangle({x:M,y:y-3,width:W-2*M,height:14,color:colour(d.template.fieldBackground ?? "#ffffff")}); text(l, M); y -= 14; } };
 
   if (d.logo?.startsWith("data:image/png")) {
     const logo = await doc.embedPng(d.logo);
@@ -193,7 +195,7 @@ async function prepareSheet(supabase: AuthClient, sheetId: string, recipients?: 
       parts: (parts ?? []).map((p) => ({ desc: p.part_description, unit: p.unit ?? "", qty: Number(p.quantity) })),
       notes: sheet.special_notes_in_pdf ? notes : null,
       terms: termsFor(parseTerms(settings?.terms), "job_sheet"),
-      template: parseTemplate(settings?.pdf_template),
+      template: await resolveDocumentAssets(supabase, parseTemplate(settings?.pdf_template)),
     });
 
     const attachments: Attachment[] = [{ filename: `${sheetTitle(sheet.jobsheet_number)}.pdf`, mime: "application/pdf", data: pdf }];

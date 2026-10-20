@@ -31,6 +31,16 @@ export type PdfTemplate = {
   accentColor: string;
   font: "sans" | "serif" | "mono";
   labels: Record<string, string>;
+  documentFont?: "standard" | "lato" | "abel" | "custom" | undefined;
+  fontPath?: string;
+  fontName?: string;
+  backgroundPath?: string;
+  frame?: "none" | "line" | "double" | undefined;
+  fieldBackground?: string;
+  fieldText?: string;
+  /** Resolved privately at read time, never saved. */
+  fontData?: string | undefined;
+  backgroundData?: string | undefined;
 };
 export const DOCUMENT_STYLES = ["modern", "technical", "bold", "classic", "compact", "service"] as const;
 export const DEFAULT_TEMPLATE: PdfTemplate = { order: BLOCKS.map((b) => b.key), hidden: [], header: "", footer: "", showTravel: true, stylePreset: "modern", primaryColor: "#246654", accentColor: "#e4ad37", font: "sans", labels: {} };
@@ -65,6 +75,13 @@ export function parseTemplate(raw: unknown): PdfTemplate {
     primaryColor: validColor(r.primaryColor, DEFAULT_TEMPLATE.primaryColor),
     accentColor: validColor(r.accentColor, DEFAULT_TEMPLATE.accentColor),
     font: r.font === "serif" || r.font === "mono" ? r.font : "sans",
+    documentFont: ["lato", "abel", "custom"].includes(r.documentFont ?? "") ? r.documentFont : "standard",
+    fontPath: typeof r.fontPath === "string" && /^[0-9a-f-]{36}\/fonts\/[\w.-]+$/.test(r.fontPath) ? r.fontPath : "",
+    fontName: typeof r.fontName === "string" ? r.fontName.slice(0, 80) : "",
+    backgroundPath: typeof r.backgroundPath === "string" && /^[0-9a-f-]{36}\/backgrounds\/[\w.-]+$/.test(r.backgroundPath) ? r.backgroundPath : "",
+    frame: r.frame === "line" || r.frame === "double" ? r.frame : "none",
+    fieldBackground: validColor(r.fieldBackground, "#ffffff"),
+    fieldText: validColor(r.fieldText, "#202020"),
     labels: Object.fromEntries(Object.entries(r.labels && typeof r.labels === "object" ? r.labels : {}).filter(([k, v]) => k in FIELD_LABELS && typeof v === "string" && v.trim()).map(([k, v]) => [k, String(v).trim().slice(0, 80)])),
   };
 }

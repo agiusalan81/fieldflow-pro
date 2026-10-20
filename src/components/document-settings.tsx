@@ -5,9 +5,13 @@ import { ArrowDown, ArrowUp, Download, FileUp, GripVertical, Loader2, Plus, Tras
 import { supabase } from "@/integrations/supabase/client";
 import { BLOCKS, DOC_TYPES, moveBlock, parsePresets, parseTemplate, parseTerms, termsFor, visibleBlocks, type NotePreset, type PdfTemplate, type Terms } from "@/lib/documents";
 import { buildPdf } from "@/lib/sendJobSheetEmail";
-import { ServiceSheet } from "@/components/service-sheet";
 import { formatOfficeAddress, parseOfficeAddress } from "@/lib/contact-details";
 import { BrandControls } from "@/components/brand-controls";
+import { BrandingLock } from "@/components/branding-lock";
+import { usePlanFeatures } from "@/lib/plan-features";
+import { contrastRatio } from "@/lib/branding";
+import { resolveDocumentAssets } from "@/lib/branding-assets";
+import { DocumentPreview } from "@/components/document-preview";
 import { extractDocumentText } from "@/lib/document-library.functions";
 import { DOC_CATEGORIES, type DocCategory } from "@/components/document-library";
 import { Button } from "@/components/ui/button";
@@ -20,12 +24,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 const label = (k: string) => BLOCKS.find((b) => b.key === k)?.label ?? k;
 
 export function DocumentSettings({ companyId }: { companyId: string }) {
+  const planOn = usePlanFeatures();
   const qc = useQueryClient();
   const { data } = useQuery({
     queryKey: ["doc-settings"],
     queryFn: async () => (await supabase.from("company_settings").select("pdf_template, terms, note_presets, logo_data, office_address, company_address, vat_number, office_phone, company_email").maybeSingle()).data,
   });
   const [t, setT] = useState<PdfTemplate | null>(null);
+  const [resolved, setResolved] = useState<PdfTemplate | null>(null);
+  const [saving, setSaving] = useState(false);
   const [terms, setTerms] = useState<Terms | null>(null);
   const [presets, setPresets] = useState<NotePreset[]>([]);
   const [drag, setDrag] = useState<number | null>(null);
@@ -53,11 +60,21 @@ export function DocumentSettings({ companyId }: { companyId: string }) {
   useEffect(() => {
     if (data !== undefined && !t) { setT(parseTemplate(data?.pdf_template)); setTerms(parseTerms(data?.terms)); setPresets(parsePresets(data?.note_presets)); }
   }, [data, t]);
+  useEffect(() => { if (!t) return; let active = true; void resolveDocumentAssets(supabase, t).then(value => { if (active) setResolved(value); }).catch(() => toast.error("Could not load document branding")); return () => { active = false; }; }, [t]);
   if (!t || !terms) return null;
 
   const save = async () => {
-    const { error } = await supabase.from("company_settings").upsert({ company_id: companyId, pdf_template: t as never, terms: terms as never, note_presets: presets.filter((p) => p.label.trim()) as never });
-    if (error) { toast.error(error.message); return; }
+    if (contrastRatio(t.fieldBackground ?? "#ffffff", t.fieldText ?? "#202020") < 4.5) { toast.error("Choose document field colours with stronger contrast"); return; }
+    setSaving(true);
+    const { data: latest, error: readError } = await supabase.from("company_settings").select("pdf_template").maybeSingle();
+    if (readError) { toast.error(readError.message); setSaving(false); return; }
+    const prior = (latest?.pdf_template ?? {}) as Record<string, unknown>;
+    const next = { ...prior, primaryColor: t.primaryColor, labels: t.labels, header: t.header, footer: t.footer, showTravel: t.showTravel,
+      ...(planOn("branding_documents") ? { order: t.order, hidden: t.hidden, stylePreset: t.stylePreset, accentColor: t.accentColor, frame: t.frame, backgroundPath: t.backgroundPath, fieldBackground: t.fieldBackground, fieldText: t.fieldText } : {}),
+      ...(planOn("branding_fonts") ? { font: t.font, documentFont: t.documentFont } : {}),
+      ...(planOn("branding_custom_fonts") ? { fontPath: t.fontPath, fontName: t.fontName } : {}) };
+    const { error } = await supabase.from("company_settings").upsert({ company_id: companyId, pdf_template: next as never, terms: terms as never, note_presets: presets.filter((p) => p.label.trim()) as never });
+    setSaving(false); if (error) { toast.error(error.message); return; }
     toast.success("Document templates saved");
     qc.invalidateQueries({ queryKey: ["doc-settings"] });
     qc.invalidateQueries({ queryKey: ["company-settings"] });
@@ -85,7 +102,7 @@ export function DocumentSettings({ companyId }: { companyId: string }) {
         company: SAMPLE.company, logo: data?.logo_data ?? "", number: SAMPLE.number, date: SAMPLE.date, client: SAMPLE.client,
         address: SAMPLE.address, asset: SAMPLE.asset, fault: SAMPLE.fault, repairs: SAMPLE.repairs, technician: SAMPLE.technician,
         signedBy: SAMPLE.signedBy, idCard: SAMPLE.idCard, signature: null, logs: SAMPLE.logs, parts: SAMPLE.parts,
-        notes: SAMPLE.notes, terms: termsFor(terms, "job_sheet"), template: t,
+        notes: SAMPLE.notes, terms: termsFor(terms, "job_sheet"), template: await resolveDocumentAssets(supabase, t),
       });
       const url = URL.createObjectURL(new Blob([pdf as unknown as BlobPart], { type: "application/pdf" }));
       const a = document.createElement("a"); a.href = url; a.download = `Job_sheet-${SAMPLE.number}_Sample.pdf`; a.click(); a.remove();
@@ -95,14 +112,14 @@ export function DocumentSettings({ companyId }: { companyId: string }) {
 
   return (
     <div className="space-y-4">
-      <BrandControls template={t} onChange={setT} logo={data?.logo_data ?? ""} />
+      <BrandControls companyId={companyId} template={resolved ? { ...t, fontData: resolved.fontData, backgroundData: resolved.backgroundData } : t} onChange={value => { const { fontData: _f, backgroundData: _b, ...stored } = value; setT(stored); }} logo={data?.logo_data ?? ""} />
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="space-y-4 rounded-xl border bg-card p-5">
           <div><h2 className="font-medium text-foreground">Job sheet PDF layout</h2><p className="text-sm text-muted-foreground">Drag sections to reorder. Switch off anything you don't want clients to see.</p></div>
           <div className="space-y-1.5"><Label>Header text</Label><Input placeholder="e.g. Licensed lift contractor · VAT MT1234" value={t.header} onChange={(e) => setT({ ...t, header: e.target.value })} /></div>
-          <ul className="space-y-1.5">
+          <BrandingLock allowed={planOn("branding_documents")} feature="branding_documents"><ul className="space-y-1.5">
             {t.order.map((k, i) => (
-              <li key={k} draggable onDragStart={() => setDrag(i)} onDragOver={(e) => e.preventDefault()} onDrop={() => { if (drag !== null) setT({ ...t, order: moveBlock(t.order, drag, i) }); setDrag(null); }}
+              <li key={k} draggable={planOn("branding_documents")} onDragStart={() => setDrag(i)} onDragOver={(e) => e.preventDefault()} onDrop={() => { if (planOn("branding_documents") && drag !== null) setT({ ...t, order: moveBlock(t.order, drag, i) }); setDrag(null); }}
                 className={`flex items-center gap-2 rounded-lg border px-2 py-1.5 text-sm ${t.hidden.includes(k) ? "opacity-50" : ""}`}>
                 <GripVertical className="h-4 w-4 cursor-grab text-muted-foreground" />
                 <span className="flex-1">{label(k)}</span>
@@ -111,7 +128,7 @@ export function DocumentSettings({ companyId }: { companyId: string }) {
                 <Switch aria-label={`Show ${label(k)}`} checked={!t.hidden.includes(k)} onCheckedChange={() => toggle(k)} />
               </li>
             ))}
-          </ul>
+          </ul></BrandingLock>
           <label className="flex items-center gap-2 text-sm"><Switch checked={t.showTravel} onCheckedChange={(c) => setT({ ...t, showTravel: c })} />Show travel hours in the time sheet</label>
           <div className="space-y-1.5"><Label>Footer text</Label><Input placeholder="e.g. Thank you for choosing us" value={t.footer} onChange={(e) => setT({ ...t, footer: e.target.value })} /></div>
         </section>
@@ -121,55 +138,7 @@ export function DocumentSettings({ companyId }: { companyId: string }) {
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Live preview — what the client receives</p>
             <Button size="sm" variant="outline" onClick={downloadSample}><Download className="mr-1 h-3.5 w-3.5" />Sample PDF</Button>
           </div>
-          {t.stylePreset === "service" ? <ServiceSheet data={{ ...SAMPLE, logo: data?.logo_data ?? "", officeAddress: formatOfficeAddress(parseOfficeAddress(data?.office_address,data?.company_address ?? "")), vatNumber: data?.vat_number ?? "", contact: [data?.office_phone,data?.company_email].filter(Boolean).join("\n"), template: t, signature: null, terms: termsFor(terms,"job_sheet") }}/> : <div className="mx-auto max-w-md space-y-4 rounded-lg border bg-white p-6 text-[11px] leading-relaxed text-slate-800 shadow">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-2">
-                {data?.logo_data && <img src={data.logo_data} alt="" className="h-10 max-w-24 object-contain" />}
-                <p className="text-sm font-semibold">{SAMPLE.company}</p>
-              </div>
-              <div className="text-right">
-                <p className="font-mono text-xs font-semibold">Job sheet- {SAMPLE.number}</p>
-                <p className="text-[10px] text-slate-500">{SAMPLE.date}</p>
-              </div>
-            </div>
-            <p className="text-[10px] text-slate-500">Job sheet - client copy</p>
-            <hr className="border-slate-300" />
-            {t.header && <p className="text-[10px] text-slate-500">{t.header}</p>}
-            {visibleBlocks(t).map((k) => (
-              <div key={k}>
-                <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">{label(k)}</p>
-                {k === "client" && <p>{SAMPLE.client}</p>}
-                {k === "address" && <p>{SAMPLE.address}</p>}
-                {k === "equipment" && <p>{SAMPLE.asset}</p>}
-                {k === "fault" && <p>{SAMPLE.fault}</p>}
-                {k === "work" && <p>{SAMPLE.repairs}</p>}
-                {k === "notes" && <p>{SAMPLE.notes}</p>}
-                {k === "timesheet" && (
-                  <table className="mt-1 w-full text-left text-[10px]">
-                    <thead><tr className="border-b border-slate-200"><th className="py-0.5 font-semibold">Date</th><th className="font-semibold">In</th><th className="font-semibold">Out</th>{t.showTravel && <th className="font-semibold">Travel h</th>}<th className="text-right font-semibold">Total h</th></tr></thead>
-                    <tbody>{SAMPLE.logs.map((l, i) => (
-                      <tr key={i} className="border-b border-slate-100"><td className="py-0.5">{l.date}</td><td>{l.in}</td><td>{l.out}</td>{t.showTravel && <td>{l.travel}</td>}<td className="text-right">{l.total.toFixed(2)}</td></tr>
-                    ))}</tbody>
-                  </table>
-                )}
-                {k === "timesheet" && <p className="mt-0.5 text-[10px] text-slate-500">Technicians ({SAMPLE.logs[0]?.count}): {SAMPLE.logs[0]?.techs}</p>}
-                {k === "parts" && (
-                  <table className="mt-1 w-full text-left text-[10px]">
-                    <thead><tr className="border-b border-slate-200"><th className="py-0.5 font-semibold">Description</th><th className="font-semibold">Unit</th><th className="text-right font-semibold">Qty</th></tr></thead>
-                    <tbody>{SAMPLE.parts.map((p, i) => <tr key={i} className="border-b border-slate-100"><td className="py-0.5">{p.desc}</td><td>{p.unit}</td><td className="text-right">{p.qty}</td></tr>)}</tbody>
-                  </table>
-                )}
-                {k === "signoff" && (
-                  <div className="mt-1 grid grid-cols-2 gap-4 border-t border-slate-300 pt-2">
-                    <div><p className="text-[9px] font-semibold uppercase text-slate-400">Technician</p><p>{SAMPLE.technician}</p></div>
-                    <div><p className="text-[9px] font-semibold uppercase text-slate-400">Client sign-off</p><p>{SAMPLE.signedBy} · ID {SAMPLE.idCard}</p><div className="mt-1 h-10 w-24 rounded border border-dashed border-slate-300 text-center text-[9px] leading-10 text-slate-400">signature</div></div>
-                  </div>
-                )}
-              </div>
-            ))}
-            {termsFor(terms, "job_sheet") && <div><p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">Terms & conditions</p><p className="whitespace-pre-wrap text-[9px] text-slate-500">{termsFor(terms, "job_sheet")}</p></div>}
-            {t.footer && <p className="border-t border-slate-200 pt-2 text-center text-[10px] text-slate-500">{t.footer}</p>}
-          </div>}
+          <DocumentPreview template={resolved ?? t} logo={data?.logo_data ?? ""} />
           <p className="mt-2 text-xs text-muted-foreground">Sample data shown. Download the sample PDF to see the exact file the client receives by email.</p>
         </section>
       </div>
@@ -224,7 +193,7 @@ export function DocumentSettings({ companyId }: { companyId: string }) {
         <Button size="sm" variant="outline" onClick={() => setPresets([...presets, { label: "", text: "" }])}><Plus className="mr-1 h-4 w-4" />Add preset</Button>
       </section>
 
-      <Button className="h-11" onClick={save}>Save document templates</Button>
+      <Button className="h-11" disabled={saving} onClick={save}>{saving ? "Saving…" : "Save document templates"}</Button>
     </div>
   );
 }

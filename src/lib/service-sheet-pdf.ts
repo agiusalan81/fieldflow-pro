@@ -1,17 +1,19 @@
 import { documentLabel, visibleBlocks } from "./documents";
 import type { PdfSheetData } from "./service-sheet";
+import { pdfFonts, pdfPageDecoration } from "./branding-assets";
 
 export async function buildServicePdf(d: PdfSheetData) {
   const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
   const doc = await PDFDocument.create();
-  const family = d.template.font;
-  const font = await doc.embedFont(family === "serif" ? StandardFonts.TimesRoman : family === "mono" ? StandardFonts.Courier : StandardFonts.Helvetica);
-  const bold = await doc.embedFont(family === "serif" ? StandardFonts.TimesRomanBold : family === "mono" ? StandardFonts.CourierBold : StandardFonts.HelveticaBold);
+  const { font, bold } = await pdfFonts(doc, d.template);
+  const decorate = await pdfPageDecoration(doc, d.template);
   const W = 595, H = 842, M = 36, width = W - M * 2;
   const hex = d.template.primaryColor;
-  const ink = rgb(0.12, 0.12, 0.12);
+  const textHex = d.template.fieldText ?? "#202020";
+  const ink = rgb(parseInt(textHex.slice(1,3),16)/255,parseInt(textHex.slice(3,5),16)/255,parseInt(textHex.slice(5,7),16)/255);
   const brand = rgb(parseInt(hex.slice(1,3),16)/255, parseInt(hex.slice(3,5),16)/255, parseInt(hex.slice(5,7),16)/255);
   let page = doc.addPage([W,H]); let y = H-M;
+  decorate(page);
   const safe = (value: string) => value.replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/[–—]/g,"-").replace(/•/g,"-").replace(/[^\x0A\x20-\x7E\xA0-\xFF]/g,"?");
   const wrap = (value: string, w: number, size = 9) => {
     const lines: string[] = [];
@@ -30,10 +32,13 @@ export async function buildServicePdf(d: PdfSheetData) {
     }
     return lines;
   };
-  const need = (h: number) => { if (y-h<M) { page=doc.addPage([W,H]); y=H-M; } };
+  const newPage = () => { page=doc.addPage([W,H]); decorate(page); y=H-M; };
+  const need = (h: number) => { if (y-h<M) newPage(); };
   const text = (value: string,x: number,atY: number,size=9,strong=false) => page.drawText(safe(value),{x,y:atY,size,font:strong?bold:font,color:ink});
   const line = (x1: number,y1: number,x2: number,y2: number) => page.drawLine({start:{x:x1,y:y1},end:{x:x2,y:y2},thickness:0.5,color:brand});
-  const para = (value: string) => { for(const valueLine of wrap(value,width)) { need(13); text(valueLine,M,y); y-=13; } };
+  const fieldHex = d.template.fieldBackground ?? "#ffffff";
+  const fieldColor = rgb(parseInt(fieldHex.slice(1,3),16)/255,parseInt(fieldHex.slice(3,5),16)/255,parseInt(fieldHex.slice(5,7),16)/255);
+  const para = (value: string) => { for(const valueLine of wrap(value,width)) { need(13); page.drawRectangle({x:M,y:y-3,width,height:13,color:fieldColor}); text(valueLine,M,y); y-=13; } };
   const label = (value: string) => { need(35); y-=8; text(value.toUpperCase(),M,y,8,true); y-=14; };
   const image = async (data: string | null | undefined,x: number,top: number,w: number,h: number) => {
     if (!data?.startsWith("data:image/")) return;
@@ -56,9 +61,9 @@ export async function buildServicePdf(d: PdfSheetData) {
       const wrapped=cells.map((v,i)=>wrap(v,widths[i] ? widths[i]-10 : 40,8));
       const max=Math.max(1,...wrapped.map(v=>v.length));
       for(let offset=0;offset<max;) {
-        if(y-25<M) { page=doc.addPage([W,H]);y=H-M; if(!head) drawRow(headers,true); }
+        if(y-25<M) { newPage(); if(!head) drawRow(headers,true); }
         const count=Math.min(max-offset,Math.max(1,Math.floor((y-M-10)/11)));
-        const h=count*11+10; let x=M; line(M,y,W-M,y);
+        const h=count*11+10; let x=M; page.drawRectangle({x:M,y:y-h,width,height:h,color:fieldColor}); line(M,y,W-M,y);
         wrapped.forEach((values,i)=>{line(x,y,x,y-h);values.slice(offset,offset+count).forEach((v,j)=>text(v,x+5,y-13-j*11,8,head));x+=widths[i] ?? 0;});
         line(W-M,y,W-M,y-h);line(M,y-h,W-M,y-h);y-=h;offset+=count;
       }

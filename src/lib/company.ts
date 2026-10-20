@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_RULES, type OvertimeRules } from "@/lib/jobsheets";
 import { parseTemplate, documentLabel } from "@/lib/documents";
+import { parseAppearance, brandPath } from "@/lib/branding";
+import { brandDownload, resolveAppearanceAssets, resolveDocumentAssets } from "@/lib/branding-assets";
 
 export function useCompanyRules() {
   return useQuery({
@@ -10,6 +12,10 @@ export function useCompanyRules() {
     queryFn: async () => {
       const { data, error } = await supabase.from("company_settings").select("*").maybeSingle();
       if (error) throw error;
+      const theme = { ...DEFAULT_THEME, ...((data?.theme ?? {}) as Partial<Typography>) };
+      const appearance = await resolveAppearanceAssets(supabase, parseAppearance(theme.appearance));
+      const documentTemplate = await resolveDocumentAssets(supabase, parseTemplate(data?.pdf_template));
+      const customFontData = theme.customFontPath ? await brandDownload(supabase, brandPath(theme.customFontPath)) : "";
       const rules: OvertimeRules = data
         ? { work_days: data.work_days, work_start: data.work_start.slice(0, 5), work_end: data.work_end.slice(0, 5), after_hours_rate: Number(data.after_hours_rate), saturday_rate: Number(data.saturday_rate), sunday_rate: Number(data.sunday_rate), holiday_rate: Number(data.holiday_rate), public_holidays: data.public_holidays }
         : DEFAULT_RULES;
@@ -19,8 +25,8 @@ export function useCompanyRules() {
         pingSeconds: data?.location_ping_seconds ?? 30,
         breaks: { enabled: data?.break_enabled ?? true, count: data?.breaks_per_shift ?? 1, minutes: data?.break_minutes ?? 30 },
         standby: { start: data?.standby_start ?? new Date().toISOString().slice(0, 10), rotationDays: data?.standby_rotation_days ?? 7, perShift: data?.standby_per_shift ?? 1, order: data?.standby_order ?? [] },
-        theme: { ...DEFAULT_THEME, ...((data?.theme ?? {}) as Partial<Typography>) },
-        documentTemplate: parseTemplate(data?.pdf_template),
+        theme: { ...theme, customFontData }, appearance,
+        documentTemplate,
         logo: data?.logo_data ?? "",
         appTitle: data?.app_title ?? "",
         locale: { currency: data?.currency ?? "EUR", countryCode: data?.default_country_code ?? "+356", equipmentLabel: data?.equipment_label ?? "lift" },
@@ -55,7 +61,7 @@ export const FONT_CHOICES: { value: string; label: string; css: string }[] = [
 ];
 
 export type TextStyle = { font: string; bold: boolean; italic: boolean; color: string };
-export type Typography = { headers: TextStyle; fields: TextStyle };
+export type Typography = { headers: TextStyle; fields: TextStyle; appearance?: unknown; customFontPath?: string; customFontName?: string; customFontData?: string };
 export const DEFAULT_THEME: Typography = {
   headers: { font: "default", bold: false, italic: false, color: "" },
   fields: { font: "default", bold: false, italic: false, color: "" },
