@@ -26,6 +26,7 @@ export function useCompanyRules() {
         locale: { currency: data?.currency ?? "EUR", countryCode: data?.default_country_code ?? "+356", equipmentLabel: data?.equipment_label ?? "lift" },
         equipmentCategories: data?.equipment_categories ?? EQUIPMENT_CATEGORIES,
         peNumber: data?.pe_number ?? "",
+        payrollMode: data?.payroll_mode ?? "universal_gross",
         officeAddress: parseOfficeAddress(data?.office_address, data?.company_address ?? ""),
         vatNumber: data?.vat_number ?? "",
         phones: { office_phone: data?.office_phone ?? "", whatsapp_phone: data?.whatsapp_phone ?? "", emergency_phone: data?.emergency_phone ?? "", company_email: data?.company_email ?? "", company_address: data?.company_address ?? "" },
