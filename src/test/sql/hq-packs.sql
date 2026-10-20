@@ -16,6 +16,7 @@ BEGIN
  BEGIN
   PERFORM public.set_catalog_module((SELECT id FROM public.platform_catalog WHERE product_id=p AND name='Bronze'),'fleet_management',true);
   RAISE EXCEPTION 'Unauthorized catalog change succeeded';
- EXCEPTION WHEN raise_exception THEN IF SQLERRM<>'Platform-owner access required' THEN RAISE; END IF; END;
+ EXCEPTION WHEN insufficient_privilege THEN NULL;
+ WHEN raise_exception THEN IF SQLERRM<>'Platform-owner access required' THEN RAISE; END IF; END;
 END $$;
 ROLLBACK;
