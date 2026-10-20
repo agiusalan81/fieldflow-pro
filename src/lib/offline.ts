@@ -22,6 +22,19 @@ export async function pendingDrafts(userId: string): Promise<DraftSnapshot[]> {
 export async function removeLocalDraft(userId: string, sheetId: string) {
   await (await db()).delete("drafts", draftKey(userId, sheetId)); window.dispatchEvent(new Event("fieldops-offline"));
 }
+/** Discard explicitly: an unavailable sheet may be a temporary access problem. */
+export async function discardLocalDraft(userId: string, sheetId: string) {
+  const database = await db();
+  const tx = database.transaction(["drafts", "photos", "cache"], "readwrite");
+  await tx.objectStore("drafts").delete(draftKey(userId, sheetId));
+  for (const photo of (await tx.objectStore("photos").getAll()) as LocalPhoto[]) {
+    if (photo.userId === userId && photo.sheetId === sheetId) await tx.objectStore("photos").delete(photo.key);
+  }
+  const cached = await tx.objectStore("cache").get(userId) as { key: readonly unknown[] }[] | undefined;
+  if (cached) await tx.objectStore("cache").put(cached.filter((row) => !(row.key[0] === "sheet" && row.key[1] === sheetId)), userId);
+  await tx.done;
+  window.dispatchEvent(new Event("fieldops-offline"));
+}
 export async function saveLocalPhoto(userId: string, sheetId: string, path: string, blob: Blob) {
   await (await db()).put("photos", { key: `${userId}:${path}`, userId, sheetId, blob });
 }

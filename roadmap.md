@@ -1,4 +1,6 @@
 # Roadmap
+- [x] Current approved batch implemented: FieldBridge application URL; native HQ dropdowns; larger close/Cancel controls; confirmed offline draft discard. 17 tests passed, build OK; signed-in discard/cancel/refresh verified.
+- [ ] Verify HQ dropdown and close/Cancel changes end-to-end and on the user's phone (blocked: requesting account lacks platform-owner access; isolated browser check did not complete).
 - [x] FieldBridge setup: populated product key fieldbridge, all 12 modules and 60-day trial at current published address; shared commercial product resolution, clickable new-product modules and HQ registration/referral links; repaired product-save trigger; 16 focused tests passed and build OK.
 - [ ] FieldBridge HQ form/save and new-company trial end-to-end checks (blocked: requesting account is a technician without platform-owner access; transactional SQL test cannot run through read-only query tools). SQL regression script retained under src/test/sql; no access permissions or existing company subscriptions changed.
 - [x] New-sheet clock-in shares Today’s editable vehicle plate prompt and location-consent helper; 11 tests passed and both signed-in prompts verified. No test shift/job sheet created in the real account.
