@@ -11,18 +11,17 @@
 
 ## Project rules
 - Travel shares one component/startJobTravel; arrival saves the time log before on-site status. Why: Today/Schedule parity without premature arrival.
-- Invitation reads use bounded server functions and Query loaders; timeout includes client middleware. Why: prevent hangs.
+- Invite reads use bounded server functions/Query loaders including middleware timeout. Why: prevent hangs.
 - Tenant RLS uses company_id/current_company_id(); never UI company filters. Why: one access boundary.
 - Roles live in protected user_roles; users.role is display-only. View As and permissions.ts only hide UI. Why: prevent escalation.
 - Protected user_roles registration, central helpers and restrictive tenant policies reject terminated actors; audit access changes. Why: revoke old sessions safely.
-- Invite name confirmation uses atomic named redemption; social users never need an app password. Why: save confirmed names without trusting client-supplied company or role.
-- Staff redeem single-use invites through signup triggers. Why: server-side role assignment.
+- Invites use atomic named redemption and single-use signup triggers; social users need no app password. Why: confirmed names and server-assigned roles, never client-supplied company/role.
 - User preview is real-superuser-only, actor-scoped, in-memory and removable; root blocks other screens/writes. Why: preserve sessions/audit identity.
 - Payroll uses tested shared gross/Malta engines, office RLS and DWRs; snapshots capture currency/mode; HQ guards Malta compliance. Why: preserve issued pay and separate gross from statutory net.
 - Payroll routes share payroll-page.tsx. Opening leave/payslips save transactionally with issued-slip/totals guards; year-qualified carry-forward doesn't consume leave twice. Why: no partial or retrospective changes.
 - Sign-off/leave/overtime/checklist/renewals use tested jobsheets.ts. Why: shared rules.
-- DWR filing returns the canonical shift report under a unique partial index; superseded/corrected originals remain audited and held flags clear only after filing. Why: retry-safe hours without rewriting issued payslips.
-- Dispatch keeps a lead and optional assistant; both read the job/shared sheet, only the lead starts/edits it, and new daily logs seed both initials. Why: one journey and work ledger without duplicate labour.
+- DWR filing uses a unique canonical shift report; retain superseded/corrected originals and clear held flags after filing. Why: retry-safe hours, unchanged issued pay.
+- Dispatch: lead plus optional assistant both read one sheet; only lead starts/edits; daily logs seed both initials. Why: shared journey/ledger, no duplicate labour.
 - Overtime site details use captured DWR intervals/rules; older reports show associated sites only. Why: never invent allocation.
 - Tenant typography uses applyTypography/AppShell variables; locale uses locale.ts. Why: company presentation.
 - Branding shares theme/template JSON, private tenant files and PDF/font helpers; DB/HQ locks preserve saved values. Why: secure consistent app/PDF customisation.
@@ -31,7 +30,7 @@
 - Billing uses billing.ts precedence: estimate > contract > client > company default. Integration config uses integrations.ts; job_sheets_guard_billing allows only office review changes. Why: uniform protected prices.
 - WhatsApp rules use tested whatsapp-templates.ts; AI/Meta calls use manager-only whatsapp-templates.functions.ts. Why: validate consistently.
 - Daily time logs keep technician_count separate from initials; labour uses headcount, DWR personal elapsed time. Why: prevent double-counting.
-- Combined PDFs use email PDF builder/RLS; office roles combine completed sheets for one client. Why: prevent disclosure.
+- Combined PDFs use email builder/RLS; office combines completed sheets for one client. Why: prevent disclosure.
 - Client notices use client-notices.functions.ts and tested client-notices.ts; guard_departure prevents self-approval. Why: accountability.
 - job_sheets embeds use users!job_sheets_assigned_technician_id_fkey. Why: two users FKs.
 - Signing batches are creator-owned, authenticated and finalized transactionally; store delivery before sending with shared PDF builder. Why: no partial loss or duplicate email.
