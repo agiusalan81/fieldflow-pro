@@ -1,5 +1,7 @@
 # Roadmap
-- [ ] Current batch: bundleable Fleet Management, shift GPS history, adjustable 30-second ping, technician/date routes and mileage/fuel estimates; Team invites menu and email invitation workflow; remove generic shift Travel.
+- [x] Current batch: Fleet Management module registered in HQ; server-captured shift GPS history, adjustable 30-second ping, technician/date routes and mileage/fuel estimates; Team invites menu, email-app invitation option; generic shift Travel removed. 34 focused tests passed, build OK.
+- [ ] Fleet route/vehicle save and invite dispatch end-to-end verification (blocked: requesting account is Technician; manager session needed).
+- [ ] Automatic invite email delivery (blocked: sender domain not configured; email-app compose is available).
 - [x] Current approved batch implemented: FieldBridge application URL; native HQ dropdowns; larger close/Cancel controls; confirmed offline draft discard. 17 tests passed, build OK; signed-in discard/cancel/refresh verified.
 - [ ] Verify HQ dropdown and close/Cancel changes end-to-end and on the user's phone (blocked: requesting account lacks platform-owner access; isolated browser check did not complete).
 - [x] FieldBridge setup: populated product key fieldbridge, all 12 modules and 60-day trial at current published address; shared commercial product resolution, clickable new-product modules and HQ registration/referral links; repaired product-save trigger; 16 focused tests passed and build OK.
