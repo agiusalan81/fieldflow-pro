@@ -220,3 +220,17 @@ main label {
 .map-pin-supervisor { background: var(--chart-2); }
 .map-pin-stale { opacity: 0.5; }
 html, body { overflow-x: hidden; }
+
+.tenant-workspace { background-image: linear-gradient(var(--background-overlay), var(--background-overlay)), var(--tenant-background-image, none); background-size: cover; background-position: center; background-attachment: fixed; }
+.tenant-menu { background-image: linear-gradient(var(--menu-overlay), var(--menu-overlay)), var(--tenant-menu-image, none); background-size: cover; background-position: center; }
+:root { --background-overlay: oklch(0.98 0 0 / .92); --menu-overlay: oklch(0.99 0 0 / .9); }
+.dark { --background-overlay: oklch(0.15 0 0 / .94); --menu-overlay: oklch(0.18 0 0 / .94); }
+.tenant-experience input:not([type=color]):not([type=checkbox]), .tenant-experience textarea { background-color: var(--tenant-input-background, var(--background)); color: var(--tenant-input-text, var(--foreground)); }
+.tenant-experience[data-icons=strong] nav svg, .tenant-experience[data-icons=strong] .tenant-menu svg { stroke-width: 2.8; }
+.tenant-experience[data-icons=duotone] nav svg, .tenant-experience[data-icons=duotone] .tenant-menu svg { fill: var(--sidebar-accent); stroke: var(--sidebar-primary); }
+.tenant-experience[data-company-font=on] { font-family: "FieldBridgeCompany", var(--font-sans); }
+.document-paper { background-image: linear-gradient(var(--document-overlay),var(--document-overlay)), var(--document-background-image, none); background-size: 100% 100%; --document-overlay: oklch(1 0 0 / .88); print-color-adjust: exact; }
+.document-paper[data-frame=line] { outline: 1px solid var(--document-primary); outline-offset: -8px; }
+.document-paper[data-frame=double] { outline: 3px double var(--document-primary); outline-offset: -8px; }
+.document-paper section > p, .document-paper td { background: var(--document-field-background, var(--document-paper)); color: var(--document-field-text, var(--document-ink)); }
+.document-paper h1,.document-paper h2,.document-paper h3 { font-family: inherit; font-style: normal; color: var(--document-primary); }

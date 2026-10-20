@@ -16,6 +16,8 @@ import { useCan, type ModuleKey } from "@/lib/permissions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEffect, useState } from "react";
 import { useCompanyRules, applyTypography } from "@/lib/company";
+import { appearanceVariables, industrySheetLabel } from "@/lib/branding";
+import { loadDocumentFont } from "@/lib/branding-assets";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader, SheetDescription } from "@/components/ui/sheet";
@@ -221,12 +223,19 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   const planOn = usePlanFeatures(!!actor);
   const office = isOffice(profile);
   const extraNav: NavItem[] = [];
-  const items = [...(profile?.role === "supervisor" ? supervisorNav : manager ? adminNav : techNav), ...extraNav].filter((i) => (i.to !== "/subscription" || profile?.role === "superuser") && (i.to !== "/company" || office) && (!i.office || office) && (!i.module || can(i.module) || (i.to === "/company" && office)) && (!i.feature || planOn(i.feature)));
+  const baseItems = [...(profile?.role === "supervisor" ? supervisorNav : manager ? adminNav : techNav), ...extraNav].filter((i) => (i.to !== "/subscription" || profile?.role === "superuser") && (i.to !== "/company" || office) && (!i.office || office) && (!i.module || can(i.module) || (i.to === "/company" && office)) && (!i.feature || planOn(i.feature)));
   const canSwitch = profile && profile.real_role !== "technician" && !preview.active;
 
   const { data: company } = useCompanyRules();
+  const items = baseItems.map(i => ({ ...i, label: industrySheetLabel(company?.appearance.industryPreset ?? "general", i.label) }));
   const appTitle = resolveAppTitle(company?.appTitle, planOn("custom_app_title"));
-  useEffect(() => { applyTypography(company?.theme); }, [company?.theme]);
+  useEffect(() => { applyTypography(company?.theme); return () => applyTypography(undefined); }, [company?.theme]);
+  useEffect(() => {
+    const source = company?.theme.customFontData; if (!source) return;
+    let active = true; let face: FontFace | undefined;
+    void new FontFace("FieldBridgeCompany", `url("${source}")`).load().then(f => { if (active) { face = f; document.fonts.add(f); } }).catch(() => {});
+    return () => { active = false; if (face) document.fonts.delete(face); };
+  }, [company?.theme.customFontData]);
   if (company) setTenantLocale(company.locale ?? {});
   useEffect(() => {
     document.documentElement.classList.toggle("dark", profile?.app_theme_preference === "dark");
@@ -266,10 +275,10 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   const tab = "flex flex-col items-center gap-1 py-2.5 text-[11px] text-muted-foreground";
 
   return (
-    <div className="min-h-screen bg-background lg:grid lg:grid-cols-[240px_minmax(0,1fr)]">
+    <div style={company ? appearanceVariables(company.appearance) : undefined} data-icons={company?.appearance.iconPreset} data-company-font={company?.theme.customFontData ? "on" : undefined} className="tenant-experience min-h-screen bg-background lg:grid lg:grid-cols-[240px_minmax(0,1fr)]">
       {actor && !preview.active && <NotificationSounds profile={actor} />}
       {profile && company && <IdleLogout userId={profile.id} realRole={profile.real_role} timeoutMin={company.idleTimeout} />}
-      <aside className="sticky top-0 hidden h-screen flex-col gap-6 border-r border-sidebar-border bg-sidebar py-6 px-3 lg:flex">
+      <aside className="tenant-menu sticky top-0 hidden h-screen flex-col gap-6 border-r border-sidebar-border bg-sidebar py-6 px-3 lg:flex">
         {brand}
         <NavLinks items={items} uid={profile?.id} />
         {footer}
@@ -283,7 +292,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="flex w-72 flex-col gap-6 bg-sidebar py-6">
+            <SheetContent side="left" style={company ? appearanceVariables(company.appearance) : undefined} data-icons={company?.appearance.iconPreset} className="tenant-menu tenant-experience flex w-72 flex-col gap-6 bg-sidebar py-6">
               <SheetTitle className="sr-only">Menu</SheetTitle>
               {brand}
               <NavLinks items={items} uid={profile?.id} onNavigate={() => setMenuOpen(false)} />
@@ -314,7 +323,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
         </header>
         <UserPreviewBanner />
         {actor && !preview.active && <ProfileCompletionGate profile={actor} />}
-        <main className="flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
+        <main className="tenant-workspace flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
           {actor && !preview.active && <DepartureAlerts userId={actor.id} />}
           {profile && path === "/dashboard" && !preview.active && <QuickActions items={items} uid={profile.id} role={profile.role} manager={manager} />}
           {!preview.active && <LocationSharing />}

@@ -22,6 +22,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { AppearanceSettings } from "@/components/appearance-settings";
+import { BrandingLock } from "@/components/branding-lock";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -251,7 +253,8 @@ function ProfileTab({ companyId }: { companyId: string }) {
       const { error: ce } = await supabase.from("companies").update({ name: n.slice(0, 120) }).eq("id", companyId);
       if (ce) { toast.error(ce.message); return; }
     }
-    const { error } = await supabase.from("company_settings").upsert({ company_id: companyId, ...p, company_address: formatOfficeAddress(p.office_address), office_address: p.office_address as never, theme: t as never, ...(titleAllowed ? { app_title: appTitle.trim().slice(0, 40) } : {}) });
+    const { customFontData: _fontData, ...storedTheme } = t;
+    const { error } = await supabase.from("company_settings").upsert({ company_id: companyId, ...p, company_address: formatOfficeAddress(p.office_address), office_address: p.office_address as never, theme: storedTheme as never, ...(titleAllowed ? { app_title: appTitle.trim().slice(0, 40) } : {}) });
     if (error) { toast.error(error.message); return; }
     toast.success("Company profile saved");
     qc.invalidateQueries({ queryKey: ["company-settings"] });
@@ -266,7 +269,7 @@ function ProfileTab({ companyId }: { companyId: string }) {
       </div>
     );
   };
-  const style = (k: keyof Typography, l: string) => {
+  const style = (k: "headers" | "fields", l: string) => {
     const v = t[k];
     const up = (patch: Partial<TextStyle>) => setT({ ...t, [k]: { ...v, ...patch } });
     return (
@@ -275,7 +278,7 @@ function ProfileTab({ companyId }: { companyId: string }) {
         <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
           <Select value={v.font} onValueChange={(f) => up({ font: f })}>
             <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-            <SelectContent>{FONT_CHOICES.map((f) => <SelectItem key={f.value} value={f.value}><span style={{ fontFamily: f.css || undefined }}>{f.label}</span></SelectItem>)}</SelectContent>
+            <SelectContent>{FONT_CHOICES.map((f) => <SelectItem disabled={!planOn("branding_fonts") && f.value !== "default" && f.value !== v.font} key={f.value} value={f.value}><span style={{ fontFamily: f.css || undefined }}>{f.label}</span></SelectItem>)}</SelectContent>
           </Select>
           <div className="flex items-center gap-2">
             <Input type="color" aria-label={`${l} colour`} className="h-11 w-14 p-1" value={v.color || "#000000"} onChange={(e) => up({ color: e.target.value })} />
@@ -315,10 +318,11 @@ function ProfileTab({ companyId }: { companyId: string }) {
       </section>
       <section className="space-y-4 rounded-xl border bg-card p-5">
         <div><h2 className="font-medium text-foreground">Fonts</h2><p className="text-sm text-muted-foreground">Changes preview live across the app. Save to apply for everyone in your company.</p></div>
-        <div className="grid gap-4 md:grid-cols-2">{style("headers", "Headers & titles")}{style("fields", "Field labels")}</div>
-        <Button type="button" variant="outline" size="sm" onClick={() => setT(DEFAULT_THEME)}>Reset fonts</Button>
+        <BrandingLock allowed={planOn("branding_fonts")} feature="branding_fonts"><div className="grid gap-4 md:grid-cols-2">{style("headers", "Headers & titles")}{style("fields", "Field labels")}</div>
+        <Button type="button" variant="outline" size="sm" onClick={() => setT({ ...t, ...DEFAULT_THEME })}>Reset fonts</Button></BrandingLock>
       </section>
       <Button className="h-11" onClick={save}>Save profile & branding</Button>
+      <AppearanceSettings companyId={companyId} />
     </div>
   );
 }
