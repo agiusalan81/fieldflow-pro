@@ -376,6 +376,12 @@ function SheetForm() {
       }}>Discard local changes &amp; reload</Button></div>}
       {readOnly && manager && <ReportSharing sheetId={sheetId} />}
       <JobReceipts userId={profile.id} companyId={profile.company_id} sheetId={sheetId} readOnly={readOnly || busy} />
+      {!form.signature_data && sheet.departure_status !== "none" && (
+        <div className={`mx-auto mb-4 max-w-5xl rounded-xl border-2 p-4 text-sm ${sheet.departure_status === "approved" ? "border-success bg-success/10" : sheet.departure_status === "rejected" ? "border-destructive bg-destructive/10" : "border-warning bg-warning/15"}`}>
+          <p className="font-medium text-foreground">{sheet.departure_status === "approved" ? "Approved — you may leave site. The client has been notified." : sheet.departure_status === "rejected" ? "Leaving was declined — please wait on site for the client." : "Waiting for approval to leave unsigned — please wait on site."}</p>
+          {sheet.departure_reply && <p className="mt-1 text-foreground"><b>Message from your supervisor:</b> “{sheet.departure_reply}”</p>}
+        </div>
+      )}
       <fieldset disabled={readOnly || busy} className="mx-auto max-w-5xl space-y-4 pb-24">
         {safetyItems.length > 0 && <Section n={0} title="Pre-work safety assessment"><div className="space-y-2">{safetyItems.map((i) => <label key={i} className="flex items-start gap-3 border p-3 text-sm"><Checkbox checked={!!checks[`safety:${i}`]} onCheckedChange={(v) => setChecks({ ...checks, [`safety:${i}`]: !!v })} />{i}</label>)}</div></Section>}
         <div className="flex flex-wrap items-center gap-2">
