@@ -597,7 +597,7 @@ function SheetForm() {
               <PenLine className="mr-1 h-4 w-4" />Present to client for sign-off
             </Button>
           )}
-          {!form.signature_data && <DepartureRequest preapproved={client?.preapprove_departure ?? false} sheet={{ id: sheet.id, departure_status: sheet.departure_status, departure_note: sheet.departure_note, signature_data: null, return_fee_waived: sheet.return_fee_waived }} manager={manager} onChange={() => { revision.current = null; qc.invalidateQueries({ queryKey: ["sheet", sheetId] }); }} />}
+          {!form.signature_data && <DepartureRequest preapproved={client?.preapprove_departure ?? false} sheet={{ id: sheet.id, departure_status: sheet.departure_status, departure_note: sheet.departure_note, departure_reply: sheet.departure_reply, signature_data: null, return_fee_waived: sheet.return_fee_waived }} manager={manager} onChange={() => { revision.current = null; qc.invalidateQueries({ queryKey: ["sheet", sheetId] }); }} />}
         </Section>
       </fieldset>
 
