@@ -35,20 +35,29 @@ export function useNoticeEnabled(event: EventKey) {
 }
 
 const seen = new Set<string>();
-/** Live alert for the technician when a manager decides on their request to leave an unsigned site. */
+/** App-wide live alert for the technician when a manager replies to or decides on a request to leave an unsigned site. Tapping opens the job sheet. */
 export function DepartureAlerts({ userId }: { userId: string }) {
+  const navigate = useNavigate();
+  const qc = useQueryClient();
   const [msg, setMsg] = useState<{ text: string; ok: boolean; sheetId: string } | null>(null);
   useEffect(() => {
+    const notify = (title: string, body: string, sheetId: string) => {
+      if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+        const n = new Notification(title, { body, tag: `departure-${sheetId}` });
+        n.onclick = () => { window.focus(); navigate({ to: "/sheets/$sheetId", params: { sheetId } }); n.close(); };
+      }
+      if (navigator.vibrate) navigator.vibrate(300);
+    };
     const ch = supabase.channel(`departure-${userId}`).on("postgres_changes", { event: "UPDATE", schema: "public", table: "job_sheets", filter: `assigned_technician_id=eq.${userId}` }, (p) => {
       const n = p.new as { id: string; jobsheet_number: number; departure_status: string; departure_reply: string | null }; const o = p.old as { departure_status?: string; departure_reply?: string | null };
       if (o.departure_reply !== n.departure_reply && n.departure_reply) {
         const key = `${n.id}:reply:${n.departure_reply}`;
         if (!seen.has(key)) {
           seen.add(key);
-          const text = `Job sheet- ${n.jobsheet_number} — message from the office: ${n.departure_reply}`;
+          const text = `Job sheet- ${n.jobsheet_number} — message from your supervisor: ${n.departure_reply}`;
           setMsg({ text, ok: true, sheetId: n.id }); playChime("message", userId);
-          if (typeof Notification !== "undefined" && Notification.permission === "granted") new Notification("Message from the office", { body: text });
-          if (navigator.vibrate) navigator.vibrate(300);
+          qc.invalidateQueries({ queryKey: ["sheet", n.id] });
+          notify("Message from your supervisor", text, n.id);
         }
         return;
       }
@@ -58,17 +67,17 @@ export function DepartureAlerts({ userId }: { userId: string }) {
       const ok = n.departure_status === "approved";
       const text = ok ? `Job sheet- ${n.jobsheet_number}: you may leave site. The client has been notified.` : `Job sheet- ${n.jobsheet_number}: leaving was declined — please wait for the client.`;
       setMsg({ text, ok, sheetId: n.id }); playChime("approval", userId);
-      if (typeof Notification !== "undefined" && Notification.permission === "granted") new Notification(ok ? "Departure approved" : "Departure declined", { body: text });
-      if (navigator.vibrate) navigator.vibrate(300);
+      qc.invalidateQueries({ queryKey: ["sheet", n.id] });
+      notify(ok ? "Departure approved" : "Departure declined", text, n.id);
     }).subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [userId]);
+  }, [userId, navigate, qc]);
   if (!msg) return null;
   return (
-    <div className={`rounded-xl border p-4 ${msg.ok ? "border-success bg-success/10" : "border-destructive bg-destructive/10"}`}>
+    <div className={`mb-4 rounded-xl border p-4 ${msg.ok ? "border-success bg-success/10" : "border-destructive bg-destructive/10"}`}>
       <p className="text-sm font-medium text-foreground">{msg.text}</p>
       <div className="mt-2 flex gap-2">
-        <Button size="sm" variant="outline" asChild><Link to="/sheets/$sheetId" params={{ sheetId: msg.sheetId }}>Open job sheet</Link></Button>
+        <Button size="sm" asChild onClick={() => setMsg(null)}><Link to="/sheets/$sheetId" params={{ sheetId: msg.sheetId }}>Open job sheet</Link></Button>
         <Button size="sm" variant="ghost" onClick={() => setMsg(null)}>Dismiss</Button>
       </div>
     </div>
