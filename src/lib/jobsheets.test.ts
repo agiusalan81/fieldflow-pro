@@ -1,7 +1,16 @@
 import { describe, it, expect } from "vitest";
+import { splitHours, scheduledInitials, assignmentFilter, isAssisting } from "./jobsheets";
 import { leaveHours, remainingBalance, missingSignOff, hoursFromTimes } from "./jobsheets";
 
 describe("job sheet & leave rules", () => {
+  it("equal endpoints create no standard or overtime hours", () => expect(splitHours("2026-10-19", "21:53", "21:53")).toEqual({ standard: 0, ot15: 0, ot20: 0 }));
+  it("both assigned technicians are seeded into shared daily logs", () => {
+    const job = { assigned_technician_id: "lead", secondary_technician_id: "assistant" };
+    expect(scheduledInitials(job, [{ id: "lead", full_name: "Alan Agius", technician_initials: "AA" }, { id: "assistant", full_name: "Test Technician", technician_initials: "TT" }], { full_name: "Alan Agius" })).toEqual(["AA", "TT"]);
+    expect(isAssisting(job, "assistant")).toBe(true);
+    expect(isAssisting(job, "lead")).toBe(false);
+    expect(assignmentFilter("assistant")).toBe("assigned_technician_id.eq.assistant,secondary_technician_id.eq.assistant");
+  });
   it("remaining balance = base + PH credit - taken - pending", () => {
     expect(remainingBalance({ base: 192, ph: 16, taken: 40, pending: 8 })).toBe(160);
   });

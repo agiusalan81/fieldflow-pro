@@ -4,6 +4,11 @@ import { mandatoryBreaks, workedHours, matchesSheetSearch, sheetTitle, standbyFo
 const one30 = { enabled: true, count: 1, minutes: 30 };
 
 describe("mandatory breaks", () => {
+  it("same-minute clock-out is zero hours with no phantom break", () => {
+    expect(workedHours("21:53", "21:53", one30)).toBe(0);
+    expect(mandatoryBreaks("21:53", "21:53", one30)).toEqual([]);
+  });
+  it("retains real overnight shifts", () => expect(workedHours("22:00", "06:00", one30)).toBe(7.5));
   it("one 30-min break lands mid-shift on an 8h shift", () => expect(mandatoryBreaks("07:30", "15:30", one30)).toEqual([{ from: "11:15", to: "11:45" }]));
   it("is recorded even if not taken: 8h shift pays 7.5h", () => expect(workedHours("07:30", "15:30", one30)).toBe(7.5));
   it("two breaks of 15 min", () => expect(mandatoryBreaks("08:00", "17:00", { enabled: true, count: 2, minutes: 15 })).toHaveLength(2));
