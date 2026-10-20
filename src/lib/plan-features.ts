@@ -12,7 +12,7 @@ export const PLAN_FEATURES = [
   { key: "estimates", label: "Estimates & lift RFQ" },
   { key: "supplier_email", label: "Supplier emails & reminders" },
   { key: "contracts", label: "Contracts & renewals" },
-  { key: "payroll", label: "Payroll" },
+  { key: "payroll", label: "Payroll: hours & international gross earnings" },
   { key: "safety", label: "Safety & faults" },
   { key: "reports", label: "Client reports" },
   { key: "digitization", label: "Document digitization" },
