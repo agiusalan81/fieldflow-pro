@@ -11,7 +11,7 @@ import { useProfile, useCompanyUsers, initialsOf, isManager } from "@/lib/profil
 import { remindBreakIfDue } from "@/lib/dwr-report";
 import { useCompanyRules, useTerminology } from "@/lib/company";
 import { ReportSharing } from "@/components/report-sharing";
-import { hoursFromTimes, missingSignOff, missingChecklist, roundTo15, shiftTime, parsePhotos, createDraftSheet, type JobPhoto, technicianCount, labourHours, dayLabourHours } from "@/lib/jobsheets";
+import { scheduledInitials, assignmentFilter, hoursFromTimes, missingSignOff, missingChecklist, roundTo15, shiftTime, parsePhotos, createDraftSheet, type JobPhoto, technicianCount, labourHours, dayLabourHours } from "@/lib/jobsheets";
 import { JobPhotos } from "@/components/job-photos";
 import { SpecialNotes } from "@/components/special-notes";
 import { VoiceDictation } from "@/components/voice-dictation";
@@ -112,7 +112,8 @@ function SheetForm() {
         supabase.from("jobsheet_parts").select("*").eq("jobsheet_id", sheetId).order("sort_order"),
       ]);
       if (s.error) throw s.error;
-      return { sheet: s.data, logs: l.data ?? [], parts: p.data ?? [] };
+      const assignment = s.data?.job_id ? await supabase.from("jobs").select("assigned_technician_id, secondary_technician_id").eq("id", s.data.job_id).maybeSingle() : { data: null };
+      return { assignment: assignment.data, sheet: s.data, logs: l.data ?? [], parts: p.data ?? [] };
     },
   });
   const { data: refs } = useQuery({
@@ -183,7 +184,7 @@ function SheetForm() {
   }, [sheetId]);
 
   useEffect(() => {
-    if (!profile || !data?.sheet || !form || !localReady || data.sheet.status === "completed" || conflict) return;
+    if (!profile || !data?.sheet || data.assignment?.secondary_technician_id === profile.id || !form || !localReady || data.sheet.status === "completed" || conflict) return;
     const expected = revision.current ?? data.sheet.updated_at;
     const timer = setTimeout(() => {
       const snapshot: DraftSnapshot = {
@@ -206,7 +207,9 @@ function SheetForm() {
   if (!data?.sheet || !form || !profile) return <AppShell title="Job sheet"><p className="text-muted-foreground">Loading…</p></AppShell>;
 
   const sheet = data.sheet;
-  const readOnly = sheet.status === "completed";
+  const assisting = data.assignment?.secondary_technician_id === profile.id;
+  const readOnly = sheet.status === "completed" || assisting;
+  const staffing = scheduledInitials(data.assignment, users, profile);
   const set = (patch: Partial<Form>) => setForm({ ...form, ...patch });
   const client = refs?.clients.find((c) => c.id === form.client_id);
   const checkCat = form.asset_type === "Escalator" ? "Escalator" : form.asset_type === "Lift" ? "Elevator" : "Custom";
@@ -286,7 +289,7 @@ function SheetForm() {
     const today = new Date().toISOString().slice(0, 10);
     const target = index ?? logs.findIndex((l) => l.log_date === today && !l.time_out);
     const i = target < 0 ? logs.length : target;
-    const next = target < 0 ? [...logs, { ...emptyLog(), technician_initials: [initialsOf(profile)] }] : logs.map((l) => ({ ...l }));
+    const next = target < 0 ? [...logs, { ...emptyLog(), technician_initials: staffing, technician_count: staffing.length }] : logs.map((l) => ({ ...l }));
     const log = next[i];
     if (!log) return;
     log.time_in ||= roundTo15(nowHM());
@@ -566,7 +569,7 @@ function SheetForm() {
                 {parts.filter((p) => p.log_sort_order == null).map((p, k) => <p key={k}>{p.quantity} {p.unit} · {p.part_description}</p>)}
               </div>
             )}
-            {!readOnly && <Button type="button" variant="outline" className="h-11 w-full" onClick={() => setLogs([...logs, { ...emptyLog(), time_in: roundTo15(nowHM()) }])}><Plus className="mr-1 h-4 w-4" />Add day</Button>}
+            {!readOnly && <Button type="button" variant="outline" className="h-11 w-full" onClick={() => setLogs([...logs, { ...emptyLog(), time_in: roundTo15(nowHM()), technician_initials: staffing, technician_count: staffing.length }])}><Plus className="mr-1 h-4 w-4" />Add day</Button>}
           </div>
         </Section>
 
@@ -689,7 +692,7 @@ type NextJob = { id: string; job_number: number; window_start: string | null; cl
 async function findNextJob(userId: string, currentJobId: string | null): Promise<NextJob | null> {
   const today = new Date().toISOString().slice(0, 10);
   const { data } = await supabase.from("jobs").select("id, job_number, client_id, window_start, acknowledged_at, clients(name), sites(name, address)")
-    .eq("assigned_technician_id", userId).eq("scheduled_date", today).is("acknowledged_at", null).order("window_start");
+    .or(assignmentFilter(userId)).eq("scheduled_date", today).is("acknowledged_at", null).order("window_start");
   const job = (data ?? []).find((j) => j.id !== currentJobId);
   if (!job) return null;
   const { data: cs } = await supabase.from("client_contacts").select("first_name, phone").eq("client_id", job.client_id).eq("has_whatsapp", true);

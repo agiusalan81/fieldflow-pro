@@ -21,7 +21,8 @@
 - Payroll uses tested shared gross/Malta engines, office RLS and DWRs; snapshots capture currency/mode; HQ guards Malta compliance. Why: preserve issued pay and separate gross from statutory net.
 - Payroll routes share payroll-page.tsx. Opening leave/payslips save transactionally with issued-slip/totals guards; year-qualified carry-forward doesn't consume leave twice. Why: no partial or retrospective changes.
 - Sign-off/leave/overtime/checklist/renewals use tested jobsheets.ts. Why: shared rules.
-- DWR/breaks/search/standby/clock-out use tested dwr.ts and dwr-report.ts; held shifts and assisting initials share one ledger. Why: retain callout hours.
+- DWR filing returns the canonical shift report under a unique partial index; superseded/corrected originals remain audited and held flags clear only after filing. Why: retry-safe hours without rewriting issued payslips.
+- Dispatch keeps a lead and optional assistant; both read the job/shared sheet, only the lead starts/edits it, and new daily logs seed both initials. Why: one journey and work ledger without duplicate labour.
 - Overtime site details use captured DWR intervals/rules; older reports show associated sites only. Why: never invent allocation.
 - Tenant typography uses applyTypography/AppShell variables; locale uses locale.ts. Why: company presentation.
 - Branding shares theme/template JSON, private tenant files and PDF/font helpers; DB/HQ locks preserve saved values. Why: secure consistent app/PDF customisation.

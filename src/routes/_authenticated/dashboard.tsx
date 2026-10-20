@@ -13,7 +13,7 @@ import { AppShell, StatusBadge, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { splitHours, addSplits, DEFAULT_RULES } from "@/lib/jobsheets";
+import { assignmentFilter, isAssisting, splitHours, addSplits, DEFAULT_RULES } from "@/lib/jobsheets";
 import { AssetHistory, LiftHistoryButton, PriorityBadge, timeWindow } from "@/components/job-card";
 import { formatPlate } from "@/lib/dwr";
 import { ShiftClockInDialog } from "@/components/shift-clock-in-dialog";
@@ -141,8 +141,8 @@ function TechToday({ profile, readOnly, switcher }: { profile: Profile; readOnly
     queryFn: async () => {
       const { data, error } = await supabase
         .from("jobs")
-        .select("id, job_number, asset_id, window_start, window_end, problem_summary, priority, acknowledged_at, clients(name), sites(name, address), assets(reference_number, asset_category)")
-        .eq("assigned_technician_id", profile.id)
+        .select("id, assigned_technician_id, secondary_technician_id, job_number, asset_id, window_start, window_end, problem_summary, priority, acknowledged_at, clients(name), sites(name, address), assets(reference_number, asset_category)")
+        .or(assignmentFilter(profile.id))
         .eq("scheduled_date", today)
         .order("window_start");
       if (error) throw error;
@@ -169,7 +169,7 @@ function TechToday({ profile, readOnly, switcher }: { profile: Profile; readOnly
                 <li key={j.id} className="space-y-3 rounded-xl border bg-card p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="text-xs text-muted-foreground">Job #{j.job_number} · {timeWindow(j.window_start, j.window_end)}</p>
+                      <p className="text-xs font-medium text-primary">{isAssisting(j, profile.id) ? "Assisting" : "Lead"}</p><p className="text-xs text-muted-foreground">Job #{j.job_number} · {timeWindow(j.window_start, j.window_end)}</p>
                       <p className="truncate font-medium text-foreground">{j.clients?.name}</p>
                       <p className="truncate text-sm text-muted-foreground">{j.sites?.name ?? "No site"} · {j.assets?.reference_number ?? "No lift"}</p>
                     </div>
@@ -177,7 +177,7 @@ function TechToday({ profile, readOnly, switcher }: { profile: Profile; readOnly
                   </div>
                   <p className="line-clamp-2 text-sm text-foreground">{j.problem_summary || "No problem summary"}</p>
                   <div className="grid grid-cols-2 gap-2">
-                    <JobTravelActions profile={profile} jobId={j.id} address={j.sites?.address} readOnly={readOnly} />
+                    <JobTravelActions profile={profile} jobId={j.id} address={j.sites?.address} readOnly={readOnly} assisting={isAssisting(j, profile.id)} />
                     <LiftHistoryButton assetId={j.asset_id} label={`${j.assets?.reference_number ?? ""} · ${j.sites?.name ?? j.clients?.name ?? ""}`} />
                   </div>
                 </li>
@@ -237,7 +237,7 @@ function useOpsData() {
         supabase.from("inventory_items").select("id, part_name, current_stock, min_stock_level"),
         supabase.from("leave_requests").select("id").eq("status", "pending"),
         supabase.from("shifts").select("user_id, shift_type, started_at").is("ended_at", null),
-        supabase.from("jobs").select("id, job_number, window_start, window_end, priority, assigned_technician_id, clients(name), sites(name)").eq("scheduled_date", today).order("window_start"),
+        supabase.from("jobs").select("id, job_number, window_start, window_end, priority, assigned_technician_id, secondary_technician_id, clients(name), sites(name)").eq("scheduled_date", today).order("window_start"),
         supabase.from("users").select("id, full_name"),
       ]);
       return { sheets: sheets.data ?? [], inv: inv.data ?? [], pendingLeave: leave.data?.length ?? 0, shifts: shifts.data ?? [], jobs: jobs.data ?? [], users: users.data ?? [] };
@@ -376,7 +376,7 @@ function SupervisorOverview({ profile, switcher }: { profile: Profile; switcher?
                   {data.jobs.map((j) => (
                     <li key={j.id} className="grid cursor-pointer grid-cols-[90px_minmax(0,1fr)_auto] items-center gap-3 px-5 py-2.5 text-sm hover:bg-muted/50" onClick={() => navigate({ to: "/admin/jobs" })}>
                       <span className="tabular-nums text-muted-foreground">{timeWindow(j.window_start, j.window_end)}</span>
-                      <span className="min-w-0 truncate text-foreground">#{j.job_number} · {j.clients?.name}{j.sites?.name ? ` · ${j.sites.name}` : ""}<span className="block truncate text-xs text-muted-foreground">{name(j.assigned_technician_id)}</span></span>
+                      <span className="min-w-0 truncate text-foreground">#{j.job_number} · {j.clients?.name}{j.sites?.name ? ` · ${j.sites.name}` : ""}<span className="block truncate text-xs text-muted-foreground">{name(j.assigned_technician_id)}{j.secondary_technician_id ? ` · Assisting: ${name(j.secondary_technician_id)}` : ""}</span></span>
                       <PriorityBadge p={j.priority} />
                     </li>
                   ))}
