@@ -26,3 +26,10 @@ describe("document audience", () => {
     expect(parseAudience(["client", "hacker", "client"])).toEqual(["client"]);
   });
 });
+
+import { paginate } from "@/components/a4-document";
+describe("A4 pagination", () => {
+  it("moves blocks that overflow onto the next page", () => {
+    expect(paginate([400, 400, 400, 100], 900)).toEqual([[0, 1], [2, 3]]);
+  });
+});
