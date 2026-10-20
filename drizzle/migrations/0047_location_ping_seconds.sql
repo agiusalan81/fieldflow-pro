@@ -1,0 +1,1 @@
+ALTER TABLE public.company_settings ADD COLUMN IF NOT EXISTS location_ping_seconds integer NOT NULL DEFAULT 30 CHECK (location_ping_seconds BETWEEN 10 AND 600);

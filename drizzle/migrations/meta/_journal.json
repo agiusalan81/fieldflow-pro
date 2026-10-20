@@ -330,6 +330,13 @@
       "when": 1792476377222,
       "tag": "0046_restrict_platform_products_read",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1792481051628,
+      "tag": "0047_location_ping_seconds",
+      "breakpoints": true
     }
   ]
 }
