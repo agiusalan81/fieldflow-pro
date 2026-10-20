@@ -4,6 +4,8 @@ import { useSyncExternalStore } from "react";
 /** UI-only "View As" mode. Data access is still enforced by the real role on the server. */
 export type Role = "superuser" | "admin" | "supervisor" | "technician";
 export type ViewAs = Role;
+export const canViewAsRoles = (realRole?: Role) => realRole === "superuser";
+export const resolveDisplayedRole = (realRole: Role, viewAs: ViewAs | null): Role => canViewAsRoles(realRole) && viewAs ? viewAs : realRole;
 export const ROLE_LABEL: Record<Role, string> = { superuser: "Company Superuser", admin: "Office Admin", supervisor: "Supervisor", technician: "Technician" };
 const VIEW_KEY = "fieldops:view-as";
 const listeners = new Set<() => void>();
@@ -44,7 +46,7 @@ export type Kin = { name?: string; relationship?: string; phone?: string; email?
 export function useProfile() {
   const viewAs = useViewAsRaw();
   const q = useRealProfile();
-  const data = q.data ? { ...q.data, role: q.data.real_role !== "technician" && viewAs ? viewAs : q.data.real_role } : q.data;
+  const data = q.data ? { ...q.data, role: resolveDisplayedRole(q.data.real_role, viewAs) } : q.data;
   return { ...q, data } as typeof q;
 }
 

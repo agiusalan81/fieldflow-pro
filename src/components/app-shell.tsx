@@ -11,7 +11,7 @@ import {
   LayoutDashboard, MapPin, ClipboardList, Clock, MessageSquare, CalendarDays, Users, SlidersHorizontal, Package, LogOut, Menu, Plus, CalendarClock, Settings, Building2, FileSignature, Hammer, Calculator, PhoneCall, FileText, UserCheck, ChevronDown, HelpCircle, Send, RotateCcw, MoreHorizontal,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useProfile, isManager, isOffice, setViewAs, ROLE_LABEL, type ViewAs } from "@/lib/profile";
+import { useProfile, isManager, isOffice, setViewAs, canViewAsRoles, ROLE_LABEL, type ViewAs } from "@/lib/profile";
 import { useCan, type ModuleKey } from "@/lib/permissions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEffect, useState } from "react";
@@ -223,7 +223,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   const office = isOffice(profile);
   const extraNav: NavItem[] = [];
   const baseItems = [...(profile?.role === "supervisor" ? supervisorNav : manager ? adminNav : techNav), ...extraNav].filter((i) => (i.to !== "/subscription" || profile?.role === "superuser") && (i.to !== "/company" || office) && (!i.office || office) && (!i.module || can(i.module) || (i.to === "/company" && office)) && (!i.feature || planOn(i.feature)));
-  const canSwitch = profile && profile.real_role !== "technician" && !preview.active;
+  const canSwitch = profile && canViewAsRoles(profile.real_role) && !preview.active;
 
   const { data: company } = useCompanyRules();
   const appearance = company?.appearance ?? DEFAULT_APPEARANCE;
