@@ -253,7 +253,9 @@ function ProfileTab({ companyId }: { companyId: string }) {
       const { error: ce } = await supabase.from("companies").update({ name: n.slice(0, 120) }).eq("id", companyId);
       if (ce) { toast.error(ce.message); return; }
     }
-    const { customFontData: _fontData, ...storedTheme } = t;
+    const { data: currentTheme, error: themeReadError } = await supabase.from("company_settings").select("theme").maybeSingle();
+    if (themeReadError) { toast.error(themeReadError.message); return; }
+    const storedTheme = { ...((currentTheme?.theme ?? {}) as Record<string, unknown>), ...(planOn("branding_fonts") ? { headers: t.headers, fields: t.fields } : {}) };
     const { error } = await supabase.from("company_settings").upsert({ company_id: companyId, ...p, company_address: formatOfficeAddress(p.office_address), office_address: p.office_address as never, theme: storedTheme as never, ...(titleAllowed ? { app_title: appTitle.trim().slice(0, 40) } : {}) });
     if (error) { toast.error(error.message); return; }
     toast.success("Company profile saved");

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useCompanyRules, FONT_CHOICES } from "@/lib/company";
+import { useCompanyRules } from "@/lib/company";
 import { supabase } from "@/integrations/supabase/client";
 import { usePlanFeatures } from "@/lib/plan-features";
 import { appearanceVariables, contrastRatio, ICON_PRESETS, INDUSTRY_PRESETS, INDUSTRY_LABELS, type Appearance } from "@/lib/branding";
