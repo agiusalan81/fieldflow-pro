@@ -10,11 +10,11 @@
 <!-- LOVABLE:END -->
 
 ## Project rules
-- Assigned-job travel actions share one component and startJobTravel helper; sheet arrival saves its time log before changing to on-site status. Why: keep Today and Schedule consistent without treating travel as arrival.
-- Public invitation reads use a bounded server-function lookup and Query-backed route loading; timeout covers client middleware too. Why: stalls must not hang invitations.
+- Travel shares one component/startJobTravel; arrival saves the time log before on-site status. Why: Today/Schedule parity without premature arrival.
+- Invitation reads use bounded server functions and Query loaders; timeout includes client middleware. Why: prevent hangs.
 - Tenant RLS uses company_id/current_company_id(); never UI company filters. Why: one access boundary.
 - Roles live in protected user_roles; users.role is display-only. View As and permissions.ts only hide UI. Why: prevent escalation.
-- Registration state lives in protected user_roles; central helpers and restrictive tenant policies reject terminated actors, and access changes retain audited history. Why: old sessions cannot bypass revocation.
+- Protected user_roles registration, central helpers and restrictive tenant policies reject terminated actors; audit access changes. Why: revoke old sessions safely.
 - Invite name confirmation uses atomic named redemption; social users never need an app password. Why: save confirmed names without trusting client-supplied company or role.
 - Staff redeem single-use invites through signup triggers. Why: server-side role assignment.
 - User preview is real-superuser-only, actor-scoped, in-memory and removable; root blocks other screens/writes. Why: preserve sessions/audit identity.
@@ -25,7 +25,7 @@
 - Overtime site details use captured DWR intervals/rules; older reports show associated sites only. Why: never invent allocation.
 - Tenant typography uses company_settings.theme via applyTypography/AppShell CSS variables; locale uses locale.ts. Why: tenant-configured presentation.
 - Documents/styles/labels/terms/presets use company_settings and documents.ts across forms/PDFs. Why: consistent client wording.
-- Standard Service Sheet shares a typed safe document projection and service renderers across previews, print and email PDFs. Why: consistent client-safe output.
+- Service sheets share a typed safe projection/renderers for preview, print and email. Why: client-safe consistency.
 - Pending works close via close_pending_on_followup trigger; sheet creation requires clock-in or standby. Why: enforce without UI.
 - Billing uses billing.ts precedence: estimate > contract > client > company default. Integration config uses integrations.ts; job_sheets_guard_billing allows only office review changes. Why: uniform protected prices.
 - WhatsApp rules use tested whatsapp-templates.ts; AI/Meta calls use manager-only whatsapp-templates.functions.ts. Why: validate consistently.
@@ -45,3 +45,5 @@
 - Receipt PDFs use a separate account/sheet-scoped IndexedDB queue and private storage, never client document projections. Why: preserve offline attachments without exposing accounting files.
 - Technical library uses private storage/RLS; publishing UI checks real and displayed supervisor/superuser roles; AI reads approved pages as caller. Why: secure access and consistent View As.
 - Leave/profile/clock-out handover rules use tested field-rules.ts plus guard_leave_decision. Why: UI and DB agree.
+
+- Commercial lookups share company-app identity; fallback only to one active product. Signup/referral links use app_url; checkboxes use PLAN_FEATURES. Why: product isolation and HQ parity.

@@ -3173,6 +3173,7 @@ export type Database = {
         Args: { _first_name: string; _surname: string; _token: string }
         Returns: string
       }
+      company_app_product_id: { Args: never; Returns: string }
       company_module_access: {
         Args: { _company: string; _module: string }
         Returns: boolean

@@ -1,4 +1,6 @@
 # Roadmap
+- [x] FieldBridge setup: populated product key fieldbridge, all 12 modules and 60-day trial at current published address; shared commercial product resolution, clickable new-product modules and HQ registration/referral links; repaired product-save trigger; 16 focused tests passed and build OK.
+- [ ] FieldBridge HQ form/save and new-company trial end-to-end checks (blocked: requesting account is a technician without platform-owner access; transactional SQL test cannot run through read-only query tools). SQL regression script retained under src/test/sql; no access permissions or existing company subscriptions changed.
 - [x] New-sheet clock-in shares Today’s editable vehicle plate prompt and location-consent helper; 11 tests passed and both signed-in prompts verified. No test shift/job sheet created in the real account.
 - [x] Hide technical-document restriction/categorisation controls in Technician view and rename Technical library search/social branding to FieldBridgeApp; signed-in scan form and metadata verified, 9 tests passed, build OK.
 - [x] Move technician travel to Today/Schedule assigned jobs, retain Google Maps/Waze, remove sheet-bottom In Transit and save on-site arrival; 38 focused tests passed.

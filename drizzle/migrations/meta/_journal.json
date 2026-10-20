@@ -309,6 +309,20 @@
       "when": 1792434148626,
       "tag": "0043_lift_rfq_estimates",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1792473478093,
+      "tag": "0044_fieldbridge_commercial_product_resolution",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1792473493023,
+      "tag": "0045_guard_platform_values_table_specific_fields",
+      "breakpoints": true
     }
   ]
 }
