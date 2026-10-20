@@ -44,7 +44,7 @@ export function UnfinishedWorkDialog({ profile, onCancel, onDone }: { profile: P
       for (const j of jobs) {
         const x = c(j.id);
         const note = `${new Date().toLocaleString()} · ${profile.full_name}: ${x.reason.trim()}`;
-        const patch = x.action === "tomorrow" ? { scheduled_date: nextDay(today) } : x.action === "standby" ? { assigned_technician_id: x.standby } : { assigned_technician_id: null };
+        const patch = x.action === "tomorrow" ? { scheduled_date: nextDay(today) } : x.action === "standby" ? { assigned_technician_id: x.standby, secondary_technician_id: null } : { assigned_technician_id: null, secondary_technician_id: null };
         const { error } = await supabase.from("jobs").update({ ...patch, handover_action: x.action === "tomorrow" ? "rolled_over" : x.action === "standby" ? "handed_to_standby" : "returned_to_dispatch", handover_note: note, handover_at: new Date().toISOString(), acknowledged_at: null }).eq("id", j.id);
         if (error) throw error;
       }

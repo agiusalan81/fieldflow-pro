@@ -11,7 +11,7 @@ import type { Profile } from "@/lib/profile";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-export function JobTravelActions({ profile, jobId, address, readOnly = false }: { profile: Profile; jobId: string; address?: string | null | undefined; readOnly?: boolean }) {
+export function JobTravelActions({ profile, jobId, address, readOnly = false, assisting = false }: { profile: Profile; jobId: string; address?: string | null | undefined; readOnly?: boolean; assisting?: boolean }) {
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [startedId, setStartedId] = useState<string | null>(null);
@@ -28,7 +28,7 @@ export function JobTravelActions({ profile, jobId, address, readOnly = false }: 
   const travelling = sheet?.status === "in_transit";
   const finished = sheet?.status === "completed" || sheet?.status === "in_progress";
   const start = async () => {
-    if (readOnly || busy) return;
+    if (readOnly || assisting || busy) return;
     setBusy(true);
     try {
       const id = await startJobTravel(profile, jobId);
@@ -54,8 +54,8 @@ export function JobTravelActions({ profile, jobId, address, readOnly = false }: 
   const openSheet = (id?: string) => readOnly ? <Button disabled className="h-11"><FileText className="mr-1 h-4 w-4" />Open job sheet</Button> : <Button asChild variant="outline" className="h-11">{id ? <Link to="/sheets/$sheetId" params={{ sheetId: id }}><FileText className="mr-1 h-4 w-4" />Open job sheet</Link> : <Link to="/sheets/new" search={{ jobId }}><FileText className="mr-1 h-4 w-4" />Open job sheet</Link>}</Button>;
   return <>
     <div className="grid gap-2">
-      {!finished && <Button className="h-11" disabled={readOnly || busy || isPending || isError || travelling} onClick={start}><Car className="mr-1 h-4 w-4" />{busy ? "Starting…" : travelling ? "In transit" : "Start travel"}</Button>}
-      {openSheet(sheet?.id)}
+      {!finished && !assisting && <Button className="h-11" disabled={readOnly || busy || isPending || isError || travelling} onClick={start}><Car className="mr-1 h-4 w-4" />{busy ? "Starting…" : travelling ? "In transit" : "Start travel"}</Button>}
+      {assisting ? sheet ? openSheet(sheet.id) : <span className="text-xs text-muted-foreground">Waiting for the lead to start</span> : openSheet(sheet?.id)}
       {isError && <Button variant="ghost" onClick={() => qc.invalidateQueries({ queryKey: ["job-travel-sheet", jobId] })}>Retry job status</Button>}
     </div>
     <Dialog open={!!startedId} onOpenChange={(open) => !open && setStartedId(null)}>

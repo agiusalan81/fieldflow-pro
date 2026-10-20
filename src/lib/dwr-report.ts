@@ -8,6 +8,9 @@ const localDate = (iso: string) => { const d = new Date(iso); return `${d.getFul
 
 /** Builds and files the daily works report for a shift that just ended. */
 export async function fileDailyReport(p: { userId: string; companyId: string; shiftId: string; startedAt: string; endedAt: string; rules: OvertimeRules; breaks: BreakRules; overnightBefore?: string | undefined }) {
+  const existing = await supabase.from("daily_work_reports").select("id").eq("shift_id", p.shiftId).maybeSingle();
+  if (existing.error) throw existing.error;
+  if (existing.data) return existing.data.id;
   const date = localDate(p.startedAt);
   const next = localDate(new Date(new Date(p.startedAt).getTime() + 86_400_000).toISOString());
   const [{ data: day }, { data: internal }, { data: night }] = await Promise.all([
@@ -16,7 +19,7 @@ export async function fileDailyReport(p: { userId: string; companyId: string; sh
     p.overnightBefore ? supabase.rpc("dwr_sheet_entries", { _user: p.userId, _date: next }) : Promise.resolve({ data: [] as never[] }),
   ]);
   // Standby: overnight callouts after midnight but before the next morning's start belong to this report.
-  const sheets = [...(day ?? []), ...((night ?? []) as NonNullable<typeof day>).filter((s) => s.time_in && s.time_in.slice(0, 5) < p.overnightBefore!)];
+  const sheets = [...(day ?? []), ...((night ?? []) as NonNullable<typeof day>).filter((s) => s.time_in && s.time_in.slice(0, 5) < (p.overnightBefore ?? ""))];
   const start = hhmm(p.startedAt), end = hhmm(p.endedAt);
   const rows: DwrRow[] = [
     ...sheets.map((s) => ({
@@ -38,7 +41,14 @@ export async function fileDailyReport(p: { userId: string; companyId: string; sh
     break_minutes: Math.round(breakH * 60), worked_hours: workedHours(start, end, p.breaks),
     standard_hours: Math.max(0, +(split.standard - breakH).toFixed(2)), ot15_hours: split.ot15, ot20_hours: split.ot20,
   }).select("id").single();
-  if (error) throw error;
+  if (error) {
+    if (error.code === "23505") {
+      const winner = await supabase.from("daily_work_reports").select("id").eq("shift_id", p.shiftId).single();
+      if (winner.error) throw winner.error;
+      return winner.data.id;
+    }
+    throw error;
+  }
   return data.id;
 }
 
@@ -123,8 +133,10 @@ export async function reconcileShifts(p: { userId: string; companyId: string; co
   const { data: held } = await supabase.from("shifts").select("id, started_at, ended_at").eq("user_id", p.userId).eq("dwr_held", true).not("ended_at", "is", null);
   for (const s of held ?? []) {
     if (!p.force && now < heldDwrDueAt(s.started_at, p.company.rules.work_start)) continue;
-    await supabase.from("shifts").update({ dwr_held: false }).eq("id", s.id);
-    const { sent } = await fileAndEmail({ ...p, shift: s, endedAt: s.ended_at!, overnight: true });
+    if (!s.ended_at) continue;
+    const { sent } = await fileAndEmail({ ...p, shift: s, endedAt: s.ended_at, overnight: true });
+    const released = await supabase.from("shifts").update({ dwr_held: false }).eq("id", s.id);
+    if (released.error) throw released.error;
     msgs.push(sent ? "Standby daily works report filed — ready in My daily reports" : "Standby daily works report filed — ready in My daily reports");
   }
   return msgs;

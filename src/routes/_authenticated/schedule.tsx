@@ -9,6 +9,7 @@ import { AppShell, EmptyState } from "@/components/app-shell";
 import { PriorityBadge, timeWindow } from "@/components/job-card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { assignmentFilter, isAssisting } from "@/lib/jobsheets";
 import { JobTravelActions } from "@/components/job-travel-actions";
 
 export const Route = createFileRoute("/_authenticated/schedule")({
@@ -26,6 +27,7 @@ export const Route = createFileRoute("/_authenticated/schedule")({
 });
 
 type Job = {
+  assigned_technician_id: string | null; secondary_technician_id: string | null;
   id: string; job_number: number; scheduled_date: string; window_start: string | null; window_end: string | null;
   problem_summary: string | null; priority: string; acknowledged_at: string | null;
   sheet?: { id: string; status: string; jobsheet_number: string | null } | null;
@@ -57,8 +59,8 @@ function Schedule() {
       if (!profile) return [];
       const { data, error } = await supabase
         .from("jobs")
-        .select("id, job_number, scheduled_date, window_start, window_end, problem_summary, priority, acknowledged_at, clients(name), sites(name, address), assets(reference_number, asset_category)")
-        .eq("assigned_technician_id", profile.id)
+        .select("id, assigned_technician_id, secondary_technician_id, job_number, scheduled_date, window_start, window_end, problem_summary, priority, acknowledged_at, clients(name), sites(name, address), assets(reference_number, asset_category)")
+        .or(assignmentFilter(profile.id))
         .gte("scheduled_date", today)
         .order("scheduled_date")
         .order("window_start");
@@ -80,7 +82,7 @@ function Schedule() {
   const Actions = ({ j }: { j: Job }) => (
     <div className="grid grid-cols-2 gap-2">
       <Button variant="outline" className="h-10" onClick={() => setDetail(j)}>Details</Button>
-      {j.sheet && j.sheet.status !== "draft" ? <Button asChild className="h-10" variant={j.sheet.status === "completed" ? "outline" : "default"}><Link to="/sheets/$sheetId" params={{ sheetId: j.sheet.id }}><FileText className="mr-1 h-4 w-4" />Open sheet{j.sheet.jobsheet_number ? ` #${j.sheet.jobsheet_number}` : ""}</Link></Button> : profile?.role === "technician" || profile?.role === "supervisor" ? <JobTravelActions profile={profile} jobId={j.id} address={j.sites?.address} readOnly={isPreview} /> : isPreview ? <Button disabled className="h-10"><FileText className="mr-1 h-4 w-4" />Start job</Button> : <Button asChild className="h-10"><Link to="/sheets/new" search={{ jobId: j.id }} onClick={() => autoAck(j)}><FileText className="mr-1 h-4 w-4" />Start job</Link></Button>}
+      {j.sheet && j.sheet.status !== "draft" ? <Button asChild className="h-10" variant={j.sheet.status === "completed" ? "outline" : "default"}><Link to="/sheets/$sheetId" params={{ sheetId: j.sheet.id }}><FileText className="mr-1 h-4 w-4" />Open sheet{j.sheet.jobsheet_number ? ` #${j.sheet.jobsheet_number}` : ""}</Link></Button> : profile?.role === "technician" || profile?.role === "supervisor" ? <JobTravelActions profile={profile} jobId={j.id} address={j.sites?.address} readOnly={isPreview} assisting={isAssisting(j, profile.id)} /> : isPreview ? <Button disabled className="h-10"><FileText className="mr-1 h-4 w-4" />Start job</Button> : <Button asChild className="h-10"><Link to="/sheets/new" search={{ jobId: j.id }} onClick={() => autoAck(j)}><FileText className="mr-1 h-4 w-4" />Start job</Link></Button>}
     </div>
   );
 
@@ -107,7 +109,7 @@ function Schedule() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="text-xs text-muted-foreground">{new Date(j.scheduled_date + "T00:00").toLocaleDateString([], { weekday: "short", day: "numeric", month: "short" })} · {timeWindow(j.window_start, j.window_end)}</p>
-                      <p className="truncate font-medium text-foreground">{j.clients?.name}{j.sites ? ` · ${j.sites.name}` : ""}</p>
+                      <p className="text-xs font-medium text-primary">{profile && isAssisting(j, profile.id) ? "Assisting" : "Lead"}</p><p className="truncate font-medium text-foreground">{j.clients?.name}{j.sites ? ` · ${j.sites.name}` : ""}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1"><PriorityBadge p={j.priority} /><span className={`rounded-full px-2 py-0.5 text-xs font-medium ${schedStatus(j)[1]}`}>{schedStatus(j)[0]}</span></div>
                   </div>
@@ -153,6 +155,7 @@ function Schedule() {
             <>
               <DialogHeader><DialogTitle>Job #{detail.job_number} · {detail.clients?.name}</DialogTitle></DialogHeader>
               <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2 text-sm">
+                <dt className="text-muted-foreground">Assignment</dt><dd>{profile && isAssisting(detail, profile.id) ? "Assisting" : "Lead"}</dd>
                 <dt className="text-muted-foreground">When</dt><dd>{new Date(detail.scheduled_date + "T00:00").toLocaleDateString()} · {timeWindow(detail.window_start, detail.window_end)}</dd>
                 <dt className="text-muted-foreground">Site</dt><dd>{detail.sites ? `${detail.sites.name}${detail.sites.address ? `, ${detail.sites.address}` : ""}` : "—"}</dd>
                 <dt className="text-muted-foreground">Lift</dt><dd>{detail.assets ? `${detail.assets.reference_number} · ${detail.assets.asset_category}` : "—"}</dd>

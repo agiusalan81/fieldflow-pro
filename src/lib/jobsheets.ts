@@ -1,10 +1,13 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { Profile } from "@/lib/profile";
+import { initialsOf, type Profile } from "@/lib/profile";
 
 /** Creates a draft job sheet for the signed-in technician, pre-filled from a scheduled job when given. */
 export async function createDraftSheet(profile: Profile, jobId?: string) {
   let prefill: Record<string, unknown> = {};
   if (jobId) {
+    const { data: assignment, error: assignmentError } = await supabase.from("jobs").select("assigned_technician_id, secondary_technician_id").eq("id", jobId).single();
+    if (assignmentError) throw assignmentError;
+    if (assignment.secondary_technician_id === profile.id) throw new Error("The lead technician starts travel and records both technicians on the shared sheet.");
     const { data: existing } = await supabase.from("job_sheets").select("id").eq("job_id", jobId).neq("status", "completed").maybeSingle();
     if (existing) return existing.id;
     const { data: job } = await supabase
@@ -193,7 +196,7 @@ export function splitHours(date: string, tin?: string | null, tout?: string | nu
   if (!date || !tin || !tout) return out;
   const start = toMin(tin);
   let end = toMin(tout);
-  if (end <= start) end += 1440;
+  if (end < start) end += 1440;
   const next = new Date(date + "T00:00:00Z"); next.setUTCDate(next.getUTCDate() + 1);
   const nextDate = next.toISOString().slice(0, 10);
   for (let m = start; m < end; m++) {
@@ -241,4 +244,13 @@ export function dayLabourHours(tin: string | null | undefined, tout: string | nu
   const raw = hoursFromTimes(tin, tout) + (Number(travel) || 0) + (Number(partsHours) || 0);
   if (raw <= 0) return 0;
   return +(Math.max(raw, 1) * techs).toFixed(2);
+}
+
+export type JobAssignment = { assigned_technician_id: string | null; secondary_technician_id: string | null };
+export const assignmentFilter = (userId: string) => `assigned_technician_id.eq.${userId},secondary_technician_id.eq.${userId}`;
+export const isAssisting = (job: JobAssignment, userId: string) => job.secondary_technician_id === userId;
+export function scheduledInitials(job: JobAssignment | null | undefined, users: { id: string; full_name: string; technician_initials?: string | null }[], fallback: { full_name: string; technician_initials?: string | null }) {
+  const ids = job ? [job.assigned_technician_id, job.secondary_technician_id] : [];
+  const selected = users.filter(u => ids.includes(u.id)).map(initialsOf);
+  return [...new Set(selected.length ? selected : [initialsOf(fallback)])];
 }

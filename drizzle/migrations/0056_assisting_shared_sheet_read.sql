@@ -1,0 +1,1 @@
+CREATE POLICY assisting_sheet_read ON public.job_sheets FOR SELECT TO authenticated USING(company_id=public.current_company_id() AND EXISTS(SELECT 1 FROM public.jobs j WHERE j.id=job_id AND j.company_id=company_id AND j.secondary_technician_id=auth.uid()));

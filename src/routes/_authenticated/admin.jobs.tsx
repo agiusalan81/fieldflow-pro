@@ -284,7 +284,7 @@ function NewJobDialog() {
   const navigate = useNavigate();
   const [open, setOpenRaw] = useState(!!search.new);
   const setOpen = (o: boolean) => { setOpenRaw(o); if (!o && search.new) navigate({ to: "/admin/jobs", search: {}, replace: true }); };
-  const empty = { client_id: "", site_id: "none", asset_id: "none", tech: "none", scheduled_date: new Date().toISOString().slice(0, 10), window_start: "", window_end: "", priority: "normal", problem_summary: "" };
+  const empty = { client_id: "", site_id: "none", asset_id: "none", tech: "none", assistant: "none", scheduled_date: new Date().toISOString().slice(0, 10), window_start: "", window_end: "", priority: "normal", problem_summary: "" };
   const [f, setF] = useState(empty);
   const { data: clients = [] } = useQuery({ queryKey: ["clients"], queryFn: async () => (await supabase.from("clients").select("id, name").order("name")).data ?? [] });
   const { data: sites = [] } = useQuery({ queryKey: ["sites"], queryFn: async () => (await supabase.from("sites").select("id, client_id, name").order("name")).data ?? [] });
@@ -296,7 +296,7 @@ function NewJobDialog() {
     const { data: job, error } = await supabase.from("jobs").insert({
       company_id: profile.company_id, client_id: f.client_id,
       site_id: f.site_id === "none" ? null : f.site_id, asset_id: f.asset_id === "none" ? null : f.asset_id,
-      assigned_technician_id: f.tech === "none" ? null : f.tech, scheduled_date: f.scheduled_date,
+      assigned_technician_id: f.tech === "none" ? null : f.tech, secondary_technician_id: f.assistant === "none" ? null : f.assistant, scheduled_date: f.scheduled_date,
       window_start: f.window_start || null, window_end: f.window_end || null, priority: f.priority, problem_summary: f.problem_summary || null,
     }).select("job_number").single();
     if (error) { toast.error(error.message); return; }
@@ -305,14 +305,16 @@ function NewJobDialog() {
       const t = parseIntegrations(cs?.integrations).templates.emergency_dispatch;
       if (t.enabled) {
         const site = sites.find((x) => x.id === f.site_id);
-        await supabase.from("internal_messages").insert({ company_id: profile.company_id, sender_id: profile.id, receiver_id: f.tech,
-          message_text: "EMERGENCY: " + renderTemplate(t.body || EVENTS[2].body, { job_number: String(job?.job_number ?? ""), site_address: site?.name ?? "", site_name: site?.name ?? "", priority: "urgent", client_name: clients.find((c) => c.id === f.client_id)?.name ?? "" }) });
-        toast.success("Emergency sent to the technician's Team Chat");
+        await supabase.from("internal_messages").insert([f.tech, f.assistant].filter(id => id !== "none").map(receiver_id => ({ company_id: profile.company_id, sender_id: profile.id, receiver_id,
+          message_text: "EMERGENCY: " + renderTemplate(t.body || EVENTS[2].body, { job_number: String(job?.job_number ?? ""), site_address: site?.name ?? "", site_name: site?.name ?? "", priority: "urgent", client_name: clients.find((c) => c.id === f.client_id)?.name ?? "" }) })));
+        toast.success("Emergency sent to the assigned technicians' Team Chats");
       }
     }
     toast.success("Visit scheduled");
     setOpen(false); setF(empty);
     qc.invalidateQueries({ queryKey: ["schedule"] });
+    qc.invalidateQueries({ queryKey: ["today-jobs"] });
+    qc.invalidateQueries({ queryKey: ["overview"] });
   };
 
   return (
@@ -334,10 +336,15 @@ function NewJobDialog() {
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent><SelectItem value="none">No lift</SelectItem>{assets.filter((a) => a.client_id === f.client_id).map((a) => <SelectItem key={a.id} value={a.id}>{a.reference_number} · {a.asset_category}</SelectItem>)}</SelectContent>
             </Select>
-            <Select value={f.tech} onValueChange={(v) => setF({ ...f, tech: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <div className="space-y-1"><Label>Lead technician</Label><Select value={f.tech} onValueChange={(v) => setF({ ...f, tech: v, assistant: v === f.assistant || v === "none" ? "none" : f.assistant })}>
+              <SelectTrigger aria-label="Lead technician"><SelectValue /></SelectTrigger>
               <SelectContent><SelectItem value="none">Unassigned</SelectItem>{users.map((u) => <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>)}</SelectContent>
             </Select>
+            </div>
+            <div className="space-y-1"><Label>Assisting technician</Label><Select value={f.assistant} disabled={f.tech === "none"} onValueChange={assistant => setF({ ...f, assistant })}>
+              <SelectTrigger aria-label="Assisting technician"><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="none">No assistant</SelectItem>{users.filter(u => u.id !== f.tech).map(u => <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>)}</SelectContent>
+            </Select></div>
             <Select value={f.priority} onValueChange={(v) => setF({ ...f, priority: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>{["low", "normal", "high", "urgent"].map((p) => <SelectItem key={p} value={p} className="capitalize">{p}</SelectItem>)}</SelectContent>

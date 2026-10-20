@@ -24,7 +24,7 @@ export function mandatoryBreaks(start: string, end: string, r: BreakRules): { fr
   if (!r.enabled || r.count < 1 || r.minutes < 1) return [];
   const s = toMin(start);
   let e = toMin(end);
-  if (e <= s) e += 1440;
+  if (e < s) e += 1440;
   if (e - s < MIN_SHIFT_FOR_BREAK_MIN) return [];
   const out: { from: string; to: string }[] = [];
   for (let i = 1; i <= r.count; i++) {
@@ -38,7 +38,7 @@ export function mandatoryBreaks(start: string, end: string, r: BreakRules): { fr
 export function workedHours(start: string, end: string, r: BreakRules) {
   const s = toMin(start);
   let e = toMin(end);
-  if (e <= s) e += 1440;
+  if (e < s) e += 1440;
   const br = mandatoryBreaks(start, end, r).length * r.minutes;
   return Math.round(((e - s - br) / 60) * 100) / 100;
 }
