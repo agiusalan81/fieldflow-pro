@@ -212,3 +212,11 @@ main label {
 
 .location-marker { stroke: var(--primary); fill: var(--primary); fill-opacity: 0.7; }
 .location-marker-stale { stroke: var(--muted-foreground); fill: var(--muted-foreground); fill-opacity: 0.4; }
+
+.map-pin { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; border-radius: 9999px; border: 2px solid var(--card); padding: 2px 8px; font-size: 11px; line-height: 1.2; color: var(--primary-foreground); box-shadow: 0 1px 4px oklch(0 0 0 / 0.35); }
+.map-pin b { font-weight: 700; }
+.map-pin span { opacity: 0.9; font-variant-numeric: tabular-nums; }
+.map-pin-technician { background: var(--primary); }
+.map-pin-supervisor { background: var(--chart-2); }
+.map-pin-stale { opacity: 0.5; }
+html, body { overflow-x: hidden; }

@@ -79,9 +79,9 @@ function CompanyPage() {
 function HoursTab({ companyId }: { companyId: string }) {
   const { data } = useCompanyRules();
   const qc = useQueryClient();
-  const [f, setF] = useState<null | { work_days: number[]; work_start: string; work_end: string; after_hours_rate: number; saturday_rate: number; sunday_rate: number; holiday_rate: number; holidays: string; renewal_notice_days: number; industry: string; idle_timeout_minutes: number; break_enabled: boolean; breaks_per_shift: number; break_minutes: number; currency: string; default_country_code: string; equipment_label: string; equipment_categories: string }>(null);
+  const [f, setF] = useState<null | { work_days: number[]; work_start: string; work_end: string; after_hours_rate: number; saturday_rate: number; sunday_rate: number; holiday_rate: number; holidays: string; renewal_notice_days: number; industry: string; idle_timeout_minutes: number; location_ping_seconds: number; break_enabled: boolean; breaks_per_shift: number; break_minutes: number; currency: string; default_country_code: string; equipment_label: string; equipment_categories: string }>(null);
   useEffect(() => {
-    if (data && !f) setF({ ...data.rules, holidays: data.rules.public_holidays.join(", "), renewal_notice_days: data.renewalDays, industry: data.industry, idle_timeout_minutes: data.idleTimeout, break_enabled: data.breaks.enabled, breaks_per_shift: data.breaks.count, break_minutes: data.breaks.minutes, currency: data.locale.currency, default_country_code: data.locale.countryCode, equipment_label: data.locale.equipmentLabel, equipment_categories: data.equipmentCategories.join(", ") });
+    if (data && !f) setF({ ...data.rules, holidays: data.rules.public_holidays.join(", "), renewal_notice_days: data.renewalDays, industry: data.industry, idle_timeout_minutes: data.idleTimeout, location_ping_seconds: data.pingSeconds, break_enabled: data.breaks.enabled, breaks_per_shift: data.breaks.count, break_minutes: data.breaks.minutes, currency: data.locale.currency, default_country_code: data.locale.countryCode, equipment_label: data.locale.equipmentLabel, equipment_categories: data.equipmentCategories.join(", ") });
   }, [data, f]);
   if (!f) return null;
   const save = async () => {
@@ -156,6 +156,13 @@ function HoursTab({ companyId }: { companyId: string }) {
           <SelectContent>{[[0,"Off"],[15,"15 minutes"],[30,"30 minutes"],[60,"1 hour"],[120,"2 hours"],[180,"3 hours"]].map(([v,l]) => <SelectItem key={v} value={String(v)}>{l}</SelectItem>)}</SelectContent>
         </Select>
         <p className="text-xs text-muted-foreground">Technicians who are clocked in are never signed out.</p>
+      </div>
+      <div className="space-y-1.5 sm:max-w-xs"><Label>GPS update while clocked in</Label>
+        <Select value={String(f.location_ping_seconds)} onValueChange={(v) => setF({ ...f, location_ping_seconds: Number(v) })}>
+          <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+          <SelectContent>{[[15,"Every 15 seconds"],[30,"Every 30 seconds"],[60,"Every minute"],[120,"Every 2 minutes"],[300,"Every 5 minutes"]].map(([v,l]) => <SelectItem key={v} value={String(v)}>{l}</SelectItem>)}</SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">How often the live map refreshes a team member's position. Longer gaps save phone battery.</p>
       </div>
       <div className="space-y-3 rounded-lg border p-4">
         <label className="flex items-center gap-2 text-sm font-medium"><Switch checked={f.break_enabled} onCheckedChange={(c) => setF({ ...f, break_enabled: c })} />Mandatory breaks & mid-shift reminder</label>

@@ -347,7 +347,7 @@ function SupervisorOverview({ profile, switcher }: { profile: Profile; switcher?
   }).sort((a, b) => Number(b.on) - Number(a.on));
   const done = sheets.filter((s) => s.status === "completed" && s.updated_at.slice(0, 10) === new Date().toISOString().slice(0, 10)).length;
   return (
-    <AppShell title="Field command" actions={<>{switcher}<Button asChild size="sm" variant="outline"><Link to="/admin/jobs" search={{ new: true }}>Dispatch job</Link></Button></>}>
+    <AppShell title="Field command" actions={<>{switcher}<Button asChild size="sm" variant="outline"><Link to="/live-map">Live map</Link></Button><Button asChild size="sm" variant="outline"><Link to="/admin/jobs" search={{ new: true }}>Dispatch job</Link></Button></>}>
       <div className="space-y-6">
         <MyHours profile={profile} />
         <LiveLocations />

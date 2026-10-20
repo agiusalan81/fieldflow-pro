@@ -3,7 +3,7 @@ import type { Role } from "@/lib/profile";
 /** Starter mobile quick actions per role, reordered by the user's own tap counts. */
 export const QUICK_DEFAULTS: Record<Role, string[]> = {
   technician: ["/sheets/new", "/sheets", "/schedule", "/technical-library", "/messages", "/dwr"],
-  supervisor: ["/admin/jobs?new=true", "/admin/jobs", "/team", "/standby", "/pending-works", "/messages"],
+  supervisor: ["/live-map", "/admin/jobs?new=true", "/admin/jobs", "/team", "/standby", "/pending-works", "/messages"],
   admin: ["/admin/jobs", "/admin/jobs?new=true", "/admin/entities", "/team", "/admin/leave", "/company"],
   superuser: ["/dashboard", "/admin/jobs", "/company", "/admin/entities", "/contracts", "/team"],
 };

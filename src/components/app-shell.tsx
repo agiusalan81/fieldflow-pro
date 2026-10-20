@@ -7,7 +7,7 @@ import { setTenantLocale } from "@/lib/locale";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import {
-  LayoutDashboard, ClipboardList, Clock, MessageSquare, CalendarDays, Users, SlidersHorizontal, Package, LogOut, Menu, Plus, CalendarClock, Settings, Building2, FileSignature, Hammer, Calculator, PhoneCall, FileText, UserCheck, ChevronDown, HelpCircle, Send, RotateCcw, MoreHorizontal,
+  LayoutDashboard, MapPin, ClipboardList, Clock, MessageSquare, CalendarDays, Users, SlidersHorizontal, Package, LogOut, Menu, Plus, CalendarClock, Settings, Building2, FileSignature, Hammer, Calculator, PhoneCall, FileText, UserCheck, ChevronDown, HelpCircle, Send, RotateCcw, MoreHorizontal,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, isManager, isOffice, setViewAs, ROLE_LABEL, type ViewAs } from "@/lib/profile";
@@ -49,6 +49,7 @@ const adminNav: NavItem[] = [
   { group: "Operations", to: "/admin/jobs", label: "Job sheets", icon: ClipboardList },
   { group: "Operations", to: "/pending-works", label: "Pending works", icon: Hammer, module: "pending_works" },
   { group: "Operations", to: "/admin/inventory", label: "Inventory", icon: Package, module: "inventory" },
+  { group: "Team & roster", to: "/live-map", label: "Live team map", icon: MapPin },
   { group: "Team & roster", to: "/team", label: "Team", icon: UserCheck },
   { group: "Team & roster", to: "/standby", label: "Standby roster", icon: PhoneCall, feature: "standby" },
   { group: "Team & roster", to: "/dwr", label: "Daily works reports", icon: FileText },
@@ -76,6 +77,7 @@ const supervisorNav: NavItem[] = [
   { group: "Field work", to: "/technical-library", label: "Technical library", icon: FileText, feature: "technical_library" },
   { group: "Field work", to: "/messages", label: "Team chat", icon: MessageSquare },
   { group: "Team", to: "/admin/jobs", label: "Team job sheets & dispatch", icon: Send },
+  { group: "Team", to: "/live-map", label: "Live team map", icon: MapPin },
   { group: "Team", to: "/team", label: "Team", icon: UserCheck },
   { group: "Team", to: "/standby", label: "Standby roster", icon: PhoneCall, feature: "standby" },
   { group: "Team", to: "/admin/leave", label: "Leave approvals", icon: CalendarDays, module: "leave_approvals" },
