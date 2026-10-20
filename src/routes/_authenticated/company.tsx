@@ -6,6 +6,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, isOffice, ROLE_LABEL, type Role } from "@/lib/profile";
+import { usePlanFeatures } from "@/lib/plan-features";
 import { MODULES, ROLES, canSee, usePermRows, type ModuleKey } from "@/lib/permissions";
 import { useCompanyRules, FONT_CHOICES, applyTypography, DEFAULT_THEME, type Typography, type TextStyle } from "@/lib/company";
 import { PhoneInput, splitPhone, COUNTRIES } from "@/components/client-manager";
@@ -231,17 +232,30 @@ function LogoCard({ companyId, current }: { companyId: string; current: string }
 
 function ProfileTab({ companyId }: { companyId: string }) {
   const { data } = useCompanyRules();
+  const { data: profile } = useProfile();
+  const planOn = usePlanFeatures();
+  const titleAllowed = planOn("custom_app_title");
   const qc = useQueryClient();
   const [p, setP] = useState<Phones | null>(null);
   const [t, setT] = useState<Typography | null>(null);
-  useEffect(() => { if (data && !p) { setP({...data.phones,pe_number:data.peNumber,office_address:data.officeAddress,vat_number:data.vatNumber}); setT(data.theme); } }, [data, p]);
+  const [name, setName] = useState<string | null>(null);
+  const [appTitle, setAppTitle] = useState<string | null>(null);
+  useEffect(() => { if (data && !p) { setP({...data.phones,pe_number:data.peNumber,office_address:data.officeAddress,vat_number:data.vatNumber}); setT(data.theme); setAppTitle(data.appTitle); } }, [data, p]);
+  useEffect(() => { if (profile && name === null) setName(profile.companies?.name ?? ""); }, [profile, name]);
   useEffect(() => { if (t) applyTypography(t); }, [t]);
-  if (!p || !t) return null;
+  if (!p || !t || name === null || appTitle === null) return null;
   const save = async () => {
-    const { error } = await supabase.from("company_settings").upsert({ company_id: companyId, ...p, company_address: formatOfficeAddress(p.office_address), office_address: p.office_address as never, theme: t as never });
+    const n = name.trim();
+    if (!n) { toast.error("Company name can't be empty"); return; }
+    if (n !== (profile?.companies?.name ?? "")) {
+      const { error: ce } = await supabase.from("companies").update({ name: n.slice(0, 120) }).eq("id", companyId);
+      if (ce) { toast.error(ce.message); return; }
+    }
+    const { error } = await supabase.from("company_settings").upsert({ company_id: companyId, ...p, company_address: formatOfficeAddress(p.office_address), office_address: p.office_address as never, theme: t as never, ...(titleAllowed ? { app_title: appTitle.trim().slice(0, 40) } : {}) });
     if (error) { toast.error(error.message); return; }
     toast.success("Company profile saved");
     qc.invalidateQueries({ queryKey: ["company-settings"] });
+    qc.invalidateQueries({ queryKey: ["profile"] });
   };
   const phone = (k: "office_phone" | "whatsapp_phone" | "emergency_phone", l: string, hint?: string) => {
     const sp = splitPhone(p[k]);
@@ -277,6 +291,16 @@ function ProfileTab({ companyId }: { companyId: string }) {
   };
   return (
     <div className="space-y-4">
+      <section className="space-y-4 rounded-xl border bg-card p-5">
+        <div><h2 className="font-medium text-foreground">Company name & app title</h2><p className="text-sm text-muted-foreground">The company name appears under the logo in the menu and on client documents.</p></div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5"><Label htmlFor="company-name">Company name</Label><Input id="company-name" className="h-11" maxLength={120} value={name} onChange={(e) => setName(e.target.value)} /></div>
+          <div className="space-y-1.5"><Label htmlFor="app-title">App title</Label>
+            <Input id="app-title" className="h-11" maxLength={40} placeholder="FieldBridge" disabled={!titleAllowed} value={titleAllowed ? appTitle : ""} onChange={(e) => setAppTitle(e.target.value)} />
+            <p className="text-xs text-muted-foreground">{titleAllowed ? "Shown at the top of the menu. Leave empty to use FieldBridge." : "Locked — available in Plus, Pro & Enterprise."}</p>
+          </div>
+        </div>
+      </section>
       <LogoCard companyId={companyId} current={data?.logo ?? ""} />
       <section className="space-y-4 rounded-xl border bg-card p-5">
         <div><h2 className="font-medium text-foreground">Company contact details</h2><p className="text-sm text-muted-foreground">Shown to clients on job sheets and in "on the way" messages.</p></div>
