@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 export function PayrollModeSettings() {
- const {data:company}=useCompanyRules(),{data:profile}=useProfile(),qc=useQueryClient(),{on}=usePlanFeatures();
+ const {data:company}=useCompanyRules(),{data:profile}=useProfile(),qc=useQueryClient(),on=usePlanFeatures();
  const [draft,setDraft]=useState<PayrollMode|null>(null),[busy,setBusy]=useState(false);
  const value=draft??payrollMode(company?.payrollMode);
  const save=async()=>{if(!profile)return;setBusy(true);try{const{error}=await supabase.from('company_settings').upsert({company_id:profile.company_id,payroll_mode:value},{onConflict:'company_id'});if(error)throw error;await Promise.all([qc.invalidateQueries({queryKey:['company-settings']}),qc.invalidateQueries({queryKey:['payroll']})]);setDraft(null);toast.success('Payroll mode saved');}catch(e){toast.error(e instanceof Error?e.message:'Unable to save payroll mode');}finally{setBusy(false);}};
