@@ -45,11 +45,15 @@ function SheetsPage() {
     enabled: !!profile,
     queryFn: async () => {
       if (!profile) return [];
-      const { data, error } = await supabase
+      const assignments = await supabase.from("jobs").select("id").eq("secondary_technician_id", profile.id);
+      if (assignments.error) throw assignments.error;
+      const assistingJobs = (assignments.data ?? []).map(j => j.id);
+      let query = supabase
         .from("job_sheets")
-        .select("id, jobsheet_number, status, signature_data, created_at, updated_at, reported_fault, client_id, clients(name), sites(name), assets(reference_number)")
-        .eq("assigned_technician_id", profile.id)
+        .select("id, jobsheet_number, status, signature_data, created_at, updated_at, reported_fault, assigned_technician_id, client_id, clients(name), sites(name), assets(reference_number)")
         .order("updated_at", { ascending: false });
+      query = assistingJobs.length ? query.or(`assigned_technician_id.eq.${profile.id},job_id.in.(${assistingJobs.join(",")})`) : query.eq("assigned_technician_id", profile.id);
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
@@ -87,7 +91,7 @@ function SheetsPage() {
         ) : (
           <>
             <Button asChild className="h-10 flex-1 sm:flex-none"><Link to="/sheets/$sheetId" params={{ sheetId: s.id }}><Pencil className="mr-1 h-4 w-4" />Resume / Edit</Link></Button>
-            {s.status === "draft" && !isPreview && (
+            {s.status === "draft" && s.assigned_technician_id === profile?.id && !isPreview && (
               <AlertDialog>
                 <AlertDialogTrigger asChild><Button variant="outline" className="h-10"><Trash2 className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Discard Draft</span></Button></AlertDialogTrigger>
                 <AlertDialogContent>

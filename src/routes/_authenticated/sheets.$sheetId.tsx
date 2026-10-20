@@ -160,7 +160,7 @@ function SheetForm() {
   }, [data, form]);
 
   useEffect(() => {
-    if (!profile || !data?.sheet || localReady) return;
+    if (!profile || !data?.sheet || data.assignment?.secondary_technician_id === profile.id || localReady) return;
     revision.current = data.sheet.updated_at;
     void getLocalDraft(profile.id, sheetId).then((local) => {
       if (local) {
