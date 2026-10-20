@@ -9,9 +9,9 @@ import { ShiftTracker } from "./dashboard";
 export const Route = createFileRoute("/_authenticated/hours")({
   head: () => ({
     meta: [
-      { title: "My hours — FieldOps" },
+      { title: "My hours — FieldBridge" },
       { name: "description", content: "Your standard and overtime hours worked out from shifts and job sheets." },
-      { property: "og:title", content: "My hours — FieldOps" },
+      { property: "og:title", content: "My hours — FieldBridge" },
       { property: "og:description", content: "Standard, 1.5× and 2× hours at a glance." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

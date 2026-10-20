@@ -13,9 +13,9 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/_authenticated/admin/leave")({
   head: () => ({
     meta: [
-      { title: "Leave approvals — FieldOps" },
+      { title: "Leave approvals — FieldBridge" },
       { name: "description", content: "Approve team leave with each applicant's balance, and see the team calendar." },
-      { property: "og:title", content: "Leave approvals — FieldOps" },
+      { property: "og:title", content: "Leave approvals — FieldBridge" },
       { property: "og:description", content: "Team leave approvals and calendar." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

@@ -40,9 +40,9 @@ import {
 export const Route = createFileRoute("/_authenticated/sheets/$sheetId")({
   head: () => ({
     meta: [
-      { title: "Job sheet — FieldOps" },
+      { title: "Job sheet — FieldBridge" },
       { name: "description", content: "Fill in a job sheet: asset, time sheet, parts, notes and client sign-off." },
-      { property: "og:title", content: "Job sheet — FieldOps" },
+      { property: "og:title", content: "Job sheet — FieldBridge" },
       { property: "og:description", content: "Job sheet form." },
       { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
     ],
@@ -376,6 +376,12 @@ function SheetForm() {
       }}>Discard local changes &amp; reload</Button></div>}
       {readOnly && manager && <ReportSharing sheetId={sheetId} />}
       <JobReceipts userId={profile.id} companyId={profile.company_id} sheetId={sheetId} readOnly={readOnly || busy} />
+      {!form.signature_data && sheet.departure_status !== "none" && (
+        <div className={`mx-auto mb-4 max-w-5xl rounded-xl border-2 p-4 text-sm ${sheet.departure_status === "approved" ? "border-success bg-success/10" : sheet.departure_status === "rejected" ? "border-destructive bg-destructive/10" : "border-warning bg-warning/15"}`}>
+          <p className="font-medium text-foreground">{sheet.departure_status === "approved" ? "Approved — you may leave site. The client has been notified." : sheet.departure_status === "rejected" ? "Leaving was declined — please wait on site for the client." : "Waiting for approval to leave unsigned — please wait on site."}</p>
+          {sheet.departure_reply && <p className="mt-1 text-foreground"><b>Message from your supervisor:</b> “{sheet.departure_reply}”</p>}
+        </div>
+      )}
       <fieldset disabled={readOnly || busy} className="mx-auto max-w-5xl space-y-4 pb-24">
         {safetyItems.length > 0 && <Section n={0} title="Pre-work safety assessment"><div className="space-y-2">{safetyItems.map((i) => <label key={i} className="flex items-start gap-3 border p-3 text-sm"><Checkbox checked={!!checks[`safety:${i}`]} onCheckedChange={(v) => setChecks({ ...checks, [`safety:${i}`]: !!v })} />{i}</label>)}</div></Section>}
         <div className="flex flex-wrap items-center gap-2">
@@ -597,7 +603,7 @@ function SheetForm() {
               <PenLine className="mr-1 h-4 w-4" />Present to client for sign-off
             </Button>
           )}
-          {!form.signature_data && <DepartureRequest preapproved={client?.preapprove_departure ?? false} sheet={{ id: sheet.id, departure_status: sheet.departure_status, departure_note: sheet.departure_note, signature_data: null, return_fee_waived: sheet.return_fee_waived }} manager={manager} onChange={() => { revision.current = null; qc.invalidateQueries({ queryKey: ["sheet", sheetId] }); }} />}
+          {!form.signature_data && <DepartureRequest preapproved={client?.preapprove_departure ?? false} sheet={{ id: sheet.id, departure_status: sheet.departure_status, departure_note: sheet.departure_note, departure_reply: sheet.departure_reply, signature_data: null, return_fee_waived: sheet.return_fee_waived }} manager={manager} onChange={() => { revision.current = null; qc.invalidateQueries({ queryKey: ["sheet", sheetId] }); }} />}
         </Section>
       </fieldset>
 

@@ -21,7 +21,7 @@ import { clockInShift } from "@/lib/shift-clock-in";
 import { closeShiftReport, reconcileShifts, downloadDwr } from "@/lib/dwr-report";
 import { InternalWorkCard } from "@/components/work-extras";
 import { BillingReview } from "@/components/billing-review";
-import { NoAccessButton, DepartureRequests, DepartureAlerts } from "@/components/client-notices";
+import { NoAccessButton, DepartureRequests } from "@/components/client-notices";
 import { usePreviewProfile, useUserPreview } from "@/lib/impersonation";
 import { JobTravelActions } from "@/components/job-travel-actions";
 import { UnfinishedWorkDialog } from "@/components/unfinished-work";
@@ -31,10 +31,10 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Dashboard — FieldOps" },
-      { name: "description", content: "Your FieldOps day at a glance: shifts, jobs and operations." },
-      { property: "og:title", content: "Dashboard — FieldOps" },
-      { property: "og:description", content: "Your FieldOps day at a glance." },
+      { title: "Dashboard — FieldBridge" },
+      { name: "description", content: "Your FieldBridge day at a glance: shifts, jobs and operations." },
+      { property: "og:title", content: "Dashboard — FieldBridge" },
+      { property: "og:description", content: "Your FieldBridge day at a glance." },
     ],
   }),
   component: Dashboard,
@@ -158,7 +158,6 @@ function TechToday({ profile, readOnly, switcher }: { profile: Profile; readOnly
         <InternalWorkCard key={profile.id} profile={profile} readOnly={readOnly} />
         <Button asChild variant="outline" className="h-12 w-full"><Link to="/technical-library"><ClipboardList className="mr-2 h-5 w-5" />Technical library</Link></Button>
         <ScanQr />
-        {!readOnly && <DepartureAlerts userId={profile.id} />}
         {!readOnly && <NoAccessButton profile={profile} jobs={jobs} />}
         <section>
           <h2 className="mb-3 font-medium text-foreground">Today's jobs ({jobs.length})</h2>

@@ -22,6 +22,7 @@ export function useCompanyRules() {
         theme: { ...DEFAULT_THEME, ...((data?.theme ?? {}) as Partial<Typography>) },
         documentTemplate: parseTemplate(data?.pdf_template),
         logo: data?.logo_data ?? "",
+        appTitle: data?.app_title ?? "",
         locale: { currency: data?.currency ?? "EUR", countryCode: data?.default_country_code ?? "+356", equipmentLabel: data?.equipment_label ?? "lift" },
         equipmentCategories: data?.equipment_categories ?? EQUIPMENT_CATEGORIES,
         peNumber: data?.pe_number ?? "",

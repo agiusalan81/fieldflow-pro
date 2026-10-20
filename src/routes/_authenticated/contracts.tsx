@@ -24,9 +24,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export const Route = createFileRoute("/_authenticated/contracts")({
   head: () => ({
     meta: [
-      { title: "Contracts & checklists — FieldOps" },
+      { title: "Contracts & checklists — FieldBridge" },
       { name: "description", content: "Maintenance contract types, client agreements, renewals and inspection checklists." },
-      { property: "og:title", content: "Contracts & checklists — FieldOps" },
+      { property: "og:title", content: "Contracts & checklists — FieldBridge" },
       { property: "og:description", content: "Maintenance contracts, renewals and checklists." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

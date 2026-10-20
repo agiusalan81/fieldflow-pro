@@ -18,9 +18,9 @@ export const Route = createFileRoute("/_authenticated/admin/fields")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Fields & lookups — FieldOps" },
+      { title: "Fields & lookups — FieldBridge" },
       { name: "description", content: "Build custom fields and curate dropdown options for your company." },
-      { property: "og:title", content: "Fields & lookups — FieldOps" },
+      { property: "og:title", content: "Fields & lookups — FieldBridge" },
       { property: "og:description", content: "Custom field and lookup builder." },
     ],
   }),

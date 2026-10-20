@@ -9,10 +9,10 @@ import { Label } from "@/components/ui/label";
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
     meta: [
-      { title: "Reset your password — FieldOps" },
-      { name: "description", content: "Choose a new password for your FieldOps account." },
-      { property: "og:title", content: "Reset your password — FieldOps" },
-      { property: "og:description", content: "Choose a new password for your FieldOps account." },
+      { title: "Reset your password — FieldBridge" },
+      { name: "description", content: "Choose a new password for your FieldBridge account." },
+      { property: "og:title", content: "Reset your password — FieldBridge" },
+      { property: "og:description", content: "Choose a new password for your FieldBridge account." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -49,7 +49,7 @@ function ResetPassword() {
   return (
     <main className="grid min-h-screen place-items-center bg-background px-6 py-12">
       <div className="w-full max-w-md">
-        <p className="font-display text-2xl text-foreground">FieldOps</p>
+        <p className="font-display text-2xl text-foreground">FieldBridge</p>
         <h1 className="mt-6 font-display text-4xl leading-tight text-foreground">Choose a new password</h1>
         {!ready ? (
           <p className="mt-6 text-muted-foreground">Open this page from the reset link in your email. If the link expired, request a new one from the sign-in screen.</p>

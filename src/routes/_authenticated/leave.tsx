@@ -19,9 +19,9 @@ export const Route = createFileRoute("/_authenticated/leave")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "My leave — FieldOps" },
+      { title: "My leave — FieldBridge" },
       { name: "description", content: "See your own leave balance, request leave and track your requests." },
-      { property: "og:title", content: "Book leave — FieldOps" },
+      { property: "og:title", content: "Book leave — FieldBridge" },
       { property: "og:description", content: "Leave balance, requests and approvals." },
     ],
   }),

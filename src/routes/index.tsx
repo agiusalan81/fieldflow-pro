@@ -5,9 +5,9 @@ export const Route = createFileRoute("/")({
   beforeLoad: () => { throw redirect({ to: "/auth", replace: true }); },
   head: () => ({
     meta: [
-      { title: "FieldOps — Field service management for your team" },
+      { title: "FieldBridge — Field service management for your team" },
       { name: "description", content: "Job sheets, assets, inventory and technician scheduling in one customizable workspace." },
-      { property: "og:title", content: "FieldOps — Field service management" },
+      { property: "og:title", content: "FieldBridge — Field service management" },
       { property: "og:description", content: "Job sheets, assets, inventory and technician scheduling in one customizable workspace." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

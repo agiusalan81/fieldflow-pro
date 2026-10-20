@@ -18,9 +18,9 @@ export const Route = createFileRoute("/_authenticated/admin/inventory")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Inventory — FieldOps" },
+      { title: "Inventory — FieldBridge" },
       { name: "description", content: "Parts stock control with low-stock alerts." },
-      { property: "og:title", content: "Inventory — FieldOps" },
+      { property: "og:title", content: "Inventory — FieldBridge" },
       { property: "og:description", content: "Parts stock control." },
     ],
   }),

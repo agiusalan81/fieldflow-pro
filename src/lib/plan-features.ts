@@ -16,8 +16,16 @@ export const PLAN_FEATURES = [
   { key: "safety", label: "Safety & faults" },
   { key: "reports", label: "Client reports" },
   { key: "digitization", label: "Document digitization" },
+  { key: "custom_app_title", label: "Custom app title (replaces FieldBridge)" },
 ] as const;
 export type PlanFeature = (typeof PLAN_FEATURES)[number]["key"];
+
+export const DEFAULT_APP_TITLE = "FieldBridge";
+/** Tenant's own app title only when their plan includes it; otherwise FieldBridge. */
+export function resolveAppTitle(custom: string | undefined | null, allowed: boolean) {
+  const t = (custom ?? "").trim();
+  return allowed && t ? t : DEFAULT_APP_TITLE;
+}
 
 type Status = { state?: string; modules?: { name: string; enabled: boolean }[] | null };
 

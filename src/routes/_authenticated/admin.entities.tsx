@@ -26,9 +26,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export const Route = createFileRoute("/_authenticated/admin/entities")({
   head: () => ({
     meta: [
-      { title: "Clients, contacts & assets — FieldOps" },
+      { title: "Clients, contacts & assets — FieldBridge" },
       { name: "description", content: "Manage clients, their contacts and serviced assets." },
-      { property: "og:title", content: "Clients, contacts & assets — FieldOps" },
+      { property: "og:title", content: "Clients, contacts & assets — FieldBridge" },
       { property: "og:description", content: "Manage clients, contacts and assets." },
       { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
     ],

@@ -10,9 +10,9 @@ import { AppShell, EmptyState } from "@/components/app-shell";
 export const Route = createFileRoute("/_authenticated/team")({
   head: () => ({
     meta: [
-      { title: "Team availability — FieldOps" },
+      { title: "Team availability — FieldBridge" },
       { name: "description", content: "Who is clocked in, on leave, sick or available right now." },
-      { property: "og:title", content: "Team availability — FieldOps" },
+      { property: "og:title", content: "Team availability — FieldBridge" },
       { property: "og:description", content: "Live availability of your team." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

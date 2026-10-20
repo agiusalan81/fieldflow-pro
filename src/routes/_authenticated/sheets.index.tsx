@@ -19,9 +19,9 @@ import {
 export const Route = createFileRoute("/_authenticated/sheets/")({
   head: () => ({
     meta: [
-      { title: "Past & draft job sheets — FieldOps" },
+      { title: "Past & draft job sheets — FieldBridge" },
       { name: "description", content: "Resume drafts or open completed job sheets." },
-      { property: "og:title", content: "Past & draft job sheets — FieldOps" },
+      { property: "og:title", content: "Past & draft job sheets — FieldBridge" },
       { property: "og:description", content: "Your job sheets." },
       { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
     ],

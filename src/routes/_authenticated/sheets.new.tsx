@@ -16,9 +16,9 @@ export const Route = createFileRoute("/_authenticated/sheets/new")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "New job sheet — FieldOps" },
+      { title: "New job sheet — FieldBridge" },
       { name: "description", content: "Start a new job sheet." },
-      { property: "og:title", content: "New job sheet — FieldOps" },
+      { property: "og:title", content: "New job sheet — FieldBridge" },
       { property: "og:description", content: "Start a new job sheet." },
     ],
   }),

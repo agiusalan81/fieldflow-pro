@@ -1,6 +1,6 @@
 import { playChime } from "@/lib/chime";
 import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { DoorClosed, LogOut, Check, X } from "lucide-react";
@@ -35,20 +35,29 @@ export function useNoticeEnabled(event: EventKey) {
 }
 
 const seen = new Set<string>();
-/** Live alert for the technician when a manager decides on their request to leave an unsigned site. */
+/** App-wide live alert for the technician when a manager replies to or decides on a request to leave an unsigned site. Tapping opens the job sheet. */
 export function DepartureAlerts({ userId }: { userId: string }) {
+  const navigate = useNavigate();
+  const qc = useQueryClient();
   const [msg, setMsg] = useState<{ text: string; ok: boolean; sheetId: string } | null>(null);
   useEffect(() => {
+    const notify = (title: string, body: string, sheetId: string) => {
+      if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+        const n = new Notification(title, { body, tag: `departure-${sheetId}` });
+        n.onclick = () => { window.focus(); navigate({ to: "/sheets/$sheetId", params: { sheetId } }); n.close(); };
+      }
+      if (navigator.vibrate) navigator.vibrate(300);
+    };
     const ch = supabase.channel(`departure-${userId}`).on("postgres_changes", { event: "UPDATE", schema: "public", table: "job_sheets", filter: `assigned_technician_id=eq.${userId}` }, (p) => {
       const n = p.new as { id: string; jobsheet_number: number; departure_status: string; departure_reply: string | null }; const o = p.old as { departure_status?: string; departure_reply?: string | null };
       if (o.departure_reply !== n.departure_reply && n.departure_reply) {
         const key = `${n.id}:reply:${n.departure_reply}`;
         if (!seen.has(key)) {
           seen.add(key);
-          const text = `Job sheet- ${n.jobsheet_number} — message from the office: ${n.departure_reply}`;
+          const text = `Job sheet- ${n.jobsheet_number} — message from your supervisor: ${n.departure_reply}`;
           setMsg({ text, ok: true, sheetId: n.id }); playChime("message", userId);
-          if (typeof Notification !== "undefined" && Notification.permission === "granted") new Notification("Message from the office", { body: text });
-          if (navigator.vibrate) navigator.vibrate(300);
+          qc.invalidateQueries({ queryKey: ["sheet", n.id] });
+          notify("Message from your supervisor", text, n.id);
         }
         return;
       }
@@ -58,17 +67,17 @@ export function DepartureAlerts({ userId }: { userId: string }) {
       const ok = n.departure_status === "approved";
       const text = ok ? `Job sheet- ${n.jobsheet_number}: you may leave site. The client has been notified.` : `Job sheet- ${n.jobsheet_number}: leaving was declined — please wait for the client.`;
       setMsg({ text, ok, sheetId: n.id }); playChime("approval", userId);
-      if (typeof Notification !== "undefined" && Notification.permission === "granted") new Notification(ok ? "Departure approved" : "Departure declined", { body: text });
-      if (navigator.vibrate) navigator.vibrate(300);
+      qc.invalidateQueries({ queryKey: ["sheet", n.id] });
+      notify(ok ? "Departure approved" : "Departure declined", text, n.id);
     }).subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [userId]);
+  }, [userId, navigate, qc]);
   if (!msg) return null;
   return (
-    <div className={`rounded-xl border p-4 ${msg.ok ? "border-success bg-success/10" : "border-destructive bg-destructive/10"}`}>
+    <div className={`mb-4 rounded-xl border p-4 ${msg.ok ? "border-success bg-success/10" : "border-destructive bg-destructive/10"}`}>
       <p className="text-sm font-medium text-foreground">{msg.text}</p>
       <div className="mt-2 flex gap-2">
-        <Button size="sm" variant="outline" asChild><Link to="/sheets/$sheetId" params={{ sheetId: msg.sheetId }}>Open job sheet</Link></Button>
+        <Button size="sm" asChild onClick={() => setMsg(null)}><Link to="/sheets/$sheetId" params={{ sheetId: msg.sheetId }}>Open job sheet</Link></Button>
         <Button size="sm" variant="ghost" onClick={() => setMsg(null)}>Dismiss</Button>
       </div>
     </div>
@@ -127,7 +136,7 @@ export function NoAccessButton({ profile, jobs }: { profile: Profile; jobs: { id
   );
 }
 
-type Sheet = { id: string; departure_status: string; departure_note: string | null; signature_data: string | null; return_fee_waived?: boolean };
+type Sheet = { id: string; departure_status: string; departure_note: string | null; departure_reply?: string | null; signature_data: string | null; return_fee_waived?: boolean };
 
 /** Inside an unsigned job sheet: technician asks to leave, manager approves and the client is told the lift is left off. */
 export function DepartureRequest({ sheet, manager, onChange, preapproved = false }: { sheet: Sheet; manager: boolean; onChange: () => void; preapproved?: boolean }) {
@@ -157,6 +166,7 @@ export function DepartureRequest({ sheet, manager, onChange, preapproved = false
       <p className="flex items-center gap-1.5 text-sm font-medium text-foreground"><LogOut className="h-4 w-4" />Client left before signing?</p>
       {s === "requested" && <>
         <p className="text-sm text-muted-foreground">Waiting for approval to leave. Reason: {sheet.departure_note}</p>
+        {sheet.departure_reply && <p className="rounded-md border border-warning bg-warning/15 p-2 text-sm text-foreground"><b>Message from your supervisor:</b> “{sheet.departure_reply}”{!manager && <span className="block text-xs text-muted-foreground">Please wait on site until approved.</span>}</p>}
         {manager && <label className="flex items-center gap-2 text-sm text-foreground"><Checkbox checked={waive} onCheckedChange={(b) => setWaive(!!b)} />Waive the 1 h return-visit charge</label>}
         {manager && <div className="flex flex-wrap gap-2">
           <Button size="sm" disabled={busy} onClick={approve}><Check className="mr-1 h-4 w-4" />Approve & notify client</Button>
@@ -175,25 +185,42 @@ export function DepartureRequest({ sheet, manager, onChange, preapproved = false
   );
 }
 
-/** Manager dashboard list of technicians waiting to leave an unsigned site — urgent, with a quick reply to the technician. */
+/** Manager dashboard list of technicians waiting to leave an unsigned site — urgent, with approve/decline and a quick reply to the technician. */
 export function DepartureRequests() {
+  const qc = useQueryClient();
   const [reply, setReply] = useState<Record<string, string>>({});
+  const [waive, setWaive] = useState<Record<string, boolean>>({});
   const [sending, setSending] = useState<string | null>(null);
   const { data = [] } = useQuery({
     queryKey: ["departure-requests"], refetchInterval: 20000,
-    queryFn: async () => (await supabase.from("job_sheets").select("id, jobsheet_number, departure_note, departure_requested_at, clients(name), users!job_sheets_assigned_technician_id_fkey(full_name)").eq("departure_status", "requested").order("departure_requested_at")).data ?? [],
+    queryFn: async () => (await supabase.from("job_sheets").select("id, jobsheet_number, departure_note, departure_requested_at, departure_reply, clients(name), users!job_sheets_assigned_technician_id_fkey(full_name)").eq("departure_status", "requested").order("departure_requested_at")).data ?? [],
   });
-  const sendReply = async (id: string) => {
+  const busyRun = async (id: string, f: () => Promise<void>) => {
+    setSending(id);
+    try { await f(); qc.invalidateQueries({ queryKey: ["departure-requests"] }); qc.invalidateQueries({ queryKey: ["sheet", id] }); }
+    catch (e) { toast.error((e as Error).message); } finally { setSending(null); }
+  };
+  const sendReply = (id: string) => {
     const text = (reply[id] ?? "").trim();
     if (!text) return;
-    setSending(id);
-    try {
+    void busyRun(id, async () => {
       const { error } = await supabase.from("job_sheets").update({ departure_reply: text }).eq("id", id);
       if (error) throw error;
       setReply((r) => ({ ...r, [id]: "" }));
       toast.success("Message sent to the technician");
-    } catch (e) { toast.error((e as Error).message); } finally { setSending(null); }
+    });
   };
+  const approve = (id: string) => busyRun(id, async () => {
+    const w = !!waive[id];
+    const { error } = await supabase.from("job_sheets").update({ departure_status: "approved", return_fee_waived: w, return_fee_hours: w ? 0 : RETURN_FEE_MIN_HOURS }).eq("id", id);
+    if (error) throw error;
+    report((await sendClientNotice({ data: { sheetId: id, event: "unsigned_left" } })).result);
+  });
+  const decline = (id: string) => busyRun(id, async () => {
+    const { error } = await supabase.from("job_sheets").update({ departure_status: "rejected" }).eq("id", id);
+    if (error) throw error;
+    toast.success("Request declined — technician will wait for the client");
+  });
   if (!data.length) return null;
   return (
     <section className="rounded-xl border-2 border-destructive bg-destructive/10 p-4">
@@ -205,18 +232,25 @@ export function DepartureRequests() {
       <ul className="space-y-2">
         {data.map((s) => {
           const waiting = s.departure_requested_at ? Math.max(0, Math.round((Date.now() - new Date(s.departure_requested_at).getTime()) / 60000)) : null;
+          const busy = sending === s.id;
           return (
-          <li key={s.id} className="rounded-lg bg-card p-3 text-sm">
+          <li key={s.id} className="space-y-2 rounded-lg bg-card p-3 text-sm">
             <Link to="/sheets/$sheetId" params={{ sheetId: s.id }} className="block">
               <span className="font-medium text-foreground">Job sheet- {s.jobsheet_number} · {s.clients?.name}</span>
               {waiting != null && <span className="ml-2 rounded-full bg-destructive/15 px-2 py-0.5 text-xs font-medium text-destructive">waiting {waiting} min</span>}
               <span className="block text-muted-foreground">{s.users?.full_name}: {s.departure_note}</span>
+              {s.departure_reply && <span className="block text-xs text-muted-foreground">Last message sent: “{s.departure_reply}”</span>}
             </Link>
-            <div className="mt-2 flex gap-2">
+            <label className="flex items-center gap-2 text-sm text-foreground"><Checkbox checked={!!waive[s.id]} onCheckedChange={(b) => setWaive((w) => ({ ...w, [s.id]: !!b }))} />Waive the 1 h return-visit charge</label>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" disabled={busy} onClick={() => void approve(s.id)}><Check className="mr-1 h-4 w-4" />Approve & notify client</Button>
+              <Button size="sm" variant="outline" disabled={busy} onClick={() => void decline(s.id)}><X className="mr-1 h-4 w-4" />Decline — wait on site</Button>
+            </div>
+            <div className="flex gap-2">
               <Input value={reply[s.id] ?? ""} onChange={(e) => setReply((r) => ({ ...r, [s.id]: e.target.value }))}
                 placeholder='Message the technician, e.g. "Give me a minute to reach out to the client"'
-                className="h-9 text-sm" onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void sendReply(s.id); } }} />
-              <Button size="sm" variant="outline" disabled={sending === s.id || !(reply[s.id] ?? "").trim()} onClick={() => void sendReply(s.id)}>Send</Button>
+                className="h-9 text-sm" onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); sendReply(s.id); } }} />
+              <Button size="sm" variant="outline" disabled={busy || !(reply[s.id] ?? "").trim()} onClick={() => sendReply(s.id)}>Send</Button>
             </div>
           </li>
           );

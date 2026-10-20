@@ -17,9 +17,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export const Route = createFileRoute("/_authenticated/standby")({
   head: () => ({
     meta: [
-      { title: "Standby roster — FieldOps" },
+      { title: "Standby roster — FieldBridge" },
       { name: "description", content: "After-hours standby roster with shift swaps between technicians." },
-      { property: "og:title", content: "Standby roster — FieldOps" },
+      { property: "og:title", content: "Standby roster — FieldBridge" },
       { property: "og:description", content: "Who is on call after hours, week by week." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
