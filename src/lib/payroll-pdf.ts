@@ -17,7 +17,8 @@ export async function downloadPayslip(s: PayslipSnapshot, id: string) {
   line(s.company,"",true);line(global?"Gross Pay Summary":"Payslip - Malta","",true);
   if(s.detail)line(`PE Number: ${s.detail.peNumber || "-"}`);
   line(s.employee);line(`Employee reference: ${s.employeeCode || "-"}`);line(`Tax reference: ${s.taxReference || "-"}`);
-  line(`Period: ${s.from} to ${s.to}`);line(`Payslip reference: ${id}`);line(`Hourly rate: ${euros(s.rate)}`);y-=12;
+  line(`Period: ${s.from} to ${s.to}`);line(`Payslip reference: ${id}`);line(`Currency: ${s.currency??"EUR"}`);line(`Hourly rate: ${euros(s.rate)}`);y-=12;
+  if(global&&s.grossDetail)line(`Employment basis: ${s.grossDetail.config.employment} / ${s.grossDetail.config.weeklyHours} h per week`);
   line("Earnings","",true);
   const fullHours=s.hours.worked+s.hours.leave+s.hours.sickFull;
   line(`Normal full-pay hours (${fullHours.toFixed(2)} h)`,euros(s.totals.normalPay));
