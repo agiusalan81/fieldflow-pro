@@ -323,6 +323,13 @@
       "when": 1792473493023,
       "tag": "0045_guard_platform_values_table_specific_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1792476377222,
+      "tag": "0046_restrict_platform_products_read",
+      "breakpoints": true
     }
   ]
 }
