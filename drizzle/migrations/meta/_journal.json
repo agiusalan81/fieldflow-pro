@@ -344,6 +344,13 @@
       "when": 1792500965666,
       "tag": "0048_fleet_management_history_and_vehicles",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1792507683868,
+      "tag": "0049_company_app_title",
+      "breakpoints": true
     }
   ]
 }

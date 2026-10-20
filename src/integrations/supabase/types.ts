@@ -423,6 +423,7 @@ export type Database = {
       company_settings: {
         Row: {
           after_hours_rate: number
+          app_title: string
           break_enabled: boolean
           break_minutes: number
           breaks_per_shift: number
@@ -467,6 +468,7 @@ export type Database = {
         }
         Insert: {
           after_hours_rate?: number
+          app_title?: string
           break_enabled?: boolean
           break_minutes?: number
           breaks_per_shift?: number
@@ -511,6 +513,7 @@ export type Database = {
         }
         Update: {
           after_hours_rate?: number
+          app_title?: string
           break_enabled?: boolean
           break_minutes?: number
           breaks_per_shift?: number
