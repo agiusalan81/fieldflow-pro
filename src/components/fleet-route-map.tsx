@@ -1,5 +1,5 @@
 import {useEffect,useRef} from 'react';
-import type {Map as LeafletMap} from 'leaflet';
+import type {Map as LeafletMap,LatLngTuple} from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type {FleetPoint} from '@/lib/fleet';
 export default function FleetRouteMap({segments,points}:{segments:FleetPoint[][];points:FleetPoint[]}){
