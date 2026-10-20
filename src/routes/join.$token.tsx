@@ -21,7 +21,7 @@ const invitationQuery = (token: string) => queryOptions({
 });
 
 function InviteFrame({ children }: { children: React.ReactNode }) {
-  return <main className="grid min-h-screen place-items-center bg-background px-6 py-12"><div className="w-full max-w-md space-y-5 rounded-xl border bg-card p-6"><p className="font-display text-2xl text-foreground">FieldOps</p>{children}</div></main>;
+  return <main className="grid min-h-screen place-items-center bg-background px-6 py-12"><div className="w-full max-w-md space-y-5 rounded-xl border bg-card p-6"><p className="font-display text-2xl text-foreground">FieldBridge</p>{children}</div></main>;
 }
 
 function InviteError({ reset }: ErrorComponentProps) {
@@ -45,9 +45,9 @@ export const Route = createFileRoute("/join/$token")({
   notFoundComponent: () => <InviteFrame><p>This invite link is invalid, already used or expired. Ask your manager for a new one.</p></InviteFrame>,
   head: () => ({
     meta: [
-      { title: "Join your team — FieldOps" },
-      { name: "description", content: "Accept your invitation and set up your FieldOps account." },
-      { property: "og:title", content: "Join your team on FieldOps" },
+      { title: "Join your team — FieldBridge" },
+      { name: "description", content: "Accept your invitation and set up your FieldBridge account." },
+      { property: "og:title", content: "Join your team on FieldBridge" },
       { property: "og:description", content: "Accept your invitation and set up your account." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

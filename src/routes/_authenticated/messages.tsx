@@ -14,9 +14,9 @@ export const Route = createFileRoute("/_authenticated/messages")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Team chat — FieldOps" },
+      { title: "Team chat — FieldBridge" },
       { name: "description", content: "Message teammates directly or chat inside a job sheet thread." },
-      { property: "og:title", content: "Team chat — FieldOps" },
+      { property: "og:title", content: "Team chat — FieldBridge" },
       { property: "og:description", content: "Internal team chat." },
     ],
   }),

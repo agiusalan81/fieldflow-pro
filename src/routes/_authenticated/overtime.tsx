@@ -17,9 +17,9 @@ export const Route = createFileRoute("/_authenticated/overtime")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Overtime & standby — FieldOps" },
+      { title: "Overtime & standby — FieldBridge" },
       { name: "description", content: "Log weekend, after-hours and standby call-outs with travel and work hours." },
-      { property: "og:title", content: "Overtime & standby — FieldOps" },
+      { property: "og:title", content: "Overtime & standby — FieldBridge" },
       { property: "og:description", content: "Log call-outs and travel hours." },
     ],
   }),

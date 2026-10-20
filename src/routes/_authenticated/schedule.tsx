@@ -16,9 +16,9 @@ export const Route = createFileRoute("/_authenticated/schedule")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Scheduled works — FieldOps" },
+      { title: "Scheduled works — FieldBridge" },
       { name: "description", content: "Your upcoming assignments in a list or calendar." },
-      { property: "og:title", content: "Scheduled works — FieldOps" },
+      { property: "og:title", content: "Scheduled works — FieldBridge" },
       { property: "og:description", content: "Upcoming assignments." },
     ],
   }),

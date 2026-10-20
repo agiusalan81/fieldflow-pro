@@ -40,9 +40,9 @@ import {
 export const Route = createFileRoute("/_authenticated/sheets/$sheetId")({
   head: () => ({
     meta: [
-      { title: "Job sheet — FieldOps" },
+      { title: "Job sheet — FieldBridge" },
       { name: "description", content: "Fill in a job sheet: asset, time sheet, parts, notes and client sign-off." },
-      { property: "og:title", content: "Job sheet — FieldOps" },
+      { property: "og:title", content: "Job sheet — FieldBridge" },
       { property: "og:description", content: "Job sheet form." },
       { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
     ],

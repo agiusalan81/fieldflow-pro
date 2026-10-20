@@ -19,9 +19,9 @@ export const Route = createFileRoute("/_authenticated/settings")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Personal settings — FieldOps" },
+      { title: "Personal settings — FieldBridge" },
       { name: "description", content: "Your contact details, next of kin and app preferences." },
-      { property: "og:title", content: "Personal settings — FieldOps" },
+      { property: "og:title", content: "Personal settings — FieldBridge" },
       { property: "og:description", content: "Personal settings." },
     ],
   }),

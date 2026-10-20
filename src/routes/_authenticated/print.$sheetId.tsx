@@ -15,9 +15,9 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/_authenticated/print/$sheetId")({
   head: () => ({
     meta: [
-      { title: "Client job sheet — FieldOps" },
+      { title: "Client job sheet — FieldBridge" },
       { name: "description", content: "Printable client copy of a job sheet." },
-      { property: "og:title", content: "Client job sheet — FieldOps" },
+      { property: "og:title", content: "Client job sheet — FieldBridge" },
       { property: "og:description", content: "Printable client copy." },
       { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
     ],

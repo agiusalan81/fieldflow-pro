@@ -16,9 +16,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export const Route = createFileRoute("/_authenticated/pending-works")({
   head: () => ({
     meta: [
-      { title: "Pending works — FieldOps" },
+      { title: "Pending works — FieldBridge" },
       { name: "description", content: "Follow-up repairs flagged by technicians, ready to schedule or estimate." },
-      { property: "og:title", content: "Pending works — FieldOps" },
+      { property: "og:title", content: "Pending works — FieldBridge" },
       { property: "og:description", content: "Follow-up repairs ready to schedule or estimate." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

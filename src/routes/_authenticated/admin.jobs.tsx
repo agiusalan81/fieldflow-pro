@@ -28,9 +28,9 @@ export const Route = createFileRoute("/_authenticated/admin/jobs")({
   validateSearch: (s: Record<string, unknown>): { new?: boolean | undefined } => ({ new: s["new"] === true || s["new"] === "true" ? true : undefined }),
   head: () => ({
     meta: [
-      { title: "Job sheets — FieldOps" },
+      { title: "Job sheets — FieldBridge" },
       { name: "description", content: "Master control of all job sheets: hours, overtime and status." },
-      { property: "og:title", content: "Job sheets — FieldOps" },
+      { property: "og:title", content: "Job sheets — FieldBridge" },
       { property: "og:description", content: "Master job sheet control." },
       { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
     ],

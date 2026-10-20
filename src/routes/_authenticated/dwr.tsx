@@ -16,9 +16,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export const Route = createFileRoute("/_authenticated/dwr")({
   head: () => ({
     meta: [
-      { title: "Daily works reports — FieldOps" },
+      { title: "Daily works reports — FieldBridge" },
       { name: "description", content: "Daily works reports filed at clock-out: sites, job sheets, other work, breaks and overtime." },
-      { property: "og:title", content: "Daily works reports — FieldOps" },
+      { property: "og:title", content: "Daily works reports — FieldBridge" },
       { property: "og:description", content: "Every technician's day, filed at clock-out." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
