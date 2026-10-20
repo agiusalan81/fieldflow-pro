@@ -6,6 +6,7 @@ import { Copy, Link2, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ROLE_LABEL, useProfile, type Role } from "@/lib/profile";
 import { payrollUiVisible } from "@/lib/payroll";
+import { companyProduct, productLink } from "@/lib/platform";
 import { EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +30,8 @@ export function TeamManagement({ role, companyId, meId, tab }: { role: Role; com
       return { users: u.data ?? [], roles: new Map((r.data ?? []).map((x) => [x.user_id, x.role as Role])), invites: i.data ?? [] };
     },
   });
-  const link = (t: string) => `${window.location.origin}/join/${t}`;
+  const { data: product } = useQuery({ queryKey: ["company-app-product"], queryFn: async () => companyProduct((await supabase.from("platform_products").select("slug, active, app_url")).data ?? []) });
+  const link = (t: string) => productLink(product?.app_url ?? "", `/join/${t}`, window.location.origin);
   const copy = async (t: string) => { await navigator.clipboard.writeText(link(t)); toast.success("Invite link copied"); };
   const create = async () => {
     const { data: row, error } = await supabase.from("company_invites").insert({ company_id: companyId, role: inv.role, full_name: inv.full_name || null, email: inv.email || null }).select("token").single();
