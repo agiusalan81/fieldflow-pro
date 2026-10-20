@@ -10,11 +10,11 @@
 <!-- LOVABLE:END -->
 
 ## Project rules
-- Assigned-job travel actions share one component and startJobTravel helper; sheet arrival saves its time log before changing to on-site status. Why: keep Today and Schedule consistent without treating travel as arrival.
+- Travel shares one component/startJobTravel; arrival saves the time log before on-site status. Why: Today/Schedule parity without premature arrival.
 - Public invitation reads use a bounded server-function lookup and Query-backed route loading; timeout covers client middleware too. Why: stalls must not hang invitations.
 - Tenant RLS uses company_id/current_company_id(); never UI company filters. Why: one access boundary.
 - Roles live in protected user_roles; users.role is display-only. View As and permissions.ts only hide UI. Why: prevent escalation.
-- Registration state lives in protected user_roles; central helpers and restrictive tenant policies reject terminated actors, and access changes retain audited history. Why: old sessions cannot bypass revocation.
+- Protected user_roles registration, central helpers and restrictive tenant policies reject terminated actors; audit access changes. Why: revoke old sessions safely.
 - Invite name confirmation uses atomic named redemption; social users never need an app password. Why: save confirmed names without trusting client-supplied company or role.
 - Staff redeem single-use invites through signup triggers. Why: server-side role assignment.
 - User preview is real-superuser-only, actor-scoped, in-memory and removable; root blocks other screens/writes. Why: preserve sessions/audit identity.
@@ -46,4 +46,4 @@
 - Technical library uses private storage/RLS; publishing UI checks real and displayed supervisor/superuser roles; AI reads approved pages as caller. Why: secure access and consistent View As.
 - Leave/profile/clock-out handover rules use tested field-rules.ts plus guard_leave_decision. Why: UI and DB agree.
 
-- Company commercial lookups share the explicit company-app product identity and only fall back to a single active product; signup/referral links use the configured application URL, and product checkboxes use PLAN_FEATURES. Why: avoid cross-product entitlements and keep HQ links aligned with company registration.
+- Commercial lookups share company-app identity; fallback only to one active product. Signup/referral links use app_url; checkboxes use PLAN_FEATURES. Why: product isolation and HQ parity.
