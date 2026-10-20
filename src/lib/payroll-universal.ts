@@ -22,6 +22,6 @@ export function universalPayroll(h: PayrollHours,w: WageSettings,c: EmployeeConf
   return {...hourly,normalPay,gross,net:gross,basis};
 }
 export function grossPayrollCsv(summaries: PayslipSnapshot[]) {
-  const cells=(row:unknown[])=>row.map(v=>`"${String(v).replace(/^[=+@-]/,"'").replace(/"/g,'""')}"`).join(',');
+  const cells=(row:unknown[])=>row.map(v=>`"${String(v).replace(/^[=+@-]/,"'$&").replace(/"/g,'""')}"`).join(',');
   return [cells(['Employee','Employee reference','From','To','Currency','Worked hours','Paid leave hours','Sick full hours','Sick half hours','OT 1.5 hours','OT 2 hours','Basic earnings','Half sick earnings','OT 1.5 earnings','OT 2 earnings','Standby allowance','Other earnings','Gross earnings']),...summaries.map(s=>cells([s.employee,s.employeeCode,s.from,s.to,s.currency??'EUR',s.hours.worked,s.hours.leave,s.hours.sickFull,s.hours.sickHalf,s.hours.ot15,s.hours.ot20,s.totals.normalPay,s.totals.halfPay,s.totals.ot15Pay,s.totals.ot20Pay,s.hours.standbyPay,s.adjustments.bonus,s.totals.gross]))].join('\r\n');
 }
