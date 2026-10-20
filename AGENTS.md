@@ -41,7 +41,7 @@
 - Client reports use immutable DB-built safe snapshots and hashed expiring/revocable links; photo paths stay server-only. Why: no internal disclosure.
 - Sheet safety/checklist snapshots are checked at completion; safety keys share checklist_values. Why: preserve offline saves.
 
-- Shift locations require active-shift RLS and account-scoped consent; stale map points are labelled. Why: no off-shift visibility or fabricated GPS.
+- Clock-in paths share a plate dialog and shift helper; locations use active-shift RLS/account consent and stale labels. Why: plate/consent parity, no off-shift tracking.
 - Receipt PDFs use a separate account/sheet-scoped IndexedDB queue and private storage, never client document projections. Why: preserve offline attachments without exposing accounting files.
 - Technical library uses private storage/RLS; publishing UI checks real and displayed supervisor/superuser roles; AI reads approved pages as caller. Why: secure access and consistent View As.
 - Leave/profile/clock-out handover rules use tested field-rules.ts plus guard_leave_decision. Why: UI and DB agree.
