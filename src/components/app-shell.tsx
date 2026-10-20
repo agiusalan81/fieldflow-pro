@@ -16,7 +16,7 @@ import { useCan, type ModuleKey } from "@/lib/permissions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEffect, useState } from "react";
 import { useCompanyRules, applyTypography } from "@/lib/company";
-import { appearanceVariables, industrySheetLabel } from "@/lib/branding";
+import { appearanceVariables, industrySheetLabel, DEFAULT_APPEARANCE } from "@/lib/branding";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader, SheetDescription } from "@/components/ui/sheet";
@@ -226,7 +226,8 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   const canSwitch = profile && profile.real_role !== "technician" && !preview.active;
 
   const { data: company } = useCompanyRules();
-  const items = baseItems.map(i => ({ ...i, label: industrySheetLabel(company?.appearance.industryPreset ?? "general", i.label) }));
+  const appearance = company?.appearance ?? DEFAULT_APPEARANCE;
+  const items = baseItems.map(i => ({ ...i, label: industrySheetLabel(appearance.industryPreset, i.label) }));
   const appTitle = resolveAppTitle(company?.appTitle, planOn("custom_app_title"));
   useEffect(() => { applyTypography(company?.theme); return () => applyTypography(undefined); }, [company?.theme]);
   useEffect(() => {
@@ -274,7 +275,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   const tab = "flex flex-col items-center gap-1 py-2.5 text-[11px] text-muted-foreground";
 
   return (
-    <div style={company ? appearanceVariables(company.appearance) : undefined} data-icons={company?.appearance.iconPreset} data-company-font={company?.theme.customFontData ? "on" : undefined} className="tenant-experience min-h-screen bg-background lg:grid lg:grid-cols-[240px_minmax(0,1fr)]">
+    <div style={appearanceVariables(appearance)} data-icons={appearance.iconPreset} data-company-font={company?.theme.customFontData ? "on" : undefined} className="tenant-experience min-h-screen bg-background lg:grid lg:grid-cols-[240px_minmax(0,1fr)]">
       {actor && !preview.active && <NotificationSounds profile={actor} />}
       {profile && company && <IdleLogout userId={profile.id} realRole={profile.real_role} timeoutMin={company.idleTimeout} />}
       <aside className="tenant-menu sticky top-0 hidden h-screen flex-col gap-6 border-r border-sidebar-border bg-sidebar py-6 px-3 lg:flex">
@@ -291,7 +292,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" style={company ? appearanceVariables(company.appearance) : undefined} data-icons={company?.appearance.iconPreset} className="tenant-menu tenant-experience flex w-72 flex-col gap-6 bg-sidebar py-6">
+            <SheetContent side="left" style={appearanceVariables(appearance)} data-icons={appearance.iconPreset} className="tenant-menu tenant-experience flex w-72 flex-col gap-6 bg-sidebar py-6">
               <SheetTitle className="sr-only">Menu</SheetTitle>
               {brand}
               <NavLinks items={items} uid={profile?.id} onNavigate={() => setMenuOpen(false)} />
