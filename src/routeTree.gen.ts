@@ -20,6 +20,7 @@ import { Route as AuthenticatedDwrRouteImport } from './routes/_authenticated/dw
 import { Route as AuthenticatedEstimatesRouteImport } from './routes/_authenticated/estimates'
 import { Route as AuthenticatedHoursRouteImport } from './routes/_authenticated/hours'
 import { Route as AuthenticatedLeaveRouteImport } from './routes/_authenticated/leave'
+import { Route as AuthenticatedLiveMapRouteImport } from './routes/_authenticated/live-map'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
 import { Route as AuthenticatedOvertimeRouteImport } from './routes/_authenticated/overtime'
 import { Route as AuthenticatedPayrollRouteImport } from './routes/_authenticated/payroll'
@@ -99,6 +100,11 @@ const AuthenticatedHoursRoute = AuthenticatedHoursRouteImport.update({
 const AuthenticatedLeaveRoute = AuthenticatedLeaveRouteImport.update({
   id: '/leave',
   path: '/leave',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedLiveMapRoute = AuthenticatedLiveMapRouteImport.update({
+  id: '/live-map',
+  path: '/live-map',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedMessagesRoute = AuthenticatedMessagesRouteImport.update({
@@ -255,6 +261,7 @@ export interface FileRoutesByFullPath {
   '/estimates': typeof AuthenticatedEstimatesRoute
   '/hours': typeof AuthenticatedHoursRoute
   '/leave': typeof AuthenticatedLeaveRoute
+  '/live-map': typeof AuthenticatedLiveMapRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/overtime': typeof AuthenticatedOvertimeRoute
   '/payroll': typeof AuthenticatedPayrollRouteWithChildren
@@ -293,6 +300,7 @@ export interface FileRoutesByTo {
   '/estimates': typeof AuthenticatedEstimatesRoute
   '/hours': typeof AuthenticatedHoursRoute
   '/leave': typeof AuthenticatedLeaveRoute
+  '/live-map': typeof AuthenticatedLiveMapRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/overtime': typeof AuthenticatedOvertimeRoute
   '/payroll': typeof AuthenticatedPayrollRouteWithChildren
@@ -333,6 +341,7 @@ export interface FileRoutesById {
   '/_authenticated/estimates': typeof AuthenticatedEstimatesRoute
   '/_authenticated/hours': typeof AuthenticatedHoursRoute
   '/_authenticated/leave': typeof AuthenticatedLeaveRoute
+  '/_authenticated/live-map': typeof AuthenticatedLiveMapRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/overtime': typeof AuthenticatedOvertimeRoute
   '/_authenticated/payroll': typeof AuthenticatedPayrollRouteWithChildren
@@ -373,6 +382,7 @@ export interface FileRouteTypes {
     | '/estimates'
     | '/hours'
     | '/leave'
+    | '/live-map'
     | '/messages'
     | '/overtime'
     | '/payroll'
@@ -411,6 +421,7 @@ export interface FileRouteTypes {
     | '/estimates'
     | '/hours'
     | '/leave'
+    | '/live-map'
     | '/messages'
     | '/overtime'
     | '/payroll'
@@ -450,6 +461,7 @@ export interface FileRouteTypes {
     | '/_authenticated/estimates'
     | '/_authenticated/hours'
     | '/_authenticated/leave'
+    | '/_authenticated/live-map'
     | '/_authenticated/messages'
     | '/_authenticated/overtime'
     | '/_authenticated/payroll'
@@ -565,6 +577,13 @@ declare module '@tanstack/react-router' {
       path: '/leave'
       fullPath: '/leave'
       preLoaderRoute: typeof AuthenticatedLeaveRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/live-map': {
+      id: '/_authenticated/live-map'
+      path: '/live-map'
+      fullPath: '/live-map'
+      preLoaderRoute: typeof AuthenticatedLiveMapRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/messages': {
@@ -775,6 +794,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEstimatesRoute: typeof AuthenticatedEstimatesRoute
   AuthenticatedHoursRoute: typeof AuthenticatedHoursRoute
   AuthenticatedLeaveRoute: typeof AuthenticatedLeaveRoute
+  AuthenticatedLiveMapRoute: typeof AuthenticatedLiveMapRoute
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedOvertimeRoute: typeof AuthenticatedOvertimeRoute
   AuthenticatedPayrollRoute: typeof AuthenticatedPayrollRouteWithChildren
@@ -805,6 +825,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEstimatesRoute: AuthenticatedEstimatesRoute,
   AuthenticatedHoursRoute: AuthenticatedHoursRoute,
   AuthenticatedLeaveRoute: AuthenticatedLeaveRoute,
+  AuthenticatedLiveMapRoute: AuthenticatedLiveMapRoute,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedOvertimeRoute: AuthenticatedOvertimeRoute,
   AuthenticatedPayrollRoute: AuthenticatedPayrollRouteWithChildren,
