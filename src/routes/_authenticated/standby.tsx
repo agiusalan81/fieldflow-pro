@@ -89,7 +89,7 @@ function StandbyPage() {
               <Button size="icon" variant="ghost" aria-label="Next week" onClick={() => setWeek(new Date(week.getFullYear(), week.getMonth(), week.getDate() + 7))}><ChevronRight className="h-4 w-4" /></Button>
             </div>
           </div>
-          {cfg.order.length === 0 ? <EmptyState>No one is on the roster yet.{isOffice(profile) ? " Add technicians in the roster settings below." : " Ask the office to set it up."}</EmptyState> : (
+          {cfg.order.length === 0 ? <EmptyState>No one is on the roster yet.{isOffice(profile) || profile.role === "supervisor" ? " Add technicians in the roster settings below." : " Ask the office to set it up."}</EmptyState> : (
             <div className="grid gap-2 sm:grid-cols-7">
               {days.map((d) => {
                 const ids = standbyFor(d, cfg, swaps);
@@ -127,7 +127,7 @@ function StandbyPage() {
           </section>
         )}
 
-        {isOffice(profile) && (usersLoading ? <p className="text-sm text-muted-foreground">Loading registered technicians…</p> : usersError ? <p className="text-sm text-destructive">Unable to load registered technicians. Try again before saving the roster.</p> : <RosterSettings cfg={cfg} techs={techs} registeredTechnicians={users.filter((u) => u.role === "technician").length} companyId={profile.company_id} />)}
+        {(isOffice(profile) || profile.role === "supervisor") && (usersLoading ? <p className="text-sm text-muted-foreground">Loading registered technicians…</p> : usersError ? <p className="text-sm text-destructive">Unable to load registered technicians. Try again before saving the roster.</p> : <RosterSettings cfg={cfg} techs={techs} registeredTechnicians={users.filter((u) => u.role === "technician").length} companyId={profile.company_id} />)}
       </div>
 
       <Dialog open={!!ask} onOpenChange={(o) => !o && setAsk(null)}>
@@ -174,7 +174,8 @@ function RosterSettings({ cfg, techs, registeredTechnicians, companyId }: { cfg:
       toast.error(registeredTechnicians === 0 ? "Register a technician before setting up the roster." : `Only ${registeredTechnicians} technicians are registered. Reduce technicians per shift.`);
       return;
     }
-    const { error } = await supabase.from("company_settings").upsert({ company_id: companyId, standby_start: f.start, standby_rotation_days: f.rotationDays, standby_per_shift: f.perShift, standby_order: f.order });
+    void companyId;
+    const { error } = await supabase.rpc("save_standby_roster", { _start: f.start, _rotation_days: f.rotationDays, _per_shift: f.perShift, _order: f.order });
     if (error) { toast.error(error.message); return; }
     toast.success("Roster saved");
     qc.invalidateQueries({ queryKey: ["company-settings"] });
