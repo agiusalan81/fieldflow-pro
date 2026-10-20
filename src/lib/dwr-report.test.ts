@@ -11,10 +11,10 @@ beforeEach(() => {
     let inserting = false;
     const chain: Record<string, any> = {};
     for (const name of ["select", "eq", "order"]) chain[name] = () => chain;
-    chain.insert = (row: Record<string, unknown>) => { inserting = true; state.inserts++; expect(row.worked_hours).toBe(0); expect(row.ot15_hours).toBe(0); return chain; };
-    chain.maybeSingle = async () => ({ data: table === "daily_work_reports" && state.existing ? { id: "canonical" } : null, error: null });
-    chain.single = async () => inserting && state.conflict ? { data: null, error: { code: "23505" } } : { data: { id: "canonical" }, error: null };
-    chain.then = (resolve: (v: unknown) => unknown) => Promise.resolve({ data: [], error: null }).then(resolve);
+    chain["insert"] = (row: Record<string, unknown>) => { inserting = true; state.inserts++; expect(row["worked_hours"]).toBe(0); expect(row["ot15_hours"]).toBe(0); return chain; };
+    chain["maybeSingle"] = async () => ({ data: table === "daily_work_reports" && state.existing ? { id: "canonical" } : null, error: null });
+    chain["single"] = async () => inserting && state.conflict ? { data: null, error: { code: "23505" } } : { data: { id: "canonical" }, error: null };
+    chain["then"] = (resolve: (v: unknown) => unknown) => Promise.resolve({ data: [], error: null }).then(resolve);
     return chain;
   });
 });
