@@ -135,3 +135,12 @@
 
 ## Open defect — reported failure on the user's phone (19 Oct 2026)
 - [ ] Job sheet Camera / Gallery and client signature box reported not working on the user's phone (View as Technician). Simulated iPhone + Android on a real draft sheet (#007623): pickers open, photo added, signature draws — not reproduced. Blocked on: which app/browser and link the user tested in, and what happens on tap.
+
+## Live map & tracking batch (20 Oct 2026)
+- [x] Live team map page in supervisor/admin menu + quick action + dashboard button
+- [x] Colour-coded pins (technician / supervisor) showing initials and vehicle plate
+- [x] Company setting for GPS update interval
+- [x] Location sharing notice removed from technician screen
+- [x] Team invite links use the FieldBridge domain
+- [x] "Edit with Lovable" badge hidden on the published site
+- [ ] Mobile site switching to desktop layout after login — needs the user's phone/browser details to reproduce
