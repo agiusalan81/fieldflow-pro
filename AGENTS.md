@@ -34,7 +34,7 @@
 - Client notices use client-notices.functions.ts and tested client-notices.ts; guard_departure prevents self-approval. Why: accountability.
 - job_sheets embeds use users!job_sheets_assigned_technician_id_fkey. Why: two users FKs.
 - Signing batches are creator-owned, authenticated and finalized transactionally; store delivery before sending with shared PDF builder. Why: no partial loss or duplicate email.
-- Offline drafts use account-scoped IndexedDB, transactional optimistic RPC and guarded PWA registration. Why: no cross-account/stale writes.
+- Offline: account-scoped IndexedDB/optimistic RPC/PWA; confirmed discard removes only that account/sheet draft, photos/cache atomically. Why: preserve inaccessible drafts.
 - Published document masters are immutable; attachments/agreements/sheets snapshot definitions. Why: preserve history.
 - Platform authority is protected separately in user_roles; HQ uses a narrow directory RPC, not tenant reads. Why: isolate companies.
 - Plan access: DB write guards + plan-features.ts menu gating; legacy stays on. RFQ rules in lift-rfq.ts. Why: safe rollout.
@@ -46,4 +46,4 @@
 - Technical library uses private storage/RLS; publishing UI checks real and displayed supervisor/superuser roles; AI reads approved pages as caller. Why: secure access and consistent View As.
 - Leave/profile/clock-out handover rules use tested field-rules.ts plus guard_leave_decision. Why: UI and DB agree.
 
-- Commercial lookups share company-app identity; fallback only to one active product. Signup/referral links use app_url; checkboxes use PLAN_FEATURES. Why: product isolation and HQ parity.
+- Commercial identity falls back to one active product; links use app_url, modules PLAN_FEATURES. HQ uses NativeSelect and Cancel. Why: isolation; avoid popup locks.
