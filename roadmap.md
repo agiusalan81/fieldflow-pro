@@ -154,7 +154,7 @@
 - [x] HQ button hidden from tenant top bar (private access by typing /platform)
 - [x] Default app title FieldBridge; custom app title via HQ feature "custom_app_title" (switch off for Basic in HQ)
 - [x] Editable company name in Company settings → Profile & branding
-- [ ] Phase 1: HQ 4 tiers (Basic/Plus/Pro/Enterprise) + 4 packs (Bronze/Silver/Gold/Diamond), feature toggle matrix in Plans & Packs, per-company pack chips
-- [ ] Phase 1 verification: owner-authorized composition/pack changes persist; existing subscriptions and agreed prices preserved; automated checkout remains separate
+- [x] Phase 1: HQ 4 draft tiers (Basic/Plus/Pro/Enterprise) + 4 draft packs (Bronze/Silver/Gold/Diamond), feature toggle matrix in Plans & Packs, per-company pack switches
+- [x] Phase 1 verification: HQ owner saved a matrix switch and reloaded; temporary external-customer pack assignment/removal persisted with 7 seats and agreed price 123 unchanged; fixtures removed and Bronze restored to draft. SQL catalog regression and 20 unit tests passed. Automated checkout remains separate; prices await owner decisions.
 - [ ] Phase 2: International payroll — payroll_mode (universal_gross / statutory_malta), universal gross engine, Gross Pay Summary PDF, CSV export
 - [ ] Phase 3: Tenant branding & PDF canvas (fonts, backgrounds, field colours) with locked "Available in Pro / Bronze Pack" badges
