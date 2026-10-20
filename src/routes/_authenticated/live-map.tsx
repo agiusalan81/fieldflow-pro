@@ -1,0 +1,27 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { AppShell, EmptyState } from "@/components/app-shell";
+import { LiveLocations } from "@/components/live-locations";
+import { useProfile } from "@/lib/profile";
+
+export const Route = createFileRoute("/_authenticated/live-map")({
+  head: () => ({
+    meta: [
+      { title: "Live team map — FieldBridge" },
+      { name: "description", content: "See where clocked-in technicians and supervisors are right now." },
+      { property: "og:title", content: "Live team map — FieldBridge" },
+      { property: "og:description", content: "Live positions of your clocked-in team." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
+  component: LiveMapPage,
+});
+
+function LiveMapPage() {
+  const { data: profile } = useProfile();
+  return (
+    <AppShell title="Live team map">
+      {profile?.role === "technician" ? <EmptyState>The live map is for supervisors and office staff.</EmptyState> : <LiveLocations tall />}
+    </AppShell>
+  );
+}
