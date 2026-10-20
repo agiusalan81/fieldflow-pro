@@ -288,7 +288,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
             <HelpButton />
             {actor && !preview.active && actor.role === actor.real_role && <WelcomeGuide profile={actor} allowed={items.map(i=>i.to)} />}
             <UserPreviewControl />
-            {platformOwner && !preview.active && path !== "/platform" && <Button asChild size="sm" variant="ghost"><Link to="/platform"><Building2 className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Platform HQ</span></Link></Button>}
+            {platformOwner && !preview.active && path !== "/platform" && <Button asChild size="sm" variant="ghost"><Link to="/platform"><Building2 className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">ApexPlatform HQ</span></Link></Button>}
             {canSwitch && (
               <Select value={profile.role} onValueChange={(v) => { setViewAs(v === profile.real_role ? null : (v as ViewAs)); navigate({ to: "/dashboard" }); }}>
                 <SelectTrigger className="h-9 w-[150px] border-dashed text-xs" aria-label="View As mode"><span className="hidden text-muted-foreground xl:inline">View as:&nbsp;</span><SelectValue /></SelectTrigger>
