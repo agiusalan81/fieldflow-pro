@@ -684,6 +684,7 @@ export type Database = {
         Row: {
           break_minutes: number
           company_id: string
+          correction_original: Json | null
           created_at: string
           id: string
           ot15_hours: number
@@ -695,6 +696,7 @@ export type Database = {
           shift_id: string | null
           shift_start: string
           standard_hours: number
+          superseded_by: string | null
           user_id: string
           vehicle_reg: string | null
           worked_hours: number
@@ -702,6 +704,7 @@ export type Database = {
         Insert: {
           break_minutes?: number
           company_id: string
+          correction_original?: Json | null
           created_at?: string
           id?: string
           ot15_hours?: number
@@ -713,6 +716,7 @@ export type Database = {
           shift_id?: string | null
           shift_start: string
           standard_hours?: number
+          superseded_by?: string | null
           user_id: string
           vehicle_reg?: string | null
           worked_hours?: number
@@ -720,6 +724,7 @@ export type Database = {
         Update: {
           break_minutes?: number
           company_id?: string
+          correction_original?: Json | null
           created_at?: string
           id?: string
           ot15_hours?: number
@@ -731,6 +736,7 @@ export type Database = {
           shift_id?: string | null
           shift_start?: string
           standard_hours?: number
+          superseded_by?: string | null
           user_id?: string
           vehicle_reg?: string | null
           worked_hours?: number
@@ -748,6 +754,13 @@ export type Database = {
             columns: ["shift_id"]
             isOneToOne: false
             referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_work_reports_superseded_by_fkey"
+            columns: ["superseded_by"]
+            isOneToOne: false
+            referencedRelation: "daily_work_reports"
             referencedColumns: ["id"]
           },
           {
@@ -1501,6 +1514,7 @@ export type Database = {
           priority: string
           problem_summary: string | null
           scheduled_date: string
+          secondary_technician_id: string | null
           site_id: string | null
           window_end: string | null
           window_start: string | null
@@ -1520,6 +1534,7 @@ export type Database = {
           priority?: string
           problem_summary?: string | null
           scheduled_date?: string
+          secondary_technician_id?: string | null
           site_id?: string | null
           window_end?: string | null
           window_start?: string | null
@@ -1539,6 +1554,7 @@ export type Database = {
           priority?: string
           problem_summary?: string | null
           scheduled_date?: string
+          secondary_technician_id?: string | null
           site_id?: string | null
           window_end?: string | null
           window_start?: string | null
@@ -1570,6 +1586,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_secondary_technician_id_fkey"
+            columns: ["secondary_technician_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
