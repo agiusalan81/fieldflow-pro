@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { pendingDrafts, restoreOfflineCache, persistOfflineCache, syncPending, type DraftSnapshot } from "@/lib/offline";
 import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
+import { DiscardOfflineDraft } from "@/components/discard-offline-draft";
 export function OfflineStatus() {
   const qc = useQueryClient();
   const [online, setOnline] = useState(true); const [drafts, setDrafts] = useState<DraftSnapshot[]>([]); const [userId, setUserId] = useState<string | null>(null);
@@ -35,6 +36,6 @@ export function OfflineStatus() {
     {!online && <span className="inline-flex items-center gap-2"><WifiOff className="h-4 w-4" />Offline — save changes on this device</span>}
     {drafts.length > 0 && <span className="ml-3">{drafts.length} draft{drafts.length === 1 ? "" : "s"} awaiting sync</span>}
     {online && userId && <Button size="sm" variant="ghost" onClick={() => syncPending(userId, qc)}><RefreshCw className="mr-1 h-4 w-4" />Sync</Button>}
-    {drafts.filter((d) => d.error).map((d) => <p key={d.key} className="text-destructive">{d.error} <Link className="underline" to="/sheets/$sheetId" params={{ sheetId: d.sheetId }}>Review draft</Link></p>)}
+    {drafts.map((d) => <div key={d.key} className="flex flex-wrap items-center justify-center gap-2"><span className={d.error ? "text-destructive" : "text-muted-foreground"}>{d.error}</span><Link className="underline" to="/sheets/$sheetId" params={{ sheetId: d.sheetId }}>Review draft</Link><DiscardOfflineDraft userId={d.userId} sheetId={d.sheetId} /></div>)}
   </aside>;
 }

@@ -1,4 +1,5 @@
 import { JobReceipts } from "@/components/job-receipts";
+import { DiscardOfflineDraft } from "@/components/discard-offline-draft";
 import { pendingReceipts, syncReceipts } from "@/lib/receipt-queue";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useRef } from "react";
@@ -201,7 +202,7 @@ function SheetForm() {
     return () => clearTimeout(timer);
   }, [profile, data, form, logs, parts, photos, checks, localReady, conflict, sheetId]);
 
-  if (data && !data.sheet) return <AppShell title="Job sheet"><p className="text-muted-foreground">This job sheet doesn't exist or isn't yours.</p></AppShell>;
+  if (data && !data.sheet) return <AppShell title="Job sheet"><div className="space-y-4"><p className="text-muted-foreground">This job sheet doesn't exist or isn't yours.</p>{profile && <DiscardOfflineDraft userId={profile.id} sheetId={sheetId} />}</div></AppShell>;
   if (!data?.sheet || !form || !profile) return <AppShell title="Job sheet"><p className="text-muted-foreground">Loading…</p></AppShell>;
 
   const sheet = data.sheet;
