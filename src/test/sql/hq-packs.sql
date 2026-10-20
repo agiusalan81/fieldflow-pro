@@ -10,7 +10,8 @@ BEGIN
  SELECT id INTO pro FROM public.platform_catalog WHERE product_id=p AND name='Pro' AND kind='plan';
  SELECT id,modules INTO bronze,pack_modules FROM public.platform_catalog WHERE product_id=p AND name='Bronze' AND kind='pack';
  INSERT INTO public.companies(name) VALUES('HQ transactional verification') RETURNING id INTO c;
- INSERT INTO public.platform_subscriptions(product_id,company_id,status,plan_id,agreed_price,seats) VALUES(p,c,'active',basic,123,7) RETURNING id INTO s;
+ UPDATE public.platform_subscriptions SET status='active',plan_id=basic,agreed_price=123,seats=7 WHERE product_id=p AND company_id=c RETURNING id INTO s;
+ IF s IS NULL THEN RAISE EXCEPTION 'Company trial subscription missing'; END IF;
  IF public.company_module_access(c,'custom_app_title') THEN RAISE EXCEPTION 'Basic must retain FieldBridge title'; END IF;
  IF NOT public.company_module_access(c,'branding_basic') THEN RAISE EXCEPTION 'Basic branding required'; END IF;
  UPDATE public.platform_subscriptions SET plan_id=plus WHERE id=s;
