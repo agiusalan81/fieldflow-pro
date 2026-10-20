@@ -47,6 +47,7 @@ import { Route as AuthenticatedPrintSheetIdRouteImport } from './routes/_authent
 import { Route as AuthenticatedSheetsIndexRouteImport } from './routes/_authenticated/sheets.index'
 import { Route as AuthenticatedSheetsSheetIdRouteImport } from './routes/_authenticated/sheets.$sheetId'
 import { Route as AuthenticatedSheetsNewRouteImport } from './routes/_authenticated/sheets.new'
+import { Route as AuthenticatedTeamInvitesRouteImport } from './routes/_authenticated/team.invites'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -249,6 +250,12 @@ const AuthenticatedSheetsNewRoute = AuthenticatedSheetsNewRouteImport.update({
   path: '/sheets/new',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTeamInvitesRoute =
+  AuthenticatedTeamInvitesRouteImport.update({
+    id: '/invites',
+    path: '/invites',
+    getParentRoute: () => AuthenticatedTeamRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -271,7 +278,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/standby': typeof AuthenticatedStandbyRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
-  '/team': typeof AuthenticatedTeamRoute
+  '/team': typeof AuthenticatedTeamRouteWithChildren
   '/technical-library': typeof AuthenticatedTechnicalLibraryRoute
   '/join/$token': typeof JoinTokenRoute
   '/referral/$code': typeof ReferralCodeRoute
@@ -287,6 +294,7 @@ export interface FileRoutesByFullPath {
   '/print/$sheetId': typeof AuthenticatedPrintSheetIdRoute
   '/sheets/$sheetId': typeof AuthenticatedSheetsSheetIdRoute
   '/sheets/new': typeof AuthenticatedSheetsNewRoute
+  '/team/invites': typeof AuthenticatedTeamInvitesRoute
   '/sheets/': typeof AuthenticatedSheetsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -310,7 +318,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/standby': typeof AuthenticatedStandbyRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
-  '/team': typeof AuthenticatedTeamRoute
+  '/team': typeof AuthenticatedTeamRouteWithChildren
   '/technical-library': typeof AuthenticatedTechnicalLibraryRoute
   '/join/$token': typeof JoinTokenRoute
   '/referral/$code': typeof ReferralCodeRoute
@@ -326,6 +334,7 @@ export interface FileRoutesByTo {
   '/print/$sheetId': typeof AuthenticatedPrintSheetIdRoute
   '/sheets/$sheetId': typeof AuthenticatedSheetsSheetIdRoute
   '/sheets/new': typeof AuthenticatedSheetsNewRoute
+  '/team/invites': typeof AuthenticatedTeamInvitesRoute
   '/sheets': typeof AuthenticatedSheetsIndexRoute
 }
 export interface FileRoutesById {
@@ -351,7 +360,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/standby': typeof AuthenticatedStandbyRoute
   '/_authenticated/subscription': typeof AuthenticatedSubscriptionRoute
-  '/_authenticated/team': typeof AuthenticatedTeamRoute
+  '/_authenticated/team': typeof AuthenticatedTeamRouteWithChildren
   '/_authenticated/technical-library': typeof AuthenticatedTechnicalLibraryRoute
   '/join/$token': typeof JoinTokenRoute
   '/referral/$code': typeof ReferralCodeRoute
@@ -367,6 +376,7 @@ export interface FileRoutesById {
   '/_authenticated/print/$sheetId': typeof AuthenticatedPrintSheetIdRoute
   '/_authenticated/sheets/$sheetId': typeof AuthenticatedSheetsSheetIdRoute
   '/_authenticated/sheets/new': typeof AuthenticatedSheetsNewRoute
+  '/_authenticated/team/invites': typeof AuthenticatedTeamInvitesRoute
   '/_authenticated/sheets/': typeof AuthenticatedSheetsIndexRoute
 }
 export interface FileRouteTypes {
@@ -408,6 +418,7 @@ export interface FileRouteTypes {
     | '/print/$sheetId'
     | '/sheets/$sheetId'
     | '/sheets/new'
+    | '/team/invites'
     | '/sheets/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -447,6 +458,7 @@ export interface FileRouteTypes {
     | '/print/$sheetId'
     | '/sheets/$sheetId'
     | '/sheets/new'
+    | '/team/invites'
     | '/sheets'
   id:
     | '__root__'
@@ -487,6 +499,7 @@ export interface FileRouteTypes {
     | '/_authenticated/print/$sheetId'
     | '/_authenticated/sheets/$sheetId'
     | '/_authenticated/sheets/new'
+    | '/_authenticated/team/invites'
     | '/_authenticated/sheets/'
   fileRoutesById: FileRoutesById
 }
@@ -768,6 +781,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSheetsNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/team/invites': {
+      id: '/_authenticated/team/invites'
+      path: '/invites'
+      fullPath: '/team/invites'
+      preLoaderRoute: typeof AuthenticatedTeamInvitesRouteImport
+      parentRoute: typeof AuthenticatedTeamRoute
+    }
   }
 }
 
@@ -785,6 +805,17 @@ const AuthenticatedPayrollRouteChildren: AuthenticatedPayrollRouteChildren = {
 
 const AuthenticatedPayrollRouteWithChildren =
   AuthenticatedPayrollRoute._addFileChildren(AuthenticatedPayrollRouteChildren)
+
+interface AuthenticatedTeamRouteChildren {
+  AuthenticatedTeamInvitesRoute: typeof AuthenticatedTeamInvitesRoute
+}
+
+const AuthenticatedTeamRouteChildren: AuthenticatedTeamRouteChildren = {
+  AuthenticatedTeamInvitesRoute: AuthenticatedTeamInvitesRoute,
+}
+
+const AuthenticatedTeamRouteWithChildren =
+  AuthenticatedTeamRoute._addFileChildren(AuthenticatedTeamRouteChildren)
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCompanyRoute: typeof AuthenticatedCompanyRoute
@@ -804,7 +835,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedStandbyRoute: typeof AuthenticatedStandbyRoute
   AuthenticatedSubscriptionRoute: typeof AuthenticatedSubscriptionRoute
-  AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
+  AuthenticatedTeamRoute: typeof AuthenticatedTeamRouteWithChildren
   AuthenticatedTechnicalLibraryRoute: typeof AuthenticatedTechnicalLibraryRoute
   AuthenticatedAdminEntitiesRoute: typeof AuthenticatedAdminEntitiesRoute
   AuthenticatedAdminFieldsRoute: typeof AuthenticatedAdminFieldsRoute
@@ -835,7 +866,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedStandbyRoute: AuthenticatedStandbyRoute,
   AuthenticatedSubscriptionRoute: AuthenticatedSubscriptionRoute,
-  AuthenticatedTeamRoute: AuthenticatedTeamRoute,
+  AuthenticatedTeamRoute: AuthenticatedTeamRouteWithChildren,
   AuthenticatedTechnicalLibraryRoute: AuthenticatedTechnicalLibraryRoute,
   AuthenticatedAdminEntitiesRoute: AuthenticatedAdminEntitiesRoute,
   AuthenticatedAdminFieldsRoute: AuthenticatedAdminFieldsRoute,
