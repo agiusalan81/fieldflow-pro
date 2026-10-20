@@ -977,6 +977,92 @@ export type Database = {
           },
         ]
       }
+      fleet_location_points: {
+        Row: {
+          accuracy: number
+          company_id: string
+          id: string
+          latitude: number
+          longitude: number
+          plate: string | null
+          recorded_at: string
+          shift_id: string
+          speed: number | null
+          user_id: string
+        }
+        Insert: {
+          accuracy: number
+          company_id: string
+          id?: string
+          latitude: number
+          longitude: number
+          plate?: string | null
+          recorded_at?: string
+          shift_id: string
+          speed?: number | null
+          user_id: string
+        }
+        Update: {
+          accuracy?: number
+          company_id?: string
+          id?: string
+          latitude?: number
+          longitude?: number
+          plate?: string | null
+          recorded_at?: string
+          shift_id?: string
+          speed?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fleet_location_points_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fleet_location_points_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fleet_vehicles: {
+        Row: {
+          company_id: string
+          fuel_price_per_litre: number
+          id: string
+          litres_per_100km: number
+          plate: string
+        }
+        Insert: {
+          company_id: string
+          fuel_price_per_litre?: number
+          id?: string
+          litres_per_100km?: number
+          plate: string
+        }
+        Update: {
+          company_id?: string
+          fuel_price_per_litre?: number
+          id?: string
+          litres_per_100km?: number
+          plate?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fleet_vehicles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       internal_messages: {
         Row: {
           company_id: string
@@ -3196,6 +3282,8 @@ export type Database = {
           travel: number
         }[]
       }
+      fleet_day: { Args: { _date: string; _user: string }; Returns: Json }
+      fleet_vehicle_list: { Args: never; Returns: Json }
       get_invite: {
         Args: { _token: string }
         Returns: {
@@ -3268,6 +3356,10 @@ export type Database = {
           _wage: Json
           _year: number
         }
+        Returns: undefined
+      }
+      save_fleet_vehicle: {
+        Args: { _litres: number; _plate: string; _price: number }
         Returns: undefined
       }
       save_sheet_snapshot: {
