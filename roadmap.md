@@ -155,5 +155,6 @@
 - [x] Default app title FieldBridge; custom app title via HQ feature "custom_app_title" (switch off for Basic in HQ)
 - [x] Editable company name in Company settings → Profile & branding
 - [ ] Phase 1: HQ 4 tiers (Basic/Plus/Pro/Enterprise) + 4 packs (Bronze/Silver/Gold/Diamond), feature toggle matrix in Plans & Packs, per-company pack chips
+- [ ] Phase 1 verification: owner-authorized composition/pack changes persist; existing subscriptions and agreed prices preserved; automated checkout remains separate
 - [ ] Phase 2: International payroll — payroll_mode (universal_gross / statutory_malta), universal gross engine, Gross Pay Summary PDF, CSV export
 - [ ] Phase 3: Tenant branding & PDF canvas (fonts, backgrounds, field colours) with locked "Available in Pro / Bronze Pack" badges
