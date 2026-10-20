@@ -23,8 +23,8 @@
 - Sign-off/leave/overtime/checklist/renewals use tested jobsheets.ts. Why: shared rules.
 - DWR/breaks/search/standby/clock-out use tested dwr.ts and dwr-report.ts; held shifts and assisting initials share one ledger. Why: retain callout hours.
 - Overtime site details use captured DWR intervals/rules; older reports show associated sites only. Why: never invent allocation.
-- Tenant typography uses company_settings.theme via applyTypography/AppShell CSS variables; locale uses locale.ts. Why: tenant-configured presentation.
-- Documents/styles/labels/terms/presets use company_settings and documents.ts across forms/PDFs. Why: consistent client wording.
+- Tenant typography uses applyTypography/AppShell variables; locale uses locale.ts. Why: company presentation.
+- Branding shares theme/template JSON, private tenant files and PDF/font helpers; DB/HQ locks preserve saved values. Why: secure consistent app/PDF customisation.
 - Service sheets share a typed safe projection/renderers for preview, print and email. Why: client-safe consistency.
 - Pending works close via close_pending_on_followup trigger; sheet creation requires clock-in or standby. Why: enforce without UI.
 - Billing uses billing.ts precedence: estimate > contract > client > company default. Integration config uses integrations.ts; job_sheets_guard_billing allows only office review changes. Why: uniform protected prices.
