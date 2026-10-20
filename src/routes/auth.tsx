@@ -14,9 +14,9 @@ export const Route = createFileRoute("/auth")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Sign in or create your company — FieldOps" },
+      { title: "Sign in or create your company — FieldBridge" },
       { name: "description", content: "Create your field service company workspace or sign in." },
-      { property: "og:title", content: "Sign in — FieldOps" },
+      { property: "og:title", content: "Sign in — FieldBridge" },
       { property: "og:description", content: "Create your field service company workspace or sign in." },
     ],
   }),
@@ -32,6 +32,7 @@ function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
   useEffect(() => {
+    setMode(new URLSearchParams(window.location.search).get("mode") === "signup" ? "signup" : "signin");
     setIdle(new URLSearchParams(window.location.search).get("reason") === "idle");
     const saved = window.localStorage.getItem("fieldflow_saved_email");
     if (saved) {
@@ -101,7 +102,7 @@ function AuthPage() {
   return (
     <main className="grid min-h-screen place-items-center bg-background px-6 py-12">
       <div className="w-full max-w-md">
-        <p className="font-display text-2xl text-foreground">FieldOps</p>
+        <p className="font-display text-2xl text-foreground">FieldBridge</p>
         <h1 className="mt-6 font-display text-4xl leading-tight text-foreground">
           {mode === "signup" ? "Set up your company" : "Welcome back"}
         </h1>
