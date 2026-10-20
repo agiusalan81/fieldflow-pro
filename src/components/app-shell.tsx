@@ -1,4 +1,5 @@
-import { usePlanFeatures } from "@/lib/plan-features";
+import { usePlanFeatures, resolveAppTitle } from "@/lib/plan-features";
+import { DepartureAlerts } from "@/components/client-notices";
 import { LocationSharing } from "@/components/location-sharing";
 import { PayrollSetupAlert } from "@/components/payroll-setup-alert";
 import { syncReceipts } from "@/lib/receipt-queue";
@@ -219,12 +220,12 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   const can = useCan(profile);
   const planOn = usePlanFeatures(!!actor);
   const office = isOffice(profile);
-  const { data: platformOwner } = useQuery({ queryKey: ["platform-owner"], enabled: !!actor && !preview.active, queryFn: async () => (await supabase.rpc("is_platform_owner")).data === true });
   const extraNav: NavItem[] = [];
   const items = [...(profile?.role === "supervisor" ? supervisorNav : manager ? adminNav : techNav), ...extraNav].filter((i) => (i.to !== "/subscription" || profile?.role === "superuser") && (i.to !== "/company" || office) && (!i.office || office) && (!i.module || can(i.module) || (i.to === "/company" && office)) && (!i.feature || planOn(i.feature)));
   const canSwitch = profile && profile.real_role !== "technician" && !preview.active;
 
   const { data: company } = useCompanyRules();
+  const appTitle = resolveAppTitle(company?.appTitle, planOn("custom_app_title"));
   useEffect(() => { applyTypography(company?.theme); }, [company?.theme]);
   if (company) setTenantLocale(company.locale ?? {});
   useEffect(() => {
@@ -246,7 +247,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
     <div className="flex items-center gap-3 px-3">
       {company?.logo && <img src={company.logo} alt="" className="h-10 w-10 shrink-0 rounded-md bg-card object-contain p-0.5" />}
       <div className="min-w-0">
-        <p className="font-display text-xl text-sidebar-foreground">FieldOps</p>
+        <p className="truncate font-display text-xl text-sidebar-foreground">{appTitle}</p>
         <p className="truncate text-xs text-sidebar-foreground/60">{profile?.companies?.name ?? "—"}</p>
       </div>
     </div>
@@ -294,7 +295,6 @@ export function AppShell({ title, actions, children }: { title: string; actions?
             <HelpButton />
             {actor && !preview.active && actor.role === actor.real_role && <WelcomeGuide profile={actor} allowed={items.map(i=>i.to)} />}
             <UserPreviewControl />
-            {platformOwner && !preview.active && path !== "/platform" && <Button asChild size="sm" variant="ghost"><Link to="/platform"><Building2 className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">ApexPlatform HQ</span></Link></Button>}
             {canSwitch && (
               <Select value={profile.role} onValueChange={(v) => { setViewAs(v === profile.real_role ? null : (v as ViewAs)); navigate({ to: "/dashboard" }); }}>
                 <SelectTrigger className="h-9 w-[150px] border-dashed text-xs" aria-label="View As mode"><span className="hidden text-muted-foreground xl:inline">View as:&nbsp;</span><SelectValue /></SelectTrigger>
@@ -315,6 +315,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
         <UserPreviewBanner />
         {actor && !preview.active && <ProfileCompletionGate profile={actor} />}
         <main className="flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
+          {actor && !preview.active && <DepartureAlerts userId={actor.id} />}
           {profile && path === "/dashboard" && !preview.active && <QuickActions items={items} uid={profile.id} role={profile.role} manager={manager} />}
           {!preview.active && <LocationSharing />}
           {path === "/dashboard" && !preview.active && office && <PayrollSetupAlert />}
