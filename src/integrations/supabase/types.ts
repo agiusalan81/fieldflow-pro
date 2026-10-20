@@ -321,6 +321,7 @@ export type Database = {
       }
       company_documents: {
         Row: {
+          audience: string[]
           category: string
           company_id: string
           created_at: string
@@ -332,6 +333,7 @@ export type Database = {
           uploaded_by: string | null
         }
         Insert: {
+          audience?: string[]
           category: string
           company_id: string
           created_at?: string
@@ -343,6 +345,7 @@ export type Database = {
           uploaded_by?: string | null
         }
         Update: {
+          audience?: string[]
           category?: string
           company_id?: string
           created_at?: string
@@ -817,6 +820,7 @@ export type Database = {
       }
       document_masters: {
         Row: {
+          audience: string[]
           body: string
           cloned_from: string | null
           company_id: string
@@ -827,12 +831,14 @@ export type Database = {
           kind: string
           name: string
           revision: number
+          sections: Json
           source_document_id: string | null
           state: string
           trade: string
           updated_at: string
         }
         Insert: {
+          audience?: string[]
           body?: string
           cloned_from?: string | null
           company_id: string
@@ -843,12 +849,14 @@ export type Database = {
           kind?: string
           name: string
           revision?: number
+          sections?: Json
           source_document_id?: string | null
           state?: string
           trade?: string
           updated_at?: string
         }
         Update: {
+          audience?: string[]
           body?: string
           cloned_from?: string | null
           company_id?: string
@@ -859,6 +867,7 @@ export type Database = {
           kind?: string
           name?: string
           revision?: number
+          sections?: Json
           source_document_id?: string | null
           state?: string
           trade?: string
