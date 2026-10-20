@@ -7,7 +7,7 @@ import { discardLocalDraft, saveLocalDraft, getLocalDraft, saveLocalPhoto, local
 describe("explicit offline discard", () => {
   it("removes only the selected account's sheet draft, photos and sheet cache", async () => {
     const make = (userId: string, sheetId: string) => ({ key: draftKey(userId, sheetId), userId, sheetId, expected: "v1", form: {}, logs: [], parts: [], savedAt: "2026-10-20", error: "Job sheet unavailable" });
-    for (const [user, sheet] of [["alice", "deleted"], ["alice", "other"], ["bob", "deleted"]]) {
+    for (const [user, sheet] of [["alice", "deleted"], ["alice", "other"], ["bob", "deleted"]] as const) {
       await saveLocalDraft(make(user, sheet));
       await saveLocalPhoto(user, sheet, `${user}/${sheet}/photo.jpg`, new Blob(["photo"]));
     }
