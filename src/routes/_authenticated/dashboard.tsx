@@ -123,9 +123,6 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
       </span>
       {travel && <span className="inline-flex h-7 items-center gap-1 rounded-full bg-warning/20 px-2.5 text-xs tabular-nums text-foreground"><Car className="h-3 w-3" />{formatDuration(Date.now() - new Date(travel.started_at).getTime())}</span>}
       <div className="ml-auto flex gap-2">
-        <Button size="sm" variant={travel ? "secondary" : "outline"} disabled={readOnly || !shift} onClick={() => toggle("travel", travel)}>
-          <Car className="mr-1 h-4 w-4" />{travel ? "Stop travel" : "Travel"}
-        </Button>
         <Button size="sm" variant={shift ? "outline" : "default"} disabled={readOnly} onClick={() => (shift ? setCloseOpen(true) : setPlateOpen(true))}>
           {shift ? <Square className="mr-1 h-4 w-4" /> : <Play className="mr-1 h-4 w-4" />}{shift ? "Clock out" : "Clock in"}
         </Button>
