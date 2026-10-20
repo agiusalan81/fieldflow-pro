@@ -15,7 +15,9 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { splitHours, addSplits, DEFAULT_RULES } from "@/lib/jobsheets";
 import { AssetHistory, LiftHistoryButton, PriorityBadge, timeWindow } from "@/components/job-card";
-import { normalizePlate, validPlate, formatPlate } from "@/lib/dwr";
+import { formatPlate } from "@/lib/dwr";
+import { ShiftClockInDialog } from "@/components/shift-clock-in-dialog";
+import { clockInShift } from "@/lib/shift-clock-in";
 import { closeShiftReport, reconcileShifts, downloadDwr } from "@/lib/dwr-report";
 import { InternalWorkCard } from "@/components/work-extras";
 import { BillingReview } from "@/components/billing-review";
@@ -85,21 +87,15 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
 
   const [plateOpen, setPlateOpen] = useState(false);
   const [closeOpen, setCloseOpen] = useState(false);
-  const [plate, setPlate] = useState("");
-  const openClockIn = async () => {
-    const { data } = await supabase.from("shifts").select("vehicle_reg").eq("user_id", profile.id).eq("shift_type", "shift").not("vehicle_reg", "is", null).order("started_at", { ascending: false }).limit(1).maybeSingle();
-    setPlate(data?.vehicle_reg ?? ""); setPlateOpen(true);
-  };
   const toggle = async (type: "shift" | "travel", current?: { id: string; started_at: string }, vehicle?: string) => {
     if (readOnly) return;
     const endedAt = new Date().toISOString();
     const res = current
       ? await supabase.from("shifts").update({ ended_at: endedAt }).eq("id", current.id)
-      : await supabase.from("shifts").insert({ shift_type: type, company_id: profile.company_id, user_id: profile.id, ...(vehicle ? { vehicle_reg: vehicle } : {}) });
+      : type === "shift"
+        ? await clockInShift(profile, vehicle ?? "").then(() => ({ error: null }))
+        : await supabase.from("shifts").insert({ shift_type: type, company_id: profile.company_id, user_id: profile.id });
     if (res.error) { toast.error(res.error.message); return; }
-    if (type === "shift" && !current && (profile.real_role === "technician" || profile.real_role === "supervisor") && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(() => { localStorage.setItem(`location-consent:${profile.id}`, "yes"); window.dispatchEvent(new Event("location-consent")); }, () => toast.warning("Location is off — turn it on in your browser settings so your shift location can be shared."), { timeout: 20000 });
-    }
     if (type === "shift" && current && travel) await supabase.from("shifts").update({ ended_at: endedAt }).eq("id", travel.id);
     qc.invalidateQueries({ queryKey: ["open-shifts", profile.id] });
     toast.success(current ? (type === "shift" ? "Clocked out" : "Travel stopped") : type === "shift" ? "Clocked in" : "Travel started");
@@ -130,22 +126,12 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
         <Button size="sm" variant={travel ? "secondary" : "outline"} disabled={readOnly || !shift} onClick={() => toggle("travel", travel)}>
           <Car className="mr-1 h-4 w-4" />{travel ? "Stop travel" : "Travel"}
         </Button>
-        <Button size="sm" variant={shift ? "outline" : "default"} disabled={readOnly} onClick={() => (shift ? setCloseOpen(true) : openClockIn())}>
+        <Button size="sm" variant={shift ? "outline" : "default"} disabled={readOnly} onClick={() => (shift ? setCloseOpen(true) : setPlateOpen(true))}>
           {shift ? <Square className="mr-1 h-4 w-4" /> : <Play className="mr-1 h-4 w-4" />}{shift ? "Clock out" : "Clock in"}
         </Button>
       </div>
       {closeOpen && shift && <UnfinishedWorkDialog profile={profile} onCancel={() => setCloseOpen(false)} onDone={() => { setCloseOpen(false); void toggle("shift", shift); }} />}
-      <Dialog open={plateOpen} onOpenChange={setPlateOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Shift clock-in</DialogTitle></DialogHeader>
-          <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); if (!validPlate(plate)) return; setPlateOpen(false); void toggle("shift", undefined, normalizePlate(plate)); }}>
-            <label className="block text-sm font-medium" htmlFor="vehicle-plate">Vehicle registration</label>
-            <Input id="vehicle-plate" autoFocus inputMode="text" autoCapitalize="characters" placeholder="ABC 123" value={formatPlate(plate)} onChange={(e) => setPlate(normalizePlate(e.target.value))} className="h-12 text-center text-lg tracking-widest" />
-            <p className={`text-xs ${plate && !validPlate(plate) ? "text-destructive" : "text-muted-foreground"}`}>3 letters and 3 numbers. Filled in from your last shift — change it if you're in a different vehicle.</p>
-            <Button type="submit" className="h-12 w-full" disabled={!validPlate(plate)}><Play className="mr-1 h-4 w-4" />Clock in</Button>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <ShiftClockInDialog userId={profile.id} open={plateOpen} onOpenChange={setPlateOpen} onConfirm={plate => toggle("shift", undefined, plate)} />
     </section>
   );
 }

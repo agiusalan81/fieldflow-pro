@@ -1,4 +1,5 @@
 # Roadmap
+- [x] New-sheet clock-in shares Today’s editable vehicle plate prompt and location-consent helper; 11 tests passed and both signed-in prompts verified. No test shift/job sheet created in the real account.
 - [x] Hide technical-document restriction/categorisation controls in Technician view and rename Technical library search/social branding to FieldBridgeApp; signed-in scan form and metadata verified, 9 tests passed, build OK.
 - [x] Move technician travel to Today/Schedule assigned jobs, retain Google Maps/Waze, remove sheet-bottom In Transit and save on-site arrival; 38 focused tests passed.
 - [x] Travel start sends/acknowledges the "on the way" client notice (WhatsApp/email per toggles) with confirmation in the navigation dialog; unsigned-departure requests shown as urgent with waiting timer and supervisor quick-reply to the technician; silent GPS on arrive/depart; technician-count free typing; native camera/gallery buttons; trade-neutral default wording; 245 tests passed, build OK.
