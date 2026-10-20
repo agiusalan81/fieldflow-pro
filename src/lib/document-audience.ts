@@ -21,7 +21,7 @@ export function parseSections(raw: unknown): DocSection[] {
   if (!Array.isArray(raw)) return [];
   return raw.flatMap((s) => {
     if (!s || typeof s !== "object") return [];
-    const r = s as Record<string, unknown>;
+    const r = s as { audience?: unknown; title?: unknown; body?: unknown };
     const audience: SectionAudience = r.audience === "client" || r.audience === "technician" ? r.audience : "both";
     return [{ title: typeof r.title === "string" ? r.title : "", body: typeof r.body === "string" ? r.body : "", audience }];
   });
