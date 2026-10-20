@@ -18,7 +18,7 @@
 - Invite name confirmation uses atomic named redemption; social users never need an app password. Why: save confirmed names without trusting client-supplied company or role.
 - Staff redeem single-use invites through signup triggers. Why: server-side role assignment.
 - User preview is real-superuser-only, actor-scoped, in-memory and removable; root blocks other screens/writes. Why: preserve sessions/audit identity.
-- Payroll uses tested payroll.ts/payroll-statutory.ts, office RLS, DWR hours, versioned rosters and reviewed annual tables/categories. Why: preserve reviewed payroll.
+- Payroll uses tested shared gross/Malta engines, office RLS and DWRs; snapshots capture currency/mode; HQ guards Malta compliance. Why: preserve issued pay and separate gross from statutory net.
 - Payroll routes share payroll-page.tsx. Opening leave/payslips save transactionally with issued-slip/totals guards; year-qualified carry-forward doesn't consume leave twice. Why: no partial or retrospective changes.
 - Sign-off/leave/overtime/checklist/renewals use tested jobsheets.ts. Why: shared rules.
 - DWR/breaks/search/standby/clock-out use tested dwr.ts and dwr-report.ts; held shifts and assisting initials share one ledger. Why: retain callout hours.
