@@ -31,16 +31,16 @@ export type PdfTemplate = {
   accentColor: string;
   font: "sans" | "serif" | "mono";
   labels: Record<string, string>;
-  documentFont?: "standard" | "lato" | "abel" | "custom";
+  documentFont?: "standard" | "lato" | "abel" | "custom" | undefined;
   fontPath?: string;
   fontName?: string;
   backgroundPath?: string;
-  frame?: "none" | "line" | "double";
+  frame?: "none" | "line" | "double" | undefined;
   fieldBackground?: string;
   fieldText?: string;
   /** Resolved privately at read time, never saved. */
-  fontData?: string;
-  backgroundData?: string;
+  fontData?: string | undefined;
+  backgroundData?: string | undefined;
 };
 export const DOCUMENT_STYLES = ["modern", "technical", "bold", "classic", "compact", "service"] as const;
 export const DEFAULT_TEMPLATE: PdfTemplate = { order: BLOCKS.map((b) => b.key), hidden: [], header: "", footer: "", showTravel: true, stylePreset: "modern", primaryColor: "#246654", accentColor: "#e4ad37", font: "sans", labels: {} };
