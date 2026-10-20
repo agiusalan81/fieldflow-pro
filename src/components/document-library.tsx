@@ -30,6 +30,7 @@ type Doc = {
   file_size: number;
   notes: string | null;
   created_at: string;
+  audience?: string[];
 };
 
 const fmtSize = (b: number) => (b >= 1_000_000 ? `${(b / 1_000_000).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1000))} KB`);
@@ -79,6 +80,15 @@ export function DocumentLibrary({ companyId, userId }: { companyId: string; user
     const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(d.file_path, 300);
     if (error || !data) { toast.error(error?.message ?? "Could not open file"); return; }
     setPreviewName(d.name); setPreviewUrl(data.signedUrl);
+  };
+
+  const toggleTech = async (d: Doc) => {
+    const cur = d.audience ?? [];
+    const audience = cur.includes("technician") ? cur.filter((a) => a !== "technician") : [...cur, "technician"];
+    const { error } = await supabase.from("company_documents").update({ audience }).eq("id", d.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(audience.includes("technician") ? "Technicians can now see this file" : "Hidden from technicians");
+    qc.invalidateQueries({ queryKey: ["company-documents"] });
   };
 
   const remove = async () => {
@@ -146,6 +156,7 @@ export function DocumentLibrary({ companyId, userId }: { companyId: string; user
                 {d.notes ? ` · ${d.notes}` : ""}
               </p>
             </div>
+            <Button type="button" variant="outline" size="sm" title="Who can see this file" onClick={() => void toggleTech(d)}>{(d.audience ?? []).includes("technician") ? "Technicians: on" : "Technicians: off"}</Button>
             <Button type="button" variant="outline" size="sm" onClick={() => void open(d)}>
               <Download className="mr-1 h-4 w-4" />Open
             </Button>
