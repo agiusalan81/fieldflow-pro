@@ -14,16 +14,16 @@
 - Invite reads use bounded server functions/Query loaders including middleware timeout. Why: prevent hangs.
 - Tenant RLS uses company_id/current_company_id(); never UI company filters. Why: one access boundary.
 - Roles live in protected user_roles; users.role is display-only. View As and permissions.ts only hide UI. Why: prevent escalation.
-- Protected user_roles registration, central helpers and restrictive tenant policies reject terminated actors; audit access changes. Why: revoke old sessions safely.
+- user_roles helpers/restrictive tenant policies reject terminated actors; audit access changes. Why: revoke old sessions.
 - Invites use atomic named redemption and single-use signup triggers; social users need no app password. Why: confirmed names and server-assigned roles, never client-supplied company/role.
-- User preview is real-superuser-only, actor-scoped, in-memory and removable; root blocks other screens/writes. Why: preserve sessions/audit identity.
+- User preview: real-superuser-only, actor-scoped, in-memory, removable; root blocks other screens/writes. Why: preserve identity.
 - Payroll uses tested shared gross/Malta engines, office RLS and DWRs; snapshots capture currency/mode; HQ guards Malta compliance. Why: preserve issued pay and separate gross from statutory net.
 - Payroll routes share payroll-page.tsx. Opening leave/payslips save transactionally with issued-slip/totals guards; year-qualified carry-forward doesn't consume leave twice. Why: no partial or retrospective changes.
 - Sign-off/leave/overtime/checklist/renewals use tested jobsheets.ts. Why: shared rules.
 - DWR filing uses a unique canonical shift report; retain superseded/corrected originals and clear held flags after filing. Why: retry-safe hours, unchanged issued pay.
 - Dispatch: lead plus optional assistant both read one sheet; only lead starts/edits; daily logs seed both initials. Why: shared journey/ledger, no duplicate labour.
 - Overtime site details use captured DWR intervals/rules; older reports show associated sites only. Why: never invent allocation.
-- Tenant typography uses applyTypography/AppShell variables; locale uses locale.ts. Why: company presentation.
+- Typography uses applyTypography/AppShell; locale uses locale.ts. Why: tenant presentation.
 - Branding shares theme/template JSON, private tenant files and PDF/font helpers; DB/HQ locks preserve saved values. Why: secure consistent app/PDF customisation.
 - Service sheets share a typed safe projection/renderers for preview, print and email. Why: client-safe consistency.
 - Pending works close via close_pending_on_followup trigger; sheet creation requires clock-in or standby. Why: enforce without UI.
