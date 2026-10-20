@@ -3421,6 +3421,15 @@ export type Database = {
         }
         Returns: string
       }
+      save_standby_roster: {
+        Args: {
+          _order: string[]
+          _per_shift: number
+          _rotation_days: number
+          _start: string
+        }
+        Returns: undefined
+      }
       search_technical_documents: {
         Args: {
           _asset?: string
