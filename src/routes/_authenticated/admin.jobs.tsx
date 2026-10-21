@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { saveSheetOrder } from "@/lib/sheet-nav";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, Mail, FileText, Trash2, Download, X } from "lucide-react";
@@ -58,6 +59,7 @@ function AdminJobs() {
   const { data: customers = [] } = useQuery({ queryKey: ["clients"], queryFn: async () => (await supabase.from("clients").select("id, name").order("name")).data ?? [] });
   useEffect(() => { setSelected([]); }, [filter, q, mine, details]);
   const { data: me } = useProfile();
+  const listRef = useRef<string[]>([]);
   const [approving, setApproving] = useState<(typeof jobs)[number] | null>(null);
   const { data: jobs = [] } = useQuery({
     queryKey: ["admin-jobs"],
@@ -87,7 +89,7 @@ function AdminJobs() {
     setDeleting(null);
     qc.invalidateQueries({ queryKey: ["admin-jobs"] });
   };
-  const open = (id: string) => navigate({ to: "/sheets/$sheetId", params: { sheetId: id } });
+  const open = (id: string) => { saveSheetOrder(listRef.current); return navigate({ to: "/sheets/$sheetId", params: { sheetId: id } }); };
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
 
   const confirmApprove = async () => {
@@ -110,7 +112,11 @@ function AdminJobs() {
   };
 
   const queue = jobs.filter((j) => matchesSheetFilter(j, "admin_queue"));
-  const list = jobs.filter((j) => matchesSheetDetails(j, { ...details, initials: staff.find((u) => u.id === details.technician) ? initialsOf(staff.find((u) => u.id === details.technician) ?? { full_name: "" }) : undefined }) && matchesSheetFilter(j, filter) && (!mine || j.assigned_technician_id === me?.id) && matchesSheetSearch(j.jobsheet_number, [j.clients?.name, j.users?.full_name, j.assets?.reference_number, j.sites?.name, j.reported_fault], q));
+  const base = jobs.filter((j) => matchesSheetDetails(j, { ...details, initials: staff.find((u) => u.id === details.technician) ? initialsOf(staff.find((u) => u.id === details.technician) ?? { full_name: "" }) : undefined }) && (!mine || j.assigned_technician_id === me?.id) && matchesSheetSearch(j.jobsheet_number, [j.clients?.name, j.users?.full_name, j.assets?.reference_number, j.sites?.name, j.reported_fault], q));
+  const list = base.filter((j) => matchesSheetFilter(j, filter));
+  listRef.current = list.map((j) => j.id);
+  const pills: (readonly [string, string])[] = [["all", "All"], ...STATUSES, ["has_pending", "Pending works"]];
+  const countFor = (k: string) => base.filter((j) => matchesSheetFilter(j, k)).length;
   const totalHours = (j: (typeof jobs)[number]) => (j.jobsheet_time_logs ?? []).reduce((s, l) => s + Number(l.daily_total_hours || 0), 0);
 
   const office = me?.role === "admin" || me?.role === "superuser";
@@ -153,6 +159,13 @@ function AdminJobs() {
         <Button size="sm" variant={mine ? "outline" : "default"} onClick={() => setMine(false)}>All sheets</Button>
         <Button size="sm" variant={mine ? "default" : "outline"} onClick={() => setMine(true)}>Assigned to me</Button>
         <Button size="sm" variant="ghost" onClick={() => { setDetails({ from: "", to: "", client: "all", technician: "all" }); setFilter("all"); setQ(""); setMine(false); }}>Clear filters</Button>
+      </div>
+      <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="Filter by status">
+        {pills.map(([k, l]) => (
+          <Button key={k} size="sm" variant={filter === k ? "default" : "outline"} aria-pressed={filter === k} onClick={() => setFilter(k)} className="rounded-full">
+            {l} <span className="ml-1 tabular-nums opacity-80">({countFor(k)})</span>
+          </Button>
+        ))}
         <span className="self-center text-sm text-muted-foreground">{list.length} sheets</span>
       </div>
       {office && selected.length > 0 && <div className="sticky top-0 z-10 mb-4 flex flex-wrap items-center gap-2 border border-primary bg-background p-3">
