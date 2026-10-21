@@ -126,8 +126,9 @@ function Messages() {
                     </span>
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-medium text-foreground">{t.label}</span>
-                      <span className="block truncate text-xs text-muted-foreground">{last?.message_text ?? "No messages yet"}</span>
+                      <span className={`block truncate text-xs ${unread[keyOf(t)] ? "font-semibold text-foreground" : "text-muted-foreground"}`}>{last?.message_text ?? "No messages yet"}</span>
                     </span>
+                    {!!unread[keyOf(t)] && <span aria-label={`${unread[keyOf(t)]} unread`} className="col-start-3 row-start-1 rounded-full bg-destructive px-1.5 text-xs text-destructive-foreground">{unread[keyOf(t)]}</span>}
                   </button>
                 </li>
               );
