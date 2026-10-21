@@ -225,7 +225,14 @@ html, body { overflow-x: hidden; }
 .tenant-menu { background-image: linear-gradient(var(--menu-overlay), var(--menu-overlay)), var(--tenant-menu-image, none); background-size: cover; background-position: center; }
 :root { --background-overlay: oklch(0.98 0 0 / .92); --menu-overlay: oklch(0.99 0 0 / .9); }
 .dark { --background-overlay: oklch(0.15 0 0 / .94); --menu-overlay: oklch(0.18 0 0 / .94); }
-.tenant-experience input:not([type=color]):not([type=checkbox]), .tenant-experience textarea { background-color: var(--tenant-input-background, var(--background)); color: var(--tenant-input-text, var(--foreground)); }
+.tenant-experience input:not([type=color]):not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]),
+.tenant-experience textarea,
+.tenant-experience select,
+.tenant-experience button[role=combobox],
+.tenant-experience [data-slot=select-trigger],
+.tenant-experience [cmdk-input] { background-color: var(--tenant-input-background, var(--background)); color: var(--tenant-input-text, var(--foreground)); }
+.tenant-experience select option { background-color: var(--tenant-input-background, var(--background)); color: var(--tenant-input-text, var(--foreground)); }
+.tenant-experience input::placeholder, .tenant-experience textarea::placeholder { color: var(--tenant-input-text, var(--muted-foreground)); opacity: 0.6; }
 .tenant-experience[data-icons=strong] nav svg, .tenant-experience[data-icons=strong] .tenant-menu svg { stroke-width: 2.8; }
 .tenant-experience[data-icons=duotone] nav svg, .tenant-experience[data-icons=duotone] .tenant-menu svg { fill: var(--sidebar-accent); stroke: var(--sidebar-primary); }
 .tenant-experience[data-company-font=on] { font-family: "FieldBridgeCompany", var(--font-sans); }
