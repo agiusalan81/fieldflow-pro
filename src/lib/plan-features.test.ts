@@ -2,6 +2,16 @@ import { describe, expect, it } from "vitest";
 import { featureOn, resolveAppTitle } from "./plan-features";
 
 describe("Platform HQ feature switches", () => {
+  it("keeps standby enabled when payroll is disabled", () => {
+    const status = { state: "active", modules: [{ name: "standby", enabled: true }, { name: "payroll", enabled: false }] };
+    expect(featureOn(status, "standby")).toBe(true);
+    expect(featureOn(status, "payroll")).toBe(false);
+  });
+  it("keeps payroll enabled when standby is disabled", () => {
+    const status = { state: "active", modules: [{ name: "standby", enabled: false }, { name: "payroll", enabled: true }] };
+    expect(featureOn(status, "standby")).toBe(false);
+    expect(featureOn(status, "payroll")).toBe(true);
+  });
   it("Fleet Management can be disabled independently of live tracking", () => { const status = { state: "active", modules: [{ name: "fleet_management", enabled: false }, { name: "tracking", enabled: true }] }; expect(featureOn(status,"fleet_management")).toBe(false); expect(featureOn(status,"tracking")).toBe(true); });
   it("companies without a plan keep every feature", () => expect(featureOn({ state: "legacy" }, "payroll")).toBe(true));
   it("a switched-off feature is hidden", () => expect(featureOn({ state: "active", modules: [{ name: "payroll", enabled: false }] }, "payroll")).toBe(false));

@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Confirmed Standby and Payroll have separate HQ switches; roster save permits Supervisors/Admins/Superusers, while payroll writes remain office-only. Added independent module regression tests; supervisor save end-to-end remains unverified.
 - [x] Approved batch implemented: Superuser-only role View As; canonical duplicate-safe DWRs with historical duplicate/original audit retention and zero-minute corrections; paired dispatch, both Schedule/Today assignments, assistant read-only shared sheets, lead-seeded daily initials. 88 focused tests passed; preview build OK.
 - [ ] Paired dispatch save → both staff Schedule → shared sheet/DWR end-to-end verification (blocked: own-account managed session is Technician; schedule save correctly denied, no real visit created).
 - [x] Current batch: Fleet Management module registered in HQ; server-captured shift GPS history, adjustable 30-second ping, technician/date routes and mileage/fuel estimates; Team invites menu, email-app invitation option; generic shift Travel removed. 34 focused tests passed, build OK.
