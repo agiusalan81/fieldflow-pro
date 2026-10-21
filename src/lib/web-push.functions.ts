@@ -57,7 +57,8 @@ export const sendChatPush = createServerFn({ method: "POST" })
     await Promise.all((subs ?? []).map(async ({ endpoint }) => {
       const head = b64url(enc.encode(JSON.stringify({ typ: "JWT", alg: "ES256" })));
       const body = b64url(enc.encode(JSON.stringify({ aud: new URL(endpoint).origin, exp: Math.floor(Date.now() / 1000) + 43200, sub: "mailto:support@fieldbridgeapp.com" })));
-      const sig = b64url(p256.sign(enc.encode(`${head}.${body}`), d));
+      const raw = p256.sign(enc.encode(`${head}.${body}`), d) as unknown as Uint8Array | { toBytes: (f: string) => Uint8Array };
+      const sig = b64url(raw instanceof Uint8Array ? raw : raw.toBytes("compact"));
       try {
         const res = await fetch(endpoint, { method: "POST", headers: { Authorization: `vapid t=${head}.${body}.${sig}, k=${b64url(pub)}`, TTL: "86400", Urgency: "high", "Content-Length": "0" } });
         if (res.status === 404 || res.status === 410) await supabaseAdmin.from("push_subscriptions").delete().eq("endpoint", endpoint);
