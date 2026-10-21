@@ -25,7 +25,6 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { AppearanceSettings } from "@/components/appearance-settings";
 import { BrandingLock } from "@/components/branding-lock";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/company")({
@@ -52,32 +51,7 @@ function CompanyPage() {
   if (!office) return <AppShell title="Company settings"><EmptyState>Company settings are available to office staff.</EmptyState></AppShell>;
   return (
     <AppShell title="Company settings">
-      <Tabs defaultValue="hours" className="mx-auto max-w-5xl">
-        <TabsList className="h-auto flex-wrap">
-          {office && <TabsTrigger value="hours">Hours & overtime</TabsTrigger>}
-          {office && <TabsTrigger value="profile">Profile & branding</TabsTrigger>}
-          {office && <TabsTrigger value="documents">PDF & terms</TabsTrigger>}
-          {office && <TabsTrigger value="library">Document library</TabsTrigger>}
-          {office && <TabsTrigger value="technical">Technical data structure</TabsTrigger>}
-          {office && <TabsTrigger value="safety">Safety & faults</TabsTrigger>}
-          {office && <TabsTrigger value="estimates">Estimates & suppliers</TabsTrigger>}
-          {office && <TabsTrigger value="pricelist">Price list</TabsTrigger>}
-          {office && <TabsTrigger value="messaging">Messages & emails</TabsTrigger>}
-          {office && <TabsTrigger value="integrations">Accounting</TabsTrigger>}
-          {superuser && <TabsTrigger value="access">Role access</TabsTrigger>}
-        </TabsList>
-        {office && <TabsContent value="hours" className="mt-4"><HoursTab companyId={profile.company_id} /></TabsContent>}
-        {office && <TabsContent value="profile" className="mt-4"><ProfileTab companyId={profile.company_id} /></TabsContent>}
-        {office && <TabsContent value="documents" className="mt-4"><DocumentSettings companyId={profile.company_id} /></TabsContent>}
-        {office && <TabsContent value="library" className="mt-4"><DocumentLibrary companyId={profile.company_id} userId={profile.id} /></TabsContent>}
-        {office && <TabsContent value="technical" className="mt-4"><TechnicalStructure companyId={profile.company_id} /></TabsContent>}
-        {office && <TabsContent value="safety" className="mt-4"><SafetySettings companyId={profile.company_id} /></TabsContent>}
-        {office && <TabsContent value="estimates" className="mt-4"><EstimateSettings companyId={profile.company_id} /></TabsContent>}
-        {office && <TabsContent value="pricelist" className="mt-4"><PriceListSettings companyId={profile.company_id} /></TabsContent>}
-        {office && <TabsContent value="integrations" className="mt-4"><IntegrationsSettings part="accounting" companyId={profile.company_id} /></TabsContent>}
-        {office && <TabsContent value="messaging" className="mt-4"><IntegrationsSettings part="messaging" companyId={profile.company_id} /></TabsContent>}
-        {superuser && <TabsContent value="access" className="mt-4"><AccessTab companyId={profile.company_id} /></TabsContent>}
-      </Tabs>
+      <SettingsSections superuser={superuser} companyId={profile.company_id} userId={profile.id} />
     </AppShell>
   );
 }
@@ -362,5 +336,58 @@ function AccessTab({ companyId }: { companyId: string }) {
         </table>
       </div>
     </section>
+  );
+}
+
+type SectionItem = { key: string; label: string; render: () => React.ReactNode };
+function SettingsSections({ superuser, companyId, userId }: { superuser: boolean; companyId: string; userId: string }) {
+  const groups: { title: string; items: SectionItem[] }[] = [
+    { title: "Company & brand", items: [{ key: "profile", label: "Profile & branding", render: () => <ProfileTab companyId={companyId} /> }] },
+    { title: "Operations & hours", items: [{ key: "hours", label: "Hours & overtime", render: () => <HoursTab companyId={companyId} /> }] },
+    { title: "Field & safety", items: [
+      { key: "technical", label: "Technical data structure", render: () => <TechnicalStructure companyId={companyId} /> },
+      { key: "safety", label: "Safety & faults", render: () => <SafetySettings companyId={companyId} /> },
+    ] },
+    { title: "Documents & PDFs", items: [
+      { key: "documents", label: "PDF & terms", render: () => <DocumentSettings companyId={companyId} /> },
+      { key: "library", label: "Document library", render: () => <DocumentLibrary companyId={companyId} userId={userId} /> },
+    ] },
+    { title: "Commercial & integrations", items: [
+      { key: "estimates", label: "Estimates & suppliers", render: () => <EstimateSettings companyId={companyId} /> },
+      { key: "pricelist", label: "Price list", render: () => <PriceListSettings companyId={companyId} /> },
+      { key: "messaging", label: "Messages & emails", render: () => <IntegrationsSettings part="messaging" companyId={companyId} /> },
+      { key: "integrations", label: "Accounting", render: () => <IntegrationsSettings part="accounting" companyId={companyId} /> },
+    ] },
+    ...(superuser ? [{ title: "Security & access", items: [{ key: "access", label: "Role access", render: () => <AccessTab companyId={companyId} /> }] }] : []),
+  ];
+  const all = groups.flatMap((g) => g.items);
+  const [active, setActive] = useState("profile");
+  const current = (all.find((i) => i.key === active) ?? all[0])!;
+  return (
+    <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-[220px_minmax(0,1fr)]">
+      <div className="md:hidden">
+        <Label className="mb-1.5 block">Section</Label>
+        <select aria-label="Settings section" className="h-11 w-full rounded-md border bg-background px-3 text-sm" value={current.key} onChange={(e) => setActive(e.target.value)}>
+          {groups.map((g) => <optgroup key={g.title} label={g.title}>{g.items.map((i) => <option key={i.key} value={i.key}>{i.label}</option>)}</optgroup>)}
+        </select>
+      </div>
+      <nav aria-label="Company settings sections" className="hidden space-y-5 md:block">
+        {groups.map((g) => (
+          <div key={g.title}>
+            <p className="mb-1.5 px-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">{g.title}</p>
+            {g.items.map((i) => (
+              <button key={i.key} type="button" onClick={() => setActive(i.key)} aria-current={i.key === current.key ? "page" : undefined}
+                className={`block w-full rounded-md px-2 py-1.5 text-left text-sm ${i.key === current.key ? "bg-primary/10 font-medium text-primary" : "text-foreground hover:bg-muted"}`}>
+                {i.label}
+              </button>
+            ))}
+          </div>
+        ))}
+      </nav>
+      <section className="min-w-0">
+        <h2 className="mb-4 text-lg font-semibold text-foreground">{current.label}</h2>
+        {current.render()}
+      </section>
+    </div>
   );
 }
