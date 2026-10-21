@@ -51,3 +51,4 @@
 - Attention: guarded atomic pending RPCs/separate actions; never edit signed content.: immutable evidence; no duplicate dispatch.
 - Blackouts and leave impact are validated in DB; range swaps use recipient acceptance plus independent manager approval before standby calculations change.: enforce for every caller.
 - Equipment QR: authenticated/RLS-scoped technical routes; public reports use hashed revocable capabilities, bounded payloads/throttling; no public reads.: private technical/client data.
+- Closed-app chat alerts use payloadless Web Push (web-push.functions.ts, VAPID key derived from WEB_PUSH_SEED, public/push-sw.js imported into the app SW); only published/installed app can receive.: no message text leaves the app; workerd-safe.
