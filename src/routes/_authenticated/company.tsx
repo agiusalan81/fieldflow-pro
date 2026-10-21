@@ -1,5 +1,6 @@
 import { TechnicalStructure } from "@/components/technical-structure";
 import { EstimateSettings } from "@/components/estimate-settings";
+import { PriceListSettings } from "@/components/price-list-settings";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -60,6 +61,7 @@ function CompanyPage() {
           {office && <TabsTrigger value="technical">Technical data structure</TabsTrigger>}
           {office && <TabsTrigger value="safety">Safety & faults</TabsTrigger>}
           {office && <TabsTrigger value="estimates">Estimates & suppliers</TabsTrigger>}
+          {office && <TabsTrigger value="pricelist">Price list</TabsTrigger>}
           {office && <TabsTrigger value="messaging">Messages & emails</TabsTrigger>}
           {office && <TabsTrigger value="integrations">Accounting</TabsTrigger>}
           {superuser && <TabsTrigger value="access">Role access</TabsTrigger>}
@@ -71,6 +73,7 @@ function CompanyPage() {
         {office && <TabsContent value="technical" className="mt-4"><TechnicalStructure companyId={profile.company_id} /></TabsContent>}
         {office && <TabsContent value="safety" className="mt-4"><SafetySettings companyId={profile.company_id} /></TabsContent>}
         {office && <TabsContent value="estimates" className="mt-4"><EstimateSettings companyId={profile.company_id} /></TabsContent>}
+        {office && <TabsContent value="pricelist" className="mt-4"><PriceListSettings companyId={profile.company_id} /></TabsContent>}
         {office && <TabsContent value="integrations" className="mt-4"><IntegrationsSettings part="accounting" companyId={profile.company_id} /></TabsContent>}
         {office && <TabsContent value="messaging" className="mt-4"><IntegrationsSettings part="messaging" companyId={profile.company_id} /></TabsContent>}
         {superuser && <TabsContent value="access" className="mt-4"><AccessTab companyId={profile.company_id} /></TabsContent>}

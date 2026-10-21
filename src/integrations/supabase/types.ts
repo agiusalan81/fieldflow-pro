@@ -423,6 +423,77 @@ export type Database = {
           },
         ]
       }
+      company_price_list_items: {
+        Row: {
+          archived_at: string | null
+          category: string
+          code: string | null
+          company_id: string
+          cost_price: number
+          created_at: string
+          description: string | null
+          id: string
+          installation_method: string | null
+          is_tally: boolean
+          name: string
+          sort_order: number
+          subcategory: string
+          trade: string
+          unit: string
+          unit_rate: number
+          updated_at: string
+          vat_rate: number
+        }
+        Insert: {
+          archived_at?: string | null
+          category?: string
+          code?: string | null
+          company_id?: string
+          cost_price?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          installation_method?: string | null
+          is_tally?: boolean
+          name: string
+          sort_order?: number
+          subcategory?: string
+          trade?: string
+          unit?: string
+          unit_rate?: number
+          updated_at?: string
+          vat_rate?: number
+        }
+        Update: {
+          archived_at?: string | null
+          category?: string
+          code?: string | null
+          company_id?: string
+          cost_price?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          installation_method?: string | null
+          is_tally?: boolean
+          name?: string
+          sort_order?: number
+          subcategory?: string
+          trade?: string
+          unit?: string
+          unit_rate?: number
+          updated_at?: string
+          vat_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_price_list_items_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_settings: {
         Row: {
           after_hours_rate: number
