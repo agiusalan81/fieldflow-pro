@@ -435,6 +435,13 @@
       "when": 1792584668374,
       "tag": "0061_qs_proposals",
       "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1792594151520,
+      "tag": "0062_attention_workflows",
+      "breakpoints": true
     }
   ]
 }
