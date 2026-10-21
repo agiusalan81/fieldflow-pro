@@ -1,3 +1,5 @@
+import { LeaveBlackouts, useLeaveBlackouts } from "@/components/leave-blackouts";
+import { matchingBlackouts } from "@/lib/attention-rules";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -38,6 +40,8 @@ const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 function LeavePage() {
   const { data: profile, isPreview } = usePreviewProfile();
   const qc = useQueryClient();
+  const blackouts = useLeaveBlackouts();
+  const [exception, setException] = useState("");
   const [f, setF] = useState({ leave_type: "Annual", start_date: "", end_date: "", optional_notes: "" });
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
@@ -75,9 +79,11 @@ function LeavePage() {
   const remaining = remainingBalance(b);
   const requested = leaveHours(f.start_date, f.end_date);
 
+  const blocked = matchingBlackouts(blackouts.data ?? [], profile?.role ?? "technician", f.leave_type, f.start_date, f.end_date);
   const request = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile || isPreview) return;
+    if (blocked.length && !exception.trim()) { toast.error("Add a reason for your annual leave exception"); return; }
     if (f.leave_type === "Sick" && !file) { toast.error("Sick leave needs a medical certificate"); return; }
     if (requested <= 0) { toast.error("Pick a date range with at least one weekday"); return; }
     if (f.leave_type === "Annual" && requested > remaining) { toast.error(`Only ${remaining.toFixed(2)} h left`); return; }
@@ -90,7 +96,7 @@ function LeavePage() {
     }
     const { error } = await supabase.from("leave_requests").insert({
       company_id: profile.company_id, user_id: profile.id, leave_type: f.leave_type, start_date: f.start_date, end_date: f.end_date,
-      total_hours: requested, optional_notes: f.optional_notes || null, medical_certificate_path: path,
+      exception_reason: blocked.length ? exception.trim() : null, total_hours: requested, optional_notes: f.optional_notes || null, medical_certificate_path: path,
     });
     setBusy(false);
     if (error) { toast.error(error.message); return; }
@@ -108,6 +114,7 @@ function LeavePage() {
   return (
     <AppShell title="My leave">
       <div className="space-y-5">
+        <LeaveBlackouts/>
         <section className="rounded-xl border bg-card p-4">
           <div className="grid grid-cols-3 gap-2 text-center sm:grid-cols-5">
             {[["Base", b.base], ["PH credit", b.ph], ["Carried forward", b.carried], ["Taken", -b.taken], ["Pending", -b.pending]].map(([l, v]) => (
@@ -138,6 +145,7 @@ function LeavePage() {
               <div className="space-y-1.5"><Label>From</Label><Input className="h-11" type="date" required value={f.start_date} onChange={(e) => setF({ ...f, start_date: e.target.value })} /></div>
               <div className="space-y-1.5"><Label>To</Label><Input className="h-11" type="date" required min={f.start_date} value={f.end_date} onChange={(e) => setF({ ...f, end_date: e.target.value })} /></div>
             </div>
+            {blocked.length > 0 && <div className="space-y-2 border-l-2 border-warning pl-3"><p className="text-sm">Annual leave overlaps a restricted period: {blocked.map(b=>b.reason).join("; ")}</p><Label htmlFor="leave-exception">Exception reason</Label><Textarea id="leave-exception" required maxLength={2000} value={exception} onChange={e=>setException(e.target.value)}/></div>}
             <p className="rounded-md bg-muted/60 px-3 py-2 text-sm">Requested: <strong className="tabular-nums">{requested.toFixed(2)} h</strong> <span className="text-muted-foreground">(8 h per weekday)</span></p>
             {f.leave_type === "Sick" && (
               <div className="space-y-1.5">
