@@ -89,7 +89,7 @@ export function standbyFor(date: string, c: StandbyConfig, swaps: Swap[] = []): 
   const rot = Math.max(1, c.rotationDays);
   const block = Math.floor(dayIndex(c.start, date) / rot);
   const first = (((block * per) % n) + n) % n;
-  let ids = Array.from({ length: per }, (_, k) => c.order[(first + k) % n]!);
+  let ids = Array.from({ length: per }, (_, k) => c.order[(first + k) % n]).filter((id): id is string => typeof id === "string");
   for (const s of swaps) {
     if (!swapApplies(s, date)) continue;
     if (ids.includes(s.requester_id) && !ids.includes(s.target_id)) ids = ids.map((x) => (x === s.requester_id ? s.target_id : x));

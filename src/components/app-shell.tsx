@@ -1,4 +1,4 @@
-import { ActionNotifications } from "@/components/action-notifications";
+import { ActionNotifications, OnCallBadge } from "@/components/action-notifications";
 import { usePlanFeatures, resolveAppTitle } from "@/lib/plan-features";
 import { DepartureAlerts } from "@/components/client-notices";
 import { LocationSharing } from "@/components/location-sharing";
@@ -132,7 +132,7 @@ function NavLinks({ items, onNavigate, uid }: { items: NavItem[]; onNavigate?: (
                     className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
                     activeProps={{ className: "bg-sidebar-accent text-sidebar-foreground font-medium" }}
                     activeOptions={{ exact: i.to === "/dashboard" }}>
-                    <i.icon className="h-4 w-4 shrink-0" />{i.label}
+                    <i.icon className="h-4 w-4 shrink-0" />{i.label}{i.to === "/standby" && <OnCallBadge userId={uid}/>}
                   </Link>
                 ))}
               </div>

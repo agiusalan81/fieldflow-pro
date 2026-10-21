@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { approvalBalance } from "@/lib/jobsheets";
-import { useProfile } from "@/lib/profile";
+import { useProfile, isManager, isOffice } from "@/lib/profile";
 import { canDecideLeave, type AppRole } from "@/lib/field-rules";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -66,6 +66,8 @@ function LeaveApprovals() {
   const iso = (d: number) => `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
   const onDay = (d: number) => reqs.filter((r) => r.start_date <= iso(d) && r.end_date >= iso(d));
 
+  if(!isManager(me)) return <AppShell title="Leave approvals"><EmptyState>Team leave is available to supervisors and office staff.</EmptyState></AppShell>;
+  const leaveLabel=(type:string)=>type==="Sick"&&!isOffice(me)?"On leave":type;
   return (
     <AppShell title="Leave approvals">
       <LeaveBlackouts/>
@@ -80,9 +82,9 @@ function LeaveApprovals() {
                 return (
                   <li key={r.id} className="space-y-2 rounded-lg border p-3">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-foreground">{r.users?.full_name} <span className="text-xs capitalize text-muted-foreground">· {r.users?.role}</span> · {r.leave_type}</p>
+                      <p className="truncate text-sm font-medium text-foreground">{r.users?.full_name} <span className="text-xs capitalize text-muted-foreground">· {r.users?.role}</span> · {leaveLabel(r.leave_type)}</p>
                       <p className="text-xs text-muted-foreground">{r.start_date} → {r.end_date} · {Number(r.total_hours).toFixed(2)} h
-                        {r.medical_certificate_path && <Button variant="link" size="sm" onClick={() => r.medical_certificate_path && openCert(r.medical_certificate_path)}>certificate</Button>}</p>
+                        {isOffice(me) && r.medical_certificate_path && <Button variant="link" size="sm" onClick={() => r.medical_certificate_path && openCert(r.medical_certificate_path)}>certificate</Button>}</p>
                       {r.optional_notes && <p className="mt-1 text-xs text-foreground">“{r.optional_notes}”</p>}
                     </div>
                     <div className="flex flex-wrap gap-1.5 text-xs">
