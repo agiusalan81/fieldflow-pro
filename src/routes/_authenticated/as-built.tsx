@@ -18,9 +18,9 @@ import { Textarea } from "@/components/ui/textarea";
 
 export const Route = createFileRoute("/_authenticated/as-built")({
   head: () => ({ meta: [
-    { title: "As-built tally — FieldBridge" },
+    { title: "Site survey — FieldBridge" },
     { name: "description", content: "Count installed points and fittings on site and compare them with the estimate." },
-    { property: "og:title", content: "As-built tally — FieldBridge" },
+    { property: "og:title", content: "Site survey — FieldBridge" },
     { property: "og:description", content: "Mobile as-built quantity tally with estimate-versus-installed comparison and office sign-off." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
   ] }),
@@ -35,10 +35,10 @@ function AsBuiltPage() {
   const { data: profile } = useProfile();
   const on = usePlanFeatures();
   const [open, setOpen] = useState<string | null>(null);
-  if (!profile) return <AppShell title="As-built tally"><p className="text-muted-foreground">Loading…</p></AppShell>;
-  if (!on("qs_pricing")) return <AppShell title="As-built tally"><EmptyState>As-built tally needs the Pricing & quantity surveying module.</EmptyState></AppShell>;
+  if (!profile) return <AppShell title="Site survey"><p className="text-muted-foreground">Loading…</p></AppShell>;
+  if (!on("qs_pricing")) return <AppShell title="Site survey"><EmptyState>Site survey needs the Pricing & quantity surveying module.</EmptyState></AppShell>;
   const manager = isManager(profile);
-  return <AppShell title="As-built tally">{open ? <Editor id={open} manager={manager} onBack={() => setOpen(null)} /> : <List companyId={profile.company_id} manager={manager} onOpen={setOpen} />}</AppShell>;
+  return <AppShell title="Site survey">{open ? <Editor id={open} manager={manager} onBack={() => setOpen(null)} /> : <List companyId={profile.company_id} manager={manager} onOpen={setOpen} />}</AppShell>;
 }
 
 function List({ companyId, manager, onOpen }: { companyId: string; manager: boolean; onOpen: (id: string) => void }) {
@@ -49,7 +49,7 @@ function List({ companyId, manager, onOpen }: { companyId: string; manager: bool
   const create = async () => {
     const p = props.data?.find((x) => x.id === proposal);
     const lines = p ? linesFromProposal((Array.isArray(p.lines) ? p.lines : []) as unknown as Line[]) : [];
-    const r = await supabase.from("qs_surveys").insert({ company_id: companyId, trade: p?.trade ?? trade, proposal_id: p?.id ?? null, title: p ? `As-built — ${p.reference} ${p.title}`.trim() : "New as-built survey", lines: lines as unknown as Json }).select("id").single();
+    const r = await supabase.from("qs_surveys").insert({ company_id: companyId, trade: p?.trade ?? trade, proposal_id: p?.id ?? null, title: p ? `Site survey — ${p.reference} ${p.title}`.trim() : "New site survey", lines: lines as unknown as Json }).select("id").single();
     if (r.error) { toast.error(r.error.message); return; } onOpen(r.data.id);
   };
   return <div className="mx-auto max-w-4xl space-y-4">
@@ -58,7 +58,7 @@ function List({ companyId, manager, onOpen }: { companyId: string; manager: bool
       {!proposal && <div className="min-w-48 space-y-1"><Label htmlFor="ab-trade">Trade</Label><select id="ab-trade" className={sel} value={trade} onChange={(e) => setTrade(e.target.value)}>{TRADES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}</select></div>}
       <Button onClick={create}><Plus className="mr-1 h-4 w-4" />New survey</Button>
     </div>
-    {q.isLoading ? <p className="text-muted-foreground">Loading…</p> : !q.data?.length ? <EmptyState>No as-built surveys yet.</EmptyState> :
+    {q.isLoading ? <p className="text-muted-foreground">Loading…</p> : !q.data?.length ? <EmptyState>No site surveys yet.</EmptyState> :
       <ul className="space-y-2">{q.data.map((s) => <li key={s.id}><button className="w-full rounded-xl border bg-card p-4 text-left hover:bg-muted/40" onClick={() => onOpen(s.id)}>
         <div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-muted px-2 py-0.5 text-xs">{STATUS[s.status]}</span><span className="text-xs text-muted-foreground">{TRADES.find((t) => t.key === s.trade)?.label}</span></div>
         <p className="mt-1 font-medium">{s.title || "Untitled"}{s.site_label ? ` · ${s.site_label}` : ""}</p>

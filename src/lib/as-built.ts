@@ -1,5 +1,5 @@
 /** As-built QS (qs_pricing): tally lines, estimate-vs-installed variance. Survey lines never carry prices. */
-export type SurveyLine = { id: string; item_id?: string | null; category: string; name: string; unit: string; estimated: number; installed: number; note?: string };
+export type SurveyLine = { id: string; item_id?: string | null; category: string; name: string; unit: string; estimated: number; installed: number; note?: string; photos?: string[] };
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
