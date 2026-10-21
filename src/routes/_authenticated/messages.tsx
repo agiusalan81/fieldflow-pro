@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_authenticated/messages")({
       { property: "og:description", content: "Internal team chat." },
     ],
   }),
-  validateSearch: (s: Record<string, unknown>): { thread?: string } => (typeof s.thread === "string" ? { thread: s.thread } : {}),
+  validateSearch: (s: Record<string, unknown>): { thread?: string } => (typeof s["thread"] === "string" ? { thread: s["thread"] } : {}),
   component: Messages,
 });
 
