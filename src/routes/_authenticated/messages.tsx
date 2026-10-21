@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ArrowLeft, Bell, Send, Hash, User } from "lucide-react";
 import { canAskNotifications } from "@/lib/chat-notify";
+import { ensurePushSubscription, pushChatMessages } from "@/lib/web-push";
 import { supabase } from "@/integrations/supabase/client";
 import { markThreadRead, unreadByThread, useChatReads } from "@/lib/chat-unread";
 import { useProfile, useCompanyUsers } from "@/lib/profile";
@@ -39,7 +40,14 @@ function Messages() {
   const endRef = useRef<HTMLDivElement>(null);
   const { data: reads = {} } = useChatReads(profile?.id);
   const [askAlerts, setAskAlerts] = useState(false);
-  useEffect(() => { setAskAlerts(canAskNotifications()); }, []);
+  useEffect(() => { setAskAlerts(canAskNotifications()); void ensurePushSubscription().catch(() => undefined); }, []);
+  const allowAlerts = async () => {
+    const p = await Notification.requestPermission();
+    setAskAlerts(false);
+    if (p !== "granted") { toast.error("Alerts were blocked. Turn them on in your phone's settings for this app."); return; }
+    const ok = await ensurePushSubscription().catch(() => false);
+    toast[ok ? "success" : "info"](ok ? "Chat alerts are on for this device" : "Alerts work while the app is open. For alerts when closed, use the installed app (Add to Home Screen).");
+  };
 
   const { data: jobs = [] } = useQuery({
     queryKey: ["chat-jobs"],
@@ -98,11 +106,12 @@ function Messages() {
   const send = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!active || !profile || !text.trim()) return;
-    const { error } = await supabase.from("internal_messages").insert({
+    const { data: sentRow, error } = await supabase.from("internal_messages").insert({
       company_id: profile.company_id, sender_id: profile.id, message_text: text.trim(),
       receiver_id: active.kind === "user" ? active.id : null, job_sheet_id: active.kind === "job" ? active.id : null,
-    });
+    }).select("id").single();
     if (error) { toast.error(error.message); return; }
+    pushChatMessages([sentRow.id]);
     setText("");
     qc.invalidateQueries({ queryKey: ["messages"] });
   };
@@ -111,7 +120,7 @@ function Messages() {
     <AppShell title="Team chat">
       <div className="grid h-[calc(100dvh-10rem)] overflow-hidden rounded-xl border bg-card md:grid-cols-[300px_minmax(0,1fr)] lg:h-[calc(100dvh-8rem)]">
         <aside className={`${active ? "hidden md:flex" : "flex"} min-h-0 flex-col border-r`}>
-          {askAlerts && <div className="flex items-center gap-2 border-b bg-muted/50 p-2 text-xs text-foreground"><Bell className="h-4 w-4 shrink-0" /><span className="flex-1">Get alerts when the app is in the background</span><Button size="sm" variant="secondary" onClick={() => void Notification.requestPermission().then(() => setAskAlerts(false))}>Allow</Button></div>}
+          {askAlerts && <div className="flex items-center gap-2 border-b bg-muted/50 p-2 text-xs text-foreground"><Bell className="h-4 w-4 shrink-0" /><span className="flex-1">Get alerts when the app is in the background</span><Button size="sm" variant="secondary" onClick={() => void allowAlerts()}>Allow</Button></div>}
           <div className="flex gap-1 border-b p-2">
             {(["all", "jobs", "people"] as const).map((f) => (
               <Button key={f} size="sm" variant={filter === f ? "secondary" : "ghost"} className="flex-1 capitalize" onClick={() => setFilter(f)}>
