@@ -98,7 +98,7 @@ function PendingWorks() {
                   <div className="mt-3 flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
                     {r.pending_status !== "scheduled" && r.pending_status !== "done" && <Button size="sm" onClick={() => setSched(r)}><CalendarPlus className="mr-1 h-4 w-4" />Schedule visit</Button>}
                     {r.pending_status !== "done" && <Button size="sm" variant="outline" onClick={() => setReview(r)}><Receipt className="mr-1 h-4 w-4" />Review for estimate</Button>}
-                    {r.pending_status !== "done" && <>{[["dispatch","Dispatch"],["supervisor","Supervisor review"],["awaiting_parts","Awaiting parts"],["done","Close"]].map(([action,label])=><Button key={action} size="sm" variant="outline" disabled={busy} onClick={()=>{setRouteTo({row:r,action});setAssignee("");setNote("");}}>{label}</Button>)}</>}
+                    {r.pending_status !== "done" && <>{([["dispatch","Dispatch"],["supervisor","Supervisor review"],["awaiting_parts","Awaiting parts"],["done","Close"]] as const).map(([action,label])=><Button key={action} size="sm" variant="outline" disabled={busy} onClick={()=>{setRouteTo({row:r,action});setAssignee("");setNote("");}}>{label}</Button>)}</>}
                     <Button size="sm" variant="ghost" onClick={()=>navigate({to:"/sheets/$sheetId",params:{sheetId:r.id}})}>Original sheet</Button>
                   </div>
                 </li>
