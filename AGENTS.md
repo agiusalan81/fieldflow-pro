@@ -17,7 +17,7 @@
 - user_roles helpers/restrictive tenant policies reject terminated actors; audit access changes. Why: revoke old sessions.
 - Invites use atomic named redemption and single-use signup triggers; social users need no app password. Why: confirmed names and server-assigned roles, never client-supplied company/role.
 - User preview: real-superuser-only, actor-scoped, in-memory, removable; root blocks other screens/writes. Why: preserve identity.
-- Payroll uses tested shared gross/Malta engines, office RLS and DWRs; snapshots capture currency/mode; HQ guards Malta compliance. Why: preserve issued pay and separate gross from statutory net.
+- Payroll uses tested gross/Malta engines, office RLS, DWRs, currency/mode snapshots and HQ guards. Roster RPC updates existing settings only. Why: preserve pay; avoid office-only INSERT guards.
 - Payroll routes share payroll-page.tsx. Opening leave/payslips save transactionally with issued-slip/totals guards; year-qualified carry-forward doesn't consume leave twice. Why: no partial or retrospective changes.
 - Sign-off/leave/overtime/checklist/renewals use tested jobsheets.ts. Why: shared rules.
 - DWR filing uses a unique canonical shift report; retain superseded/corrected originals and clear held flags after filing. Why: retry-safe hours, unchanged issued pay.
