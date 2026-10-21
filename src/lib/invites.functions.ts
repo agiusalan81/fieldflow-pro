@@ -65,8 +65,7 @@ async function companySender(sb: Sb, companyId: string) {
 
 async function sendMail(m: { to: string; subject: string; text: string; html: string; fromName: string; replyTo: string }, failMsg: string) {
   const boundary = `b_${crypto.randomUUID()}`;
-  const name = m.fromName.replace(/[\r\n"<>]/g, "");
-  const raw = [`To: ${m.to}`, `From: ${hdr(`${name} via FieldBridge`)} <me>`, ...(m.replyTo ? [`Reply-To: ${m.replyTo}`] : []), `Subject: ${hdr(m.subject)}`, "MIME-Version: 1.0", `Content-Type: multipart/alternative; boundary="${boundary}"`, "",
+  const raw = [`To: ${m.to}`, ...(m.replyTo ? [`Reply-To: ${m.replyTo}`] : []), `Subject: ${hdr(m.subject)}`, "MIME-Version: 1.0", `Content-Type: multipart/alternative; boundary="${boundary}"`, "",
     `--${boundary}`, 'Content-Type: text/plain; charset="UTF-8"', "Content-Transfer-Encoding: base64", "", b64(m.text),
     `--${boundary}`, 'Content-Type: text/html; charset="UTF-8"', "Content-Transfer-Encoding: base64", "", b64(m.html), `--${boundary}--`].join("\r\n");
   const lovableKey = process.env["LOVABLE_API_KEY"]; const gmailKey = process.env["GOOGLE_MAIL_API_KEY"];
