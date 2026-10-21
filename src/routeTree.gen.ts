@@ -36,6 +36,7 @@ import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/t
 import { Route as AuthenticatedTeamInvitesRouteImport } from './routes/_authenticated/team-invites'
 import { Route as AuthenticatedTechnicalLibraryRouteImport } from './routes/_authenticated/technical-library'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
+import { Route as ProblemTokenRouteImport } from './routes/problem.$token'
 import { Route as ReferralCodeRouteImport } from './routes/referral.$code'
 import { Route as ReportTokenRouteImport } from './routes/report.$token'
 import { Route as AuthenticatedAdminEntitiesRouteImport } from './routes/_authenticated/admin.entities'
@@ -43,6 +44,7 @@ import { Route as AuthenticatedAdminFieldsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminInventoryRouteImport } from './routes/_authenticated/admin.inventory'
 import { Route as AuthenticatedAdminJobsRouteImport } from './routes/_authenticated/admin.jobs'
 import { Route as AuthenticatedAdminLeaveRouteImport } from './routes/_authenticated/admin.leave'
+import { Route as AuthenticatedEquipmentAssetIdRouteImport } from './routes/_authenticated/equipment.$assetId'
 import { Route as AuthenticatedPayrollHoursRouteImport } from './routes/_authenticated/payroll.hours'
 import { Route as AuthenticatedPayrollPayslipsRouteImport } from './routes/_authenticated/payroll.payslips'
 import { Route as AuthenticatedPayrollWagesRouteImport } from './routes/_authenticated/payroll.wages'
@@ -190,6 +192,11 @@ const JoinTokenRoute = JoinTokenRouteImport.update({
   path: '/join/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProblemTokenRoute = ProblemTokenRouteImport.update({
+  id: '/problem/$token',
+  path: '/problem/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ReferralCodeRoute = ReferralCodeRouteImport.update({
   id: '/referral/$code',
   path: '/referral/$code',
@@ -228,6 +235,12 @@ const AuthenticatedAdminLeaveRoute = AuthenticatedAdminLeaveRouteImport.update({
   path: '/admin/leave',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedEquipmentAssetIdRoute =
+  AuthenticatedEquipmentAssetIdRouteImport.update({
+    id: '/equipment/$assetId',
+    path: '/equipment/$assetId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPayrollHoursRoute =
   AuthenticatedPayrollHoursRouteImport.update({
     id: '/hours',
@@ -303,6 +316,7 @@ export interface FileRoutesByFullPath {
   '/team-invites': typeof AuthenticatedTeamInvitesRoute
   '/technical-library': typeof AuthenticatedTechnicalLibraryRoute
   '/join/$token': typeof JoinTokenRoute
+  '/problem/$token': typeof ProblemTokenRoute
   '/referral/$code': typeof ReferralCodeRoute
   '/report/$token': typeof ReportTokenRoute
   '/admin/entities': typeof AuthenticatedAdminEntitiesRoute
@@ -310,6 +324,7 @@ export interface FileRoutesByFullPath {
   '/admin/inventory': typeof AuthenticatedAdminInventoryRoute
   '/admin/jobs': typeof AuthenticatedAdminJobsRoute
   '/admin/leave': typeof AuthenticatedAdminLeaveRoute
+  '/equipment/$assetId': typeof AuthenticatedEquipmentAssetIdRoute
   '/payroll/hours': typeof AuthenticatedPayrollHoursRoute
   '/payroll/payslips': typeof AuthenticatedPayrollPayslipsRoute
   '/payroll/wages': typeof AuthenticatedPayrollWagesRoute
@@ -346,6 +361,7 @@ export interface FileRoutesByTo {
   '/team-invites': typeof AuthenticatedTeamInvitesRoute
   '/technical-library': typeof AuthenticatedTechnicalLibraryRoute
   '/join/$token': typeof JoinTokenRoute
+  '/problem/$token': typeof ProblemTokenRoute
   '/referral/$code': typeof ReferralCodeRoute
   '/report/$token': typeof ReportTokenRoute
   '/admin/entities': typeof AuthenticatedAdminEntitiesRoute
@@ -353,6 +369,7 @@ export interface FileRoutesByTo {
   '/admin/inventory': typeof AuthenticatedAdminInventoryRoute
   '/admin/jobs': typeof AuthenticatedAdminJobsRoute
   '/admin/leave': typeof AuthenticatedAdminLeaveRoute
+  '/equipment/$assetId': typeof AuthenticatedEquipmentAssetIdRoute
   '/payroll/hours': typeof AuthenticatedPayrollHoursRoute
   '/payroll/payslips': typeof AuthenticatedPayrollPayslipsRoute
   '/payroll/wages': typeof AuthenticatedPayrollWagesRoute
@@ -391,6 +408,7 @@ export interface FileRoutesById {
   '/_authenticated/team-invites': typeof AuthenticatedTeamInvitesRoute
   '/_authenticated/technical-library': typeof AuthenticatedTechnicalLibraryRoute
   '/join/$token': typeof JoinTokenRoute
+  '/problem/$token': typeof ProblemTokenRoute
   '/referral/$code': typeof ReferralCodeRoute
   '/report/$token': typeof ReportTokenRoute
   '/_authenticated/admin/entities': typeof AuthenticatedAdminEntitiesRoute
@@ -398,6 +416,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/inventory': typeof AuthenticatedAdminInventoryRoute
   '/_authenticated/admin/jobs': typeof AuthenticatedAdminJobsRoute
   '/_authenticated/admin/leave': typeof AuthenticatedAdminLeaveRoute
+  '/_authenticated/equipment/$assetId': typeof AuthenticatedEquipmentAssetIdRoute
   '/_authenticated/payroll/hours': typeof AuthenticatedPayrollHoursRoute
   '/_authenticated/payroll/payslips': typeof AuthenticatedPayrollPayslipsRoute
   '/_authenticated/payroll/wages': typeof AuthenticatedPayrollWagesRoute
@@ -436,6 +455,7 @@ export interface FileRouteTypes {
     | '/team-invites'
     | '/technical-library'
     | '/join/$token'
+    | '/problem/$token'
     | '/referral/$code'
     | '/report/$token'
     | '/admin/entities'
@@ -443,6 +463,7 @@ export interface FileRouteTypes {
     | '/admin/inventory'
     | '/admin/jobs'
     | '/admin/leave'
+    | '/equipment/$assetId'
     | '/payroll/hours'
     | '/payroll/payslips'
     | '/payroll/wages'
@@ -479,6 +500,7 @@ export interface FileRouteTypes {
     | '/team-invites'
     | '/technical-library'
     | '/join/$token'
+    | '/problem/$token'
     | '/referral/$code'
     | '/report/$token'
     | '/admin/entities'
@@ -486,6 +508,7 @@ export interface FileRouteTypes {
     | '/admin/inventory'
     | '/admin/jobs'
     | '/admin/leave'
+    | '/equipment/$assetId'
     | '/payroll/hours'
     | '/payroll/payslips'
     | '/payroll/wages'
@@ -523,6 +546,7 @@ export interface FileRouteTypes {
     | '/_authenticated/team-invites'
     | '/_authenticated/technical-library'
     | '/join/$token'
+    | '/problem/$token'
     | '/referral/$code'
     | '/report/$token'
     | '/_authenticated/admin/entities'
@@ -530,6 +554,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/inventory'
     | '/_authenticated/admin/jobs'
     | '/_authenticated/admin/leave'
+    | '/_authenticated/equipment/$assetId'
     | '/_authenticated/payroll/hours'
     | '/_authenticated/payroll/payslips'
     | '/_authenticated/payroll/wages'
@@ -546,6 +571,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   JoinTokenRoute: typeof JoinTokenRoute
+  ProblemTokenRoute: typeof ProblemTokenRoute
   ReferralCodeRoute: typeof ReferralCodeRoute
   ReportTokenRoute: typeof ReportTokenRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
@@ -742,6 +768,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof JoinTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/problem/$token': {
+      id: '/problem/$token'
+      path: '/problem/$token'
+      fullPath: '/problem/$token'
+      preLoaderRoute: typeof ProblemTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/referral/$code': {
       id: '/referral/$code'
       path: '/referral/$code'
@@ -789,6 +822,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/leave'
       fullPath: '/admin/leave'
       preLoaderRoute: typeof AuthenticatedAdminLeaveRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/equipment/$assetId': {
+      id: '/_authenticated/equipment/$assetId'
+      path: '/equipment/$assetId'
+      fullPath: '/equipment/$assetId'
+      preLoaderRoute: typeof AuthenticatedEquipmentAssetIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/payroll/hours': {
@@ -893,6 +933,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminInventoryRoute: typeof AuthenticatedAdminInventoryRoute
   AuthenticatedAdminJobsRoute: typeof AuthenticatedAdminJobsRoute
   AuthenticatedAdminLeaveRoute: typeof AuthenticatedAdminLeaveRoute
+  AuthenticatedEquipmentAssetIdRoute: typeof AuthenticatedEquipmentAssetIdRoute
   AuthenticatedPrintSheetIdRoute: typeof AuthenticatedPrintSheetIdRoute
   AuthenticatedSheetsSheetIdRoute: typeof AuthenticatedSheetsSheetIdRoute
   AuthenticatedSheetsNewRoute: typeof AuthenticatedSheetsNewRoute
@@ -927,6 +968,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminInventoryRoute: AuthenticatedAdminInventoryRoute,
   AuthenticatedAdminJobsRoute: AuthenticatedAdminJobsRoute,
   AuthenticatedAdminLeaveRoute: AuthenticatedAdminLeaveRoute,
+  AuthenticatedEquipmentAssetIdRoute: AuthenticatedEquipmentAssetIdRoute,
   AuthenticatedPrintSheetIdRoute: AuthenticatedPrintSheetIdRoute,
   AuthenticatedSheetsSheetIdRoute: AuthenticatedSheetsSheetIdRoute,
   AuthenticatedSheetsNewRoute: AuthenticatedSheetsNewRoute,
@@ -942,6 +984,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   JoinTokenRoute: JoinTokenRoute,
+  ProblemTokenRoute: ProblemTokenRoute,
   ReferralCodeRoute: ReferralCodeRoute,
   ReportTokenRoute: ReportTokenRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,

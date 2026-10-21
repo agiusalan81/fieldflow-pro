@@ -1,3 +1,5 @@
+import { EquipmentQr } from "@/components/equipment-qr";
+import { labelKey, uniqueLabels } from "@/lib/attention-rules";
 import { parsePhone } from "@/lib/contact-details";
 import { tenantLocale } from "@/lib/locale";
 import { useState } from "react";
@@ -169,13 +171,14 @@ export function EquipmentManager({ clientId, companyId, siteId }: { clientId: st
   const [f, setF] = useState<EqDraft>(emptyEq);
   const [other, setOther] = useState("");
   const { data: learnt = [] } = useLookup(EQUIPMENT_TYPE);
-  const types = [...EQUIPMENT_TYPES.filter((t) => t !== "Other"), ...learnt.filter((l) => l.is_approved && !EQUIPMENT_TYPES.includes(l.label_value)).map((l) => l.label_value), "Other"];
+  const types = [...uniqueLabels([...EQUIPMENT_TYPES.filter(t=>t!=="Other"), ...learnt.filter(l=>l.is_approved).map(l=>l.label_value), ...allAssets.map(a=>a.asset_category)]).filter(t=>labelKey(t)!=="other"), "Other"];
   const refresh = () => { qc.invalidateQueries({ queryKey: key }); qc.invalidateQueries({ queryKey: ["assets"] }); qc.invalidateQueries({ queryKey: ["assets-all"] }); qc.invalidateQueries({ queryKey: ["entities-unified"] }); };
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!f.asset_category) { toast.error("Pick an equipment type"); return; }
-    const category = f.asset_category === "Other" ? other.trim() : f.asset_category;
+    const raw = f.asset_category === "Other" ? other.trim() : f.asset_category;
+    const category = types.find(t=>labelKey(t)===labelKey(raw)) ?? raw;
     if (!category) { toast.error("Specify the equipment type"); return; }
     const row = { asset_category: category, reference_number: f.reference_number, serial_number: f.serial_number || null };
     const { error } = editing === "new"
@@ -222,7 +225,8 @@ export function EquipmentManager({ clientId, companyId, siteId }: { clientId: st
             <div className="font-medium">{a.asset_category}</div>
             <div className="text-muted-foreground">Ref {a.reference_number} · S/N {a.serial_number ?? "—"}</div>
           </div>
-          <Button size="icon" variant="ghost" aria-label="Edit" onClick={() => { const known = types.includes(a.asset_category); setOther(known ? "" : a.asset_category); setF({ asset_category: known ? a.asset_category : "Other", reference_number: a.reference_number, serial_number: a.serial_number ?? "" }); setEditing(a.id); }}><Pencil className="h-4 w-4" /></Button>
+          <EquipmentQr assetId={a.id} reference={a.reference_number}/>
+          <Button size="icon" variant="ghost" aria-label="Edit" onClick={() => { const canonical = types.find(t=>labelKey(t)===labelKey(a.asset_category)); const known = !!canonical; setOther(known ? "" : a.asset_category); setF({ asset_category: canonical ?? "Other", reference_number: a.reference_number, serial_number: a.serial_number ?? "" }); setEditing(a.id); }}><Pencil className="h-4 w-4" /></Button>
           <Button size="icon" variant="ghost" aria-label="Delete" onClick={() => remove(a.id)}><Trash2 className="h-4 w-4" /></Button>
         </div>
       ))}

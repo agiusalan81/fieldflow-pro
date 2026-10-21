@@ -47,3 +47,7 @@
 - Leave/profile/clock-out handover rules use tested field-rules.ts plus guard_leave_decision. Why: UI and DB agree.
 
 - HQ uses single-active fallback, app_url, PLAN_FEATURES and NativeSelect/Cancel; owner-only row-locked toggle RPCs refresh access. Why: isolation; preserve prices/seats.
+
+- Attention queues use guarded atomic pending-work RPCs and separate action records; signed content is never edited. Why: preserve original evidence and avoid duplicate dispatch.
+- Blackouts and leave impact are validated in DB; range swaps use recipient acceptance plus independent manager approval before standby calculations change. Why: enforce operational decisions across all callers.
+- Equipment technical QR routes are authenticated/RLS-scoped; public reporting uses hashed revocable capabilities, limited payloads and throttling without public record reads. Why: keep technical and client data private.
