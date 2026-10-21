@@ -407,6 +407,13 @@
       "when": 1792527455325,
       "tag": "0057_supervisor_standby_roster",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1792561288388,
+      "tag": "0058_standby_update_without_payroll_insert",
+      "breakpoints": true
     }
   ]
 }
