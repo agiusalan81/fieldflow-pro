@@ -103,7 +103,7 @@ function StandbyPage() {
                       {ids.map((id) => (
                         <li key={id} className={`rounded px-1.5 py-1 text-xs ${id === profile.id ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
                           {name(id)}
-                          {id === profile.id && d >= iso(new Date()) && <button type="button" className="ml-1 underline" onClick={() => { setAsk(d); setEnd(d); setNote(""); }}>swap</button>}
+                          {id === profile.id && d >= iso(new Date()) && <Button variant="link" size="sm" className="ml-1 h-auto p-0 text-current" onClick={() => { setAsk(d); setEnd(d); setNote(""); }}>swap</Button>}
                         </li>
                       ))}
                     </ul>

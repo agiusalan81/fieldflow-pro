@@ -7,7 +7,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CalendarPlus, CheckCircle2, Receipt } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useProfile, useCompanyUsers } from "@/lib/profile";
+import { useProfile, useCompanyUsers, isManager } from "@/lib/profile";
 import { parsePhotos } from "@/lib/jobsheets";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -71,6 +71,7 @@ function PendingWorks() {
     if (!sched || !profile) return;
     if(await setStatus(sched.id,"scheduled",f.tech==="none"?null:f.tech,f.date)){setSched(null);toast.success("Return visit scheduled");}
   };
+  if(!isManager(profile))return <AppShell title="Pending works"><EmptyState>Pending Works actions are available to supervisors and office staff.</EmptyState></AppShell>;
   return (
     <AppShell title="Pending works">
       <div className="mx-auto max-w-5xl space-y-4">
