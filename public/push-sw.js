@@ -2,9 +2,9 @@
 self.addEventListener("push", (event) => {
   event.waitUntil((async () => {
     const open = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
-    // The open app already shows its own banner.
-    if (open.some((c) => c.visibilityState === "visible")) return;
-    await self.registration.showNotification("FieldBridge", { body: "You have a new team chat message", icon: "/app-icon-192.png", badge: "/app-icon-192.png", tag: "fb-chat", renotify: true, data: { url: "/messages" } });
+    // The open app already shows its own banner (only when actually focused on screen).
+    if (open.some((c) => c.visibilityState === "visible" && c.focused)) return;
+    await self.registration.showNotification("FieldBridge", { body: "You have a new team chat message", icon: "/app-icon-192.png", badge: "/app-icon-192.png", tag: "fb-chat", renotify: true, vibrate: [200, 100, 200], timestamp: Date.now(), requireInteraction: false, data: { url: "/messages" } });
   })());
 });
 self.addEventListener("notificationclick", (event) => {

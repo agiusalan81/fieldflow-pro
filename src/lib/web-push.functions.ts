@@ -51,10 +51,17 @@ export const sendChatPush = createServerFn({ method: "POST" })
     if (!recipients.size) return { sent: 0 };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: subs } = await supabaseAdmin.from("push_subscriptions").select("endpoint").in("user_id", [...recipients]);
+    const sent = await deliver(supabaseAdmin, (subs ?? []).map((x) => x.endpoint));
+    return { sent };
+  });
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function deliver(supabaseAdmin: any, endpoints: string[]) {
+  const subs = endpoints.map((endpoint) => ({ endpoint }));
     const { p256, d, pub } = await vapidKeys();
     const enc = new TextEncoder();
     let sent = 0;
-    await Promise.all((subs ?? []).map(async ({ endpoint }) => {
+    await Promise.all(subs.map(async ({ endpoint }) => {
       const head = b64url(enc.encode(JSON.stringify({ typ: "JWT", alg: "ES256" })));
       const body = b64url(enc.encode(JSON.stringify({ aud: new URL(endpoint).origin, exp: Math.floor(Date.now() / 1000) + 43200, sub: "mailto:support@fieldbridgeapp.com" })));
       const raw = p256.sign(enc.encode(`${head}.${body}`), d) as unknown as Uint8Array | { toBytes: (f: string) => Uint8Array };
@@ -66,5 +73,16 @@ export const sendChatPush = createServerFn({ method: "POST" })
         else console.error("push failed", res.status);
       } catch (e) { console.error("push error", e); }
     }));
-    return { sent };
+  return sent;
+}
+
+/** Sends a test alert to the caller's own devices. */
+export const sendTestPush = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: subs } = await supabaseAdmin.from("push_subscriptions").select("endpoint").eq("user_id", context.userId);
+    const devices = subs?.length ?? 0;
+    const sent = devices ? await deliver(supabaseAdmin, subs!.map((x) => x.endpoint)) : 0;
+    return { devices, sent };
   });
