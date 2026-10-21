@@ -5,7 +5,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Car, Lock, MapPin, Plus, Save, Send, Trash2, ShieldAlert, PenLine } from "lucide-react";
+import { ArrowLeft, Car, Lock, MapPin, Plus, Save, Send, Trash2, ShieldAlert, PenLine, ChevronLeft, ChevronRight } from "lucide-react";
+import { readSheetOrder, neighbours } from "@/lib/sheet-nav";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, useCompanyUsers, initialsOf, isManager } from "@/lib/profile";
 import { remindBreakIfDue } from "@/lib/dwr-report";
@@ -49,6 +50,22 @@ export const Route = createFileRoute("/_authenticated/sheets/$sheetId")({
   }),
   component: SheetForm,
 });
+
+function SheetStepper({ sheetId }: { sheetId: string }) {
+  const navigate = useNavigate();
+  const [ids, setIds] = useState<string[]>([]);
+  useEffect(() => { setIds(readSheetOrder()); }, []);
+  const n = neighbours(ids, sheetId);
+  if (n.index < 0) return null;
+  const go = (id: string | null) => { if (id) void navigate({ to: "/sheets/$sheetId", params: { sheetId: id } }); };
+  return (
+    <div className="flex items-center gap-1">
+      <Button size="sm" variant="outline" disabled={!n.prev} onClick={() => go(n.prev)} aria-label="Previous job sheet"><ChevronLeft className="h-4 w-4" /><span className="hidden sm:inline">Previous</span></Button>
+      <span className="px-1 text-xs tabular-nums text-muted-foreground">{n.index + 1}/{n.total}</span>
+      <Button size="sm" variant="outline" disabled={!n.next} onClick={() => go(n.next)} aria-label="Next job sheet"><span className="hidden sm:inline">Next</span><ChevronRight className="h-4 w-4" /></Button>
+    </div>
+  );
+}
 
 type Log = {
   log_date: string; time_in: string; time_out: string;
@@ -371,7 +388,7 @@ function SheetForm() {
   return (
     <AppShell
       title={`Job sheet ${sheet.jobsheet_number}`}
-      actions={<BackButton fallback="/sheets" />}
+      actions={<div className="flex items-center gap-1"><BackButton fallback="/sheets" /><SheetStepper sheetId={sheetId} /></div>}
     >
       {conflict && <div className="mx-auto mb-4 max-w-5xl border border-destructive p-3 text-sm"><p>This sheet changed on another device. Your local work has been kept. Compare it before saving.</p><Button variant="outline" className="mt-2" onClick={async () => {
         if (!confirm("Discard this device's saved changes and load the latest job sheet?")) return;

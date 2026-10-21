@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { saveSheetOrder } from "@/lib/sheet-nav";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, Mail, FileText, Trash2, Download, X } from "lucide-react";
@@ -158,6 +159,13 @@ function AdminJobs() {
         <Button size="sm" variant={mine ? "outline" : "default"} onClick={() => setMine(false)}>All sheets</Button>
         <Button size="sm" variant={mine ? "default" : "outline"} onClick={() => setMine(true)}>Assigned to me</Button>
         <Button size="sm" variant="ghost" onClick={() => { setDetails({ from: "", to: "", client: "all", technician: "all" }); setFilter("all"); setQ(""); setMine(false); }}>Clear filters</Button>
+      </div>
+      <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="Filter by status">
+        {pills.map(([k, l]) => (
+          <Button key={k} size="sm" variant={filter === k ? "default" : "outline"} aria-pressed={filter === k} onClick={() => setFilter(k)} className="rounded-full">
+            {l} <span className="ml-1 tabular-nums opacity-80">({countFor(k)})</span>
+          </Button>
+        ))}
         <span className="self-center text-sm text-muted-foreground">{list.length} sheets</span>
       </div>
       {office && selected.length > 0 && <div className="sticky top-0 z-10 mb-4 flex flex-wrap items-center gap-2 border border-primary bg-background p-3">
