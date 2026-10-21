@@ -27,7 +27,7 @@
 - Branding shares theme/template JSON, private tenant files and PDF/font helpers; DB/HQ locks preserve saved values.: secure app/PDF consistency.
 - Service sheets share a typed safe projection/renderers for preview, print and email.: client-safe consistency.
 - Pending works close via close_pending_on_followup trigger; sheet creation requires clock-in or standby.: enforce without UI.
-- Billing uses billing.ts precedence: estimate > contract > client > company default. Integration config uses integrations.ts; job_sheets_guard_billing allows only office review changes.: protected prices.
+- Billing precedence in billing.ts; config in integrations.ts; job_sheets_guard_billing allows only office review.: protected prices.
 - WhatsApp rules use tested whatsapp-templates.ts; AI/Meta calls use manager-only whatsapp-templates.functions.ts.: validate consistently.
 - Daily time logs keep technician_count separate from initials; labour uses headcount, DWR personal elapsed time.: correct hours.
 - Combined PDFs use email builder/RLS; office combines completed sheets for one client.: client isolation.
@@ -40,15 +40,12 @@
 - Plan access: DB write guards + plan-features.ts menu gating; legacy stays on. RFQ rules in lift-rfq.ts.: safe rollout.
 - Client reports use immutable DB-built safe snapshots and hashed expiring/revocable links; photo paths stay server-only.: no internal disclosure.
 - Sheet safety/checklist snapshots are checked at completion; safety keys share checklist_values.: offline safety.
-
 - Clock-in shares plate/consent helpers. Fleet appends active-shift GPS with module/tenant guards; mileage excludes jitter/gaps.: honest isolated tracking.
 - Receipt PDFs: separate account/sheet IndexedDB queue/private storage; exclude from client projections.: private offline receipts.
 - Technical library: private storage/RLS; publish checks real/displayed supervisor/superuser; AI reads approved pages as caller.: secure View As.
 - Leave/profile/clock-out handover rules use tested field-rules.ts plus guard_leave_decision.: UI and DB agree.
-
 - HQ uses single-active fallback, app_url, PLAN_FEATURES and NativeSelect/Cancel; owner-only row-locked toggle RPCs refresh access.: isolated prices/seats.
-
 - Attention: guarded atomic pending RPCs/separate actions; never edit signed content.: immutable evidence; no duplicate dispatch.
-- Blackouts and leave impact are validated in DB; range swaps use recipient acceptance plus independent manager approval before standby calculations change.: enforce for every caller.
+- Blackouts/leave impact validated in DB; range swaps need recipient then manager approval before standby changes.: enforce for every caller.
 - Equipment QR: authenticated/RLS-scoped technical routes; public reports use hashed revocable capabilities, bounded payloads/throttling; no public reads.: private technical/client data.
-- Closed-app chat alerts use payloadless Web Push (web-push.functions.ts, VAPID key derived from WEB_PUSH_SEED, public/push-sw.js imported into the app SW); only published/installed app can receive.: no message text leaves the app; workerd-safe.
+- Chat Web Push is payloadless (web-push.functions.ts, WEB_PUSH_SEED key, push-sw.js in app SW).: no text leaves app.
