@@ -1,6 +1,6 @@
 export const DEFAULT_FLEET_PING_SECONDS = 30;
 export type FleetPoint = { id: string; user_id: string; shift_id: string; plate: string | null; latitude: number; longitude: number; accuracy: number; recorded_at: string };
-export type FleetVehicle = { plate: string; litres_per_100km: number; fuel_price_per_litre: number };
+export type FleetVehicle = { plate: string; litres_per_100km: number; fuel_price_per_litre: number; make_model?: string | null; fuel_type?: string | null; assigned_user_id?: string | null };
 export function distanceKm(a: FleetPoint, b: FleetPoint) {
   const r = Math.PI / 180;
   const d = Math.sin((b.latitude-a.latitude)*r/2)**2 + Math.cos(a.latitude*r)*Math.cos(b.latitude*r)*Math.sin((b.longitude-a.longitude)*r/2)**2;
