@@ -172,3 +172,5 @@
 - [ ] Phase 2 issuance/read-back verification (blocked: existing employee has missing daily reports; no irreversible real payslip issued during testing). PDF generation and CSV amounts tested; country-specific net pay outside Malta and direct accounting/bank integrations remain future work.
 - [x] Phase 3: Tenant appearance and shared PDF styling, fonts/custom fonts, private backgrounds, field colours, frames, icon presets and HQ-driven locked badges. 19 focused tests and latest build passed; signed-in appearance/frame save/reload and private font/background upload → reload → sample PDF verified without runtime errors. Temporary uploaded document settings and test frame removed. Database guard, office upload policy and anonymous offer denial confirmed. Pack checkout remains dependent on payment setup; no new country payroll compliance added.
 - [ ] Phase 4: mobile as-built QS tally counters and estimate vs installed variance
+- [ ] Phone install name FieldBridge
+- [ ] Site survey: rename from As-built tally, delete survey, row photos
