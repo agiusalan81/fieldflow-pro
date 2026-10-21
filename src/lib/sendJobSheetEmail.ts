@@ -4,7 +4,7 @@ import { clientPhotos, parsePhotos, labourHours, technicianCount, validateCombin
 import { parseTemplate, parseTerms, termsFor, visibleBlocks, documentLabel, type PdfTemplate } from "@/lib/documents";
 import { buildServicePdf } from "@/lib/service-sheet-pdf";
 import { serviceEquipment, type PdfSheetData } from "@/lib/service-sheet";
-import { formatOfficeAddress, parseOfficeAddress } from "@/lib/contact-details";
+import { companySignature, formatOfficeAddress, parseOfficeAddress } from "@/lib/contact-details";
 import { sheetTitle } from "@/lib/dwr";
 import { validateMonthlyQueue } from "@/lib/monthly-signing";
 import { pdfFonts, pdfPageDecoration, resolveDocumentAssets } from "@/lib/branding-assets";

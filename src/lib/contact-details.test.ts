@@ -1,4 +1,4 @@
-import { expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { parsePhone, parseOfficeAddress, formatOfficeAddress } from "./contact-details";
 it("preserves all eight digits while typing a Malta number", () => {
   for (const number of ["1", "12", "12345678"]) expect(parsePhone(`+356 ${number}`, "+356", ["+356", "+44"])).toEqual({ code: "+356", number });
