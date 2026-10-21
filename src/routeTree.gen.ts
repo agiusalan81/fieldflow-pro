@@ -27,6 +27,7 @@ import { Route as AuthenticatedOvertimeRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedPayrollRouteImport } from './routes/_authenticated/payroll'
 import { Route as AuthenticatedPendingWorksRouteImport } from './routes/_authenticated/pending-works'
 import { Route as AuthenticatedPlatformRouteImport } from './routes/_authenticated/platform'
+import { Route as AuthenticatedProposalsRouteImport } from './routes/_authenticated/proposals'
 import { Route as AuthenticatedScheduleRouteImport } from './routes/_authenticated/schedule'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedStandbyRouteImport } from './routes/_authenticated/standby'
@@ -138,6 +139,11 @@ const AuthenticatedPendingWorksRoute =
 const AuthenticatedPlatformRoute = AuthenticatedPlatformRouteImport.update({
   id: '/platform',
   path: '/platform',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedProposalsRoute = AuthenticatedProposalsRouteImport.update({
+  id: '/proposals',
+  path: '/proposals',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedScheduleRoute = AuthenticatedScheduleRouteImport.update({
@@ -281,6 +287,7 @@ export interface FileRoutesByFullPath {
   '/payroll': typeof AuthenticatedPayrollRouteWithChildren
   '/pending-works': typeof AuthenticatedPendingWorksRoute
   '/platform': typeof AuthenticatedPlatformRoute
+  '/proposals': typeof AuthenticatedProposalsRoute
   '/schedule': typeof AuthenticatedScheduleRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/standby': typeof AuthenticatedStandbyRoute
@@ -322,6 +329,7 @@ export interface FileRoutesByTo {
   '/payroll': typeof AuthenticatedPayrollRouteWithChildren
   '/pending-works': typeof AuthenticatedPendingWorksRoute
   '/platform': typeof AuthenticatedPlatformRoute
+  '/proposals': typeof AuthenticatedProposalsRoute
   '/schedule': typeof AuthenticatedScheduleRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/standby': typeof AuthenticatedStandbyRoute
@@ -365,6 +373,7 @@ export interface FileRoutesById {
   '/_authenticated/payroll': typeof AuthenticatedPayrollRouteWithChildren
   '/_authenticated/pending-works': typeof AuthenticatedPendingWorksRoute
   '/_authenticated/platform': typeof AuthenticatedPlatformRoute
+  '/_authenticated/proposals': typeof AuthenticatedProposalsRoute
   '/_authenticated/schedule': typeof AuthenticatedScheduleRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/standby': typeof AuthenticatedStandbyRoute
@@ -408,6 +417,7 @@ export interface FileRouteTypes {
     | '/payroll'
     | '/pending-works'
     | '/platform'
+    | '/proposals'
     | '/schedule'
     | '/settings'
     | '/standby'
@@ -449,6 +459,7 @@ export interface FileRouteTypes {
     | '/payroll'
     | '/pending-works'
     | '/platform'
+    | '/proposals'
     | '/schedule'
     | '/settings'
     | '/standby'
@@ -491,6 +502,7 @@ export interface FileRouteTypes {
     | '/_authenticated/payroll'
     | '/_authenticated/pending-works'
     | '/_authenticated/platform'
+    | '/_authenticated/proposals'
     | '/_authenticated/schedule'
     | '/_authenticated/settings'
     | '/_authenticated/standby'
@@ -651,6 +663,13 @@ declare module '@tanstack/react-router' {
       path: '/platform'
       fullPath: '/platform'
       preLoaderRoute: typeof AuthenticatedPlatformRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/proposals': {
+      id: '/_authenticated/proposals'
+      path: '/proposals'
+      fullPath: '/proposals'
+      preLoaderRoute: typeof AuthenticatedProposalsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/schedule': {
@@ -840,6 +859,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPayrollRoute: typeof AuthenticatedPayrollRouteWithChildren
   AuthenticatedPendingWorksRoute: typeof AuthenticatedPendingWorksRoute
   AuthenticatedPlatformRoute: typeof AuthenticatedPlatformRoute
+  AuthenticatedProposalsRoute: typeof AuthenticatedProposalsRoute
   AuthenticatedScheduleRoute: typeof AuthenticatedScheduleRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedStandbyRoute: typeof AuthenticatedStandbyRoute
@@ -873,6 +893,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPayrollRoute: AuthenticatedPayrollRouteWithChildren,
   AuthenticatedPendingWorksRoute: AuthenticatedPendingWorksRoute,
   AuthenticatedPlatformRoute: AuthenticatedPlatformRoute,
+  AuthenticatedProposalsRoute: AuthenticatedProposalsRoute,
   AuthenticatedScheduleRoute: AuthenticatedScheduleRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedStandbyRoute: AuthenticatedStandbyRoute,
