@@ -19,6 +19,6 @@ export function appearanceVariables(a: Appearance): CSSProperties {
   return { "--tenant-background-image": a.backgroundData ? `url("${a.backgroundData}")` : "none", "--tenant-menu-image": a.menuBackgroundData ? `url("${a.menuBackgroundData}")` : "none", "--tenant-input-background": a.fieldBackground || undefined, "--tenant-input-text": a.fieldText || undefined } as CSSProperties;
 }
 export function industrySheetLabel(preset: Appearance["industryPreset"], label: string) {
-  const noun = preset === "lifts" ? "Lift service sheets" : preset === "hvac" ? "HVAC service sheets" : preset === "electrical" ? "Electrical service sheets" : preset === "plumbing" ? "Plumbing service sheets" : "Job sheets";
+  const noun = preset === "lifts" ? "Job sheets" : preset === "hvac" ? "HVAC service sheets" : preset === "electrical" ? "Electrical service sheets" : preset === "plumbing" ? "Plumbing service sheets" : "Job sheets";
   return label.includes("job sheets") ? label.replace("job sheets", noun.toLowerCase()) : label === "Job sheets" ? noun : label;
 }

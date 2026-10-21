@@ -7,4 +7,5 @@ describe("tenant branding", () => {
   it("rejects unsafe field colours and icon sets", () => { expect(parseAppearance({fieldText:"url(evil)",iconPreset:"script"})).toMatchObject({fieldText:"",iconPreset:"outline"}); });
   it("requires at least 4.5 contrast for readable field pairs", () => { expect(contrastRatio("#ffffff","#202020")).toBeGreaterThanOrEqual(4.5); expect(contrastRatio("#ffffff","#eeeeee")).toBeLessThan(4.5); });
   it("industry presets change wording without adding menu entries", () => { expect(industrySheetLabel("hvac","Job sheets")).toBe("HVAC service sheets"); expect(industrySheetLabel("hvac","Team")).toBe("Team"); });
+  it("lifts companies keep the menu entry named Job sheets", () => { expect(industrySheetLabel("lifts","Job sheets")).toBe("Job sheets"); expect(industrySheetLabel("lifts","job sheets pending")).toBe("job sheets pending"); });
 });
