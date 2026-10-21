@@ -195,7 +195,7 @@ const DECISIONS: { key: ReviewDecision["decision"]; label: string }[] = [
 ];
 
 /** Phase 5: office variance review and commercial close-out. Signed site quantities are never edited. */
-function CloseOut({ s, rateFor, money, onSaved }: { s: Survey; rateFor?: (l: SurveyLine) => number | undefined; money: (n: number) => string; onSaved: () => void }) {
+function CloseOut({ s, rateFor, money, onSaved }: { s: Survey; rateFor?: ((l: SurveyLine) => number | undefined) | undefined; money: (n: number) => string; onSaved: () => void }) {
   const [review, setReview] = useState<SurveyReview>(s.review ?? {});
   const [busy, setBusy] = useState(false);
   useEffect(() => setReview(s.review ?? {}), [s.review]);
