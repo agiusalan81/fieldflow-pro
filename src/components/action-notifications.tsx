@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useProfile, isManager } from '@/lib/profile';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-export function OnCallBadge({ userId }: { userId?: string }) {
+export function OnCallBadge({ userId }: { userId?: string | undefined }) {
  const q=useQuery({queryKey:['on-call-menu-badge',userId],enabled:!!userId,refetchInterval:15000,queryFn:async()=>{if(!userId)return 0;const r=await supabase.from('standby_swaps').select('id',{count:'exact',head:true}).eq('target_id',userId).eq('status','pending');if(r.error)throw r.error;return r.count??0;}});
  return q.data ? <span aria-label={`${q.data} incoming swap requests`} className="ml-auto rounded-full bg-destructive px-1.5 text-xs text-destructive-foreground">{q.data}</span> : null;
 }
