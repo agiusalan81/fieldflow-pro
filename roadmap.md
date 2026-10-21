@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Approved six-part batch: Pending Works routing/thumbnails; leave blackout/operational review; unified Team/confirmed roles; range swaps/menu badge; plate/site-label fixes; equipment technical/public report QR; attention-only manager dashboard.
 - [x] Phase 1 batch: job-sheet type filter (tested), fleet vehicle register (make/model, fuel type, assigned technician), emailed invites bound to recipient with signed-in mismatch warning, tenant field colours on all inputs/dropdowns; signed-in email in menu already done.
 - [ ] Phase 1: automatic server-sent invite emails (blocked: sender email domain not set up).
 - [x] Phase 2: Pricing & QS module switch in HQ, company price list per trade with starter catalogues (no preset prices), tally items, installation methods, VAT (tested).
