@@ -23,3 +23,29 @@ export function variance(line: SurveyLine) {
 export function varianceValue(lines: SurveyLine[], rateFor: (l: SurveyLine) => number | undefined) {
   return r2(lines.reduce((a, l) => { const rate = rateFor(l); return rate == null ? a : a + variance(l).diff * rate; }, 0));
 }
+
+/** Phase 5 commercial review: per-line office decision; signed field quantities stay untouched. */
+export type ReviewDecision = { decision: "accept" | "estimate" | "adjust"; qty?: number; reason?: string };
+export type SurveyReview = Record<string, ReviewDecision>;
+
+/** Quantity to charge: accept installed (default), hold to estimate, or an office-adjusted figure. */
+export function finalQty(line: SurveyLine, d?: ReviewDecision): number {
+  if (!d || d.decision === "accept") return Number(line.installed) || 0;
+  if (d.decision === "estimate") return Number(line.estimated) || 0;
+  return r2(Math.max(0, Number(d.qty) || 0));
+}
+
+/** Variances still needing a decision; adjustments and held-to-estimate lines need a reason. */
+export function unresolved(lines: SurveyLine[], review: SurveyReview): SurveyLine[] {
+  return lines.filter((l) => {
+    const d = review[l.id];
+    if (d && d.decision !== "accept" && !d.reason?.trim()) return true;
+    return variance(l).status !== "match" && !d;
+  });
+}
+
+export function finalAccount(lines: SurveyLine[], review: SurveyReview, rateFor: (l: SurveyLine) => number | undefined) {
+  let estimated = 0, final = 0;
+  for (const l of lines) { const rate = rateFor(l); if (rate == null) continue; estimated += (Number(l.estimated) || 0) * rate; final += finalQty(l, review[l.id]) * rate; }
+  return { estimated: r2(estimated), final: r2(final), difference: r2(final - estimated) };
+}
