@@ -1,3 +1,4 @@
+import { InstallAppCard } from "@/components/install-app";
 import fieldbridgeMark from "@/assets/fieldbridge-mark.png";
 import { SocialSignin } from "@/components/social-signin";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -198,6 +199,7 @@ function AuthPage() {
         >
           {mode === "signup" ? "Already have an account? Sign in" : "New organisation? Set up a company"}
         </button>
+        {mode === "signin" && <div className="mt-6"><InstallAppCard compact /></div>}
       </div>
     </main>
   );

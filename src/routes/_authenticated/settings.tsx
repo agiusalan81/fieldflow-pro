@@ -1,3 +1,4 @@
+import { PushDeviceStatus } from "@/components/push-device-status";
 import { PhoneInput, splitPhone } from "@/components/client-manager";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
@@ -116,6 +117,7 @@ function Settings() {
               <Switch checked={sounds} onCheckedChange={(c) => { setSounds(c); if (profile) setSoundsOn(profile.id, c); if (c) playChime("message"); }} />
             </label>
           </section>
+          <PushDeviceStatus />
           <div className="grid gap-2 sm:grid-cols-3">
             <Button className="h-11" onClick={save}>Update Profile</Button>
             <Dialog open={pwOpen} onOpenChange={setPwOpen}>

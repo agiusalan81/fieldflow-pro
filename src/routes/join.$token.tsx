@@ -1,3 +1,4 @@
+import { OFFER_INSTALL_KEY } from "@/lib/install-app";
 import { queryOptions, useQueryClient, useQueryErrorResetBoundary, useSuspenseQuery } from "@tanstack/react-query";
 import { SocialSignin } from "@/components/social-signin";
 import { createFileRoute, useNavigate, useRouter, type ErrorComponentProps } from "@tanstack/react-router";
@@ -87,6 +88,7 @@ function JoinPage() {
   const enter = async () => {
     sessionStorage.removeItem("fieldflow:pending-invite");
     qc.clear();
+    sessionStorage.setItem(OFFER_INSTALL_KEY, "1");
     await navigate({ to: "/dashboard", replace: true });
   };
   const accept = async (e: FormEvent) => {
