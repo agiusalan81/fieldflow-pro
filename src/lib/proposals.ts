@@ -3,7 +3,7 @@ import { lineTotal } from "./price-list";
 
 export type SpecField = { key: string; label: string; options?: string[] };
 export type SpecSection = { key: string; title: string; fields: SpecField[]; when?: (spec: Spec) => boolean };
-export type Spec = Record<string, string>;
+export type Spec = Record<string, string> & { scope?: string; equipment_type?: string; equipment_subtype?: string; equipment_other?: string };
 
 export const EQUIPMENT_TYPES: Record<string, string[]> = {
   "Passenger lift": ["Electric MR", "Electric MRL", "Hydraulic"],
