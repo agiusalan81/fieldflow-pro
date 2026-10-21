@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ArrowLeft, Send, Hash, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { markThreadRead, unreadByThread, useChatReads } from "@/lib/chat-unread";
 import { useProfile, useCompanyUsers } from "@/lib/profile";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/_authenticated/messages")({
       { property: "og:description", content: "Internal team chat." },
     ],
   }),
+  validateSearch: (s: Record<string, unknown>): { thread?: string } => (typeof s.thread === "string" ? { thread: s.thread } : {}),
   component: Messages,
 });
 
@@ -29,10 +31,12 @@ function Messages() {
   const { data: profile } = useProfile();
   const { data: users = [] } = useCompanyUsers();
   const qc = useQueryClient();
+  const { thread: linked } = Route.useSearch();
   const [filter, setFilter] = useState<"all" | "people" | "jobs">("all");
   const [active, setActive] = useState<Thread | null>(null);
   const [text, setText] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
+  const { data: reads = {} } = useChatReads(profile?.id);
 
   const { data: jobs = [] } = useQuery({
     queryKey: ["chat-jobs"],
@@ -67,6 +71,26 @@ function Messages() {
   const nameOf = (id: string) => users.find((u) => u.id === id)?.full_name ?? "Someone";
 
   useEffect(() => { endRef.current?.scrollIntoView({ block: "end" }); }, [current.length, active?.id]);
+
+  const unread = useMemo(() => (profile ? unreadByThread(msgs, reads, profile.id) : {}), [msgs, reads, profile]);
+  const keyOf = (t: Thread) => `${t.kind}:${t.id}`;
+
+  // Open a thread from a notification link.
+  useEffect(() => {
+    if (!linked || active) return;
+    const t = threads.find((x) => keyOf(x) === linked);
+    if (t) setActive(t);
+  }, [linked, threads, active]);
+
+  // Mark the open thread read whenever new messages arrive in it.
+  useEffect(() => {
+    if (!active || !profile) return;
+    const k = keyOf(active);
+    if (!unread[k] && reads[k]) return;
+    void markThreadRead(profile.id, k).then(() => {
+      qc.invalidateQueries({ queryKey: ["chat-reads"] });
+    });
+  }, [active, profile, unread, reads, qc]);
 
   const send = async (e: React.FormEvent) => {
     e.preventDefault();
