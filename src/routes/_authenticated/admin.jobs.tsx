@@ -115,7 +115,7 @@ function AdminJobs() {
   const base = jobs.filter((j) => matchesSheetDetails(j, { ...details, initials: staff.find((u) => u.id === details.technician) ? initialsOf(staff.find((u) => u.id === details.technician) ?? { full_name: "" }) : undefined }) && (!mine || j.assigned_technician_id === me?.id) && matchesSheetSearch(j.jobsheet_number, [j.clients?.name, j.users?.full_name, j.assets?.reference_number, j.sites?.name, j.reported_fault], q));
   const list = base.filter((j) => matchesSheetFilter(j, filter));
   listRef.current = list.map((j) => j.id);
-  const pills: [string, string][] = [["all", "All"], ...STATUSES, ["has_pending", "Pending works"]];
+  const pills: (readonly [string, string])[] = [["all", "All"], ...STATUSES, ["has_pending", "Pending works"]];
   const countFor = (k: string) => base.filter((j) => matchesSheetFilter(j, k)).length;
   const totalHours = (j: (typeof jobs)[number]) => (j.jobsheet_time_logs ?? []).reduce((s, l) => s + Number(l.daily_total_hours || 0), 0);
 

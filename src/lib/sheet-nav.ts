@@ -16,5 +16,5 @@ export function readSheetOrder(): string[] {
 export function neighbours(ids: string[], current: string): { prev: string | null; next: string | null; index: number; total: number } {
   const i = ids.indexOf(current);
   if (i < 0) return { prev: null, next: null, index: -1, total: ids.length };
-  return { prev: i > 0 ? ids[i - 1] : null, next: i < ids.length - 1 ? ids[i + 1] : null, index: i, total: ids.length };
+  return { prev: i > 0 ? ids[i - 1] ?? null : null, next: i < ids.length - 1 ? ids[i + 1] ?? null : null, index: i, total: ids.length };
 }
