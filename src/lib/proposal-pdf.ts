@@ -4,7 +4,7 @@ import { proposalTotals, visibleSections, type Line, type Spec, type Terms } fro
 
 export type ProposalPdfInput = {
   company: { name: string; logo?: string; address?: string; vat?: string; footer?: string; primary?: string };
-  reference: string; title: string; date: string; client?: string; site?: string; currency: string;
+  reference: string; title: string; date: string; client?: string | undefined; site?: string | undefined; currency: string;
   trade: string; spec: Spec; lines: Line[]; terms: Terms;
 };
 
