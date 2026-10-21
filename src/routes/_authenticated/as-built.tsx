@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Minus, Plus, Printer, Trash2 } from "lucide-react";
+import { ArrowLeft, Camera, Minus, Plus, Printer, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { useProfile, isManager } from "@/lib/profile";
@@ -18,9 +18,9 @@ import { Textarea } from "@/components/ui/textarea";
 
 export const Route = createFileRoute("/_authenticated/as-built")({
   head: () => ({ meta: [
-    { title: "As-built tally — FieldBridge" },
+    { title: "Site survey — FieldBridge" },
     { name: "description", content: "Count installed points and fittings on site and compare them with the estimate." },
-    { property: "og:title", content: "As-built tally — FieldBridge" },
+    { property: "og:title", content: "Site survey — FieldBridge" },
     { property: "og:description", content: "Mobile as-built quantity tally with estimate-versus-installed comparison and office sign-off." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
   ] }),
@@ -35,10 +35,10 @@ function AsBuiltPage() {
   const { data: profile } = useProfile();
   const on = usePlanFeatures();
   const [open, setOpen] = useState<string | null>(null);
-  if (!profile) return <AppShell title="As-built tally"><p className="text-muted-foreground">Loading…</p></AppShell>;
-  if (!on("qs_pricing")) return <AppShell title="As-built tally"><EmptyState>As-built tally needs the Pricing & quantity surveying module.</EmptyState></AppShell>;
+  if (!profile) return <AppShell title="Site survey"><p className="text-muted-foreground">Loading…</p></AppShell>;
+  if (!on("qs_pricing")) return <AppShell title="Site survey"><EmptyState>Site survey needs the Pricing & quantity surveying module.</EmptyState></AppShell>;
   const manager = isManager(profile);
-  return <AppShell title="As-built tally">{open ? <Editor id={open} manager={manager} onBack={() => setOpen(null)} /> : <List companyId={profile.company_id} manager={manager} onOpen={setOpen} />}</AppShell>;
+  return <AppShell title="Site survey">{open ? <Editor id={open} manager={manager} companyId={profile.company_id} onBack={() => setOpen(null)} /> : <List companyId={profile.company_id} manager={manager} onOpen={setOpen} />}</AppShell>;
 }
 
 function List({ companyId, manager, onOpen }: { companyId: string; manager: boolean; onOpen: (id: string) => void }) {
@@ -49,7 +49,7 @@ function List({ companyId, manager, onOpen }: { companyId: string; manager: bool
   const create = async () => {
     const p = props.data?.find((x) => x.id === proposal);
     const lines = p ? linesFromProposal((Array.isArray(p.lines) ? p.lines : []) as unknown as Line[]) : [];
-    const r = await supabase.from("qs_surveys").insert({ company_id: companyId, trade: p?.trade ?? trade, proposal_id: p?.id ?? null, title: p ? `As-built — ${p.reference} ${p.title}`.trim() : "New as-built survey", lines: lines as unknown as Json }).select("id").single();
+    const r = await supabase.from("qs_surveys").insert({ company_id: companyId, trade: p?.trade ?? trade, proposal_id: p?.id ?? null, title: p ? `Site survey — ${p.reference} ${p.title}`.trim() : "New site survey", lines: lines as unknown as Json }).select("id").single();
     if (r.error) { toast.error(r.error.message); return; } onOpen(r.data.id);
   };
   return <div className="mx-auto max-w-4xl space-y-4">
@@ -58,7 +58,7 @@ function List({ companyId, manager, onOpen }: { companyId: string; manager: bool
       {!proposal && <div className="min-w-48 space-y-1"><Label htmlFor="ab-trade">Trade</Label><select id="ab-trade" className={sel} value={trade} onChange={(e) => setTrade(e.target.value)}>{TRADES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}</select></div>}
       <Button onClick={create}><Plus className="mr-1 h-4 w-4" />New survey</Button>
     </div>
-    {q.isLoading ? <p className="text-muted-foreground">Loading…</p> : !q.data?.length ? <EmptyState>No as-built surveys yet.</EmptyState> :
+    {q.isLoading ? <p className="text-muted-foreground">Loading…</p> : !q.data?.length ? <EmptyState>No site surveys yet.</EmptyState> :
       <ul className="space-y-2">{q.data.map((s) => <li key={s.id}><button className="w-full rounded-xl border bg-card p-4 text-left hover:bg-muted/40" onClick={() => onOpen(s.id)}>
         <div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-muted px-2 py-0.5 text-xs">{STATUS[s.status]}</span><span className="text-xs text-muted-foreground">{TRADES.find((t) => t.key === s.trade)?.label}</span></div>
         <p className="mt-1 font-medium">{s.title || "Untitled"}{s.site_label ? ` · ${s.site_label}` : ""}</p>
@@ -66,7 +66,42 @@ function List({ companyId, manager, onOpen }: { companyId: string; manager: bool
   </div>;
 }
 
-function Editor({ id, manager, onBack }: { id: string; manager: boolean; onBack: () => void }) {
+function RowPhotos({ companyId, surveyId, paths, locked, onChange }: { companyId: string; surveyId: string; paths: string[]; locked: boolean; onChange: (p: string[]) => void }) {
+  const [busy, setBusy] = useState(false);
+  const [view, setView] = useState<string | null>(null);
+  const urls = useQuery({ enabled: paths.length > 0, queryKey: ["survey-photo-urls", ...paths], queryFn: async () => {
+    const r = await supabase.storage.from("job-photos").createSignedUrls(paths, 3600);
+    return Object.fromEntries((r.data ?? []).map((x) => [x.path, x.signedUrl]));
+  } });
+  const add = async (files: FileList | null) => {
+    if (!files?.length) return;
+    setBusy(true);
+    const added: string[] = [];
+    for (const f of Array.from(files)) {
+      const ext = (f.name.split(".").pop() || "jpg").toLowerCase();
+      const path = `${companyId}/site-surveys/${surveyId}/${crypto.randomUUID()}.${ext}`;
+      const r = await supabase.storage.from("job-photos").upload(path, f, { contentType: f.type || "image/jpeg" });
+      if (r.error) toast.error(r.error.message); else added.push(path);
+    }
+    setBusy(false);
+    if (added.length) { onChange([...paths, ...added]); toast.success("Photo added — remember to save"); }
+  };
+  const del = async (p: string) => { await supabase.storage.from("job-photos").remove([p]); onChange(paths.filter((x) => x !== p)); };
+  if (locked && !paths.length) return null;
+  return <div className="mt-2 flex flex-wrap items-center gap-2">
+    {paths.map((p) => <div key={p} className="relative">
+      {urls.data?.[p] ? <button type="button" onClick={() => setView(urls.data![p])}><img src={urls.data[p]} alt="Survey row photo" className="h-16 w-16 rounded-md border object-cover" /></button> : <div className="h-16 w-16 rounded-md border bg-muted" />}
+      {!locked && <button type="button" aria-label="Remove photo" className="absolute -right-1 -top-1 rounded-full bg-destructive p-0.5 text-destructive-foreground print:hidden" onClick={() => del(p)}><X className="h-3 w-3" /></button>}
+    </div>)}
+    {!locked && <label className="flex h-16 w-16 cursor-pointer flex-col items-center justify-center rounded-md border border-dashed text-xs text-muted-foreground hover:bg-muted/40 print:hidden">
+      <Camera className="h-5 w-5" />{busy ? "…" : "Photo"}
+      <input type="file" accept="image/*" capture="environment" multiple className="hidden" disabled={busy} onChange={(e) => { add(e.target.files); e.target.value = ""; }} />
+    </label>}
+    {view && <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 p-4" onClick={() => setView(null)}><img src={view} alt="Survey row photo enlarged" className="max-h-full max-w-full rounded-lg" /></div>}
+  </div>;
+}
+
+function Editor({ id, manager, companyId, onBack }: { id: string; manager: boolean; companyId: string; onBack: () => void }) {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["qs_survey", id], queryFn: async () => { const r = await supabase.from("qs_surveys").select("id, title, trade, site_label, lines, notes, status, proposal_id, signed_off_at").eq("id", id).single(); if (r.error) throw r.error; return { ...r.data, lines: (Array.isArray(r.data.lines) ? r.data.lines : []) as unknown as SurveyLine[] } as Survey; } });
   const items = useQuery({ queryKey: ["price-items-survey"], queryFn: async () => { const r = await supabase.from("company_price_list_items").select("id, trade, category, name, unit, is_tally").order("category"); return r.error ? [] : r.data; } });
@@ -88,6 +123,16 @@ function Editor({ id, manager, onBack }: { id: string; manager: boolean; onBack:
     toast.success(status === "signed_off" ? "Signed off" : status === "submitted" ? "Sent for sign-off" : "Saved");
     qc.invalidateQueries({ queryKey: ["qs_survey", id] }); qc.invalidateQueries({ queryKey: ["qs_surveys"] });
   };
+  const remove = async () => {
+    if (!window.confirm(`Delete "${s.title || "this survey"}"? This cannot be undone.`)) return;
+    setBusy(true);
+    const r = await supabase.from("qs_surveys").delete().eq("id", id).select("id");
+    setBusy(false);
+    if (r.error || !r.data?.length) { toast.error(r.error?.message ?? "Only office or supervisors can delete draft surveys."); return; }
+    const paths = s.lines.flatMap((l) => l.photos ?? []);
+    if (paths.length) await supabase.storage.from("job-photos").remove(paths);
+    toast.success("Survey deleted"); qc.invalidateQueries({ queryKey: ["qs_surveys"] }); onBack();
+  };
   const rateFor = (l: SurveyLine) => { const m = rates.data?.find((x) => (l.item_id && x.item_id === l.item_id) || x.name === l.name); return m ? Number(m.rate) : undefined; };
   const money = (n: number) => new Intl.NumberFormat(undefined, { style: "currency", currency: "EUR" }).format(n);
 
@@ -97,6 +142,7 @@ function Editor({ id, manager, onBack }: { id: string; manager: boolean; onBack:
       <span className="rounded-full bg-muted px-2 py-0.5 text-xs">{STATUS[s.status]}</span>
       <div className="ml-auto flex flex-wrap gap-2">
         <Button variant="outline" onClick={() => window.print()}><Printer className="mr-1 h-4 w-4" />Print final quantities</Button>
+        {manager && s.status === "draft" && <Button variant="outline" className="text-destructive" disabled={busy} onClick={remove}><Trash2 className="mr-1 h-4 w-4" />Delete survey</Button>}
         {!locked && <Button variant="outline" disabled={busy} onClick={() => save()}>Save</Button>}
         {s.status === "draft" && <Button disabled={busy} onClick={() => save("submitted")}>Send for sign-off</Button>}
         {s.status === "submitted" && manager && <><Button variant="outline" disabled={busy} onClick={() => save("draft")}>Send back</Button><Button disabled={busy} onClick={() => save("signed_off")}>Sign off</Button></>}
@@ -134,6 +180,7 @@ function Editor({ id, manager, onBack }: { id: string; manager: boolean; onBack:
         </div>
         {!locked && <Input aria-label="Item note" className="mt-2 print:hidden" placeholder="Note (optional, e.g. location)" value={l.note ?? ""} onChange={(e) => line(i, { note: e.target.value })} />}
         {locked && l.note && <p className="mt-1 text-xs text-muted-foreground">{l.note}</p>}
+        <RowPhotos companyId={companyId} surveyId={id} paths={l.photos ?? []} locked={locked} onChange={(photos) => line(i, { photos })} />
       </li>; })}</ul>}
 
     {manager && s.proposal_id && s.lines.length > 0 && <p className="text-sm">Value of difference at proposal rates: <b className="tabular-nums">{money(varianceValue(s.lines, rateFor))}</b> <span className="text-muted-foreground">(excl. VAT; office and supervisors only)</span></p>}
