@@ -7,6 +7,8 @@ import { Plus, Mail, FileText, Trash2, Download, X } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { DateFilter } from "@/components/date-filter";
 import { MonthlySheets } from "@/components/monthly-sheets";
+import { BillingReview } from "@/components/billing-review";
+import { useCan } from "@/lib/permissions";
 import { SearchSelect } from "@/components/search-select";
 import { sendJobSheetEmail, combinedJobSheets } from "@/lib/sendJobSheetEmail";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -59,6 +61,8 @@ function AdminJobs() {
   const { data: customers = [] } = useQuery({ queryKey: ["clients"], queryFn: async () => (await supabase.from("clients").select("id, name").order("name")).data ?? [] });
   useEffect(() => { setSelected([]); }, [filter, q, mine, details]);
   const { data: me } = useProfile();
+  const can = useCan(me);
+  const [review, setReview] = useState<string | null>(null);
   const listRef = useRef<string[]>([]);
   const [approving, setApproving] = useState<(typeof jobs)[number] | null>(null);
   const { data: jobs = [] } = useQuery({
@@ -234,6 +238,7 @@ function AdminJobs() {
                     <TableCell onClick={stop}>
                       <div className="flex gap-2">
                         {j.status === "completed" && <>
+                          {office && can("billing") && <Button size="sm" variant="outline" onClick={() => setReview(j.id)}>Review billing</Button>}
                           <Button asChild size="sm" variant="outline"><Link to="/print/$sheetId" params={{ sheetId: j.id }} target="_blank"><FileText className="mr-1 h-4 w-4" />Client PDF</Link></Button>
                           <Button size="sm" onClick={() => setResend(j)}><Mail className="mr-1 h-4 w-4" />Resend</Button>
                         </>}
@@ -275,6 +280,7 @@ function AdminJobs() {
       </Dialog>
       {bulkEmail && selectedSheets[0] && <ResendDialog sheet={selectedSheets[0]} sheetIds={selected} onClose={() => setBulkEmail(false)} />}
       {resend && <ResendDialog sheet={resend} onClose={() => setResend(null)} />}
+      {office && can("billing") && <BillingReview sheetId={review} onClose={() => setReview(null)} />}
       <Dialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>Delete Job sheet- {deleting?.jobsheet_number}?</DialogTitle></DialogHeader>

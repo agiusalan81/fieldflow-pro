@@ -85,6 +85,7 @@ export function BillingReview({ sheetId, onClose }: { sheetId: string | null; on
     const prov = ACCOUNTING.find((a) => a.key === data.integ.accounting.provider)?.label;
     toast.success(status === "approved" ? "Billing approved" : prov ? `Marked as sent to ${prov} (connection not live yet)` : "Marked as invoiced");
     qc.invalidateQueries({ queryKey: ["overview"] }); qc.invalidateQueries({ queryKey: ["billing-review", sheetId] });
+    qc.invalidateQueries({ queryKey: ["admin-jobs"] }); qc.invalidateQueries({ queryKey: ["attention-overview"] });
     onClose();
   };
 
