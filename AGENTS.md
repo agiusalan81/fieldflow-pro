@@ -11,18 +11,18 @@
 
 ## Project rules
 - Travel shares one component/startJobTravel; arrival saves the time log before on-site status. Why: consistent travel/arrival.
-- Invite reads use bounded server functions/Query loaders including middleware timeout. Why: prevent hangs.
+- Invite server functions/Query loaders have timeouts, including middleware. Why: prevent hangs.
 - Tenant RLS uses company_id/current_company_id(); never UI company filters. Why: one access boundary.
 - Roles live in protected user_roles; users.role is display-only. View As and permissions.ts only hide UI. Why: safe privileges.
 - user_roles helpers/restrictive tenant policies reject terminated actors; audit access changes. Why: session revocation.
-- Invites use atomic named redemption and single-use signup triggers; social users need no app password. Why: verified names; no client-assigned tenant/role.
-- User preview: real-superuser-only, actor-scoped, in-memory, removable; root blocks other screens/writes. Why: preserve identity.
+- Invites redeem names atomically via single-use signup triggers; social users need no password. Why: verified names; no client-assigned tenant/role.
+- Preview: real-superuser-only, actor-scoped, removable memory state; root blocks other screens/writes. Why: preserve identity.
 - Payroll uses tested gross/Malta engines, office RLS, DWRs, currency/mode snapshots and HQ guards. Roster RPC updates existing settings only. Why: preserve pay and roster access.
 - Payroll routes share payroll-page.tsx. Opening leave/payslips save atomically with issued-slip/totals guards; year-qualified carry-forward prevents double consumption. Why: immutable issued pay.
 - Sign-off/leave/overtime/checklist/renewals use tested jobsheets.ts. Why: shared rules.
-- DWR filing uses a unique canonical shift report; retain superseded/corrected originals and clear held flags after filing. Why: retry-safe hours/pay.
+- DWR: one canonical report/shift; retain corrected/superseded originals; filing clears held flags. Why: retry-safe hours/pay.
 - Dispatch: lead plus optional assistant both read one sheet; only lead starts/edits; daily logs seed both initials. Why: one journey/labour ledger.
-- Overtime site details use captured DWR intervals/rules; older reports show associated sites only. Why: factual allocation.
+- Overtime uses captured DWR intervals/rules; old reports show associated sites only. Why: factual allocation.
 - Typography uses applyTypography/AppShell; locale uses locale.ts. Why: tenant presentation.
 - Branding shares theme/template JSON, private tenant files and PDF/font helpers; DB/HQ locks preserve saved values. Why: secure app/PDF consistency.
 - Service sheets share a typed safe projection/renderers for preview, print and email. Why: client-safe consistency.
@@ -34,7 +34,7 @@
 - Client notices use client-notices.functions.ts and tested client-notices.ts; guard_departure prevents self-approval. Why: accountability.
 - job_sheets embeds use users!job_sheets_assigned_technician_id_fkey. Why: two users FKs.
 - Signing batches are creator-owned, authenticated and finalized transactionally; store delivery before sending with shared PDF builder. Why: atomic, retry-safe delivery.
-- Offline: account-scoped IndexedDB/optimistic RPC/PWA; confirmed discard removes only that account/sheet draft, photos/cache atomically. Why: retain inaccessible drafts.
+- Offline: account-scoped IndexedDB/optimistic RPC/PWA; confirmed discard atomically removes only that account/sheet draft/photos/cache. Why: retain inaccessible drafts.
 - Published document masters are immutable; attachments/agreements/sheets snapshot definitions. Why: preserve history.
 - Platform authority is protected separately in user_roles; HQ uses a narrow directory RPC, not tenant reads. Why: isolate companies.
 - Plan access: DB write guards + plan-features.ts menu gating; legacy stays on. RFQ rules in lift-rfq.ts. Why: safe rollout.
@@ -42,12 +42,12 @@
 - Sheet safety/checklist snapshots are checked at completion; safety keys share checklist_values. Why: offline safety.
 
 - Clock-in shares plate/consent helpers. Fleet appends active-shift GPS with module/tenant guards; mileage excludes jitter/gaps. Why: honest isolated tracking.
-- Receipt PDFs use a separate account/sheet-scoped IndexedDB queue and private storage, never client document projections. Why: private offline receipts.
-- Technical library uses private storage/RLS; publishing UI checks real and displayed supervisor/superuser roles; AI reads approved pages as caller. Why: secure View As.
+- Receipt PDFs: separate account/sheet IndexedDB queue/private storage; exclude from client projections. Why: private offline receipts.
+- Technical library: private storage/RLS; publish checks real/displayed supervisor/superuser; AI reads approved pages as caller. Why: secure View As.
 - Leave/profile/clock-out handover rules use tested field-rules.ts plus guard_leave_decision. Why: UI and DB agree.
 
 - HQ uses single-active fallback, app_url, PLAN_FEATURES and NativeSelect/Cancel; owner-only row-locked toggle RPCs refresh access. Why: isolated prices/seats.
 
-- Attention queues use guarded atomic pending-work RPCs and separate action records; signed content is never edited. Why: immutable evidence; no duplicate dispatch.
+- Attention: guarded atomic pending RPCs/separate actions; never edit signed content. Why: immutable evidence; no duplicate dispatch.
 - Blackouts and leave impact are validated in DB; range swaps use recipient acceptance plus independent manager approval before standby calculations change. Why: enforce for every caller.
-- Equipment technical QR routes are authenticated/RLS-scoped; public reporting uses hashed revocable capabilities, limited payloads and throttling without public record reads. Why: private technical/client data.
+- Equipment QR: authenticated/RLS-scoped technical routes; public reports use hashed revocable capabilities, bounded payloads/throttling; no public reads. Why: private technical/client data.
