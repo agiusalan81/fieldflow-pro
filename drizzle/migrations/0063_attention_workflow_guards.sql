@@ -1,0 +1,37 @@
+CREATE OR REPLACE FUNCTION public.route_pending_work(_sheet uuid,_action text,_expected text,_assignee uuid DEFAULT NULL,_date date DEFAULT NULL,_note text DEFAULT '') RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ DECLARE s public.job_sheets;j uuid;c uuid=public.current_company_id(); BEGIN
+IF auth.uid() IS NULL OR NOT public.member_is_active(auth.uid()) OR NOT public.is_company_manager() OR NOT public.company_module_access(c,'core') THEN RAISE EXCEPTION 'Manager access required'; END IF;
+IF _action IS NULL OR _expected IS NULL OR _action NOT IN ('open','quote','dispatch','supervisor','awaiting_parts','scheduled','done') OR _note IS NULL OR length(_note)>2000 OR (_action='done' AND trim(_note)='') OR (_action='scheduled' AND _date IS NULL) THEN RAISE EXCEPTION 'Invalid follow-up action'; END IF;
+SELECT * INTO s FROM public.job_sheets WHERE id=_sheet AND company_id=c FOR UPDATE; IF NOT FOUND OR coalesce(trim(s.pending_works_future_jobs),'')='' THEN RAISE EXCEPTION 'Pending work not found'; END IF;
+IF s.pending_status<>_expected THEN RAISE EXCEPTION 'This item changed. Refresh before acting.'; END IF;
+IF _assignee IS NOT NULL AND NOT EXISTS(SELECT 1 FROM public.user_roles WHERE user_id=_assignee AND company_id=c AND public.member_is_active(user_id) AND (_action<>'supervisor' OR role IN ('supervisor','admin','superuser'))) THEN RAISE EXCEPTION 'Choose an active company team member'; END IF;
+IF _action='supervisor' AND _assignee IS NULL THEN RAISE EXCEPTION 'Choose a supervisor'; END IF;
+j=s.pending_job_id;
+IF _action IN ('dispatch','scheduled') THEN
+IF NOT EXISTS(SELECT 1 FROM public.clients WHERE id=s.client_id AND company_id=c) OR (s.site_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM public.sites WHERE id=s.site_id AND company_id=c AND client_id=s.client_id)) OR (s.asset_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM public.assets WHERE id=s.asset_id AND company_id=c AND client_id=s.client_id)) THEN RAISE EXCEPTION 'Source client or equipment unavailable'; END IF;
+IF j IS NULL THEN INSERT INTO public.jobs(company_id,client_id,site_id,asset_id,assigned_technician_id,scheduled_date,problem_summary,priority) VALUES(c,s.client_id,s.site_id,s.asset_id,_assignee,_date,left('Follow-up from #'||s.jobsheet_number||': '||s.pending_works_future_jobs,500),'normal') RETURNING id INTO j;
+ELSIF _action='scheduled' THEN UPDATE public.jobs SET assigned_technician_id=_assignee,scheduled_date=_date WHERE id=j AND company_id=c; END IF; END IF;
+INSERT INTO public.pending_work_actions(sheet_id,company_id,action,assigned_to,note,updated_by) VALUES(_sheet,c,_action,_assignee,_note,auth.uid()) ON CONFLICT(sheet_id) DO UPDATE SET action=excluded.action,assigned_to=excluded.assigned_to,note=excluded.note,updated_by=auth.uid(),updated_at=now();
+UPDATE public.job_sheets SET pending_status=_action,pending_job_id=j WHERE id=_sheet;
+IF _action='supervisor' THEN INSERT INTO public.internal_messages(company_id,sender_id,receiver_id,job_sheet_id,message_text) VALUES(c,auth.uid(),_assignee,_sheet,'Pending work needs supervisor review: '||left(s.pending_works_future_jobs,1000)||' '||_note); END IF; RETURN j; END $$;
+CREATE OR REPLACE FUNCTION public.guard_attention_metadata() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN
+IF TG_OP='DELETE' THEN RETURN OLD; END IF;
+IF TG_OP='UPDATE' AND (NEW.id IS DISTINCT FROM OLD.id OR NEW.company_id IS DISTINCT FROM OLD.company_id) THEN RAISE EXCEPTION 'Record identity cannot change'; END IF;
+IF TG_TABLE_NAME='equipment_report_links' THEN
+IF NEW.asset_id IS DISTINCT FROM OLD.asset_id OR NEW.token_hash IS DISTINCT FROM OLD.token_hash OR NEW.created_at IS DISTINCT FROM OLD.created_at THEN RAISE EXCEPTION 'Reporting label identity cannot change'; END IF;
+IF auth.uid() IS NOT NULL AND NEW.last_report_at IS DISTINCT FROM OLD.last_report_at THEN RAISE EXCEPTION 'Report timing is managed automatically';END IF;
+ELSIF TG_TABLE_NAME='equipment_problem_reports' THEN
+IF NEW.asset_id IS DISTINCT FROM OLD.asset_id OR NEW.first_name IS DISTINCT FROM OLD.first_name OR NEW.last_name IS DISTINCT FROM OLD.last_name OR NEW.position IS DISTINCT FROM OLD.position OR NEW.problem IS DISTINCT FROM OLD.problem OR NEW.created_at IS DISTINCT FROM OLD.created_at THEN RAISE EXCEPTION 'Submitted report is immutable';END IF;
+IF NEW.status NOT IN ('open','closed') THEN RAISE EXCEPTION 'Invalid report status';END IF;
+END IF;RETURN NEW; END $$;
+CREATE TRIGGER equipment_link_identity BEFORE UPDATE ON public.equipment_report_links FOR EACH ROW EXECUTE FUNCTION public.guard_attention_metadata();
+CREATE TRIGGER equipment_report_identity BEFORE UPDATE ON public.equipment_problem_reports FOR EACH ROW EXECUTE FUNCTION public.guard_attention_metadata();
+CREATE TRIGGER blackout_identity BEFORE UPDATE ON public.leave_blackouts FOR EACH ROW EXECUTE FUNCTION public.guard_attention_metadata();
+CREATE TRIGGER blackout_commercial BEFORE INSERT OR UPDATE OR DELETE ON public.leave_blackouts FOR EACH ROW EXECUTE FUNCTION public.guard_commercial_write('core');
+CREATE TRIGGER report_commercial BEFORE UPDATE ON public.equipment_problem_reports FOR EACH ROW EXECUTE FUNCTION public.guard_commercial_write('core');
+CREATE POLICY blackout_active_boundary ON public.leave_blackouts AS RESTRICTIVE FOR ALL TO authenticated USING(public.member_is_active(auth.uid())) WITH CHECK(public.member_is_active(auth.uid()));
+CREATE POLICY link_active_boundary ON public.equipment_report_links AS RESTRICTIVE FOR ALL TO authenticated USING(public.member_is_active(auth.uid())) WITH CHECK(public.member_is_active(auth.uid()));
+CREATE POLICY problem_active_boundary ON public.equipment_problem_reports AS RESTRICTIVE FOR ALL TO authenticated USING(public.member_is_active(auth.uid())) WITH CHECK(public.member_is_active(auth.uid()));
+CREATE OR REPLACE FUNCTION public.notify_leave_consultation() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN IF NEW.consulted_supervisor_id IS DISTINCT FROM OLD.consulted_supervisor_id AND NEW.consulted_supervisor_id IS NOT NULL THEN INSERT INTO public.internal_messages(company_id,sender_id,receiver_id,message_text) VALUES(NEW.company_id,auth.uid(),NEW.consulted_supervisor_id,'Please review operational cover for leave from '||NEW.start_date||' to '||NEW.end_date||'. Open Leave approvals to respond.'); END IF;RETURN NEW;END $$;
+CREATE TRIGGER leave_consultation_notice AFTER UPDATE ON public.leave_requests FOR EACH ROW EXECUTE FUNCTION public.notify_leave_consultation();
+CREATE OR REPLACE FUNCTION public.guard_leave_review_lengths() RETURNS trigger LANGUAGE plpgsql SET search_path=public AS $$ BEGIN IF length(coalesce(NEW.exception_reason,''))>2000 OR length(coalesce(NEW.work_handling_note,''))>2000 OR length(coalesce(NEW.supervisor_response,''))>2000 THEN RAISE EXCEPTION 'Review notes must be under 2000 characters';END IF;IF TG_OP='INSERT' AND (NEW.consulted_supervisor_id IS NOT NULL OR NEW.supervisor_response IS NOT NULL OR NEW.work_handling_note IS NOT NULL) THEN RAISE EXCEPTION 'Review fields cannot be set on creation'; END IF;RETURN NEW;END $$;
+CREATE TRIGGER leave_review_lengths BEFORE INSERT OR UPDATE ON public.leave_requests FOR EACH ROW EXECUTE FUNCTION public.guard_leave_review_lengths();
