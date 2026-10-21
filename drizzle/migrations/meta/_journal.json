@@ -470,6 +470,13 @@
       "when": 1792596631706,
       "tag": "0066_qs_as_built_surveys",
       "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1792597601616,
+      "tag": "0067_chat_reads",
+      "breakpoints": true
     }
   ]
 }

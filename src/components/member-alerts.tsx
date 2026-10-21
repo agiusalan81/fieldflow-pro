@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Kin, Profile } from "@/lib/profile";
 import { missingProfileFields } from "@/lib/field-rules";
 import { playChime } from "@/lib/chime";
+import { notifyChatMessage } from "@/lib/chat-notify";
 import { PhoneInput, splitPhone } from "@/components/client-manager";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -80,10 +81,12 @@ export function NotificationSounds({ profile }: { profile: Profile }) {
     const uid = profile.id;
     const ch = supabase.channel(`sounds-${uid}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "internal_messages" }, (p) => {
-        const m = p.new as { sender_id: string; receiver_id: string | null };
+        const m = p.new as { sender_id: string; receiver_id: string | null; job_sheet_id: string | null; message_text: string };
         if (m.sender_id === uid) return;
         if (m.receiver_id && m.receiver_id !== uid) return;
-        playChime("message", uid); qc.invalidateQueries({ queryKey: ["messages"] });
+        playChime("message", uid);
+        qc.invalidateQueries({ queryKey: ["messages"] }); qc.invalidateQueries({ queryKey: ["messages-unread"] });
+        void notifyChatMessage(m, uid);
       })
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "leave_requests", filter: `user_id=eq.${uid}` }, (p) => {
         const n = p.new as { status: string }, o = p.old as { status?: string };
