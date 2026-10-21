@@ -2,9 +2,9 @@
 import { createClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 
-const url = process.env.STANDBY_TEST_URL;
-const key = process.env.STANDBY_TEST_KEY;
-const token = process.env.STANDBY_TEST_TOKEN;
+const url = process.env['STANDBY_TEST_URL'];
+const key = process.env['STANDBY_TEST_KEY'];
+const token = process.env['STANDBY_TEST_TOKEN'];
 
 describe.skipIf(!url || !key || !token)("supervisor standby save boundary", () => {
   function client() {
