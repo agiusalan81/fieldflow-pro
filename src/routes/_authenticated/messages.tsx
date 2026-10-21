@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ArrowLeft, Bell, Send, Hash, User } from "lucide-react";
 import { canAskNotifications } from "@/lib/chat-notify";
+import { ensurePushSubscription, pushChatMessages } from "@/lib/web-push";
 import { supabase } from "@/integrations/supabase/client";
 import { markThreadRead, unreadByThread, useChatReads } from "@/lib/chat-unread";
 import { useProfile, useCompanyUsers } from "@/lib/profile";
@@ -39,7 +40,14 @@ function Messages() {
   const endRef = useRef<HTMLDivElement>(null);
   const { data: reads = {} } = useChatReads(profile?.id);
   const [askAlerts, setAskAlerts] = useState(false);
-  useEffect(() => { setAskAlerts(canAskNotifications()); }, []);
+  useEffect(() => { setAskAlerts(canAskNotifications()); void ensurePushSubscription().catch(() => undefined); }, []);
+  const allowAlerts = async () => {
+    const p = await Notification.requestPermission();
+    setAskAlerts(false);
+    if (p !== "granted") { toast.error("Alerts were blocked. Turn them on in your phone's settings for this app."); return; }
+    const ok = await ensurePushSubscription().catch(() => false);
+    toast[ok ? "success" : "info"](ok ? "Chat alerts are on for this device" : "Alerts work while the app is open. For alerts when closed, use the installed app (Add to Home Screen).");
+  };
 
   const { data: jobs = [] } = useQuery({
     queryKey: ["chat-jobs"],
@@ -98,11 +106,12 @@ function Messages() {
   const send = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!active || !profile || !text.trim()) return;
-    const { error } = await supabase.from("internal_messages").insert({
+    const { data: sentRow, error } = await supabase.from("internal_messages").insert({
       company_id: profile.company_id, sender_id: profile.id, message_text: text.trim(),
       receiver_id: active.kind === "user" ? active.id : null, job_sheet_id: active.kind === "job" ? active.id : null,
-    });
+    }).select("id").single();
     if (error) { toast.error(error.message); return; }
+    pushChatMessages([sentRow.id]);
     setText("");
     qc.invalidateQueries({ queryKey: ["messages"] });
   };

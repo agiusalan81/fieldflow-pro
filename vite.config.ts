@@ -12,8 +12,9 @@ export default defineConfig({
   plugins: [VitePWA({
     strategies: "generateSW", filename: "sw.js", outDir: "dist/client",
     injectRegister: null, registerType: "autoUpdate", devOptions: { enabled: false },
-    manifest: { name: "FieldFlow", short_name: "FieldFlow", display: "standalone", start_url: "/", icons: [{ src: "/app-icon-192.png", sizes: "192x192", type: "image/png" }, { src: "/app-icon-512.png", sizes: "512x512", type: "image/png" }] },
+    manifest: { name: "FieldBridge", short_name: "FieldBridge", display: "standalone", start_url: "/", icons: [{ src: "/app-icon-192.png", sizes: "192x192", type: "image/png" }, { src: "/app-icon-512.png", sizes: "512x512", type: "image/png" }] },
     workbox: {
+      importScripts: ["/push-sw.js"],
       globPatterns: ["**/*.{js,css,png,ico,woff2}"], navigateFallback: null,
       cleanupOutdatedCaches: true,
       runtimeCaching: [
