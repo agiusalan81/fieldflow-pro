@@ -388,7 +388,7 @@ function SheetForm() {
   return (
     <AppShell
       title={`Job sheet ${sheet.jobsheet_number}`}
-      actions={<div className="flex items-center gap-1"><BackButton fallback="/sheets" /><SheetStepper sheetId={sheetId} /></div>}
+      actions={<BackButton fallback="/sheets" />}
     >
       {conflict && <div className="mx-auto mb-4 max-w-5xl border border-destructive p-3 text-sm"><p>This sheet changed on another device. Your local work has been kept. Compare it before saving.</p><Button variant="outline" className="mt-2" onClick={async () => {
         if (!confirm("Discard this device's saved changes and load the latest job sheet?")) return;
@@ -698,6 +698,7 @@ function SheetForm() {
         </div>
       )}
       {readOnly && isManager(profile) && <p className="mx-auto max-w-5xl text-xs text-muted-foreground">Status can be changed from the Job sheets admin page.</p>}
+      <div className="mx-auto mb-28 mt-6 max-w-5xl border-t pt-4"><SheetStepper sheetId={sheetId} /></div>
       <NextStopDialog job={nextStop} profile={profile} onDone={() => { setNextStop(null); navigate({ to: "/dashboard" }); }} />
     </AppShell>
   );
