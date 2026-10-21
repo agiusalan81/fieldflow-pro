@@ -50,6 +50,7 @@ import { Route as AuthenticatedPrintSheetIdRouteImport } from './routes/_authent
 import { Route as AuthenticatedSheetsIndexRouteImport } from './routes/_authenticated/sheets.index'
 import { Route as AuthenticatedSheetsSheetIdRouteImport } from './routes/_authenticated/sheets.$sheetId'
 import { Route as AuthenticatedSheetsNewRouteImport } from './routes/_authenticated/sheets.new'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -268,6 +269,12 @@ const AuthenticatedSheetsNewRoute = AuthenticatedSheetsNewRouteImport.update({
   path: '/sheets/new',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -310,6 +317,7 @@ export interface FileRoutesByFullPath {
   '/sheets/$sheetId': typeof AuthenticatedSheetsSheetIdRoute
   '/sheets/new': typeof AuthenticatedSheetsNewRoute
   '/sheets/': typeof AuthenticatedSheetsIndexRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -352,6 +360,7 @@ export interface FileRoutesByTo {
   '/sheets/$sheetId': typeof AuthenticatedSheetsSheetIdRoute
   '/sheets/new': typeof AuthenticatedSheetsNewRoute
   '/sheets': typeof AuthenticatedSheetsIndexRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -396,6 +405,7 @@ export interface FileRoutesById {
   '/_authenticated/sheets/$sheetId': typeof AuthenticatedSheetsSheetIdRoute
   '/_authenticated/sheets/new': typeof AuthenticatedSheetsNewRoute
   '/_authenticated/sheets/': typeof AuthenticatedSheetsIndexRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -440,6 +450,7 @@ export interface FileRouteTypes {
     | '/sheets/$sheetId'
     | '/sheets/new'
     | '/sheets/'
+    | '/lovable/email/transactional/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -482,6 +493,7 @@ export interface FileRouteTypes {
     | '/sheets/$sheetId'
     | '/sheets/new'
     | '/sheets'
+    | '/lovable/email/transactional/preview'
   id:
     | '__root__'
     | '/'
@@ -525,6 +537,7 @@ export interface FileRouteTypes {
     | '/_authenticated/sheets/$sheetId'
     | '/_authenticated/sheets/new'
     | '/_authenticated/sheets/'
+    | '/lovable/email/transactional/preview'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -535,6 +548,7 @@ export interface RootRouteChildren {
   JoinTokenRoute: typeof JoinTokenRoute
   ReferralCodeRoute: typeof ReferralCodeRoute
   ReportTokenRoute: typeof ReportTokenRoute
+  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -826,6 +840,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSheetsNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -923,6 +944,7 @@ const rootRouteChildren: RootRouteChildren = {
   JoinTokenRoute: JoinTokenRoute,
   ReferralCodeRoute: ReferralCodeRoute,
   ReportTokenRoute: ReportTokenRoute,
+  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
