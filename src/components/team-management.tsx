@@ -1,3 +1,5 @@
+import { useServerFn } from "@tanstack/react-start";
+import { sendInviteEmail } from "@/lib/invites.functions";
 import { RegisteredMembers } from "@/components/registered-members";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
@@ -18,12 +20,16 @@ export function TeamManagement({ role, companyId, meId, tab }: { role: Role; com
   const qc = useQueryClient();
   const [inv, setInv] = useState({ role: "technician" as Role, full_name: "", email: "" });
   const [deliveryEmail, setDeliveryEmail] = useState("");
+  const [sending, setSending] = useState(false);
+  const sendInvite = useServerFn(sendInviteEmail);
   const emailInvite = async () => {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(deliveryEmail)) { toast.error("Enter the recipient email address"); return; }
     const { data: row, error } = await supabase.from("company_invites").insert({ company_id: companyId, role: inv.role, full_name: inv.full_name || null, email: deliveryEmail.trim().toLowerCase() }).select("token").single();
     if (error) { toast.error(error.message); return; }
-    window.location.href = `mailto:${encodeURIComponent(deliveryEmail)}?subject=${encodeURIComponent("Join our team on FieldBridge")}&body=${encodeURIComponent(`You are invited to join our company on FieldBridge. Register using this email address (${deliveryEmail.trim()}) with Google, Microsoft or email sign-in:\n\n${link(row.token)}`)}`;
-    toast.info("Invite created — send it from your email app");
+    setSending(true);
+    try { const r = await sendInvite({ data: { token: row.token, link: link(row.token) } }); toast.success(`Invitation sent to ${r.to}`); setDeliveryEmail(""); }
+    catch (e) { toast.error(e instanceof Error ? e.message : "Invitation email failed — copy the link instead"); }
+    finally { setSending(false); }
     qc.invalidateQueries({ queryKey: ["team"] });
   };
   const canEditRoles = role === "superuser" || role === "admin";
@@ -74,7 +80,7 @@ export function TeamManagement({ role, companyId, meId, tab }: { role: Role; com
           <Input className="h-11" type="email" placeholder="Email (optional)" value={inv.email} onChange={(e) => setInv({ ...inv, email: e.target.value })} />
           <Button className="h-11" onClick={create}>Create & copy link</Button>
         </div>
-        <div className="flex flex-wrap gap-2"><Input className="h-11 sm:max-w-sm" type="email" aria-label="Invite delivery email" placeholder="Recipient email (they register with this address)" value={deliveryEmail} onChange={e=>setDeliveryEmail(e.target.value)}/><Button variant="outline" onClick={emailInvite}>Email invite</Button></div>
+        <div className="flex flex-wrap gap-2"><Input className="h-11 sm:max-w-sm" type="email" aria-label="Invite delivery email" placeholder="Recipient email (they register with this address)" value={deliveryEmail} onChange={e=>setDeliveryEmail(e.target.value)}/><Button variant="outline" disabled={sending} onClick={emailInvite}>{sending ? "Sending…" : "Email invite"}</Button></div>
         {data?.invites.length ? (
           <ul className="divide-y rounded-lg border">
             {data.invites.map((i) => (
