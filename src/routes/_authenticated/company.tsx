@@ -362,7 +362,7 @@ function SettingsSections({ superuser, companyId, userId }: { superuser: boolean
   ];
   const all = groups.flatMap((g) => g.items);
   const [active, setActive] = useState("profile");
-  const current = all.find((i) => i.key === active) ?? all[0];
+  const current = (all.find((i) => i.key === active) ?? all[0])!;
   return (
     <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-[220px_minmax(0,1fr)]">
       <div className="md:hidden">
