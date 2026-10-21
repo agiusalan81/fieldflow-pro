@@ -72,6 +72,24 @@ export type Database = {
           },
         ]
       }
+      chat_reads: {
+        Row: {
+          last_read_at: string
+          thread_key: string
+          user_id: string
+        }
+        Insert: {
+          last_read_at?: string
+          thread_key: string
+          user_id: string
+        }
+        Update: {
+          last_read_at?: string
+          thread_key?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       checklist_templates: {
         Row: {
           company_id: string
