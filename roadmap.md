@@ -6,7 +6,7 @@
 - [x] Phase 2: Pricing & QS module switch in HQ, company price list per trade with starter catalogues (no preset prices), tally items, installation methods, VAT (tested).
 - [x] Phase 3: Proposals page — lift spec (drive vs hydraulic), price-list/custom lines, priced options, offer net/VAT/total, 4-line payment terms, guarantee, client items, exclusions, delivery; A4 PDF download (tested, PDF visually checked).
 - [ ] Verify Proposals save/PDF signed in as office/supervisor (not yet run with a real account).
-- [ ] Phase 4: mobile as-built QS tally/variance (after Phase 3).
+- [x] Phase 4: as-built tally (tap counters, measured runs, estimate vs installed, office sign-off lock, print). Signed-in manager save/sign-off check pending.
 - [x] Fix confirmed supervisor roster-save failure: update existing roster fields without triggering payroll insert guards; supervisor Save roster/reload and payroll-page denial verified.
 - [x] Confirmed Standby and Payroll have separate HQ switches; roster save permits Supervisors/Admins/Superusers, while payroll writes remain office-only. Added independent module regression tests; supervisor save end-to-end remains unverified.
 - [x] Approved batch implemented: Superuser-only role View As; canonical duplicate-safe DWRs with historical duplicate/original audit retention and zero-minute corrections; paired dispatch, both Schedule/Today assignments, assistant read-only shared sheets, lead-seeded daily initials. 88 focused tests passed; preview build OK.

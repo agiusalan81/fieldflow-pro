@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as AuthenticatedAsBuiltRouteImport } from './routes/_authenticated/as-built'
 import { Route as AuthenticatedCompanyRouteImport } from './routes/_authenticated/company'
 import { Route as AuthenticatedContractsRouteImport } from './routes/_authenticated/contracts'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -72,6 +73,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAsBuiltRoute = AuthenticatedAsBuiltRouteImport.update({
+  id: '/as-built',
+  path: '/as-built',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCompanyRoute = AuthenticatedCompanyRouteImport.update({
   id: '/company',
@@ -293,6 +299,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/as-built': typeof AuthenticatedAsBuiltRoute
   '/company': typeof AuthenticatedCompanyRoute
   '/contracts': typeof AuthenticatedContractsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -338,6 +345,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/as-built': typeof AuthenticatedAsBuiltRoute
   '/company': typeof AuthenticatedCompanyRoute
   '/contracts': typeof AuthenticatedContractsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -385,6 +393,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/_authenticated/as-built': typeof AuthenticatedAsBuiltRoute
   '/_authenticated/company': typeof AuthenticatedCompanyRoute
   '/_authenticated/contracts': typeof AuthenticatedContractsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -432,6 +441,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/reset-password'
+    | '/as-built'
     | '/company'
     | '/contracts'
     | '/dashboard'
@@ -477,6 +487,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/reset-password'
+    | '/as-built'
     | '/company'
     | '/contracts'
     | '/dashboard'
@@ -523,6 +534,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/reset-password'
+    | '/_authenticated/as-built'
     | '/_authenticated/company'
     | '/_authenticated/contracts'
     | '/_authenticated/dashboard'
@@ -606,6 +618,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/as-built': {
+      id: '/_authenticated/as-built'
+      path: '/as-built'
+      fullPath: '/as-built'
+      preLoaderRoute: typeof AuthenticatedAsBuiltRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/company': {
       id: '/_authenticated/company'
@@ -906,6 +925,7 @@ const AuthenticatedPayrollRouteWithChildren =
   AuthenticatedPayrollRoute._addFileChildren(AuthenticatedPayrollRouteChildren)
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAsBuiltRoute: typeof AuthenticatedAsBuiltRoute
   AuthenticatedCompanyRoute: typeof AuthenticatedCompanyRoute
   AuthenticatedContractsRoute: typeof AuthenticatedContractsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
@@ -941,6 +961,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAsBuiltRoute: AuthenticatedAsBuiltRoute,
   AuthenticatedCompanyRoute: AuthenticatedCompanyRoute,
   AuthenticatedContractsRoute: AuthenticatedContractsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,

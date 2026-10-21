@@ -3072,6 +3072,75 @@ export type Database = {
           },
         ]
       }
+      qs_surveys: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          lines: Json
+          notes: string
+          proposal_id: string | null
+          signed_off_at: string | null
+          signed_off_by: string | null
+          site_label: string
+          status: string
+          submitted_at: string | null
+          title: string
+          trade: string
+          updated_at: string
+        }
+        Insert: {
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          lines?: Json
+          notes?: string
+          proposal_id?: string | null
+          signed_off_at?: string | null
+          signed_off_by?: string | null
+          site_label?: string
+          status?: string
+          submitted_at?: string | null
+          title?: string
+          trade?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          lines?: Json
+          notes?: string
+          proposal_id?: string | null
+          signed_off_at?: string | null
+          signed_off_by?: string | null
+          site_label?: string
+          status?: string
+          submitted_at?: string | null
+          title?: string
+          trade?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qs_surveys_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qs_surveys_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_permissions: {
         Row: {
           company_id: string
