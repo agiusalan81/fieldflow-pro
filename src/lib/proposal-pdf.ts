@@ -13,7 +13,7 @@ export async function buildProposalPdf(d: ProposalPdfInput): Promise<Uint8Array>
   const doc = await PDFDocument.create();
   doc.setTitle(`${d.reference} ${d.title}`.trim());
   const font = await doc.embedFont(StandardFonts.Helvetica), bold = await doc.embedFont(StandardFonts.HelveticaBold);
-  const W = 595, H = 842, M = 42, CW = W - M * 2, TOP = H - M - 58, BOTTOM = M + 30;
+  const W = 595, H = 842, M = 42, CW = W - M * 2, TOP = H - M - 74, BOTTOM = M + 30;
   const hex = /^#[0-9a-f]{6}$/i.test(d.company.primary ?? "") ? d.company.primary! : "#1f3a5f";
   const brand = rgb(parseInt(hex.slice(1, 3), 16) / 255, parseInt(hex.slice(3, 5), 16) / 255, parseInt(hex.slice(5, 7), 16) / 255);
   const ink = rgb(0.13, 0.13, 0.13), grey = rgb(0.42, 0.42, 0.42), band = rgb(0.95, 0.95, 0.95);
