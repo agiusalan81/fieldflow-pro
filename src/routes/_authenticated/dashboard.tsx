@@ -1,3 +1,4 @@
+import { AttentionOverview } from "@/components/attention-overview";
 import { LiveLocations } from "@/components/live-locations";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -272,131 +273,8 @@ function MyHours({ profile }: { profile: Profile }) {
 }
 
 function OfficeOverview({ profile }: { profile: Profile }) {
-  const { data: actor } = useProfile();
-  const { active: readOnly } = useUserPreview(actor);
-  const can = useCan(profile);
-  const navigate = useNavigate();
-  const { data } = useOpsData();
-  const { data: c } = useCompanyRules();
-  const rules = c?.rules ?? DEFAULT_RULES;
-  const completed = (data?.sheets ?? []).filter((s) => s.status === "completed");
-  const billing = completed.map((s) => ({ s, h: s.jobsheet_time_logs.reduce((a, l) => addSplits(a, splitHours(l.log_date, l.time_in, l.time_out, rules)), { standard: 0, ot15: 0, ot20: 0 }) }));
-  const tot = billing.reduce((a, b) => addSplits(a, b.h), { standard: 0, ot15: 0, ot20: 0 });
-  const low = (data?.inv ?? []).filter((i) => i.current_stock <= i.min_stock_level);
-  const [review, setReview] = useState<string | null>(null);
-  return (
-    <AppShell title={profile.companies?.name ?? "Overview"} actions={<Button asChild size="sm" variant="outline"><Link to="/company">Company settings</Link></Button>}>
-      <div className="space-y-6">
-        <MyHours profile={profile} />
-        <LiveLocations />
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          {can("billing") && <Card to="/admin/jobs" title="Completed (30 days)" icon={ClipboardList} value={completed.length} sub={`${tot.standard} h std · ${tot.ot15} h 1.5× · ${tot.ot20} h 2×`} />}
-          {can("billing") && <Card to="/admin/jobs" title="Overtime hours" icon={Clock} value={(tot.ot15 + tot.ot20).toFixed(2)} sub="1.5× and 2× in the last 30 days" />}
-          {can("leave_approvals") && <Card to="/leave" title="Leave requests" icon={CalendarDays} value={data?.pendingLeave ?? 0} sub="Waiting for approval" />}
-          {can("inventory") && <Card to="/admin/inventory" title="Low stock" icon={AlertTriangle} value={low.length} sub={low.slice(0, 2).map((i) => i.part_name).join(", ") || "All parts above minimum"} />}
-        </div>
-        {can("contracts") && (
-          <section className="space-y-3">
-            <div className="flex items-center justify-between"><h2 className="font-medium text-foreground">Contracts due for renewal</h2><Link to="/contracts" className="text-sm text-primary">All contracts</Link></div>
-            <RenewalList office={!readOnly} limit={5} />
-          </section>
-        )}
-        {can("billing") && (
-          <section className="rounded-xl border bg-card">
-            <h2 className="border-b px-5 py-3 font-medium text-foreground">Ready for billing <span className="text-xs font-normal text-muted-foreground">— tap a sheet to review before it goes to accounting</span></h2>
-            {!billing.length ? <p className="p-5 text-sm text-muted-foreground">No completed job sheets in the last 30 days.</p> : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead><tr className="border-b text-left text-muted-foreground"><th className="px-5 py-2 font-medium">Sheet</th><th className="px-3 py-2 font-medium">Client</th><th className="px-3 py-2 font-medium">Technician</th><th className="px-3 py-2 text-right font-medium">Std</th><th className="px-3 py-2 text-right font-medium">1.5×</th><th className="px-3 py-2 text-right font-medium">2×</th><th className="px-3 py-2 font-medium">Billing</th></tr></thead>
-                  <tbody className="divide-y">
-                    {billing.slice(0, 10).map(({ s, h }) => (
-                      <tr key={s.id} className="cursor-pointer hover:bg-muted/50" onClick={() => { if (!readOnly) setReview(s.id); }}>
-                        <td className="px-5 py-2.5 font-mono text-primary">#{s.jobsheet_number}</td><td className="px-3 py-2.5 text-foreground">{s.clients?.name}</td><td className="px-3 py-2.5 text-muted-foreground">{s.users?.full_name ?? "—"}</td>
-                        <td className="px-3 py-2.5 text-right tabular-nums">{h.standard}</td><td className="px-3 py-2.5 text-right tabular-nums">{h.ot15}</td><td className="px-3 py-2.5 text-right tabular-nums">{h.ot20}</td><td className="px-3 py-2.5 text-xs capitalize text-muted-foreground">{s.billing_status === "unreviewed" ? "To review" : s.billing_status}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
-        )}
-      </div>
-      {!readOnly && <BillingReview sheetId={review} onClose={() => setReview(null)} />}
-    </AppShell>
-  );
+  return <AppShell title={profile.companies?.name ?? "Overview"} actions={<Button asChild size="sm" variant="outline"><Link to="/company">Company settings</Link></Button>}><div className="mx-auto max-w-5xl space-y-5"><ShiftTracker profile={profile}/><AttentionOverview/></div></AppShell>;
 }
-
 function SupervisorOverview({ profile, switcher }: { profile: Profile; switcher?: ReactNode }) {
-  const can = useCan(profile);
-  const navigate = useNavigate();
-  const { data } = useOpsData();
-  const sheets = data?.sheets ?? [];
-  const approvals = sheets.filter((s) => s.requires_admin_approval).length;
-  const pending = sheets.filter((s) => (s.pending_works_future_jobs ?? "").trim() && s.pending_status !== "done").length;
-  const name = (id: string | null) => data?.users.find((u) => u.id === id)?.full_name ?? "Unassigned";
-  const techs = (data?.users ?? []).map((u) => {
-    const sh = (data?.shifts ?? []).filter((x) => x.user_id === u.id);
-    const active = sheets.find((s) => s.assigned_technician_id === u.id && (s.status === "in_transit" || s.status === "in_progress"));
-    const status = active?.status === "in_progress" ? `On site · ${active.clients?.name}` : active?.status === "in_transit" || sh.some((x) => x.shift_type === "travel") ? `Travelling${active ? ` · ${active.clients?.name}` : ""}` : sh.some((x) => x.shift_type === "shift") ? "On shift · available" : "Off shift";
-    return { u, status, on: sh.length > 0 || !!active };
-  }).sort((a, b) => Number(b.on) - Number(a.on));
-  const done = sheets.filter((s) => s.status === "completed" && s.updated_at.slice(0, 10) === new Date().toISOString().slice(0, 10)).length;
-  return (
-    <AppShell title="Field command" actions={<>{switcher}<Button asChild size="sm" variant="outline"><Link to="/live-map">Live map</Link></Button><Button asChild size="sm" variant="outline"><Link to="/admin/jobs" search={{ new: true }}>Dispatch job</Link></Button></>}>
-      <div className="space-y-6">
-        <MyHours profile={profile} />
-        <LiveLocations />
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          {can("live_status") && <Card to="/dashboard" title="Technicians active" icon={Play} value={techs.filter((t) => t.on).length} sub={`of ${techs.length} team members`} />}
-          {can("dispatch") && <Card to="/admin/jobs" title="Today's jobs" icon={CalendarDays} value={data?.jobs.length ?? 0} sub={`${done} sheets completed today`} />}
-          {can("approvals") && <Card to="/admin/jobs" title="Asset approvals" icon={AlertTriangle} value={approvals} sub="Model / serial changes to check" />}
-          {can("pending_works") && <Card to="/pending-works" title="Pending works" icon={ClipboardList} value={pending} sub="Follow-ups to schedule or estimate" />}
-        </div>
-        <div className="grid gap-4 lg:grid-cols-2">
-          {can("live_status") && (
-            <section className="rounded-xl border bg-card">
-              <h2 className="border-b px-5 py-3 font-medium text-foreground">Live technician status</h2>
-              <ul className="divide-y">
-                {techs.map(({ u, status, on }) => (
-                  <li key={u.id} className="flex items-center gap-3 px-5 py-2.5 text-sm">
-                    <span className={`h-2 w-2 shrink-0 rounded-full ${on ? "bg-success" : "bg-muted-foreground"}`} />
-                    <span className="min-w-0 flex-1 truncate text-foreground">{u.full_name}</span>
-                    <span className="truncate text-muted-foreground">{status}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-          {can("dispatch") && (
-            <section className="rounded-xl border bg-card">
-              <h2 className="border-b px-5 py-3 font-medium text-foreground">Today's dispatch</h2>
-              {!data?.jobs.length ? <p className="p-5 text-sm text-muted-foreground">No jobs scheduled today.</p> : (
-                <ul className="divide-y">
-                  {data.jobs.map((j) => (
-                    <li key={j.id} className="grid cursor-pointer grid-cols-[90px_minmax(0,1fr)_auto] items-center gap-3 px-5 py-2.5 text-sm hover:bg-muted/50" onClick={() => navigate({ to: "/admin/jobs" })}>
-                      <span className="tabular-nums text-muted-foreground">{timeWindow(j.window_start, j.window_end)}</span>
-                      <span className="min-w-0 truncate text-foreground">#{j.job_number} · {j.clients?.name}{j.sites?.name ? ` · ${j.sites.name}` : ""}<span className="block truncate text-xs text-muted-foreground">{name(j.assigned_technician_id)}{j.secondary_technician_id ? ` · Assisting: ${name(j.secondary_technician_id)}` : ""}</span></span>
-                      <PriorityBadge p={j.priority} />
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          )}
-        </div>
-        <section className="rounded-xl border bg-card">
-          <h2 className="border-b px-5 py-3 font-medium text-foreground">Recent job sheets</h2>
-          <ul className="divide-y">
-            {sheets.slice(0, 8).map((j) => (
-              <li key={j.id} className="grid cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-5 py-3 hover:bg-muted/50" onClick={() => navigate({ to: "/sheets/$sheetId", params: { sheetId: j.id } })}>
-                <div className="min-w-0"><p className="truncate text-sm font-medium text-foreground">#{j.jobsheet_number} · {j.clients?.name}</p><p className="truncate text-xs text-muted-foreground">{j.users?.full_name ?? "Unassigned"}</p></div>
-                <StatusBadge status={j.status} />
-              </li>
-            ))}
-          </ul>
-        </section>
-      </div>
-    </AppShell>
-  );
+  return <AppShell title="Team attention" actions={switcher}><div className="mx-auto max-w-5xl space-y-5"><ShiftTracker profile={profile}/><AttentionOverview/></div></AppShell>;
 }

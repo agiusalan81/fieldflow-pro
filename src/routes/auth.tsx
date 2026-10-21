@@ -26,12 +26,21 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const continueSignedIn = async () => {
+    const asset=sessionStorage.getItem("fieldbridge:equipment-return");
+    if(asset && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(asset)) {
+      sessionStorage.removeItem("fieldbridge:equipment-return");
+      await navigate({to:"/equipment/$assetId",params:{assetId:asset},replace:true});
+    } else await navigate({to:"/dashboard",replace:true});
+  };
   const [noCompany,setNoCompany] = useState(false);
   const [mode, setMode] = useState<"signup" | "signin">("signin");
   const [idle, setIdle] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
   useEffect(() => {
+    const asset = new URLSearchParams(window.location.search).get("equipment");
+    if(asset && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(asset)) sessionStorage.setItem("fieldbridge:equipment-return",asset);
     setMode(new URLSearchParams(window.location.search).get("mode") === "signup" ? "signup" : "signin");
     setIdle(new URLSearchParams(window.location.search).get("reason") === "idle");
     const saved = window.localStorage.getItem("fieldflow_saved_email");
@@ -44,7 +53,7 @@ function AuthPage() {
       const pending = sessionStorage.getItem("fieldflow:pending-invite");
       if (pending && /^[a-f0-9]{36}$/.test(pending)) { await navigate({to:"/join/$token",params:{token:pending},replace:true}); return; }
       const { data: member } = await supabase.from("users").select("id").eq("id",data.user.id).maybeSingle();
-      if (member) navigate({ to: "/dashboard", replace: true });
+      if (member) void continueSignedIn();
       else setNoCompany(true);
     });
   }, [navigate]);
@@ -93,7 +102,7 @@ function AuthPage() {
         if (remember) window.localStorage.setItem("fieldflow_saved_email", form.email);
         else window.localStorage.removeItem("fieldflow_saved_email");
         queryClient.clear();
-        navigate({ to: "/dashboard" });
+        void continueSignedIn();
       }
     }
     setBusy(false);
@@ -113,7 +122,7 @@ function AuthPage() {
         </p>
 
         {noCompany && <div className="mt-6 space-y-3 border p-4"><p>You are signed in, but have not joined a company. Open your team invitation to continue.</p><Button variant="outline" onClick={async()=>{queryClient.clear();await supabase.auth.signOut();setNoCompany(false);}}>Sign out</Button></div>}
-        {!noCompany && mode === "signin" && <div className="mt-6"><SocialSignin onError={setError} onSuccess={async()=>{ const {data:auth}=await supabase.auth.getUser(); if (!auth.user) return; const {data:member}=await supabase.from("users").select("id").eq("id",auth.user.id).maybeSingle(); if(member){queryClient.clear();await navigate({to:"/dashboard"});}else setNoCompany(true); }}/></div>}
+        {!noCompany && mode === "signin" && <div className="mt-6"><SocialSignin onError={setError} onSuccess={async()=>{ const {data:auth}=await supabase.auth.getUser(); if (!auth.user) return; const {data:member}=await supabase.from("users").select("id").eq("id",auth.user.id).maybeSingle(); if(member){queryClient.clear();await continueSignedIn();}else setNoCompany(true); }}/></div>}
         {idle && mode === "signin" && <p className="mt-6 rounded-lg border bg-muted p-3 text-sm text-muted-foreground">You were signed out after a period of inactivity.</p>}
         {!noCompany && (sent ? (
           <div className="mt-8 rounded-xl border bg-card p-6 text-card-foreground">

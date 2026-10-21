@@ -1,10 +1,13 @@
+import { PendingPhotoStrip } from "@/components/pending-photo-strip";
+import { EquipmentProblemQueue } from "@/components/equipment-problem-queue";
+import { Textarea } from "@/components/ui/textarea";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CalendarPlus, CheckCircle2, Receipt } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useProfile, useCompanyUsers } from "@/lib/profile";
+import { useProfile, useCompanyUsers, isManager } from "@/lib/profile";
 import { parsePhotos } from "@/lib/jobsheets";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -27,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/pending-works")({
   component: PendingWorks,
 });
 
-const STATUS: Record<string, string> = { open: "Open", quote: "Awaiting estimate", scheduled: "Scheduled", done: "Done" };
+const STATUS: Record<string, string> = { open: "Open", quote: "Awaiting estimate", dispatch: "Dispatch queue", supervisor: "Supervisor review", awaiting_parts: "Awaiting parts", scheduled: "Scheduled", done: "Done" };
 
 export function usePendingWorks() {
   return useQuery({
@@ -48,37 +51,36 @@ function PendingWorks() {
   const { data: users = [] } = useCompanyUsers();
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
+  const [routeTo, setRouteTo] = useState<{row:(typeof data)[number];action:string}|null>(null);
+  const [assignee,setAssignee]=useState("");
+  const [note,setNote]=useState("");
   const [filter, setFilter] = useState("active");
   const [sched, setSched] = useState<(typeof data)[number] | null>(null);
   const [review, setReview] = useState<(typeof data)[number] | null>(null);
   const [f, setF] = useState({ date: new Date().toISOString().slice(0, 10), tech: "none" });
   const rows = data.filter((r) => filter === "all" || (filter === "active" ? r.pending_status !== "done" : r.pending_status === filter));
-  const setStatus = async (id: string, s: string) => {
-    const { error } = await supabase.from("job_sheets").update({ pending_status: s }).eq("id", id);
-    if (error) { toast.error(error.message); return; }
-    qc.invalidateQueries({ queryKey: ["pending-works"] });
+  const setStatus = async (id: string, action: string, target: string | null = null, date: string | null = null, reason = "") => {
+    const row = data.find(r=>r.id===id); if(!row || busy)return false;
+    setBusy(true);
+    const r = await supabase.rpc("route_pending_work", {_sheet:id,_action:action,_expected:row.pending_status,...(target?{_assignee:target}:{}),...(date?{_date:date}:{}),_note:reason});
+    setBusy(false); if(r.error){toast.error(r.error.message);return false;}
+    await Promise.all([qc.invalidateQueries({queryKey:["pending-works"]}),qc.invalidateQueries({queryKey:["jobs"]}),qc.invalidateQueries({queryKey:["attention-overview"]})]);toast.success("Follow-up action saved");return true;
   };
   const schedule = async () => {
     if (!sched || !profile) return;
-    const { data: job, error } = await supabase.from("jobs").insert({
-      company_id: profile.company_id, client_id: sched.client_id, site_id: sched.site_id, asset_id: sched.asset_id,
-      assigned_technician_id: f.tech === "none" ? null : f.tech, scheduled_date: f.date,
-      problem_summary: `Follow-up from #${sched.jobsheet_number}: ${sched.pending_works_future_jobs}`.slice(0, 500), priority: "normal",
-    }).select("id").single();
-    if (error) { toast.error(error.message); return; }
-    await supabase.from("job_sheets").update({ pending_status: "scheduled", pending_job_id: job.id }).eq("id", sched.id);
-    toast.success("Return visit scheduled");
-    setSched(null);
-    qc.invalidateQueries({ queryKey: ["pending-works"] });
+    if(await setStatus(sched.id,"scheduled",f.tech==="none"?null:f.tech,f.date)){setSched(null);toast.success("Return visit scheduled");}
   };
+  if(!isManager(profile))return <AppShell title="Pending works"><EmptyState>Pending Works actions are available to supervisors and office staff.</EmptyState></AppShell>;
   return (
     <AppShell title="Pending works">
       <div className="mx-auto max-w-5xl space-y-4">
         <div className="flex flex-wrap items-center gap-2">
-          {["active", "open", "quote", "scheduled", "done", "all"].map((s) => (
+          {["active", "open", "quote", "dispatch", "supervisor", "awaiting_parts", "scheduled", "done", "all"].map((s) => (
             <Button key={s} size="sm" variant={filter === s ? "default" : "outline"} onClick={() => setFilter(s)}>{s === "active" ? "Not done" : s === "all" ? "All" : STATUS[s]}</Button>
           ))}
         </div>
+        <EquipmentProblemQueue/>
         {!rows.length ? <EmptyState>No pending works here.</EmptyState> : (
           <ul className="space-y-2">
             {rows.map((r) => {
@@ -93,10 +95,12 @@ function PendingWorks() {
                     <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">{STATUS[r.pending_status] ?? r.pending_status}</span>
                   </div>
                   <p className="mt-2 whitespace-pre-line text-sm text-foreground">{r.pending_works_future_jobs}</p>
+                  <PendingPhotoStrip sheetId={r.id} photos={r.photo_paths} onOpen={()=>setReview(r)}/>
                   <div className="mt-3 flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
                     {r.pending_status !== "scheduled" && r.pending_status !== "done" && <Button size="sm" onClick={() => setSched(r)}><CalendarPlus className="mr-1 h-4 w-4" />Schedule visit</Button>}
-                    {r.pending_status === "open" && <Button size="sm" variant="outline" onClick={() => setReview(r)}><Receipt className="mr-1 h-4 w-4" />Review for estimate</Button>}
-                    {r.pending_status !== "done" && <Button size="sm" variant="outline" onClick={() => setStatus(r.id, "done")}><CheckCircle2 className="mr-1 h-4 w-4" />Close manually</Button>}
+                    {r.pending_status !== "done" && <Button size="sm" variant="outline" onClick={() => setReview(r)}><Receipt className="mr-1 h-4 w-4" />Review for estimate</Button>}
+                    {r.pending_status !== "done" && <>{([["dispatch","Dispatch"],["supervisor","Supervisor review"],["awaiting_parts","Awaiting parts"],["done","Close"]] as const).map(([action,label])=><Button key={action} size="sm" variant="outline" disabled={busy} onClick={()=>{setRouteTo({row:r,action});setAssignee("");setNote("");}}>{label}</Button>)}</>}
+                    <Button size="sm" variant="ghost" onClick={()=>navigate({to:"/sheets/$sheetId",params:{sheetId:r.id}})}>Original sheet</Button>
                   </div>
                 </li>
               );
@@ -105,13 +109,14 @@ function PendingWorks() {
         )}
       </div>
       <p className="mx-auto mt-4 max-w-5xl text-xs text-muted-foreground">Scheduled items close automatically when the follow-up job sheet is submitted.</p>
+      <Dialog open={!!routeTo} onOpenChange={o=>!o&&!busy&&setRouteTo(null)}><DialogContent><DialogHeader><DialogTitle>{routeTo ? STATUS[routeTo.action] : "Follow-up"}</DialogTitle></DialogHeader><p className="text-sm">#{routeTo?.row.jobsheet_number} · {routeTo?.row.clients?.name}</p><p className="text-sm text-muted-foreground">{routeTo?.row.pending_works_future_jobs}</p>{routeTo?.action==="supervisor"&&<><Label htmlFor="pending-supervisor">Supervisor</Label><select id="pending-supervisor" className="h-10 rounded-md border bg-background px-2" value={assignee} onChange={e=>setAssignee(e.target.value)}><option value="">Choose supervisor</option>{users.filter(u=>["supervisor","admin","superuser"].includes(u.role)).map(u=><option key={u.id} value={u.id}>{u.full_name}</option>)}</select></>}<Label htmlFor="pending-action-note">{routeTo?.action==="done"?"Closure reason":"Action note"}</Label><Textarea id="pending-action-note" maxLength={2000} value={note} onChange={e=>setNote(e.target.value)}/><p className="text-xs text-muted-foreground">The signed original stays unchanged. {routeTo?.action==="dispatch"?"An unassigned follow-up job is created for dispatch.":""}</p><div className="flex justify-end gap-2"><Button variant="outline" disabled={busy} onClick={()=>setRouteTo(null)}>Cancel</Button><Button disabled={busy||(routeTo?.action==="supervisor"&&!assignee)||(routeTo?.action==="done"&&!note.trim())} onClick={async()=>{if(routeTo&&await setStatus(routeTo.row.id,routeTo.action,assignee||null,null,note.trim()))setRouteTo(null);}}>Confirm action</Button></div></DialogContent></Dialog>
       <Dialog open={!!review} onOpenChange={(o) => !o && setReview(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader><DialogTitle>Review for estimate — #{review?.jobsheet_number}</DialogTitle></DialogHeader>
           {review && <ReviewBody r={review} />}
           <div className="grid gap-2 sm:grid-cols-2">
             <Button variant="outline" className="h-11" onClick={() => review && navigate({ to: "/sheets/$sheetId", params: { sheetId: review.id } })}>Open full job sheet</Button>
-            <Button className="h-11" onClick={async () => { if (review) { await setStatus(review.id, "quote"); toast.success("Marked as needing an estimate"); setReview(null); } }}><Receipt className="mr-1 h-4 w-4" />Needs estimate</Button>
+            <Button className="h-11" onClick={async () => { if (review) { if(await setStatus(review.id, "quote")) setReview(null); } }}><Receipt className="mr-1 h-4 w-4" />Needs estimate</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -126,7 +131,7 @@ function PendingWorks() {
                 <SelectContent><SelectItem value="none">Unassigned</SelectItem>{users.map((u) => <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>)}</SelectContent></Select>
             </div>
           </div>
-          <Button className="h-11" onClick={schedule}>Create job</Button>
+          <Button disabled={busy||!f.date} className="h-11" onClick={schedule}>Create job</Button>
         </DialogContent>
       </Dialog>
     </AppShell>

@@ -25,6 +25,13 @@ describe("job sheet number search", () => {
 });
 
 describe("standby roster", () => {
+ it("accepted range waits for manager approval",()=>{
+ const cfg={start:"2026-10-12",rotationDays:7,perShift:1,order:["a","b","c"]};
+ const swap={swap_date:"2026-10-13",end_date:"2026-10-15",requester_id:"a",target_id:"c",status:"accepted",manager_approved:false};
+ expect(standbyFor("2026-10-14",cfg,[swap])).toEqual(["a"]);
+ expect(standbyFor("2026-10-14",cfg,[{...swap,manager_approved:true}])).toEqual(["c"]);
+ expect(standbyFor("2026-10-16",cfg,[{...swap,manager_approved:true}])).toEqual(["a"]);
+ });
   it("does not allow staffing above the number of registered technicians", () => {
     expect(validStandbyStaffing(3, 2)).toBe(false);
     expect(validStandbyStaffing(2, 2)).toBe(true);

@@ -1038,6 +1038,102 @@ export type Database = {
           },
         ]
       }
+      equipment_problem_reports: {
+        Row: {
+          asset_id: string
+          company_id: string
+          created_at: string | null
+          first_name: string
+          id: string
+          last_name: string
+          position: string
+          problem: string
+          status: string
+        }
+        Insert: {
+          asset_id: string
+          company_id: string
+          created_at?: string | null
+          first_name: string
+          id?: string
+          last_name: string
+          position: string
+          problem: string
+          status?: string
+        }
+        Update: {
+          asset_id?: string
+          company_id?: string
+          created_at?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string
+          position?: string
+          problem?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipment_problem_reports_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipment_problem_reports_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      equipment_report_links: {
+        Row: {
+          asset_id: string
+          company_id: string
+          created_at: string | null
+          id: string
+          last_report_at: string | null
+          revoked_at: string | null
+          token_hash: string
+        }
+        Insert: {
+          asset_id: string
+          company_id?: string
+          created_at?: string | null
+          id?: string
+          last_report_at?: string | null
+          revoked_at?: string | null
+          token_hash: string
+        }
+        Update: {
+          asset_id?: string
+          company_id?: string
+          created_at?: string | null
+          id?: string
+          last_report_at?: string | null
+          revoked_at?: string | null
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipment_report_links_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipment_report_links_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fault_library: {
         Row: {
           active: boolean
@@ -1859,45 +1955,98 @@ export type Database = {
           },
         ]
       }
+      leave_blackouts: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          created_by: string | null
+          end_date: string
+          id: string
+          reason: string
+          roles: Database["public"]["Enums"]["app_role"][]
+          start_date: string
+        }
+        Insert: {
+          company_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          end_date: string
+          id?: string
+          reason: string
+          roles?: Database["public"]["Enums"]["app_role"][]
+          start_date: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          end_date?: string
+          id?: string
+          reason?: string
+          roles?: Database["public"]["Enums"]["app_role"][]
+          start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leave_blackouts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leave_requests: {
         Row: {
           company_id: string
+          consulted_supervisor_id: string | null
           created_at: string
           end_date: string
+          exception_reason: string | null
           id: string
           leave_type: string
           medical_certificate_path: string | null
           optional_notes: string | null
           start_date: string
           status: Database["public"]["Enums"]["leave_status"]
+          supervisor_response: string | null
           total_hours: number
           user_id: string
+          work_handling_note: string | null
         }
         Insert: {
           company_id: string
+          consulted_supervisor_id?: string | null
           created_at?: string
           end_date: string
+          exception_reason?: string | null
           id?: string
           leave_type?: string
           medical_certificate_path?: string | null
           optional_notes?: string | null
           start_date: string
           status?: Database["public"]["Enums"]["leave_status"]
+          supervisor_response?: string | null
           total_hours?: number
           user_id: string
+          work_handling_note?: string | null
         }
         Update: {
           company_id?: string
+          consulted_supervisor_id?: string | null
           created_at?: string
           end_date?: string
+          exception_reason?: string | null
           id?: string
           leave_type?: string
           medical_certificate_path?: string | null
           optional_notes?: string | null
           start_date?: string
           status?: Database["public"]["Enums"]["leave_status"]
+          supervisor_response?: string | null
           total_hours?: number
           user_id?: string
+          work_handling_note?: string | null
         }
         Relationships: [
           {
@@ -2419,6 +2568,51 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pending_work_actions: {
+        Row: {
+          action: string
+          assigned_to: string | null
+          company_id: string
+          note: string
+          sheet_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          action?: string
+          assigned_to?: string | null
+          company_id?: string
+          note?: string
+          sheet_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          action?: string
+          assigned_to?: string | null
+          company_id?: string
+          note?: string
+          sheet_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pending_work_actions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pending_work_actions_sheet_id_fkey"
+            columns: ["sheet_id"]
+            isOneToOne: true
+            referencedRelation: "job_sheets"
             referencedColumns: ["id"]
           },
         ]
@@ -3107,9 +3301,13 @@ export type Database = {
       }
       standby_swaps: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           company_id: string
           created_at: string
+          end_date: string | null
           id: string
+          manager_approved: boolean
           note: string | null
           requester_id: string
           responded_at: string | null
@@ -3118,9 +3316,13 @@ export type Database = {
           target_id: string
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           company_id: string
           created_at?: string
+          end_date?: string | null
           id?: string
+          manager_approved?: boolean
           note?: string | null
           requester_id: string
           responded_at?: string | null
@@ -3129,9 +3331,13 @@ export type Database = {
           target_id: string
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           company_id?: string
           created_at?: string
+          end_date?: string | null
           id?: string
+          manager_approved?: boolean
           note?: string | null
           requester_id?: string
           responded_at?: string | null
@@ -3162,6 +3368,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      team_role_changes: {
+        Row: {
+          changed_at: string | null
+          changed_by: string | null
+          company_id: string
+          id: string
+          member_id: string
+          new_role: Database["public"]["Enums"]["app_role"]
+          old_role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          changed_at?: string | null
+          changed_by?: string | null
+          company_id: string
+          id?: string
+          member_id: string
+          new_role: Database["public"]["Enums"]["app_role"]
+          old_role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          changed_at?: string | null
+          changed_by?: string | null
+          company_id?: string
+          id?: string
+          member_id?: string
+          new_role?: Database["public"]["Enums"]["app_role"]
+          old_role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
       }
       technical_documents: {
         Row: {
@@ -3466,6 +3702,10 @@ export type Database = {
         Args: { _company: string; _module: string }
         Returns: boolean
       }
+      create_equipment_report_link: {
+        Args: { _asset: string }
+        Returns: string
+      }
       current_company_id: { Args: never; Returns: string }
       dwr_sheet_entries: {
         Args: { _date: string; _user: string }
@@ -3546,6 +3786,17 @@ export type Database = {
           terminated_at: string
           termination_reason: string
         }[]
+      }
+      route_pending_work: {
+        Args: {
+          _action: string
+          _assignee?: string
+          _date?: string
+          _expected: string
+          _note?: string
+          _sheet: string
+        }
+        Returns: string
       }
       save_employee_payroll_setup: {
         Args: {
@@ -3653,6 +3904,16 @@ export type Database = {
           _name: string
           _sheet: string
           _signature: string
+        }
+        Returns: undefined
+      }
+      submit_equipment_problem: {
+        Args: {
+          _first: string
+          _last: string
+          _position: string
+          _problem: string
+          _token: string
         }
         Returns: undefined
       }

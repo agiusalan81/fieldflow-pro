@@ -1,0 +1,16 @@
+import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { ROLE_LABEL, type Role } from '@/lib/profile';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+const ACCESS: Record<Role, string> = { technician: 'Personal field work and assigned jobs; no team management or payroll.', supervisor: 'Team dispatch, pending works, on-call rota and operational approvals; no payroll.', admin: 'Office management, team access, leave decisions and payroll where enabled.', superuser: 'Full company administration, role preview and subscription controls.' };
+export function RoleChangeControl({ member, actorRole, meId }: { member: { id: string; full_name: string; role: Role; registration_status: string; platform_owner: boolean }; actorRole: Role; meId: string }) {
+  const qc = useQueryClient(); const [next, setNext] = useState<Role | null>(null); const [busy, setBusy] = useState(false);
+  const allowed = (actorRole === 'admin' || actorRole === 'superuser') && member.id !== meId && !member.platform_owner && member.registration_status === 'active' && (actorRole === 'superuser' || member.role !== 'superuser');
+  if (!allowed) return <span>{ROLE_LABEL[member.role]}</span>;
+  const save = async () => { if (!next) return; setBusy(true); const r = await supabase.from('user_roles').update({ role: next }).eq('user_id', member.id).select('user_id'); setBusy(false); if (r.error || !r.data?.length) { toast.error(r.error?.message ?? 'Role change not permitted'); return; } setNext(null); await qc.invalidateQueries(); toast.success('Role changed'); };
+  return <><Select value={member.role} onValueChange={v => { if (v !== member.role) setNext(v as Role); }}><SelectTrigger className="w-44" aria-label={`Role for ${member.full_name}`}><SelectValue /></SelectTrigger><SelectContent>{(['technician','supervisor','admin', ...(actorRole === 'superuser' ? ['superuser'] : [])] as Role[]).map(r => <SelectItem key={r} value={r}>{ROLE_LABEL[r]}</SelectItem>)}</SelectContent></Select><Dialog open={!!next} onOpenChange={o => { if (!o && !busy) setNext(null); }}><DialogContent><DialogHeader><DialogTitle>Confirm role change</DialogTitle></DialogHeader><p className="font-medium">{member.full_name}</p><p>{ROLE_LABEL[member.role]} → {next ? ROLE_LABEL[next] : ''}</p><p className="text-sm text-muted-foreground">Current access: {ACCESS[member.role]}</p><p className="text-sm">New access: {next ? ACCESS[next] : ''}</p><p className="text-sm text-muted-foreground">The change takes effect immediately and is recorded. Historical work stays with this person.</p><div className="flex justify-end gap-2"><Button variant="outline" disabled={busy} onClick={() => setNext(null)}>Cancel</Button><Button disabled={busy} onClick={save}>Confirm role change</Button></div></DialogContent></Dialog></>;
+}

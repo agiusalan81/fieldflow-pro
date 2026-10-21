@@ -1,3 +1,5 @@
+import { LeaveBlackouts } from "@/components/leave-blackouts";
+import { LeaveImpact } from "@/components/leave-impact";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -5,7 +7,7 @@ import { toast } from "sonner";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { approvalBalance } from "@/lib/jobsheets";
-import { useProfile } from "@/lib/profile";
+import { useProfile, isManager, isOffice } from "@/lib/profile";
 import { canDecideLeave, type AppRole } from "@/lib/field-rules";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -64,9 +66,12 @@ function LeaveApprovals() {
   const iso = (d: number) => `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
   const onDay = (d: number) => reqs.filter((r) => r.start_date <= iso(d) && r.end_date >= iso(d));
 
+  if(!isManager(me)) return <AppShell title="Leave approvals"><EmptyState>Team leave is available to supervisors and office staff.</EmptyState></AppShell>;
+  const leaveLabel=(type:string)=>type==="Sick"&&!isOffice(me)?"On leave":type;
   return (
     <AppShell title="Leave approvals">
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+      <LeaveBlackouts/>
+      <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
         <section className="rounded-xl border bg-card p-5">
           <h2 className="mb-3 font-medium text-foreground">Awaiting approval ({pending.length})</h2>
           {pending.length === 0 ? <EmptyState>Nothing to approve.</EmptyState> : (
@@ -77,9 +82,9 @@ function LeaveApprovals() {
                 return (
                   <li key={r.id} className="space-y-2 rounded-lg border p-3">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-foreground">{r.users?.full_name} <span className="text-xs capitalize text-muted-foreground">· {r.users?.role}</span> · {r.leave_type}</p>
+                      <p className="truncate text-sm font-medium text-foreground">{r.users?.full_name} <span className="text-xs capitalize text-muted-foreground">· {r.users?.role}</span> · {leaveLabel(r.leave_type)}</p>
                       <p className="text-xs text-muted-foreground">{r.start_date} → {r.end_date} · {Number(r.total_hours).toFixed(2)} h
-                        {r.medical_certificate_path && <button className="ml-1 text-primary underline" onClick={() => openCert(r.medical_certificate_path!)}>certificate</button>}</p>
+                        {isOffice(me) && r.medical_certificate_path && <Button variant="link" size="sm" onClick={() => r.medical_certificate_path && openCert(r.medical_certificate_path)}>certificate</Button>}</p>
                       {r.optional_notes && <p className="mt-1 text-xs text-foreground">“{r.optional_notes}”</p>}
                     </div>
                     <div className="flex flex-wrap gap-1.5 text-xs">
@@ -87,10 +92,7 @@ function LeaveApprovals() {
                       {isAnnual && <span className="rounded-full bg-muted px-2 py-0.5 tabular-nums">{bal.after.toFixed(2)} h after this</span>}
                       {bal.exceedsBy > 0 && <span className="rounded-full bg-warning/25 px-2 py-0.5 text-warning-foreground">Exceeds balance by {bal.exceedsBy.toFixed(2)} h</span>}
                     </div>
-                    {me && canDecideLeave(me.real_role as AppRole, (r.users?.role ?? "technician") as AppRole, r.user_id === me.id) ? <div className="flex gap-1">
-                      <Button size="sm" onClick={() => decide(r.id, "approved")}>Approve</Button>
-                      <Button size="sm" variant="outline" onClick={() => decide(r.id, "rejected")}>Reject</Button>
-                    </div> : <p className="text-xs text-muted-foreground">{r.user_id === me?.id ? "Your own request — an Office Admin decides this." : "Awaiting an Office Admin decision."}</p>}
+                    <LeaveImpact request={r}/>
                   </li>
                 );
               })}

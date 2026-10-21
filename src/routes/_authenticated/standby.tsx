@@ -17,9 +17,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export const Route = createFileRoute("/_authenticated/standby")({
   head: () => ({
     meta: [
-      { title: "Standby roster — FieldBridge" },
+      { title: "On-call rota — FieldBridge" },
       { name: "description", content: "After-hours standby roster with shift swaps between technicians." },
-      { property: "og:title", content: "Standby roster — FieldBridge" },
+      { property: "og:title", content: "On-call rota — FieldBridge" },
       { property: "og:description", content: "Who is on call after hours, week by week." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -41,11 +41,13 @@ function StandbyPage() {
   const [week, setWeek] = useState(() => today0());
   const [ask, setAsk] = useState<string | null>(null);
   const [target, setTarget] = useState("");
+  const [end, setEnd] = useState("");
+  const [note, setNote] = useState("");
   const { data: swaps = [] } = useQuery({
     queryKey: ["standby-swaps"],
     queryFn: async () => (await supabase.from("standby_swaps").select("*").order("created_at", { ascending: false }).limit(200)).data ?? [],
   });
-  if (!profile || !company) return <AppShell title="Standby roster"><p className="text-muted-foreground">Loading…</p></AppShell>;
+  if (!profile || !company) return <AppShell title="On-call rota"><p className="text-muted-foreground">Loading…</p></AppShell>;
   const cfg = company.standby;
   const name = (id: string) => users.find((u) => u.id === id)?.full_name ?? "—";
   const days = Array.from({ length: 7 }, (_, i) => iso(new Date(week.getFullYear(), week.getMonth(), week.getDate() + i)));
@@ -54,7 +56,7 @@ function StandbyPage() {
 
   const request = async () => {
     if (!ask || !target) return;
-    const { error } = await supabase.from("standby_swaps").insert({ company_id: profile.company_id, swap_date: ask, requester_id: profile.id, target_id: target });
+    const { error } = await supabase.from("standby_swaps").insert({ company_id: profile.company_id, swap_date: ask, requester_id: profile.id, target_id: target, end_date: end || ask, note: note.trim() || null });
     if (error) { toast.error(error.message); return; }
     toast.success(`Swap request sent to ${name(target)}`);
     setAsk(null); setTarget(""); refresh();
@@ -62,19 +64,19 @@ function StandbyPage() {
   const answer = async (id: string, status: "accepted" | "declined" | "cancelled") => {
     const { error } = await supabase.from("standby_swaps").update({ status }).eq("id", id);
     if (error) { toast.error(error.message); return; }
-    toast.success(status === "accepted" ? "Swap accepted — the roster is updated" : status === "declined" ? "Swap declined" : "Request cancelled");
+    toast.success(status === "accepted" ? "Accepted — awaiting manager approval" : status === "declined" ? "Swap declined" : "Request cancelled");
     refresh();
   };
   const incoming = swaps.filter((s) => s.target_id === profile.id && s.status === "pending");
   const mine = swaps.filter((s) => s.requester_id === profile.id);
 
   return (
-    <AppShell title="Standby roster">
+    <AppShell title="On-call rota">
       <div className="mx-auto max-w-5xl space-y-5">
         {incoming.map((s) => (
           <div key={s.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-warning bg-warning/10 p-4">
             <Repeat className="h-5 w-5 text-foreground" />
-            <p className="flex-1 text-sm text-foreground"><b>{name(s.requester_id)}</b> asks you to take their standby on <b>{new Date(s.swap_date + "T00:00").toLocaleDateString([], { weekday: "long", day: "numeric", month: "short" })}</b>.</p>
+            <p className="flex-1 text-sm text-foreground"><b>{name(s.requester_id)}</b> asks you to take their standby on <b>{s.swap_date}{s.end_date && s.end_date !== s.swap_date ? ` → ${s.end_date}` : ""}</b>{s.note ? ` · ${s.note}` : ""}.</p>
             <Button size="sm" variant="outline" onClick={() => answer(s.id, "declined")}>Decline</Button>
             <Button size="sm" onClick={() => answer(s.id, "accepted")}>Accept</Button>
           </div>
@@ -101,7 +103,7 @@ function StandbyPage() {
                       {ids.map((id) => (
                         <li key={id} className={`rounded px-1.5 py-1 text-xs ${id === profile.id ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
                           {name(id)}
-                          {id === profile.id && d >= iso(new Date()) && <button type="button" className="ml-1 underline" onClick={() => setAsk(d)}>swap</button>}
+                          {id === profile.id && d >= iso(new Date()) && <Button variant="link" size="sm" className="ml-1 h-auto p-0 text-current" onClick={() => { setAsk(d); setEnd(d); setNote(""); }}>swap</Button>}
                         </li>
                       ))}
                     </ul>
@@ -120,6 +122,7 @@ function StandbyPage() {
           </section>
         )}
 
+        {isManager(profile) && swaps.filter(s=>s.status==="accepted"&&!s.manager_approved).map(s=><div key={s.id} className="flex flex-wrap items-center gap-3 border-l-2 border-warning p-3 text-sm"><p className="flex-1">{name(s.requester_id)} → {name(s.target_id)} · {s.swap_date} → {s.end_date ?? s.swap_date} · Awaiting approval</p><Button size="sm" disabled={[s.requester_id,s.target_id].includes(profile.id)} onClick={async()=>{const r=await supabase.from("standby_swaps").update({manager_approved:true}).eq("id",s.id);if(r.error)toast.error(r.error.message);else{toast.success("Swap approved — rota updated");refresh();}}}>Approve swap</Button><Button size="sm" variant="outline" onClick={()=>answer(s.id,"cancelled")}>Decline swap</Button></div>)}
         {isManager(profile) && (
           <section className="rounded-xl border bg-card p-4">
             <h2 className="mb-2 font-medium text-foreground">All swap requests</h2>
@@ -133,13 +136,15 @@ function StandbyPage() {
       <Dialog open={!!ask} onOpenChange={(o) => !o && setAsk(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>Swap standby on {ask && new Date(ask + "T00:00").toLocaleDateString([], { weekday: "long", day: "numeric", month: "short" })}</DialogTitle></DialogHeader>
+          <div className="grid grid-cols-2 gap-3"><div><Label>From</Label><Input type="date" value={ask ?? ""} min={iso(new Date())} onChange={e=>setAsk(e.target.value)}/></div><div><Label>To</Label><Input type="date" value={end} min={ask ?? ""} onChange={e=>setEnd(e.target.value)}/></div></div>
+          <Label>Reason (optional)</Label><Input maxLength={1000} value={note} onChange={e=>setNote(e.target.value)}/>
           <div className="space-y-1.5"><Label>Ask colleague</Label>
             <Select value={target} onValueChange={setTarget}>
               <SelectTrigger className="h-11"><SelectValue placeholder="Choose a technician" /></SelectTrigger>
               <SelectContent>{techs.filter((u) => u.id !== profile.id && !(ask && standbyFor(ask, cfg, swaps).includes(u.id))).map((u) => <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <p className="text-xs text-muted-foreground">They need to accept before the roster changes.</p>
+          <p className="text-xs text-muted-foreground">Colleague acceptance is followed by supervisor/admin approval before the rota changes.</p>
           <Button className="h-11" disabled={!target} onClick={request}>Send request</Button>
         </DialogContent>
       </Dialog>
@@ -147,14 +152,14 @@ function StandbyPage() {
   );
 }
 
-function SwapList({ swaps, name, onCancel, meId, manager }: { swaps: { id: string; swap_date: string; requester_id: string; target_id: string; status: string; created_at: string }[]; name: (id: string) => string; onCancel: (id: string) => void; meId: string; manager?: boolean }) {
+function SwapList({ swaps, name, onCancel, meId, manager }: { swaps: { id: string; swap_date: string; requester_id: string; target_id: string; status: string; created_at: string; end_date?: string | null; manager_approved?: boolean }[]; name: (id: string) => string; onCancel: (id: string) => void; meId: string; manager?: boolean }) {
   return (
     <ul className="divide-y text-sm">
       {swaps.map((s) => (
         <li key={s.id} className="flex flex-wrap items-center gap-2 py-2">
-          <span className="tabular-nums text-muted-foreground">{new Date(s.swap_date + "T00:00").toLocaleDateString([], { day: "numeric", month: "short" })}</span>
+          <span className="tabular-nums text-muted-foreground">{s.swap_date}{s.end_date && s.end_date !== s.swap_date ? ` → ${s.end_date}` : ""}</span>
           <span className="flex-1 text-foreground">{name(s.requester_id)} → {name(s.target_id)}</span>
-          <span className={`rounded-full px-2 py-0.5 text-xs capitalize ${SWAP_CLS[s.status] ?? ""}`}>{s.status}</span>
+          <span className={`rounded-full px-2 py-0.5 text-xs capitalize ${SWAP_CLS[s.status] ?? ""}`}>{s.status === "accepted" ? (s.manager_approved ? "Approved" : "Awaiting manager") : s.status}</span>
           <span className="text-xs text-muted-foreground">asked {new Date(s.created_at).toLocaleDateString()}</span>
           {s.status === "pending" && (s.requester_id === meId || manager) && <Button size="icon" variant="ghost" className="h-7 w-7" aria-label="Cancel request" onClick={() => onCancel(s.id)}><X className="h-3.5 w-3.5" /></Button>}
         </li>

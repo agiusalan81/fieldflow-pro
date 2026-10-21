@@ -1,3 +1,4 @@
+import { swapApplies } from "@/lib/attention-rules";
 /** Daily works report (DWR), mandatory break and standby roster rules. */
 
 export type BreakRules = { enabled: boolean; count: number; minutes: number };
@@ -66,7 +67,7 @@ export const sheetTitle = (n: string | number) => `Job sheet- ${n}`;
 
 // ---------- Standby roster ----------
 export type StandbyConfig = { start: string; rotationDays: number; perShift: number; order: string[] };
-export type Swap = { swap_date: string; requester_id: string; target_id: string; status: string };
+export type Swap = { swap_date: string; requester_id: string; target_id: string; status: string; end_date?: string | null; manager_approved?: boolean };
 
 /** A roster cannot request more technicians than the company has registered. */
 export function validStandbyStaffing(perShift: number, registeredTechnicians: number) {
@@ -88,9 +89,9 @@ export function standbyFor(date: string, c: StandbyConfig, swaps: Swap[] = []): 
   const rot = Math.max(1, c.rotationDays);
   const block = Math.floor(dayIndex(c.start, date) / rot);
   const first = (((block * per) % n) + n) % n;
-  let ids = Array.from({ length: per }, (_, k) => c.order[(first + k) % n]!);
+  let ids = Array.from({ length: per }, (_, k) => c.order[(first + k) % n]).filter((id): id is string => typeof id === "string");
   for (const s of swaps) {
-    if (s.status !== "accepted" || s.swap_date !== date) continue;
+    if (!swapApplies(s, date)) continue;
     if (ids.includes(s.requester_id) && !ids.includes(s.target_id)) ids = ids.map((x) => (x === s.requester_id ? s.target_id : x));
   }
   return ids;

@@ -1,3 +1,4 @@
+import { labelKey, uniqueLabels } from "@/lib/attention-rules";
 import { tenantLocale } from "@/lib/locale";
 import { ClientRates } from "@/components/integrations-settings";
 import { ClientPreapproval } from "@/components/client-preapproval";
@@ -177,8 +178,8 @@ function UnifiedTable({ q, onOpen, clients, onDelete }: { q: string; onOpen: (c:
       return { ...base, key: a.id, site: st?.name ?? "—", address: st?.address ?? c.billing_address ?? "", asset: a.reference_number, category: a.asset_category, serial: a.serial_number ?? "" };
     });
   });
-  const categories = Array.from(new Set((data?.assets ?? []).map((a) => a.asset_category))).sort();
-  const list = rows.filter((r) => (client === "all" || r.clientId === client) && (cat === "all" || r.category === cat) && match(q, r.client, r.contact, r.site, r.address, r.asset, r.category, r.serial));
+  const categories = uniqueLabels((data?.assets ?? []).map((a) => a.asset_category));
+  const list = rows.filter((r) => (client === "all" || r.clientId === client) && (cat === "all" || labelKey(r.category) === labelKey(cat)) && match(q, r.client, r.contact, r.site, r.address, r.asset, r.category, r.serial));
   return (
     <>
       <div className="mb-3 grid gap-2 sm:grid-cols-2">

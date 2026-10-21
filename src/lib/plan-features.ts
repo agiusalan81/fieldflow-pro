@@ -8,7 +8,7 @@ export const PLAN_FEATURES = [
   { key: "fleet_management", label: "Fleet Management: routes, mileage & fuel" },
   { key: "receipts", label: "Receipt scan to PDF" },
   { key: "technical_library", label: "Technical library" },
-  { key: "standby", label: "Standby roster & swaps" },
+  { key: "standby", label: "On-call rota & swaps" },
   { key: "estimates", label: "Estimates & lift RFQ" },
   { key: "qs_pricing", label: "Pricing & quantity surveying: price lists, BoQ, as-built QS" },
   { key: "supplier_email", label: "Supplier emails & reminders" },

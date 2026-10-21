@@ -1,3 +1,4 @@
+import { ActionNotifications, OnCallBadge } from "@/components/action-notifications";
 import { usePlanFeatures, resolveAppTitle } from "@/lib/plan-features";
 import { DepartureAlerts } from "@/components/client-notices";
 import { LocationSharing } from "@/components/location-sharing";
@@ -38,7 +39,7 @@ const techNav: NavItem[] = [
   { group: "Field work", to: "/technical-library", label: "Technical library", icon: FileText, feature: "technical_library" },
   { group: "Field work", to: "/messages", label: "Team chat", icon: MessageSquare },
   { group: "Time & roster", to: "/dwr", label: "My daily reports", icon: FileText },
-  { group: "Time & roster", to: "/standby", label: "Standby", icon: PhoneCall, feature: "standby" },
+  { group: "Time & roster", to: "/standby", label: "On-call rota", icon: PhoneCall, feature: "standby" },
   { group: "Time & roster", to: "/leave", label: "Leave", icon: CalendarDays },
   { group: "Time & roster", to: "/hours", label: "My hours", icon: Clock },
   { group: "General", to: "/settings", label: "Settings", icon: Settings },
@@ -55,7 +56,7 @@ const adminNav: NavItem[] = [
   { group: "Team & roster", to: "/team", label: "Team", icon: UserCheck },
   { group: "Team & roster", to: "/team-invites", label: "Invites", icon: Send },
   { group: "Fleet Management", to: "/fleet", label: "Fleet Management", icon: MapPin, feature: "fleet_management" },
-  { group: "Team & roster", to: "/standby", label: "Standby roster", icon: PhoneCall, feature: "standby" },
+  { group: "Team & roster", to: "/standby", label: "On-call rota", icon: PhoneCall, feature: "standby" },
   { group: "Team & roster", to: "/dwr", label: "Daily works reports", icon: FileText },
   { group: "Team & roster", to: "/admin/leave", label: "Leave approvals", icon: CalendarDays, module: "leave_approvals" },
   { group: "Clients & commercial", to: "/admin/entities", label: "Clients & assets", icon: Users, module: "clients" },
@@ -86,7 +87,7 @@ const supervisorNav: NavItem[] = [
   { group: "Team", to: "/team", label: "Team", icon: UserCheck },
   { group: "Team", to: "/team-invites", label: "Invites", icon: Send },
   { group: "Fleet Management", to: "/fleet", label: "Fleet Management", icon: MapPin, feature: "fleet_management" },
-  { group: "Team", to: "/standby", label: "Standby roster", icon: PhoneCall, feature: "standby" },
+  { group: "Team", to: "/standby", label: "On-call rota", icon: PhoneCall, feature: "standby" },
   { group: "Team", to: "/admin/leave", label: "Leave approvals", icon: CalendarDays, module: "leave_approvals" },
   { group: "Team", to: "/pending-works", label: "Pending works", icon: Hammer, module: "pending_works" },
   { group: "Clients & estimates", to: "/admin/entities", label: "Clients & assets", icon: Users, module: "clients" },
@@ -131,7 +132,7 @@ function NavLinks({ items, onNavigate, uid }: { items: NavItem[]; onNavigate?: (
                     className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
                     activeProps={{ className: "bg-sidebar-accent text-sidebar-foreground font-medium" }}
                     activeOptions={{ exact: i.to === "/dashboard" }}>
-                    <i.icon className="h-4 w-4 shrink-0" />{i.label}
+                    <i.icon className="h-4 w-4 shrink-0" />{i.label}{i.to === "/standby" && <OnCallBadge userId={uid}/>}
                   </Link>
                 ))}
               </div>
@@ -303,6 +304,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
           </Sheet>
           <h1 className="min-w-0 flex-1 truncate font-display text-xl text-foreground sm:text-2xl">{title}</h1>
           <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-2">
+            {!preview.active && <ActionNotifications />}
             <HelpButton />
             {actor && !preview.active && actor.role === actor.real_role && <WelcomeGuide profile={actor} allowed={items.map(i=>i.to)} />}
             <UserPreviewControl />
@@ -329,7 +331,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
           {actor && !preview.active && <DepartureAlerts userId={actor.id} />}
           {profile && path === "/dashboard" && !preview.active && <QuickActions items={items} uid={profile.id} role={profile.role} manager={manager} />}
           {!preview.active && <LocationSharing />}
-          {path === "/dashboard" && !preview.active && office && <PayrollSetupAlert />}
+          
           {children}
         </main>
       </div>
