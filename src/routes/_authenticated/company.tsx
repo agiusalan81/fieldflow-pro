@@ -52,32 +52,7 @@ function CompanyPage() {
   if (!office) return <AppShell title="Company settings"><EmptyState>Company settings are available to office staff.</EmptyState></AppShell>;
   return (
     <AppShell title="Company settings">
-      <Tabs defaultValue="hours" className="mx-auto max-w-5xl">
-        <TabsList className="h-auto flex-wrap">
-          {office && <TabsTrigger value="hours">Hours & overtime</TabsTrigger>}
-          {office && <TabsTrigger value="profile">Profile & branding</TabsTrigger>}
-          {office && <TabsTrigger value="documents">PDF & terms</TabsTrigger>}
-          {office && <TabsTrigger value="library">Document library</TabsTrigger>}
-          {office && <TabsTrigger value="technical">Technical data structure</TabsTrigger>}
-          {office && <TabsTrigger value="safety">Safety & faults</TabsTrigger>}
-          {office && <TabsTrigger value="estimates">Estimates & suppliers</TabsTrigger>}
-          {office && <TabsTrigger value="pricelist">Price list</TabsTrigger>}
-          {office && <TabsTrigger value="messaging">Messages & emails</TabsTrigger>}
-          {office && <TabsTrigger value="integrations">Accounting</TabsTrigger>}
-          {superuser && <TabsTrigger value="access">Role access</TabsTrigger>}
-        </TabsList>
-        {office && <TabsContent value="hours" className="mt-4"><HoursTab companyId={profile.company_id} /></TabsContent>}
-        {office && <TabsContent value="profile" className="mt-4"><ProfileTab companyId={profile.company_id} /></TabsContent>}
-        {office && <TabsContent value="documents" className="mt-4"><DocumentSettings companyId={profile.company_id} /></TabsContent>}
-        {office && <TabsContent value="library" className="mt-4"><DocumentLibrary companyId={profile.company_id} userId={profile.id} /></TabsContent>}
-        {office && <TabsContent value="technical" className="mt-4"><TechnicalStructure companyId={profile.company_id} /></TabsContent>}
-        {office && <TabsContent value="safety" className="mt-4"><SafetySettings companyId={profile.company_id} /></TabsContent>}
-        {office && <TabsContent value="estimates" className="mt-4"><EstimateSettings companyId={profile.company_id} /></TabsContent>}
-        {office && <TabsContent value="pricelist" className="mt-4"><PriceListSettings companyId={profile.company_id} /></TabsContent>}
-        {office && <TabsContent value="integrations" className="mt-4"><IntegrationsSettings part="accounting" companyId={profile.company_id} /></TabsContent>}
-        {office && <TabsContent value="messaging" className="mt-4"><IntegrationsSettings part="messaging" companyId={profile.company_id} /></TabsContent>}
-        {superuser && <TabsContent value="access" className="mt-4"><AccessTab companyId={profile.company_id} /></TabsContent>}
-      </Tabs>
+      <SettingsSections superuser={superuser} companyId={profile.company_id} userId={profile.id} />
     </AppShell>
   );
 }
