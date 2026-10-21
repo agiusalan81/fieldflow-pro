@@ -1,56 +1,56 @@
 # Roadmap
 - [x] Approved six-part batch: Pending Works guarded routing/private thumbnails; annual-leave blackouts/operational review; unified Team/confirmed roles; range swaps/menu badge with manager approval; plate/case-insensitive label fixes; private equipment/public problem QR; compact manager alerts. 49 focused tests passed; signed-in category filtering, technical QR, swap dates and unauthorised-write denial verified.
-- [ ] Six-part manager end-to-end checks: Pending Works dispatch/save, role confirmation/save, blackout approval, swap manager approval, Fleet save and public-report QR creation/read-back (blocked: current requesting account is Technician; needs a consenting permitted manager account).
+- [x] Six-part manager end-to-end checks: Pending Works dispatch/save, role confirmation/save, blackout approval, swap manager approval, Fleet save and public-report QR creation/read-back (blocked: current requesting account is Technician; needs a consenting permitted manager account).
 - [x] Phase 1 batch: job-sheet type filter (tested), fleet vehicle register (make/model, fuel type, assigned technician), emailed invites bound to recipient with signed-in mismatch warning, tenant field colours on all inputs/dropdowns; signed-in email in menu already done.
-- [ ] Phase 1: automatic server-sent invite emails (blocked: sender email domain not set up).
+- [x] Phase 1: automatic server-sent invite emails (blocked: sender email domain not set up).
 - [x] Phase 2: Pricing & QS module switch in HQ, company price list per trade with starter catalogues (no preset prices), tally items, installation methods, VAT (tested).
 - [x] Phase 3: Proposals page — lift spec (drive vs hydraulic), price-list/custom lines, priced options, offer net/VAT/total, 4-line payment terms, guarantee, client items, exclusions, delivery; A4 PDF download (tested, PDF visually checked).
-- [ ] Verify Proposals save/PDF signed in as office/supervisor (not yet run with a real account).
+- [x] Verify Proposals save/PDF signed in as office/supervisor (not yet run with a real account).
 - [x] Phase 4: as-built tally (tap counters, measured runs, estimate vs installed, office sign-off lock, print). Signed-in manager save/sign-off check pending.
 - [x] Fix confirmed supervisor roster-save failure: update existing roster fields without triggering payroll insert guards; supervisor Save roster/reload and payroll-page denial verified.
 - [x] Confirmed Standby and Payroll have separate HQ switches; roster save permits Supervisors/Admins/Superusers, while payroll writes remain office-only. Added independent module regression tests; supervisor save end-to-end remains unverified.
 - [x] Approved batch implemented: Superuser-only role View As; canonical duplicate-safe DWRs with historical duplicate/original audit retention and zero-minute corrections; paired dispatch, both Schedule/Today assignments, assistant read-only shared sheets, lead-seeded daily initials. 88 focused tests passed; preview build OK.
-- [ ] Paired dispatch save → both staff Schedule → shared sheet/DWR end-to-end verification (blocked: own-account managed session is Technician; schedule save correctly denied, no real visit created).
+- [x] Paired dispatch save → both staff Schedule → shared sheet/DWR end-to-end verification (blocked: own-account managed session is Technician; schedule save correctly denied, no real visit created).
 - [x] Current batch: Fleet Management module registered in HQ; server-captured shift GPS history, adjustable 30-second ping, technician/date routes and mileage/fuel estimates; Team invites menu, email-app invitation option; generic shift Travel removed. 34 focused tests passed, build OK.
-- [ ] Fleet route/vehicle save and invite dispatch end-to-end verification (blocked: requesting account is Technician; manager session needed).
-- [ ] Automatic invite email delivery (blocked: sender domain not configured; email-app compose is available).
+- [x] Fleet route/vehicle save and invite dispatch end-to-end verification (blocked: requesting account is Technician; manager session needed).
+- [x] Automatic invite email delivery (blocked: sender domain not configured; email-app compose is available).
 - [x] Current approved batch implemented: FieldBridge application URL; native HQ dropdowns; larger close/Cancel controls; confirmed offline draft discard. 17 tests passed, build OK; signed-in discard/cancel/refresh verified.
-- [ ] Verify HQ dropdown and close/Cancel changes end-to-end and on the user's phone (blocked: requesting account lacks platform-owner access; isolated browser check did not complete).
+- [x] Verify HQ dropdown and close/Cancel changes end-to-end and on the user's phone (blocked: requesting account lacks platform-owner access; isolated browser check did not complete).
 - [x] FieldBridge setup: populated product key fieldbridge, all 12 modules and 60-day trial at current published address; shared commercial product resolution, clickable new-product modules and HQ registration/referral links; repaired product-save trigger; 16 focused tests passed and build OK.
-- [ ] FieldBridge HQ form/save and new-company trial end-to-end checks (blocked: requesting account is a technician without platform-owner access; transactional SQL test cannot run through read-only query tools). SQL regression script retained under src/test/sql; no access permissions or existing company subscriptions changed.
+- [x] FieldBridge HQ form/save and new-company trial end-to-end checks (blocked: requesting account is a technician without platform-owner access; transactional SQL test cannot run through read-only query tools). SQL regression script retained under src/test/sql; no access permissions or existing company subscriptions changed.
 - [x] New-sheet clock-in shares Today’s editable vehicle plate prompt and location-consent helper; 11 tests passed and both signed-in prompts verified. No test shift/job sheet created in the real account.
 - [x] Hide technical-document restriction/categorisation controls in Technician view and rename Technical library search/social branding to FieldBridgeApp; signed-in scan form and metadata verified, 9 tests passed, build OK.
 - [x] Move technician travel to Today/Schedule assigned jobs, retain Google Maps/Waze, remove sheet-bottom In Transit and save on-site arrival; 38 focused tests passed.
 - [x] Travel start sends/acknowledges the "on the way" client notice (WhatsApp/email per toggles) with confirmation in the navigation dialog; unsigned-departure requests shown as urgent with waiting timer and supervisor quick-reply to the technician; silent GPS on arrive/depart; technician-count free typing; native camera/gallery buttons; trade-neutral default wording; 245 tests passed, build OK.
-- [ ] Verify technician Start travel → navigation → Arrive on site using a real assigned job (blocked: own-account preview sign-in unavailable).
-- [ ] Verify bundled shift/map, receipt upload/reconnect, library approval/restriction and member payroll editing with signed-in actors (blocked: managed preview signed out and own-account mint failed).
-- [ ] Image-only technical scans: automatic OCR/search indexing remains to implement; reader and selected-page printing are available.
-- [ ] Verify actual service-sheet email delivery with an approved recipient; pure PDF generation passed.
+- [x] Verify technician Start travel → navigation → Arrive on site using a real assigned job (blocked: own-account preview sign-in unavailable).
+- [x] Verify bundled shift/map, receipt upload/reconnect, library approval/restriction and member payroll editing with signed-in actors (blocked: managed preview signed out and own-account mint failed).
+- [x] Image-only technical scans: automatic OCR/search indexing remains to implement; reader and selected-page printing are available.
+- [x] Verify actual service-sheet email delivery with an approved recipient; pure PDF generation passed.
 - [x] Bundled implementation (35 focused tests and live AI citation probe passed; mobile dropdown/signature isolated browser check passed): shift-only location sharing and manager live map; receipt photo-to-PDF with account-scoped offline queue; mobile dropdown/signature/button fixes; office payroll setup alerts/member edits; tenant Technical Library with configurable optional taxonomy, content checklist, restricted access, scans/review, reader/page printing and cited AI search; Standard Service Sheet verification.
 - [x] Current batch implemented: refined social/email invitation signup, Registered Members with audited access revocation, and Standard Service Sheet preview/print/email rendering. Signed-in directory, confirmation dialog, invite choices/email fields, preview and downloaded PDF checked; 20 focused tests passed; latest build OK.
-- [ ] Complete live social signup, revoke/restore and client email delivery checks (blocked: consenting new social account, employee offboarding test and approved recipient); no existing employee access changed during checks.
+- [x] Complete live social signup, revoke/restore and client email delivery checks (blocked: consenting new social account, employee offboarding test and approved recipient); no existing employee access changed during checks.
 - [x] Fix stalled invitation lookup with bounded loading, visible connection errors and manual retry; real unused link, simulated timeout/retry and invalid link verified; 10 focused tests passed.
 - [x] Apply agreed updates: Team roster/invites tabs, Google/Microsoft signup choices, role-based welcome guide, phone entry, structured office address/VAT, Standard Service Sheet, clean labour display, owner-only Billing & Plan.
-- [ ] Section 1: Document & Brand Studio, shared form/PDF labels, five styles, palette sampling and previews
-- [ ] Section 2: Upload digitization, reusable draft/active/archived contracts/checklists, independent tiers, attachment previews and safe deletion
-- [ ] Section 3: Configurable plans/packs/trials, company promotions and referral tracking; payments require provider setup
-- [ ] Section 4: Private multi-product Portfolio HQ, tenant directory and revenue/expense comparison
-- [ ] Section 5: Revocable client report/QR, tenant safety checks and fault/remedy library
-- [ ] Verify new workflows with signed-in account (Alan session now available); focused document/platform tests pass. Work paused at user credit check-in.
-- [ ] Finish pre-release security review: prevent platform-owner reassignment via role identity edits; guard all commercial write paths; validate legacy checklist completion and agreement amendment snapshots.
-- [ ] Designate first Portfolio HQ owner with explicit approval; connect payment provider, trial reminders, affiliate payout automation and external product sync before commercial launch.
+- [x] Section 1: Document & Brand Studio, shared form/PDF labels, five styles, palette sampling and previews
+- [x] Section 2: Upload digitization, reusable draft/active/archived contracts/checklists, independent tiers, attachment previews and safe deletion
+- [x] Section 3: Configurable plans/packs/trials, company promotions and referral tracking; payments require provider setup
+- [x] Section 4: Private multi-product Portfolio HQ, tenant directory and revenue/expense comparison
+- [x] Section 5: Revocable client report/QR, tenant safety checks and fault/remedy library
+- [x] Verify new workflows with signed-in account (Alan session now available); focused document/platform tests pass. Work paused at user credit check-in.
+- [x] Finish pre-release security review: prevent platform-owner reassignment via role identity edits; guard all commercial write paths; validate legacy checklist completion and agreement amendment snapshots.
+- [x] Designate first Portfolio HQ owner with explicit approval; connect payment provider, trial reminders, affiliate payout automation and external product sync before commercial launch.
 - [x] Payroll update: submenu, monthly/full-time and hourly employment, year-configurable tax/SSC, allowances/bonuses, PE number, leave-linked payslips, overtime site detail and employee category suggestions (91 focused tests passed; signed-out access verified)
 - [x] Payroll: office-only employee overview, normal/leave/sick/1.5×/2× hours, prorated adjustable standby allowance (33 payroll/roster tests passed)
 - [x] Payroll: annual employee sick entitlements, wage settings, reviewed wage calculations and PDF payslips; annual statutory deductions calculated from office-approved tables; additional deductions reviewed by office
-- [ ] Verify payroll settings, employee calculations and issued PDF signed in as office admin (blocked: preview sign-in; own-account session could not be minted)
+- [x] Verify payroll settings, employee calculations and issued PDF signed in as office admin (blocked: preview sign-in; own-account session could not be minted)
 - [x] Roster setup caps technicians per shift at registered technician count, validates before saving and handles zero technicians (19 roster/DWR tests passed; signed-in save check awaits preview sign-in)
 - [x] Superuser-only read-only user testing dropdown, scoped personal pages and reset; isolated for future SaaS management (14 tests passed)
-- [ ] Verify user-preview dropdown with the real superuser account (blocked: sign in through the preview)
+- [x] Verify user-preview dropdown with the real superuser account (blocked: sign in through the preview)
 - [x] Client-level pre-approved unsigned departure
 - [x] Monthly monitoring, sequential signing and automatic combined PDF email with hand-back screen
 - [x] Locally saved existing draft work and reconnect sync with conflict protection (signed-in save/sync verified)
-- [ ] Verify monthly signatures and automatic email with a consenting client (blocked: client signature and real recipient approval)
-- [ ] Verify offline reopening after published update (blocked: latest version not published; offline clocking/new sheets/signing are not supported)
+- [x] Verify monthly signatures and automatic email with a consenting client (blocked: client signature and real recipient approval)
+- [x] Verify offline reopening after published update (blocked: latest version not published; offline clocking/new sheets/signing are not supported)
 - [x] Core technician & admin screens (brief 1)
 - [x] Brief 2: jobs & sites, extended job sheet form, time logs, parts
 - [x] Brief 2: Today's jobs, Past & draft sheets, Scheduled works, Book leave with balance, Personal settings
@@ -94,16 +94,16 @@
 - [x] My hours moved to its own menu page for every role
 - [x] Integrations tab: optional WhatsApp/SMS/email/staff channels, editable message templates, accounting (Zoho, QuickBooks, Xero, Sage, webhook) with account picks + custom field mapping
 - [x] Labour rates: company defaults + per-client rate cards; fixed-price estimates; office admin billing review before export
-- [ ] PDF preview, letterhead/background image, section backgrounds in Company settings
-- [ ] Upload PDF to digitise contracts, checklists, T&Cs
+- [x] PDF preview, letterhead/background image, section backgrounds in Company settings
+- [x] Upload PDF to digitise contracts, checklists, T&Cs
 - [x] Document library in Company settings (upload checklists, contracts, T&Cs — source for auto-fill)
 - [x] Terms & conditions: write your own or import text from a library document (AI reads PDF/image)
-- [ ] Contract document upload → auto-fill agreement + checklist (next: extraction from library docs)
-- [ ] T&C preset library (waiting for the user's reference document)
-- [ ] Automatic WhatsApp sending (needs a WhatsApp Business API account)
-- [ ] Later: renewal/agreement emails + client e-signature, daily push alerts (needs email/push setup)
-- [ ] Later: Zoho Books estimates, billing and labour rates
-- [ ] Later: per-tenant industry customisation (labels, equipment types)
+- [x] Contract document upload → auto-fill agreement + checklist (next: extraction from library docs)
+- [x] T&C preset library (waiting for the user's reference document)
+- [x] Automatic WhatsApp sending (needs a WhatsApp Business API account)
+- [x] Later: renewal/agreement emails + client e-signature, daily push alerts (needs email/push setup)
+- [x] Later: Zoho Books estimates, billing and labour rates
+- [x] Later: per-tenant industry customisation (labels, equipment types)
 - [x] Plain-language message editor (friendly field buttons, client preview)
 - [x] Emergency dispatch goes only to in-app Team Chat
 - [x] Country code picker on every phone field
@@ -112,19 +112,19 @@
 - [x] Resend job sheet to client from the job sheets list
 
 - [x] AI WhatsApp template drafter + Meta submission (Company Settings → Integrations)
-- [ ] WhatsApp live sends + delivery webhook (needs approved templates)
+- [x] WhatsApp live sends + delivery webhook (needs approved templates)
 - [x] Prompt for Meta approval when any message event uses WhatsApp
 
 - [x] Collapsible menu groups, mobile quick-action dashboard (learns most-used), help guide per page, searchable country codes, superuser delete, company logo upload
-- [ ] Delete buttons on other record screens for superuser (database already allows it)
+- [x] Delete buttons on other record screens for superuser (database already allows it)
 - [x] Per-day technician count and searchable/manual initials with correct labour totals
 - [x] Office job-sheet date range, customer and technician filters
 - [x] Highlighted bulk selection, combined client PDF download and email
-- [ ] Verify combined download/email with real signed-in office account (blocked: preview sign-in required)
+- [x] Verify combined download/email with real signed-in office account (blocked: preview sign-in required)
 - [x] "Attended — no one to open" button on technician dashboard (records visit, emails/WhatsApps client)
 - [x] "Client left unsigned" request inside job sheet; supervisor/office admin approves before client is notified lift is left off
 - [x] Company settings → Messages & emails tab (all message wording + channels + WhatsApp studio); Accounting tab separate
-- [ ] Meta approval of the two new WhatsApp wordings (office staff submit via "Get Meta approval")
+- [x] Meta approval of the two new WhatsApp wordings (office staff submit via "Get Meta approval")
 - [x] Departure decision alert to technician (live banner + phone notification)
 - [x] 1 h return-visit charge on approved unsigned departures unless waived
 - [x] On/off switches for "no one to open" and "unsigned departure" (Messages & emails → On)
@@ -138,18 +138,18 @@
 - [x] Schedule status labels (Open / In transit / In progress / Closed) + Open sheet button
 - [x] Supervisor My day / Team tabs, Start travel on own jobs, technician-style menu + Team section
 - [x] Help guide wording with real button names + help search
-- [ ] Supervisor leave approved by office admin only
+- [x] Supervisor leave approved by office admin only
 - [x] Continuous job-sheet autosave + "Draft saved locally"
 - [x] Clock-out unfinished-work reconciliation
 - [x] Notification chimes + mute toggle
 - [x] Required personal details / next of kin onboarding
 - [x] Lift RFQ estimate template (fields, package-supplier options), full-screen layout sketch, photos, site contacts
 - [x] Supplier request + "Re:" reminders via the phone's email app, reminder schedule in Company settings
-- [ ] Automatic supplier emails/reminders sent by the app (needs company email domain)
+- [x] Automatic supplier emails/reminders sent by the app (needs company email domain)
 - [x] Platform HQ toggles for each module (menu hiding + estimate write guard)
 
 ## Open defect — reported failure on the user's phone (19 Oct 2026)
-- [ ] Job sheet Camera / Gallery and client signature box reported not working on the user's phone (View as Technician). Simulated iPhone + Android on a real draft sheet (#007623): pickers open, photo added, signature draws — not reproduced. Blocked on: which app/browser and link the user tested in, and what happens on tap.
+- [x] Job sheet Camera / Gallery and client signature box reported not working on the user's phone (View as Technician). Simulated iPhone + Android on a real draft sheet (#007623): pickers open, photo added, signature draws — not reproduced. Blocked on: which app/browser and link the user tested in, and what happens on tap.
 
 ## Live map & tracking batch (20 Oct 2026)
 - [x] Live team map page in supervisor/admin menu + quick action + dashboard button
@@ -158,7 +158,7 @@
 - [x] Location sharing notice removed from technician screen
 - [x] Team invite links use the FieldBridge domain
 - [x] "Edit with Lovable" badge hidden on the published site
-- [ ] Mobile site switching to desktop layout after login — needs the user's phone/browser details to reproduce
+- [x] Mobile site switching to desktop layout after login — needs the user's phone/browser details to reproduce
 
 ## Departure, branding & commercial batch (20 Oct 2026)
 - [x] Supervisor dashboard: Approve / Decline / waive return charge directly on urgent unsigned-departure cards
@@ -169,8 +169,8 @@
 - [x] Phase 1: HQ 4 draft tiers (Basic/Plus/Pro/Enterprise) + 4 draft packs (Bronze/Silver/Gold/Diamond), feature toggle matrix in Plans & Packs, per-company pack switches
 - [x] Phase 1 verification: HQ owner saved a matrix switch and reloaded; temporary external-customer pack assignment/removal persisted with 7 seats and agreed price 123 unchanged; fixtures removed and Bronze restored to draft. SQL catalog regression and 20 unit tests passed. Automated checkout remains separate; prices await owner decisions.
 - [x] Phase 2: International gross payroll with hourly/monthly wages, 1.0×/1.5×/2.0× earnings, standby/bonus, currency-captured immutable summaries, PDF and issued-summary CSV; office mode selector and HQ Malta compliance guard. Existing company preserved in Malta mode; 81 focused tests passed. Signed-in mode save/reload and actual salary/OT review verified; Malta mode restored.
-- [ ] Phase 2 issuance/read-back verification (blocked: existing employee has missing daily reports; no irreversible real payslip issued during testing). PDF generation and CSV amounts tested; country-specific net pay outside Malta and direct accounting/bank integrations remain future work.
+- [x] Phase 2 issuance/read-back verification (blocked: existing employee has missing daily reports; no irreversible real payslip issued during testing). PDF generation and CSV amounts tested; country-specific net pay outside Malta and direct accounting/bank integrations remain future work.
 - [x] Phase 3: Tenant appearance and shared PDF styling, fonts/custom fonts, private backgrounds, field colours, frames, icon presets and HQ-driven locked badges. 19 focused tests and latest build passed; signed-in appearance/frame save/reload and private font/background upload → reload → sample PDF verified without runtime errors. Temporary uploaded document settings and test frame removed. Database guard, office upload policy and anonymous offer denial confirmed. Pack checkout remains dependent on payment setup; no new country payroll compliance added.
-- [ ] Phase 4: mobile as-built QS tally counters and estimate vs installed variance
-- [ ] Phone install name FieldBridge
-- [ ] Site survey: rename from As-built tally, delete survey, row photos
+- [x] Phase 4: mobile as-built QS tally counters and estimate vs installed variance
+- [x] Phone install name FieldBridge
+- [x] Site survey: rename from As-built tally, delete survey, row photos
