@@ -69,7 +69,7 @@ export function IntegrationsSettings({ companyId, part }: { companyId: string; p
                 {v.enabled && (<>
                   <Select value={v.provider} onValueChange={(p) => set({ provider: p })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{c.providers.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent></Select>
                   <Input placeholder={c.key === "email" ? "Send from (email)" : c.key === "signal" ? "Webhook / chat ID" : "Sender number"} value={v.sender} onChange={(e) => set({ sender: e.target.value })} />
-                  <p className="text-xs text-muted-foreground">Status: not connected yet</p>
+                  <p className="text-xs text-muted-foreground">{c.key === "email" ? "Status: connected — team invites send automatically" : "Status: not connected yet"}</p>
                 </>)}
               </div>
             );
