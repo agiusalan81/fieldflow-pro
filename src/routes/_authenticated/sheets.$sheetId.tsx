@@ -388,7 +388,7 @@ function SheetForm() {
   return (
     <AppShell
       title={`Job sheet ${sheet.jobsheet_number}`}
-      actions={<div className="flex items-center gap-1"><BackButton fallback="/sheets" /><SheetStepper sheetId={sheetId} /></div>}
+      actions={<BackButton fallback="/sheets" />}
     >
       {conflict && <div className="mx-auto mb-4 max-w-5xl border border-destructive p-3 text-sm"><p>This sheet changed on another device. Your local work has been kept. Compare it before saving.</p><Button variant="outline" className="mt-2" onClick={async () => {
         if (!confirm("Discard this device's saved changes and load the latest job sheet?")) return;
