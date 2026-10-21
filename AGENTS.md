@@ -27,7 +27,7 @@
 - Branding shares theme/template JSON, private tenant files and PDF/font helpers; DB/HQ locks preserve saved values.: secure app/PDF consistency.
 - Service sheets share a typed safe projection/renderers for preview, print and email.: client-safe consistency.
 - Pending works close via close_pending_on_followup trigger; sheet creation requires clock-in or standby.: enforce without UI.
-- Billing precedence in billing.ts; config in integrations.ts; job_sheets_guard_billing allows only office review.: protected prices.
+- Billing precedence in billing.ts; config in integrations.ts; job_sheets_guard_billing allows only office review; completed rows in the office Job sheets list open the shared BillingReview and saves refresh list/attention queries.: protected prices and reachable review without dashboard tables.
 - WhatsApp rules use tested whatsapp-templates.ts; AI/Meta calls use manager-only whatsapp-templates.functions.ts.: validate consistently.
 - Daily time logs keep technician_count separate from initials; labour uses headcount, DWR personal elapsed time.: correct hours.
 - Combined PDFs use email builder/RLS; office combines completed sheets for one client.: client isolation.
