@@ -17,7 +17,7 @@
 - user_roles helpers/restrictive tenant policies reject terminated actors; audit access changes.: session revocation.
 - Invites redeem names atomically via single-use signup triggers; social users need no password.: verified names; no client-assigned tenant/role.
 - Preview: real-superuser-only, actor-scoped, removable memory state; root blocks other screens/writes.: preserve identity.
-- Payroll uses tested gross/Malta engines, office RLS, DWRs, currency/mode snapshots and HQ guards. Roster RPC updates existing settings only.: preserve pay and roster access.
+- Payroll uses tested gross/Malta engines, office RLS, snapshots, HQ guards; roster RPC updates existing settings only.: preserve pay and roster access.
 - Payroll routes share payroll-page.tsx. Opening leave/payslips save atomically with issued-slip/totals guards; year-qualified carry-forward prevents double consumption.: immutable issued pay.
 - Sign-off/leave/overtime/checklist/renewals use tested jobsheets.ts.: shared rules.
 - DWR: one canonical report/shift; retain corrected/superseded originals; filing clears held flags.: retry-safe hours/pay.
@@ -33,7 +33,7 @@
 - Combined PDFs use email builder/RLS; office combines completed sheets for one client.: client isolation.
 - Client notices use client-notices.functions.ts and tested client-notices.ts; guard_departure prevents self-approval.: accountability.
 - job_sheets embeds use users!job_sheets_assigned_technician_id_fkey.: two users FKs.
-- Signing batches are creator-owned, authenticated and finalized transactionally; store delivery before sending with shared PDF builder.: atomic, retry-safe delivery.
+- Signing batches: creator-owned, finalized transactionally; store delivery before sending via shared PDF builder.: atomic, retry-safe delivery.
 - Offline: account-scoped IndexedDB/optimistic RPC/PWA; confirmed discard atomically removes only that account/sheet draft/photos/cache.: retain inaccessible drafts.
 - Published document masters are immutable; attachments/agreements/sheets snapshot definitions.: preserve history.
 - Platform authority is protected separately in user_roles; HQ uses a narrow directory RPC, not tenant reads.: isolate companies.
