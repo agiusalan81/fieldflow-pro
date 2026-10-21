@@ -15,6 +15,6 @@ export function DocumentPreview({ template, logo, mode = "document" }: { templat
     <header className="document-header flex items-start justify-between gap-3 pb-4"><div className="flex items-center gap-2">{logo && <img alt="Company logo" src={logo} className="h-10 max-w-24 object-contain" />}<strong className="text-base">Your Company</strong></div><div className="text-right">Job sheet 1042<br />18/10/2026</div></header>
     {template.header && <p>{template.header}</p>}
     {visibleBlocks(template).map((key) => <section key={key} className="space-y-1"><h3 className="document-label text-[10px] font-semibold uppercase">{documentLabel(template, key)}</h3><p className={mode === "form" ? "border px-3 py-2" : ""}>{samples[key]}</p></section>)}
-    {template.footer && <footer className="border-t pt-3 text-center">{template.footer}</footer>}
+    {template.footer && <footer className="whitespace-pre-line break-words border-t pt-3 text-center">{template.footer.split(/(\S+@\S+\.\S+|https?:\/\/\S+)/).map((part, i) => i % 2 ? <a key={i} className="underline" href={part.includes("@") && !part.startsWith("http") ? `mailto:${part}` : part}>{part}</a> : part)}</footer>}
   </article>;
 }

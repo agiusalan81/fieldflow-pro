@@ -536,6 +536,7 @@ export type Database = {
           theme: Json
           updated_at: string
           vat_number: string
+          website: string | null
           whatsapp_phone: string | null
           work_days: number[]
           work_end: string
@@ -582,6 +583,7 @@ export type Database = {
           theme?: Json
           updated_at?: string
           vat_number?: string
+          website?: string | null
           whatsapp_phone?: string | null
           work_days?: number[]
           work_end?: string
@@ -628,6 +630,7 @@ export type Database = {
           theme?: Json
           updated_at?: string
           vat_number?: string
+          website?: string | null
           whatsapp_phone?: string | null
           work_days?: number[]
           work_end?: string

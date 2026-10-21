@@ -84,6 +84,6 @@ export async function buildServicePdf(d: PdfSheetData) {
     } else {label(documentLabel(d.template,key));para(fields[key] || "-");}
   }
   if(d.terms){label("Terms & conditions");for(const term of d.terms.split("\n").filter(v=>v.trim()))para(`- ${term.replace(/^\s*[-•]\s*/,"")}`);}
-  if(d.template.footer){label("");para(d.template.footer);}
+  if(d.template.footer){label("");d.template.footer.split("\n").forEach(para);}
   return doc.save();
 }

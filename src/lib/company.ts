@@ -35,7 +35,7 @@ export function useCompanyRules() {
         payrollMode: data?.payroll_mode ?? "universal_gross",
         officeAddress: parseOfficeAddress(data?.office_address, data?.company_address ?? ""),
         vatNumber: data?.vat_number ?? "",
-        phones: { office_phone: data?.office_phone ?? "", whatsapp_phone: data?.whatsapp_phone ?? "", emergency_phone: data?.emergency_phone ?? "", company_email: data?.company_email ?? "", company_address: data?.company_address ?? "" },
+        phones: { office_phone: data?.office_phone ?? "", whatsapp_phone: data?.whatsapp_phone ?? "", emergency_phone: data?.emergency_phone ?? "", company_email: data?.company_email ?? "", website: data?.website ?? "", company_address: data?.company_address ?? "" },
       };
     },
     staleTime: 60_000,
