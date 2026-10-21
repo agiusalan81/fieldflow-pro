@@ -339,3 +339,56 @@ function AccessTab({ companyId }: { companyId: string }) {
     </section>
   );
 }
+
+type SectionItem = { key: string; label: string; render: () => React.ReactNode };
+function SettingsSections({ superuser, companyId, userId }: { superuser: boolean; companyId: string; userId: string }) {
+  const groups: { title: string; items: SectionItem[] }[] = [
+    { title: "Company & brand", items: [{ key: "profile", label: "Profile & branding", render: () => <ProfileTab companyId={companyId} /> }] },
+    { title: "Operations & hours", items: [{ key: "hours", label: "Hours & overtime", render: () => <HoursTab companyId={companyId} /> }] },
+    { title: "Field & safety", items: [
+      { key: "technical", label: "Technical data structure", render: () => <TechnicalStructure companyId={companyId} /> },
+      { key: "safety", label: "Safety & faults", render: () => <SafetySettings companyId={companyId} /> },
+    ] },
+    { title: "Documents & PDFs", items: [
+      { key: "documents", label: "PDF & terms", render: () => <DocumentSettings companyId={companyId} /> },
+      { key: "library", label: "Document library", render: () => <DocumentLibrary companyId={companyId} userId={userId} /> },
+    ] },
+    { title: "Commercial & integrations", items: [
+      { key: "estimates", label: "Estimates & suppliers", render: () => <EstimateSettings companyId={companyId} /> },
+      { key: "pricelist", label: "Price list", render: () => <PriceListSettings companyId={companyId} /> },
+      { key: "messaging", label: "Messages & emails", render: () => <IntegrationsSettings part="messaging" companyId={companyId} /> },
+      { key: "integrations", label: "Accounting", render: () => <IntegrationsSettings part="accounting" companyId={companyId} /> },
+    ] },
+    ...(superuser ? [{ title: "Security & access", items: [{ key: "access", label: "Role access", render: () => <AccessTab companyId={companyId} /> }] }] : []),
+  ];
+  const all = groups.flatMap((g) => g.items);
+  const [active, setActive] = useState("profile");
+  const current = all.find((i) => i.key === active) ?? all[0];
+  return (
+    <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-[220px_minmax(0,1fr)]">
+      <div className="md:hidden">
+        <Label className="mb-1.5 block">Section</Label>
+        <select aria-label="Settings section" className="h-11 w-full rounded-md border bg-background px-3 text-sm" value={current.key} onChange={(e) => setActive(e.target.value)}>
+          {groups.map((g) => <optgroup key={g.title} label={g.title}>{g.items.map((i) => <option key={i.key} value={i.key}>{i.label}</option>)}</optgroup>)}
+        </select>
+      </div>
+      <nav aria-label="Company settings sections" className="hidden space-y-5 md:block">
+        {groups.map((g) => (
+          <div key={g.title}>
+            <p className="mb-1.5 px-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">{g.title}</p>
+            {g.items.map((i) => (
+              <button key={i.key} type="button" onClick={() => setActive(i.key)} aria-current={i.key === current.key ? "page" : undefined}
+                className={`block w-full rounded-md px-2 py-1.5 text-left text-sm ${i.key === current.key ? "bg-primary/10 font-medium text-primary" : "text-foreground hover:bg-muted"}`}>
+                {i.label}
+              </button>
+            ))}
+          </div>
+        ))}
+      </nav>
+      <section className="min-w-0">
+        <h2 className="mb-4 text-lg font-semibold text-foreground">{current.label}</h2>
+        {current.render()}
+      </section>
+    </div>
+  );
+}
