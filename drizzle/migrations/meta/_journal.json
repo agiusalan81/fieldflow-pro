@@ -414,6 +414,13 @@
       "when": 1792561288388,
       "tag": "0058_standby_update_without_payroll_insert",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1792583548072,
+      "tag": "0059_fleet_vehicle_register_details",
+      "breakpoints": true
     }
   ]
 }

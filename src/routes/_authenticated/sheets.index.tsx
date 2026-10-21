@@ -7,6 +7,7 @@ import { Eye, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePreviewProfile } from "@/lib/impersonation";
 import { matchesSheetSearch } from "@/lib/dwr";
+import { matchesSheetType, type SheetTypeFilter } from "@/lib/jobsheet-type-filter";
 import { AppShell, StatusBadge, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +38,7 @@ function SheetsPage() {
   const { tab = "open" } = Route.useSearch();
   const [q, setQ] = useState("");
   const [client, setClient] = useState("all");
+  const [jobType, setJobType] = useState<SheetTypeFilter>("all");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
 
@@ -50,7 +52,7 @@ function SheetsPage() {
       const assistingJobs = (assignments.data ?? []).map(j => j.id);
       let query = supabase
         .from("job_sheets")
-        .select("id, jobsheet_number, status, signature_data, created_at, updated_at, reported_fault, assigned_technician_id, client_id, clients(name), sites(name), assets(reference_number)")
+        .select("id, jobsheet_number, status, signature_data, created_at, updated_at, reported_fault, is_installation, is_tech_assistance, is_maintenance, assigned_technician_id, client_id, clients(name), sites(name), assets(reference_number)")
         .order("updated_at", { ascending: false });
       query = assistingJobs.length ? query.or(`assigned_technician_id.eq.${profile.id},job_id.in.(${assistingJobs.join(",")})`) : query.eq("assigned_technician_id", profile.id);
       const { data, error } = await query;
@@ -61,7 +63,7 @@ function SheetsPage() {
   const clients = Array.from(new Map(sheets.map((s) => [s.client_id, s.clients?.name ?? ""])).entries());
   const filtered = sheets.filter((s) => {
     const d = s.created_at.slice(0, 10);
-    return (client === "all" || s.client_id === client) && (!from || d >= from) && (!to || d <= to)
+    return (client === "all" || s.client_id === client) && (!from || d >= from) && (!to || d <= to) && matchesSheetType(s, jobType)
       && matchesSheetSearch(s.jobsheet_number, [s.clients?.name, s.sites?.name, s.assets?.reference_number, s.reported_fault], q);
   });
   const open = filtered.filter((s) => s.status !== "completed");
@@ -112,11 +114,20 @@ function SheetsPage() {
   return (
     <AppShell title="Past & draft job sheets">
       <div className="mx-auto max-w-5xl space-y-4">
-        <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_200px_150px_150px]">
+        <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_200px_190px_150px_150px]">
           <Input className="h-11" placeholder="Search number, client, site, fault…" value={q} onChange={(e) => setQ(e.target.value)} />
           <Select value={client} onValueChange={setClient}>
             <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
             <SelectContent><SelectItem value="all">All clients</SelectItem>{clients.map(([id, n]) => <SelectItem key={id} value={id}>{n}</SelectItem>)}</SelectContent>
+          </Select>
+          <Select value={jobType} onValueChange={(v) => setJobType(v as SheetTypeFilter)}>
+            <SelectTrigger className="h-11" aria-label="Job type"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All job types</SelectItem>
+              <SelectItem value="installation">Installation</SelectItem>
+              <SelectItem value="tech_assistance">Technical assistance</SelectItem>
+              <SelectItem value="maintenance">Maintenance</SelectItem>
+            </SelectContent>
           </Select>
           <Input className="h-11" type="date" aria-label="From date" value={from} onChange={(e) => setFrom(e.target.value)} />
           <Input className="h-11" type="date" aria-label="To date" value={to} onChange={(e) => setTo(e.target.value)} />

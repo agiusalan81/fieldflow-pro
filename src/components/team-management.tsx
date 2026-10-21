@@ -19,9 +19,9 @@ export function TeamManagement({ role, companyId, meId, tab }: { role: Role; com
   const [deliveryEmail, setDeliveryEmail] = useState("");
   const emailInvite = async () => {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(deliveryEmail)) { toast.error("Enter the recipient email address"); return; }
-    const { data: row, error } = await supabase.from("company_invites").insert({ company_id: companyId, role: inv.role, full_name: inv.full_name || null, email: null }).select("token").single();
+    const { data: row, error } = await supabase.from("company_invites").insert({ company_id: companyId, role: inv.role, full_name: inv.full_name || null, email: deliveryEmail.trim().toLowerCase() }).select("token").single();
     if (error) { toast.error(error.message); return; }
-    window.location.href = `mailto:${encodeURIComponent(deliveryEmail)}?subject=${encodeURIComponent("Join our team on FieldBridge")}&body=${encodeURIComponent(`You are invited to join our company on FieldBridge. Use any Google, Microsoft or email account to join:\n\n${link(row.token)}`)}`;
+    window.location.href = `mailto:${encodeURIComponent(deliveryEmail)}?subject=${encodeURIComponent("Join our team on FieldBridge")}&body=${encodeURIComponent(`You are invited to join our company on FieldBridge. Register using this email address (${deliveryEmail.trim()}) with Google, Microsoft or email sign-in:\n\n${link(row.token)}`)}`;
     toast.info("Invite created — send it from your email app");
     qc.invalidateQueries({ queryKey: ["team"] });
   };
@@ -73,7 +73,7 @@ export function TeamManagement({ role, companyId, meId, tab }: { role: Role; com
           <Input className="h-11" type="email" placeholder="Email (optional)" value={inv.email} onChange={(e) => setInv({ ...inv, email: e.target.value })} />
           <Button className="h-11" onClick={create}>Create & copy link</Button>
         </div>
-        <div className="flex flex-wrap gap-2"><Input className="h-11 sm:max-w-sm" type="email" aria-label="Invite delivery email" placeholder="Recipient email (any account can join)" value={deliveryEmail} onChange={e=>setDeliveryEmail(e.target.value)}/><Button variant="outline" onClick={emailInvite}>Email invite</Button></div>
+        <div className="flex flex-wrap gap-2"><Input className="h-11 sm:max-w-sm" type="email" aria-label="Invite delivery email" placeholder="Recipient email (they register with this address)" value={deliveryEmail} onChange={e=>setDeliveryEmail(e.target.value)}/><Button variant="outline" onClick={emailInvite}>Email invite</Button></div>
         {data?.invites.length ? (
           <ul className="divide-y rounded-lg border">
             {data.invites.map((i) => (

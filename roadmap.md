@@ -1,4 +1,7 @@
 # Roadmap
+- [x] Phase 1 batch: job-sheet type filter (tested), fleet vehicle register (make/model, fuel type, assigned technician), emailed invites bound to recipient with signed-in mismatch warning, tenant field colours on all inputs/dropdowns; signed-in email in menu already done.
+- [ ] Phase 1: automatic server-sent invite emails (blocked: sender email domain not set up).
+- [ ] Phase 2-4: qs_pricing catalogues/price lists, equipment spec & BoQ proposals, as-built QS (next build).
 - [x] Fix confirmed supervisor roster-save failure: update existing roster fields without triggering payroll insert guards; supervisor Save roster/reload and payroll-page denial verified.
 - [x] Confirmed Standby and Payroll have separate HQ switches; roster save permits Supervisors/Admins/Superusers, while payroll writes remain office-only. Added independent module regression tests; supervisor save end-to-end remains unverified.
 - [x] Approved batch implemented: Superuser-only role View As; canonical duplicate-safe DWRs with historical duplicate/original audit retention and zero-minute corrections; paired dispatch, both Schedule/Today assignments, assistant read-only shared sheets, lead-seeded daily initials. 88 focused tests passed; preview build OK.
