@@ -185,7 +185,7 @@ function HoursTab({ companyId }: { companyId: string }) {
   );
 }
 
-type Phones = { office_phone: string; whatsapp_phone: string; emergency_phone: string; company_email: string; company_address: string; pe_number: string; office_address: OfficeAddress; vat_number: string };
+type Phones = { office_phone: string; whatsapp_phone: string; emergency_phone: string; company_email: string; website: string; company_address: string; pe_number: string; office_address: OfficeAddress; vat_number: string };
 
 /** Shrinks an image to fit 400×400 and returns a PNG data URL, so it embeds in PDFs and emails. */
 function shrinkImage(file: File): Promise<string> {
@@ -317,6 +317,7 @@ function ProfileTab({ companyId }: { companyId: string }) {
           {phone("whatsapp_phone", "WhatsApp dispatch number", "Clients see this number on WhatsApp updates.")}
           {phone("emergency_phone", "24/7 emergency line")}
           <div className="space-y-1.5"><Label>Company email</Label><Input className="h-11" type="email" value={p.company_email} onChange={(e) => setP({ ...p, company_email: e.target.value })} /></div>
+          <div className="space-y-1.5"><Label htmlFor="company-website">Website</Label><Input id="company-website" className="h-11" type="url" maxLength={200} placeholder="https://www.example.com" value={p.website ?? ""} onChange={(e) => setP({ ...p, website: e.target.value })} /></div>
         </div>
         <div className="space-y-1.5"><Label htmlFor="company-pe-number">PE number (Principal Employer)</Label><Input id="company-pe-number" value={p.pe_number} onChange={e=>setP({...p,pe_number:e.target.value})}/></div>
         <div className="space-y-3"><h3 className="font-medium">Office address</h3><div className="grid gap-3 sm:grid-cols-2">{([['building','Building name / number'],['street','Street address'],['city','City / locality'],['postalCode','Postal code']] as const).map(([key,label])=><div key={key} className="space-y-1.5"><Label htmlFor={`office-${key}`}>{label}</Label><Input id={`office-${key}`} className="h-11" maxLength={200} value={p.office_address[key]} onChange={e=>setP({...p,office_address:{...p.office_address,[key]:e.target.value}})} /></div>)}</div><p className="text-sm text-muted-foreground">{formatOfficeAddress(p.office_address)}</p></div><div className="space-y-1.5"><Label htmlFor="company-vat">VAT / Tax number</Label><Input id="company-vat" className="h-11" maxLength={60} value={p.vat_number} onChange={e=>setP({...p,vat_number:e.target.value})}/></div>

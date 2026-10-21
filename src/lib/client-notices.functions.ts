@@ -1,3 +1,4 @@
+import { companySignature, formatOfficeAddress, parseOfficeAddress } from "@/lib/contact-details";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -22,7 +23,7 @@ export const sendClientNotice = createServerFn({ method: "POST" })
       if (!mgr) throw new Error("Only a supervisor or office admin can send this notice.");
     }
     const [{ data: settings }, { data: company }, { data: contacts }] = await Promise.all([
-      sb.from("company_settings").select("integrations, office_phone").eq("company_id", sheet.company_id).maybeSingle(),
+      sb.from("company_settings").select("integrations, office_phone, company_email, website, office_address, company_address, vat_number").eq("company_id", sheet.company_id).maybeSingle(),
       sb.from("companies").select("name").eq("id", sheet.company_id).single(),
       sb.from("client_contacts").select("first_name, email, phone, has_whatsapp, site_id, is_primary_contact, receives_job_sheets").eq("client_id", sheet.client_id),
     ]);
@@ -47,7 +48,7 @@ export const sendClientNotice = createServerFn({ method: "POST" })
         const subject = data.event === "no_access" ? `Visit attempted — ${values.site_name}` : data.event === "on_my_way" ? `Technician on the way — ${values.site_name}` : `Signature needed — Job sheet- ${sheet.jobsheet_number}`;
         const res = await fetch("https://connector-gateway.lovable.dev/google_mail/gmail/v1/users/me/messages/send", {
           method: "POST", headers: { Authorization: `Bearer ${a}`, "X-Connection-Api-Key": g, "Content-Type": "application/json" },
-          body: JSON.stringify({ raw: rawEmail(emails, subject, `${text}\n\n${company?.name ?? ""}`, []) }),
+          body: JSON.stringify({ raw: rawEmail(emails, subject, `${text}\n\n${companySignature({ name: company?.name, address: formatOfficeAddress(parseOfficeAddress(settings?.office_address, settings?.company_address ?? "")), phone: settings?.office_phone, email: settings?.company_email, website: settings?.website, vat: settings?.vat_number })}`, []) }),
         });
         if (!res.ok) console.error(`Notice email failed [${res.status}]: ${await res.text()}`);
         result.push({ channel: "email", to: emails.join(", "), ok: res.ok, ...(res.ok ? {} : { error: "Email could not be sent" }) });

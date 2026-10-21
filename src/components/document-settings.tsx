@@ -130,7 +130,7 @@ export function DocumentSettings({ companyId }: { companyId: string }) {
             ))}
           </ul></BrandingLock>
           <label className="flex items-center gap-2 text-sm"><Switch checked={t.showTravel} onCheckedChange={(c) => setT({ ...t, showTravel: c })} />Show travel hours in the time sheet</label>
-          <div className="space-y-1.5"><Label>Footer text</Label><Input placeholder="e.g. Thank you for choosing us" value={t.footer} onChange={(e) => setT({ ...t, footer: e.target.value })} /></div>
+          <div className="space-y-1.5"><Label>Footer text</Label><p className="text-xs text-muted-foreground">Multiple lines allowed. Email addresses and web links become clickable.</p><Textarea rows={4} maxLength={1000} placeholder={"e.g. Thank you for choosing us\noffice@yourcompany.com · www.yourcompany.com"} value={t.footer} onChange={(e) => setT({ ...t, footer: e.target.value })} /></div>
         </section>
 
         <section className="rounded-xl border bg-card p-5">

@@ -144,7 +144,7 @@ export async function buildPdf(d: PdfSheetData) {
     else if (b === "signoff") await signoff();
   }
   if (d.terms) { label("Terms & conditions"); for (const l of wrap(d.terms, 8, W - 2 * M)) { need(11); text(l, M, 8, font, grey); y -= 11; } }
-  if (d.template.footer) { need(20); y -= 8; text(d.template.footer, M, 9, font, grey); }
+  if (d.template.footer) { y -= 8; for (const l of d.template.footer.split("\n").flatMap((p) => wrap(p, 9, W - 2 * M))) { need(12); text(l, M, 9, font, grey); y -= 12; } }
   return doc.save();
 }
 
@@ -161,7 +161,7 @@ async function prepareSheet(supabase: AuthClient, sheetId: string, recipients?: 
 
     const { data: contacts } = await supabase
       .from("client_contacts").select("email, site_id").eq("client_id", sheet.client_id).eq("receives_job_sheets", true);
-    const { data: settings } = await supabase.from("company_settings").select("pdf_template, terms, logo_data, office_address, company_address, vat_number, office_phone, company_email").eq("company_id", sheet.company_id).maybeSingle();
+    const { data: settings } = await supabase.from("company_settings").select("pdf_template, terms, logo_data, office_address, company_address, vat_number, office_phone, company_email, website").eq("company_id", sheet.company_id).maybeSingle();
     const notes = sheet.special_notes?.trim() || null;
     const emails = recipients?.length ? [...new Set(recipients.map((e) => e.trim()))] : (contacts ?? []).filter((c) => !c.site_id || !sheet.site_id || c.site_id === sheet.site_id).map((c) => c.email).filter((e): e is string => !!e);
 
@@ -217,7 +217,8 @@ async function prepareSheet(supabase: AuthClient, sheetId: string, recipients?: 
       photoCount ? `${photoCount} photo${photoCount > 1 ? "s" : ""} of the work are also attached.` : null,
       "",
       "Thank you for your business.",
-      company,
+      "",
+      companySignature({ name: company, address: formatOfficeAddress(parseOfficeAddress(settings?.office_address, settings?.company_address ?? "")), phone: settings?.office_phone, email: settings?.company_email, website: settings?.website, vat: settings?.vat_number }),
     ].filter((l): l is string => l != null).join("\n");
 
     return { sheet, emails, attachments, body, clientName: client?.name ?? "customer" };
