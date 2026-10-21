@@ -8,7 +8,7 @@ import type { Json } from "@/integrations/supabase/types";
 import { useProfile, isManager } from "@/lib/profile";
 import { usePlanFeatures } from "@/lib/plan-features";
 import { TRADES } from "@/lib/price-list";
-import { linesFromProposal, tally, variance, varianceValue, type SurveyLine } from "@/lib/as-built";
+import { finalAccount, finalQty, linesFromProposal, tally, unresolved, variance, varianceValue, type ReviewDecision, type SurveyLine, type SurveyReview } from "@/lib/as-built";
 import type { Line } from "@/lib/proposals";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -28,8 +28,8 @@ export const Route = createFileRoute("/_authenticated/as-built")({
 });
 
 const sel = "h-10 w-full rounded-md border bg-background px-3 text-foreground";
-const STATUS: Record<string, string> = { draft: "In progress", submitted: "Awaiting sign-off", signed_off: "Signed off" };
-type Survey = { id: string; title: string; trade: string; site_label: string; lines: SurveyLine[]; notes: string; status: string; proposal_id: string | null; signed_off_at: string | null };
+const STATUS: Record<string, string> = { draft: "In progress", submitted: "Awaiting sign-off", signed_off: "Signed off — awaiting office review", closed: "Closed — final account" };
+type Survey = { id: string; title: string; trade: string; site_label: string; lines: SurveyLine[]; notes: string; status: string; proposal_id: string | null; signed_off_at: string | null; review: SurveyReview; closed_at: string | null };
 
 function AsBuiltPage() {
   const { data: profile } = useProfile();
@@ -103,7 +103,7 @@ function RowPhotos({ companyId, surveyId, paths, locked, onChange }: { companyId
 
 function Editor({ id, manager, companyId, onBack }: { id: string; manager: boolean; companyId: string; onBack: () => void }) {
   const qc = useQueryClient();
-  const q = useQuery({ queryKey: ["qs_survey", id], queryFn: async () => { const r = await supabase.from("qs_surveys").select("id, title, trade, site_label, lines, notes, status, proposal_id, signed_off_at").eq("id", id).single(); if (r.error) throw r.error; return { ...r.data, lines: (Array.isArray(r.data.lines) ? r.data.lines : []) as unknown as SurveyLine[] } as Survey; } });
+  const q = useQuery({ queryKey: ["qs_survey", id], queryFn: async () => { const r = await supabase.from("qs_surveys").select("id, title, trade, site_label, lines, notes, status, proposal_id, signed_off_at, review, closed_at").eq("id", id).single(); if (r.error) throw r.error; return { ...r.data, lines: (Array.isArray(r.data.lines) ? r.data.lines : []) as unknown as SurveyLine[], review: ((r.data.review && typeof r.data.review === "object" && !Array.isArray(r.data.review)) ? r.data.review : {}) as unknown as SurveyReview } as Survey; } });
   const items = useQuery({ queryKey: ["price-items-survey"], queryFn: async () => { const r = await supabase.from("company_price_list_items").select("id, trade, category, name, unit, is_tally").order("category"); return r.error ? [] : r.data; } });
   const rates = useQuery({ enabled: manager && !!q.data?.proposal_id, queryKey: ["survey-rates", q.data?.proposal_id], queryFn: async () => { const r = await supabase.from("proposals").select("lines").eq("id", q.data!.proposal_id!).single(); return r.error ? [] : ((r.data.lines ?? []) as unknown as Line[]); } });
   const [s, setS] = useState<Survey | null>(null);
@@ -111,7 +111,7 @@ function Editor({ id, manager, companyId, onBack }: { id: string; manager: boole
   const [busy, setBusy] = useState(false);
   useEffect(() => { if (q.data) setS(q.data); }, [q.data]);
   if (!s) return <p className="text-muted-foreground">Loading…</p>;
-  const locked = s.status === "signed_off";
+  const locked = s.status === "signed_off" || s.status === "closed";
   const set = (p: Partial<Survey>) => setS({ ...s, ...p });
   const line = (i: number, p: Partial<SurveyLine>) => set({ lines: s.lines.map((l, j) => (j === i ? { ...l, ...p } : l)) });
   const tradeItems = (items.data ?? []).filter((x) => x.trade === s.trade);
@@ -141,7 +141,7 @@ function Editor({ id, manager, companyId, onBack }: { id: string; manager: boole
       <Button variant="ghost" onClick={onBack}><ArrowLeft className="mr-1 h-4 w-4" />All surveys</Button>
       <span className="rounded-full bg-muted px-2 py-0.5 text-xs">{STATUS[s.status]}</span>
       <div className="ml-auto flex flex-wrap gap-2">
-        <Button variant="outline" onClick={() => window.print()}><Printer className="mr-1 h-4 w-4" />Print final quantities</Button>
+        <Button variant="outline" onClick={() => window.print()}><Printer className="mr-1 h-4 w-4" />{s.status === "closed" ? "Print final account" : "Print quantities"}</Button>
         {manager && s.status === "draft" && <Button variant="outline" className="text-destructive" disabled={busy} onClick={remove}><Trash2 className="mr-1 h-4 w-4" />Delete survey</Button>}
         {!locked && <Button variant="outline" disabled={busy} onClick={() => save()}>Save</Button>}
         {s.status === "draft" && <Button disabled={busy} onClick={() => save("submitted")}>Send for sign-off</Button>}
@@ -185,6 +185,62 @@ function Editor({ id, manager, companyId, onBack }: { id: string; manager: boole
 
     {manager && s.proposal_id && s.lines.length > 0 && <p className="text-sm">Value of difference at proposal rates: <b className="tabular-nums">{money(varianceValue(s.lines, rateFor))}</b> <span className="text-muted-foreground">(excl. VAT; office and supervisors only)</span></p>}
     <div className="space-y-1"><Label htmlFor="ab-notes">Survey notes</Label><Textarea id="ab-notes" disabled={locked} value={s.notes} onChange={(e) => set({ notes: e.target.value })} /></div>
-    {locked && s.signed_off_at && <p className="text-sm text-muted-foreground">Signed off {new Date(s.signed_off_at).toLocaleString()} — final quantities are locked.</p>}
+    {locked && s.signed_off_at && <p className="text-sm text-muted-foreground">Signed off {new Date(s.signed_off_at).toLocaleString()} — site quantities are locked.</p>}
+    {manager && locked && <CloseOut s={s} rateFor={s.proposal_id ? rateFor : undefined} money={money} onSaved={() => { qc.invalidateQueries({ queryKey: ["qs_survey", id] }); qc.invalidateQueries({ queryKey: ["qs_surveys"] }); }} />}
   </div>;
+}
+
+const DECISIONS: { key: ReviewDecision["decision"]; label: string }[] = [
+  { key: "accept", label: "Charge installed" }, { key: "estimate", label: "Hold to estimate" }, { key: "adjust", label: "Adjust" },
+];
+
+/** Phase 5: office variance review and commercial close-out. Signed site quantities are never edited. */
+function CloseOut({ s, rateFor, money, onSaved }: { s: Survey; rateFor?: ((l: SurveyLine) => number | undefined) | undefined; money: (n: number) => string; onSaved: () => void }) {
+  const [review, setReview] = useState<SurveyReview>(s.review ?? {});
+  const [busy, setBusy] = useState(false);
+  useEffect(() => setReview(s.review ?? {}), [s.review]);
+  const closed = s.status === "closed";
+  const open = unresolved(s.lines, review);
+  const set = (lineId: string, p: Partial<ReviewDecision>) => setReview((r) => ({ ...r, [lineId]: { decision: "accept", ...r[lineId], ...p } }));
+  const acct = rateFor ? finalAccount(s.lines, review, rateFor) : null;
+  const save = async (close?: boolean) => {
+    if (close && open.length) { toast.error(`${open.length} item(s) still need a decision or reason`); return; }
+    if (close && !window.confirm("Close this survey? The final account will be locked.")) return;
+    setBusy(true);
+    const r = await supabase.from("qs_surveys").update({ review: review as unknown as Json, ...(close ? { status: "closed" } : {}) }).eq("id", s.id);
+    setBusy(false);
+    if (r.error) { toast.error(r.error.message); return; }
+    toast.success(close ? "Survey closed — final account locked" : "Review saved"); onSaved();
+  };
+  return <section className="space-y-3 rounded-xl border bg-card p-4 print:border-0 print:p-0">
+    <div className="flex flex-wrap items-center gap-2">
+      <h2 className="text-lg font-semibold">Office review & final account</h2>
+      {!closed && <span className="rounded-full bg-muted px-2 py-0.5 text-xs print:hidden">{open.length ? `${open.length} to resolve` : "All resolved"}</span>}
+      {!closed && <div className="ml-auto flex gap-2 print:hidden"><Button variant="outline" disabled={busy} onClick={() => save()}>Save review</Button><Button disabled={busy || open.length > 0} onClick={() => save(true)}>Close survey</Button></div>}
+    </div>
+    <div className="overflow-x-auto"><table className="w-full text-sm">
+      <thead><tr className="border-b text-left text-muted-foreground"><th className="py-1 pr-2">Item</th><th className="px-2 text-right">Est.</th><th className="px-2 text-right">Installed</th><th className="px-2">Decision</th><th className="px-2 text-right">Final</th>{rateFor && <th className="pl-2 text-right">Value</th>}</tr></thead>
+      <tbody>{s.lines.map((l) => { const d = review[l.id]; const v = variance(l); const fq = finalQty(l, d); const rate = rateFor?.(l); const needs = open.some((x) => x.id === l.id);
+        return <tr key={l.id} className={`border-b align-top ${needs ? "bg-destructive/5" : ""}`}>
+          <td className="py-2 pr-2">{l.name}<span className="ml-1 text-xs text-muted-foreground">({l.unit})</span>{v.status !== "match" && <span className="ml-1 text-xs text-muted-foreground">{v.diff > 0 ? "+" : ""}{v.diff}</span>}</td>
+          <td className="px-2 text-right tabular-nums">{l.estimated}</td>
+          <td className="px-2 text-right tabular-nums">{l.installed}</td>
+          <td className="px-2">{closed ? <span>{DECISIONS.find((x) => x.key === (d?.decision ?? "accept"))?.label}{d?.reason ? ` — ${d.reason}` : ""}</span> : <div className="space-y-1 print:hidden">
+            <select aria-label={`Decision for ${l.name}`} className="h-9 w-full rounded-md border bg-background px-2" value={d?.decision ?? (v.status === "match" ? "accept" : "")} onChange={(e) => set(l.id, { decision: e.target.value as ReviewDecision["decision"] })}>
+              {v.status !== "match" && !d && <option value="">Choose…</option>}{DECISIONS.map((x) => <option key={x.key} value={x.key}>{x.label}</option>)}</select>
+            {d?.decision === "adjust" && <Input aria-label={`Adjusted quantity for ${l.name}`} type="number" inputMode="decimal" min={0} step="0.01" value={d.qty ?? ""} onChange={(e) => set(l.id, { qty: Number(e.target.value) })} />}
+            {d && d.decision !== "accept" && <Input aria-label={`Reason for ${l.name}`} placeholder="Reason (required)" value={d.reason ?? ""} onChange={(e) => set(l.id, { reason: e.target.value })} />}
+          </div>}</td>
+          <td className="px-2 text-right font-medium tabular-nums">{fq}</td>
+          {rateFor && <td className="pl-2 text-right tabular-nums">{rate == null ? "—" : money(fq * rate)}</td>}
+        </tr>; })}</tbody>
+    </table></div>
+    {acct && <div className="grid gap-1 text-sm sm:max-w-sm sm:ml-auto">
+      <div className="flex justify-between"><span>Estimate value</span><span className="tabular-nums">{money(acct.estimated)}</span></div>
+      <div className="flex justify-between font-semibold"><span>Final account</span><span className="tabular-nums">{money(acct.final)}</span></div>
+      <div className="flex justify-between text-muted-foreground"><span>Difference</span><span className="tabular-nums">{acct.difference > 0 ? "+" : ""}{money(acct.difference)}</span></div>
+      <p className="text-xs text-muted-foreground">Excl. VAT, at proposal rates. Items without a proposal rate are excluded.</p>
+    </div>}
+    {closed && s.closed_at && <p className="text-sm text-muted-foreground">Closed {new Date(s.closed_at).toLocaleString()} — final account locked.</p>}
+  </section>;
 }

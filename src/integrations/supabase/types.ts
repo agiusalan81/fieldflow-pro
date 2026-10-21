@@ -3116,6 +3116,8 @@ export type Database = {
       }
       qs_surveys: {
         Row: {
+          closed_at: string | null
+          closed_by: string | null
           company_id: string
           created_at: string
           created_by: string | null
@@ -3123,6 +3125,7 @@ export type Database = {
           lines: Json
           notes: string
           proposal_id: string | null
+          review: Json
           signed_off_at: string | null
           signed_off_by: string | null
           site_label: string
@@ -3133,6 +3136,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          closed_at?: string | null
+          closed_by?: string | null
           company_id?: string
           created_at?: string
           created_by?: string | null
@@ -3140,6 +3145,7 @@ export type Database = {
           lines?: Json
           notes?: string
           proposal_id?: string | null
+          review?: Json
           signed_off_at?: string | null
           signed_off_by?: string | null
           site_label?: string
@@ -3150,6 +3156,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          closed_at?: string | null
+          closed_by?: string | null
           company_id?: string
           created_at?: string
           created_by?: string | null
@@ -3157,6 +3165,7 @@ export type Database = {
           lines?: Json
           notes?: string
           proposal_id?: string | null
+          review?: Json
           signed_off_at?: string | null
           signed_off_by?: string | null
           site_label?: string
