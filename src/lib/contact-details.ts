@@ -14,7 +14,7 @@ export function parsePhone(value: string | null | undefined, fallback: string, k
   if (phone === fallback || knownCodes.includes(phone)) return { code: phone, number: "" };
   const code = [...knownCodes].sort((a,b) => b.length-a.length).find((c) => phone.startsWith(c));
   return code ? { code, number: phone.slice(code.length) } : { code: fallback, number: phone };
-}export type CompanyContact = { name?: string | null; address?: string | null; phone?: string | null; email?: string | null; website?: string | null; vat?: string | null };
+}export type CompanyContact = { name?: string | null | undefined; address?: string | null | undefined; phone?: string | null | undefined; email?: string | null | undefined; website?: string | null | undefined; vat?: string | null | undefined };
 /** Plain-text tenant company block appended to every client email. */
 export function companySignature(c: CompanyContact) {
   const line = (label: string, v?: string | null) => (v && v.trim() ? `${label}${v.trim()}` : null);
