@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Send, Hash, User } from "lucide-react";
+import { ArrowLeft, Bell, Send, Hash, User } from "lucide-react";
+import { canAskNotifications } from "@/lib/chat-notify";
 import { supabase } from "@/integrations/supabase/client";
 import { markThreadRead, unreadByThread, useChatReads } from "@/lib/chat-unread";
 import { useProfile, useCompanyUsers } from "@/lib/profile";
@@ -37,6 +38,8 @@ function Messages() {
   const [text, setText] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
   const { data: reads = {} } = useChatReads(profile?.id);
+  const [askAlerts, setAskAlerts] = useState(false);
+  useEffect(() => { setAskAlerts(canAskNotifications()); }, []);
 
   const { data: jobs = [] } = useQuery({
     queryKey: ["chat-jobs"],
@@ -108,6 +111,7 @@ function Messages() {
     <AppShell title="Team chat">
       <div className="grid h-[calc(100dvh-10rem)] overflow-hidden rounded-xl border bg-card md:grid-cols-[300px_minmax(0,1fr)] lg:h-[calc(100dvh-8rem)]">
         <aside className={`${active ? "hidden md:flex" : "flex"} min-h-0 flex-col border-r`}>
+          {askAlerts && <div className="flex items-center gap-2 border-b bg-muted/50 p-2 text-xs text-foreground"><Bell className="h-4 w-4 shrink-0" /><span className="flex-1">Get alerts when the app is in the background</span><Button size="sm" variant="secondary" onClick={() => void Notification.requestPermission().then(() => setAskAlerts(false))}>Allow</Button></div>}
           <div className="flex gap-1 border-b p-2">
             {(["all", "jobs", "people"] as const).map((f) => (
               <Button key={f} size="sm" variant={filter === f ? "secondary" : "ghost"} className="flex-1 capitalize" onClick={() => setFilter(f)}>
