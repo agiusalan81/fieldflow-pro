@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Fix confirmed supervisor roster-save failure caused by settings upsert firing the payroll insert guard; verify roster saves and unchanged payroll restrictions.
 - [x] Confirmed Standby and Payroll have separate HQ switches; roster save permits Supervisors/Admins/Superusers, while payroll writes remain office-only. Added independent module regression tests; supervisor save end-to-end remains unverified.
 - [x] Approved batch implemented: Superuser-only role View As; canonical duplicate-safe DWRs with historical duplicate/original audit retention and zero-minute corrections; paired dispatch, both Schedule/Today assignments, assistant read-only shared sheets, lead-seeded daily initials. 88 focused tests passed; preview build OK.
 - [ ] Paired dispatch save → both staff Schedule → shared sheet/DWR end-to-end verification (blocked: own-account managed session is Technician; schedule save correctly denied, no real visit created).
