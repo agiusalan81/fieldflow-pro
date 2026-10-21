@@ -1,3 +1,4 @@
+import { RegisteredMembers } from "@/components/registered-members";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -86,29 +87,7 @@ export function TeamManagement({ role, companyId, meId, tab }: { role: Role; com
           </ul>
         ) : null}
       </section>}
-      {tab === "roster" && <section className="rounded-lg border bg-card">
-        <h2 className="border-b px-5 py-3 font-medium text-foreground">Team ({data?.users.length ?? 0})</h2>
-        {!data?.users.length ? <div className="p-5"><EmptyState>No team members yet.</EmptyState></div> : (
-          <ul className="divide-y">
-            {data.users.map((u) => {
-              const r = data.roles.get(u.id) ?? "technician";
-              const editable = canEditRoles && u.id !== meId && (role === "superuser" || r !== "superuser");
-              return (
-                <li key={u.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
-                  <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-foreground">{u.full_name} <span className="font-mono text-xs text-muted-foreground">{u.employee_id}</span></p><p className="truncate text-xs text-muted-foreground">{u.email}</p></div>
-                  {canEditRoles && payrollVisible && <Button asChild size="sm" variant="outline"><Link to="/payroll/wages">Payroll setup</Link></Button>}
-                  {editable ? (
-                    <Select value={r} onValueChange={(v) => changeRole(u.id, v as Role)}>
-                      <SelectTrigger className="h-9 w-[170px]"><SelectValue /></SelectTrigger>
-                      <SelectContent>{invitable(role).map((x) => <SelectItem key={x} value={x}>{ROLE_LABEL[x]}</SelectItem>)}</SelectContent>
-                    </Select>
-                  ) : <span className="text-sm text-muted-foreground">{ROLE_LABEL[r]}</span>}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>}
+      {tab === "roster" && <RegisteredMembers role={role} meId={meId}/>}
     </div>
   );
 }

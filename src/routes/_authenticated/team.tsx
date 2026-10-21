@@ -47,7 +47,7 @@ function LiveAvailability() {
   if (!isManager(profile)) return <AppShell title="Team availability"><EmptyState>Only supervisors and office staff can see team availability.</EmptyState></AppShell>;
   const statusOf = (id: string): { s: Status; sub: string } => {
     const lv = data?.leave.find((x) => x.user_id === id);
-    if (lv) return { s: lv.leave_type === "Sick" && isManager(profile) ? "sick" : "leave", sub: `until ${new Date(lv.end_date + "T00:00").toLocaleDateString()}` };
+    if (lv) return { s: lv.leave_type === "Sick" && (profile?.role === "admin" || profile?.role === "superuser") ? "sick" : "leave", sub: `until ${new Date(lv.end_date + "T00:00").toLocaleDateString()}` };
     const sh = data?.shifts.filter((x) => x.user_id === id) ?? [];
     const tr = sh.find((x) => x.shift_type === "travel");
     const on = sh.find((x) => x.shift_type === "shift");
@@ -81,5 +81,5 @@ function TeamPage() {
  const { data: profile } = useProfile();
  if (!profile) return <AppShell title="Team"><p className="text-muted-foreground">Loading…</p></AppShell>;
  if (!isManager(profile)) return <AppShell title="Team"><EmptyState>Team management is available to supervisors and office staff.</EmptyState></AppShell>;
-  return <AppShell title="Team"><Tabs defaultValue="availability" className="mx-auto max-w-5xl"><TabsList className="h-auto flex-wrap"><TabsTrigger value="availability">Live Availability</TabsTrigger><TabsTrigger value="roster">Team Roster</TabsTrigger><TabsTrigger value="registered">Registered Members</TabsTrigger><TabsTrigger value="invites">Invites</TabsTrigger></TabsList><TabsContent value="availability" className="mt-4"><LiveAvailability /></TabsContent><TabsContent value="registered" className="mt-4"><RegisteredMembers role={profile.role} meId={profile.id}/></TabsContent>{(["roster","invites"] as const).map(tab=><TabsContent key={tab} value={tab} className="mt-4"><TeamManagement role={profile.role} companyId={profile.company_id} meId={profile.id} tab={tab}/></TabsContent>)}</Tabs></AppShell>;
+  return <AppShell title="Team"><Tabs defaultValue="availability" className="mx-auto max-w-5xl"><TabsList className="h-auto flex-wrap"><TabsTrigger value="availability">Live Availability</TabsTrigger><TabsTrigger value="registered">Team members</TabsTrigger><TabsTrigger value="invites">Invites</TabsTrigger></TabsList><TabsContent value="availability" className="mt-4"><LiveAvailability /></TabsContent><TabsContent value="registered" className="mt-4"><RegisteredMembers role={profile.role} meId={profile.id}/></TabsContent>{(["invites"] as const).map(tab=><TabsContent key={tab} value={tab} className="mt-4"><TeamManagement role={profile.role} companyId={profile.company_id} meId={profile.id} tab={tab}/></TabsContent>)}</Tabs></AppShell>;
 }
