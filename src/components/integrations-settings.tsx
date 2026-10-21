@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { CheckCircle2, Mail, Plus, Trash2 } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { sendTestEmail } from "@/lib/invites.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { ACCOUNTING, CHANNELS, EVENTS, MERGE_TAGS, SAMPLE, TAG_LABELS, toFriendly, fromFriendly, parseIntegrations, renderTemplate, type Integrations, type ChannelKey } from "@/lib/integrations";
 import { parseRates, ZERO_RATES, type Rates } from "@/lib/billing";
@@ -21,6 +23,43 @@ export function RatesFields({ value, onChange }: { value: Rates; onChange: (r: R
     <div className="space-y-1.5"><Label>{l}</Label><Input type="number" min="0" step="0.5" inputMode="decimal" value={value[k] || ""} onChange={(e) => onChange({ ...value, [k]: Number(e.target.value) || 0 })} /></div>
   );
   return <div className="grid gap-3 sm:grid-cols-4">{f("standard", "Standard 1.0× / h")}{f("ot15", "Overtime 1.5× / h")}{f("ot20", "Overtime 2.0× / h")}{f("callout", "Call-out fee")}</div>;
+}
+
+function EmailDeliveryCard({ companyId }: { companyId: string }) {
+  const send = useServerFn(sendTestEmail);
+  const [busy, setBusy] = useState(false);
+  const { data } = useQuery({
+    queryKey: ["company-email", companyId],
+    queryFn: async () => (await supabase.from("company_settings").select("company_email").eq("company_id", companyId).maybeSingle()).data,
+  });
+  const reply = data?.company_email?.trim();
+  const test = async () => {
+    setBusy(true);
+    try { const r = await send({ data: { companyId } }); toast.success(`Test email sent to ${r.to} — check your inbox`); }
+    catch (e) { toast.error(e instanceof Error ? e.message : "Test email failed"); }
+    finally { setBusy(false); }
+  };
+  return (
+    <section className="space-y-4 rounded-xl border bg-card p-5">
+      <div className="flex items-start gap-3">
+        <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+        <div className="space-y-1">
+          <h2 className="font-medium text-foreground">Email delivery: active and ready</h2>
+          <p className="text-sm text-muted-foreground">Team invites and client emails send automatically — nothing to set up. Your company name is shown on every email.</p>
+          <p className="text-sm text-foreground">Client replies go to: <b>{reply || "not set yet"}</b>{!reply && <span className="text-muted-foreground"> — add your company email in Company info.</span>}</p>
+        </div>
+      </div>
+      <Button variant="outline" onClick={test} disabled={busy}><Mail className="mr-2 h-4 w-4" />{busy ? "Sending…" : "Send test email to me"}</Button>
+      <div className="space-y-2 border-t pt-4">
+        <p className="text-sm font-medium text-foreground">Optional: send from your own mailbox</p>
+        <p className="text-sm text-muted-foreground">Want emails to come straight from your own Google or Microsoft address? One-click sign-in is coming soon — no passwords or server settings needed.</p>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" disabled>Connect Google / Gmail · soon</Button>
+          <Button variant="secondary" disabled>Connect Microsoft 365 / Outlook · soon</Button>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 export function IntegrationsSettings({ companyId, part }: { companyId: string; part: "messaging" | "accounting" }) {
@@ -56,6 +95,7 @@ export function IntegrationsSettings({ companyId, part }: { companyId: string; p
   return (
     <div className="space-y-5">
       {part === "messaging" && <>
+      <EmailDeliveryCard companyId={companyId} />
       <WhatsAppTemplateStudio prefill={prefill} />
       <section className="space-y-4 rounded-xl border bg-card p-5">
         <div><h2 className="font-medium text-foreground">Messaging channels</h2><p className="text-sm text-muted-foreground">All optional. Turn on the channels your company uses. Live sending starts once each provider account is connected.</p></div>
@@ -69,7 +109,7 @@ export function IntegrationsSettings({ companyId, part }: { companyId: string; p
                 {v.enabled && (<>
                   <Select value={v.provider} onValueChange={(p) => set({ provider: p })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{c.providers.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent></Select>
                   <Input placeholder={c.key === "email" ? "Send from (email)" : c.key === "signal" ? "Webhook / chat ID" : "Sender number"} value={v.sender} onChange={(e) => set({ sender: e.target.value })} />
-                  <p className="text-xs text-muted-foreground">{c.key === "email" ? "Status: connected — team invites send automatically" : "Status: not connected yet"}</p>
+                  <p className="text-xs text-muted-foreground">{c.key === "email" ? "Emails already send automatically — see Email delivery above" : "Status: not connected yet"}</p>
                 </>)}
               </div>
             );
