@@ -1061,27 +1061,43 @@ export type Database = {
       }
       fleet_vehicles: {
         Row: {
+          assigned_user_id: string | null
           company_id: string
           fuel_price_per_litre: number
+          fuel_type: string
           id: string
           litres_per_100km: number
+          make_model: string | null
           plate: string
         }
         Insert: {
+          assigned_user_id?: string | null
           company_id: string
           fuel_price_per_litre?: number
+          fuel_type?: string
           id?: string
           litres_per_100km?: number
+          make_model?: string | null
           plate: string
         }
         Update: {
+          assigned_user_id?: string | null
           company_id?: string
           fuel_price_per_litre?: number
+          fuel_type?: string
           id?: string
           litres_per_100km?: number
+          make_model?: string | null
           plate?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fleet_vehicles_assigned_user_id_fkey"
+            columns: ["assigned_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "fleet_vehicles_company_id_fkey"
             columns: ["company_id"]
@@ -3399,6 +3415,17 @@ export type Database = {
       }
       save_fleet_vehicle: {
         Args: { _litres: number; _plate: string; _price: number }
+        Returns: undefined
+      }
+      save_fleet_vehicle_details: {
+        Args: {
+          _assigned: string
+          _fuel_type: string
+          _litres: number
+          _make_model: string
+          _plate: string
+          _price: number
+        }
         Returns: undefined
       }
       save_sheet_snapshot: {
