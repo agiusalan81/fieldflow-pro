@@ -10,6 +10,7 @@ export const PLAN_FEATURES = [
   { key: "technical_library", label: "Technical library" },
   { key: "standby", label: "Standby roster & swaps" },
   { key: "estimates", label: "Estimates & lift RFQ" },
+  { key: "qs_pricing", label: "Pricing & quantity surveying: price lists, BoQ, as-built QS" },
   { key: "supplier_email", label: "Supplier emails & reminders" },
   { key: "contracts", label: "Contracts & renewals" },
   { key: "payroll", label: "Payroll: hours & international gross earnings" },
