@@ -58,6 +58,7 @@ function AdminJobs() {
   const { data: customers = [] } = useQuery({ queryKey: ["clients"], queryFn: async () => (await supabase.from("clients").select("id, name").order("name")).data ?? [] });
   useEffect(() => { setSelected([]); }, [filter, q, mine, details]);
   const { data: me } = useProfile();
+  const listRef = useRef<string[]>([]);
   const [approving, setApproving] = useState<(typeof jobs)[number] | null>(null);
   const { data: jobs = [] } = useQuery({
     queryKey: ["admin-jobs"],
@@ -87,7 +88,7 @@ function AdminJobs() {
     setDeleting(null);
     qc.invalidateQueries({ queryKey: ["admin-jobs"] });
   };
-  const open = (id: string) => navigate({ to: "/sheets/$sheetId", params: { sheetId: id } });
+  const open = (id: string) => { saveSheetOrder(listRef.current); return navigate({ to: "/sheets/$sheetId", params: { sheetId: id } }); };
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
 
   const confirmApprove = async () => {
@@ -110,7 +111,11 @@ function AdminJobs() {
   };
 
   const queue = jobs.filter((j) => matchesSheetFilter(j, "admin_queue"));
-  const list = jobs.filter((j) => matchesSheetDetails(j, { ...details, initials: staff.find((u) => u.id === details.technician) ? initialsOf(staff.find((u) => u.id === details.technician) ?? { full_name: "" }) : undefined }) && matchesSheetFilter(j, filter) && (!mine || j.assigned_technician_id === me?.id) && matchesSheetSearch(j.jobsheet_number, [j.clients?.name, j.users?.full_name, j.assets?.reference_number, j.sites?.name, j.reported_fault], q));
+  const base = jobs.filter((j) => matchesSheetDetails(j, { ...details, initials: staff.find((u) => u.id === details.technician) ? initialsOf(staff.find((u) => u.id === details.technician) ?? { full_name: "" }) : undefined }) && (!mine || j.assigned_technician_id === me?.id) && matchesSheetSearch(j.jobsheet_number, [j.clients?.name, j.users?.full_name, j.assets?.reference_number, j.sites?.name, j.reported_fault], q));
+  const list = base.filter((j) => matchesSheetFilter(j, filter));
+  listRef.current = list.map((j) => j.id);
+  const pills: [string, string][] = [["all", "All"], ...STATUSES, ["has_pending", "Pending works"]];
+  const countFor = (k: string) => base.filter((j) => matchesSheetFilter(j, k)).length;
   const totalHours = (j: (typeof jobs)[number]) => (j.jobsheet_time_logs ?? []).reduce((s, l) => s + Number(l.daily_total_hours || 0), 0);
 
   const office = me?.role === "admin" || me?.role === "superuser";
