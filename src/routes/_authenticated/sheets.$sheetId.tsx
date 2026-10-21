@@ -698,6 +698,7 @@ function SheetForm() {
         </div>
       )}
       {readOnly && isManager(profile) && <p className="mx-auto max-w-5xl text-xs text-muted-foreground">Status can be changed from the Job sheets admin page.</p>}
+      <div className="mx-auto mb-28 mt-6 max-w-5xl border-t pt-4"><SheetStepper sheetId={sheetId} /></div>
       <NextStopDialog job={nextStop} profile={profile} onDone={() => { setNextStop(null); navigate({ to: "/dashboard" }); }} />
     </AppShell>
   );
