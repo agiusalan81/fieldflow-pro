@@ -3,14 +3,20 @@ import { useQuery } from '@tanstack/react-query';
 import { Bell } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useProfile, isManager } from '@/lib/profile';
+import { useUnreadChatTotal } from '@/lib/chat-unread';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 export function OnCallBadge({ userId }: { userId?: string | undefined }) {
  const q=useQuery({queryKey:['on-call-menu-badge',userId],enabled:!!userId,refetchInterval:15000,queryFn:async()=>{if(!userId)return 0;const r=await supabase.from('standby_swaps').select('id',{count:'exact',head:true}).eq('target_id',userId).eq('status','pending');if(r.error)throw r.error;return r.count??0;}});
  return q.data ? <span aria-label={`${q.data} incoming swap requests`} className="ml-auto rounded-full bg-destructive px-1.5 text-xs text-destructive-foreground">{q.data}</span> : null;
 }
+export function ChatBadge({ userId }: { userId?: string | undefined }) {
+ const n=useUnreadChatTotal(userId);
+ return n ? <span aria-label={`${n} unread messages`} className="ml-auto rounded-full bg-destructive px-1.5 text-xs text-destructive-foreground">{n}</span> : null;
+}
 export function ActionNotifications() {
   const { data:p }=useProfile();
+  const chat=useUnreadChatTotal(p?.id);
   const {data}=useQuery({queryKey:['action-notifications',p?.id],enabled:!!p,refetchInterval:15000,queryFn:async()=>{
     if(!p)return {incoming:0,approval:0,leave:0};
     const [incoming,approval,leave]=await Promise.all([
@@ -19,6 +25,6 @@ export function ActionNotifications() {
       supabase.from('leave_requests').select('id',{count:'exact',head:true}).eq('consulted_supervisor_id',p.id).eq('status','pending').is('supervisor_response',null)
     ]);if(incoming.error||approval.error||leave.error)throw incoming.error||approval.error||leave.error;return {incoming:incoming.count??0,approval:approval.count??0,leave:leave.count??0};
   }});
-  const count=(data?.incoming??0)+(data?.approval??0)+(data?.leave??0);
-  return <Popover><PopoverTrigger asChild><Button variant="ghost" size="icon" className="relative" aria-label={`Pending actions: ${count}`}><Bell className="h-5 w-5"/>{count>0&&<span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] text-destructive-foreground">{count}</span>}</Button></PopoverTrigger><PopoverContent align="end" className="w-72 space-y-3"><h2 className="font-medium">Pending actions</h2>{!count?<p className="text-sm text-muted-foreground">Nothing awaiting your attention.</p>:<>{!!data?.incoming&&<Button asChild variant="outline" className="w-full"><Link to="/standby">{data.incoming} on-call swap request(s)</Link></Button>}{!!data?.approval&&<Button asChild variant="outline" className="w-full"><Link to="/standby">{data.approval} swap approval(s)</Link></Button>}{!!data?.leave&&<Button asChild variant="outline" className="w-full"><Link to="/admin/leave">{data.leave} leave consultation(s)</Link></Button>}</>}</PopoverContent></Popover>;
+  const count=chat+(data?.incoming??0)+(data?.approval??0)+(data?.leave??0);
+  return <Popover><PopoverTrigger asChild><Button variant="ghost" size="icon" className="relative" aria-label={`Pending actions: ${count}`}><Bell className="h-5 w-5"/>{count>0&&<span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] text-destructive-foreground">{count}</span>}</Button></PopoverTrigger><PopoverContent align="end" className="w-72 space-y-3"><h2 className="font-medium">Pending actions</h2>{!count?<p className="text-sm text-muted-foreground">Nothing awaiting your attention.</p>:<>{!!chat&&<Button asChild variant="outline" className="w-full"><Link to="/messages">{chat} unread message(s)</Link></Button>}{!!data?.incoming&&<Button asChild variant="outline" className="w-full"><Link to="/standby">{data.incoming} on-call swap request(s)</Link></Button>}{!!data?.approval&&<Button asChild variant="outline" className="w-full"><Link to="/standby">{data.approval} swap approval(s)</Link></Button>}{!!data?.leave&&<Button asChild variant="outline" className="w-full"><Link to="/admin/leave">{data.leave} leave consultation(s)</Link></Button>}</>}</PopoverContent></Popover>;
 }
