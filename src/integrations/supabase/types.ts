@@ -2802,6 +2802,79 @@ export type Database = {
           },
         ]
       }
+      proposals: {
+        Row: {
+          client_id: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          lines: Json
+          reference: string
+          site_id: string | null
+          spec: Json
+          status: string
+          terms: Json
+          title: string
+          trade: string
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          lines?: Json
+          reference?: string
+          site_id?: string | null
+          spec?: Json
+          status?: string
+          terms?: Json
+          title?: string
+          trade?: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          lines?: Json
+          reference?: string
+          site_id?: string | null
+          spec?: Json
+          status?: string
+          terms?: Json
+          title?: string
+          trade?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposals_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposals_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposals_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_permissions: {
         Row: {
           company_id: string

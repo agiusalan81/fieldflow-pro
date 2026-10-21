@@ -428,6 +428,13 @@
       "when": 1792584078598,
       "tag": "0060_qs_pricing_price_list",
       "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1792584668374,
+      "tag": "0061_qs_proposals",
+      "breakpoints": true
     }
   ]
 }
