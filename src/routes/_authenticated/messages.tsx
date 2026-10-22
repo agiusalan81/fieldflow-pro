@@ -157,7 +157,7 @@ function Messages() {
             <>
               <header className="flex items-center gap-2 border-b px-3 py-2.5">
                 <Button size="icon" variant="ghost" className="md:hidden" onClick={() => setActive(null)} aria-label="Back"><ArrowLeft className="h-4 w-4" /></Button>
-                <p className="truncate font-medium text-foreground">{active.label}</p>
+                <p className="truncate font-medium text-foreground">{active.label}{active.kind === "user" && roleOf(active.id) && <span className="ml-2 rounded bg-muted px-1.5 text-xs font-normal text-muted-foreground">{roleOf(active.id)}</span>}</p>
               </header>
               <div className="min-h-0 flex-1 space-y-2 overflow-y-auto bg-muted/40 p-4">
                 {current.map((m) => {
