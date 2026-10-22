@@ -1,11 +1,12 @@
 import { documentLabel, visibleBlocks } from "./documents";
 import type { PdfSheetData } from "./service-sheet";
-import { pdfFonts, pdfPageDecoration } from "./branding-assets";
+import { pdfFonts, pdfLayerFonts, pdfPageDecoration } from "./branding-assets";
 
 export async function buildServicePdf(d: PdfSheetData) {
   const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
   const doc = await PDFDocument.create();
   const { font, bold } = await pdfFonts(doc, d.template);
+  const layers = await pdfLayerFonts(doc, d.template, { font, bold });
   const decorate = await pdfPageDecoration(doc, d.template);
   const W = 595, H = 842, M = 36, width = W - M * 2;
   const hex = d.template.primaryColor;
@@ -15,17 +16,17 @@ export async function buildServicePdf(d: PdfSheetData) {
   let page = doc.addPage([W,H]); let y = H-M;
   decorate(page);
   const safe = (value: string) => value.replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/[–—]/g,"-").replace(/•/g,"-").replace(/[^\x0A\x20-\x7E\xA0-\xFF]/g,"?");
-  const wrap = (value: string, w: number, size = 9) => {
+  const wrap = (value: string, w: number, size = 9, mf = font) => {
     const lines: string[] = [];
     for (const para of safe(value || "-").split("\n")) {
       let line = "";
       for (const word of para.split(/\s+/)) {
-        if (font.widthOfTextAtSize(word, size) > w) {
+        if (mf.widthOfTextAtSize(word, size) > w) {
           if (line) { lines.push(line); line = ""; }
           let chunk = "";
-          for (const char of word) { if (font.widthOfTextAtSize(chunk + char,size)>w && chunk) { lines.push(chunk); chunk=""; } chunk+=char; }
+          for (const char of word) { if (mf.widthOfTextAtSize(chunk + char,size)>w && chunk) { lines.push(chunk); chunk=""; } chunk+=char; }
           line = chunk;
-        } else if (font.widthOfTextAtSize(`${line} ${word}`.trim(),size)>w && line) { lines.push(line); line=word; }
+        } else if (mf.widthOfTextAtSize(`${line} ${word}`.trim(),size)>w && line) { lines.push(line); line=word; }
         else line=`${line} ${word}`.trim();
       }
       lines.push(line);
@@ -34,12 +35,12 @@ export async function buildServicePdf(d: PdfSheetData) {
   };
   const newPage = () => { page=doc.addPage([W,H]); decorate(page); y=H-M; };
   const need = (h: number) => { if (y-h<M) newPage(); };
-  const text = (value: string,x: number,atY: number,size=9,strong=false) => page.drawText(safe(value),{x,y:atY,size,font:strong?bold:font,color:ink});
+  const text = (value: string,x: number,atY: number,size=9,strong=false,layer?: { font: typeof font; color: typeof ink }) => page.drawText(safe(value),{x,y:atY,size,font:layer?.font ?? (strong?bold:font),color:layer?.color ?? ink});
   const line = (x1: number,y1: number,x2: number,y2: number) => page.drawLine({start:{x:x1,y:y1},end:{x:x2,y:y2},thickness:0.5,color:brand});
   const fieldHex = d.template.fieldBackground ?? "#ffffff";
   const fieldColor = rgb(parseInt(fieldHex.slice(1,3),16)/255,parseInt(fieldHex.slice(3,5),16)/255,parseInt(fieldHex.slice(5,7),16)/255);
-  const para = (value: string) => { for(const valueLine of wrap(value,width)) { need(13); page.drawRectangle({x:M,y:y-3,width,height:13,color:fieldColor}); text(valueLine,M,y); y-=13; } };
-  const label = (value: string) => { need(35); y-=8; text(value.toUpperCase(),M,y,8,true); y-=14; };
+  const para = (value: string) => { for(const valueLine of wrap(value,width,9,layers.detail.font)) { need(13); page.drawRectangle({x:M,y:y-3,width,height:13,color:fieldColor}); text(valueLine,M,y,9,false,layers.detail); y-=13; } };
+  const label = (value: string) => { need(35); y-=8; text(value.toUpperCase(),M,y,8,true,layers.label); y-=14; };
   const image = async (data: string | null | undefined,x: number,top: number,w: number,h: number) => {
     if (!data?.startsWith("data:image/")) return;
     try { const img = data.startsWith("data:image/png") ? await doc.embedPng(data) : await doc.embedJpg(data); const scale=Math.min(w/img.width,h/img.height); page.drawImage(img,{x:x+(w-img.width*scale)/2,y:top-img.height*scale,width:img.width*scale,height:img.height*scale}); } catch { /* Invalid optional image must not prevent delivery. */ }
@@ -47,7 +48,7 @@ export async function buildServicePdf(d: PdfSheetData) {
   const headerLeft = wrap([d.company,d.officeAddress,d.vatNumber && `VAT / Tax: ${d.vatNumber}`].filter(Boolean).join("\n"),width/3-10);
   const headerRight = wrap(d.contact || "",width/3-10);
   const headerHeight = Math.max(65,Math.max(headerLeft.length,headerRight.length)*12+10);
-  headerLeft.forEach((v,i)=>text(v,M,y-i*12,9,i===0));
+  headerLeft.forEach((v,i)=>text(v,M,y-i*12,9,i===0,i===0?layers.company:undefined));
   headerRight.forEach((v,i)=>text(v,M+width*2/3+10,y-i*12,8));
   await image(d.logo,M+width/3,y,width/3,55);
   y-=headerHeight; line(M,y,W-M,y); y-=20;

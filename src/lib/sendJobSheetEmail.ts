@@ -7,7 +7,7 @@ import { serviceEquipment, type PdfSheetData } from "@/lib/service-sheet";
 import { companySignature, formatOfficeAddress, parseOfficeAddress } from "@/lib/contact-details";
 import { sheetTitle } from "@/lib/dwr";
 import { validateMonthlyQueue } from "@/lib/monthly-signing";
-import { pdfFonts, pdfPageDecoration, resolveDocumentAssets } from "@/lib/branding-assets";
+import { pdfFonts, pdfLayerFonts, pdfPageDecoration, resolveDocumentAssets } from "@/lib/branding-assets";
 
 const b64 = (s: string) =>
   btoa(Array.from(new TextEncoder().encode(s), (b) => String.fromCharCode(b)).join(""));
@@ -58,6 +58,7 @@ export async function buildPdf(d: PdfSheetData) {
   const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
   const doc = await PDFDocument.create();
   const { font, bold } = await pdfFonts(doc, d.template);
+  const layers = await pdfLayerFonts(doc, d.template, { font, bold });
   const decorate = await pdfPageDecoration(doc, d.template);
   const W = 595, H = 842, M = 48;
   let page = doc.addPage([W, H]);
@@ -66,21 +67,21 @@ export async function buildPdf(d: PdfSheetData) {
   const colour = (hex: string) => rgb(parseInt(hex.slice(1, 3), 16) / 255, parseInt(hex.slice(3, 5), 16) / 255, parseInt(hex.slice(5, 7), 16) / 255);
   const grey = colour(d.template.primaryColor);
   const need = (h: number) => { if (y - h < M) { page = doc.addPage([W, H]); decorate(page); y = H - M; } };
-  const wrap = (text: string, size: number, width: number) => {
+  const wrap = (text: string, size: number, width: number, mf = font) => {
     const out: string[] = [];
     for (const para of safe(text).split("\n")) {
       let line = "";
       for (const w of para.split(" ")) {
         const t = line ? `${line} ${w}` : w;
-        if (font.widthOfTextAtSize(t, size) > width && line) { out.push(line); line = w; } else line = t;
+        if (mf.widthOfTextAtSize(t, size) > width && line) { out.push(line); line = w; } else line = t;
       }
       out.push(line);
     }
     return out;
   };
   const text = (t: string, x: number, size = 10, f = font, color = colour(d.template.fieldText ?? "#202020")) => page.drawText(safe(t), { x, y, size, font: f, color });
-  const label = (t: string) => { need(30); y -= d.template.stylePreset === "compact" ? 3 : 8; text(t.toUpperCase(), M, 8, bold, grey); y -= 14; };
-  const para = (t: string) => { for (const l of wrap(t || "-", 10, W - 2 * M)) { need(14); page.drawRectangle({x:M,y:y-3,width:W-2*M,height:14,color:colour(d.template.fieldBackground ?? "#ffffff")}); text(l, M); y -= 14; } };
+  const label = (t: string) => { need(30); y -= d.template.stylePreset === "compact" ? 3 : 8; text(t.toUpperCase(), M, 8, layers.label.font, layers.label.color); y -= 14; };
+  const para = (t: string) => { for (const l of wrap(t || "-", 10, W - 2 * M, layers.detail.font)) { need(14); page.drawRectangle({x:M,y:y-3,width:W-2*M,height:14,color:colour(d.template.fieldBackground ?? "#ffffff")}); text(l, M, 10, layers.detail.font, layers.detail.color); y -= 14; } };
 
   if (d.logo?.startsWith("data:image/png")) {
     const logo = await doc.embedPng(d.logo);
@@ -89,7 +90,8 @@ export async function buildPdf(d: PdfSheetData) {
   }
   if (d.template.stylePreset === "bold") { page.drawRectangle({ x: M - 8, y: y - 36, width: W - 2 * M + 16, height: 48, color: grey, opacity: 0.12 }); }
   if (d.template.stylePreset === "technical") page.drawLine({ start: { x: M - 8, y }, end: { x: M - 8, y: M }, thickness: 2, color: colour(d.template.accentColor) });
-  para(d.company);
+  for (const l of wrap(d.company, 12, W / 2, layers.company.font)) { text(l, M, 12, layers.company.font, layers.company.color); y -= 14; }
+  y += 14;
   text(sheetTitle(d.number), W - M - bold.widthOfTextAtSize(safe(sheetTitle(d.number)), 12), 12, bold);
   y -= 16; text("Job sheet - client copy", M, 10, font, grey); text(d.date, W - M - font.widthOfTextAtSize(safe(d.date), 10), 10, font, grey);
   y -= 12; page.drawLine({ start: { x: M, y }, end: { x: W - M, y }, thickness: 0.5, color: grey }); y -= 10;
