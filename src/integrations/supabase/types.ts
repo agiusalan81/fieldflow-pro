@@ -667,6 +667,44 @@ export type Database = {
           },
         ]
       }
+      company_skills: {
+        Row: {
+          archived: boolean
+          category: string
+          company_id: string
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          archived?: boolean
+          category?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          archived?: boolean
+          category?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_skills_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contract_types: {
         Row: {
           annual_price: number
@@ -1449,6 +1487,55 @@ export type Database = {
           },
         ]
       }
+      job_crew: {
+        Row: {
+          added_by: string | null
+          claimed: boolean
+          company_id: string
+          created_at: string
+          job_id: string
+          user_id: string
+        }
+        Insert: {
+          added_by?: string | null
+          claimed?: boolean
+          company_id?: string
+          created_at?: string
+          job_id: string
+          user_id: string
+        }
+        Update: {
+          added_by?: string | null
+          claimed?: boolean
+          company_id?: string
+          created_at?: string
+          job_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_crew_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_crew_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_crew_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_sheets: {
         Row: {
           asset_id: string | null
@@ -1705,6 +1792,49 @@ export type Database = {
           },
         ]
       }
+      job_skills: {
+        Row: {
+          company_id: string
+          job_id: string
+          mandatory: boolean
+          skill_id: string
+        }
+        Insert: {
+          company_id?: string
+          job_id: string
+          mandatory?: boolean
+          skill_id: string
+        }
+        Update: {
+          company_id?: string
+          job_id?: string
+          mandatory?: boolean
+          skill_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_skills_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_skills_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_skills_skill_id_fkey"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "company_skills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       jobs: {
         Row: {
           acknowledged_at: string | null
@@ -1718,8 +1848,10 @@ export type Database = {
           handover_note: string | null
           id: string
           job_number: number
+          open_to_claim: boolean
           priority: string
           problem_summary: string | null
+          required_team_size: number
           scheduled_date: string
           secondary_technician_id: string | null
           site_id: string | null
@@ -1738,8 +1870,10 @@ export type Database = {
           handover_note?: string | null
           id?: string
           job_number?: number
+          open_to_claim?: boolean
           priority?: string
           problem_summary?: string | null
+          required_team_size?: number
           scheduled_date?: string
           secondary_technician_id?: string | null
           site_id?: string | null
@@ -1758,8 +1892,10 @@ export type Database = {
           handover_note?: string | null
           id?: string
           job_number?: number
+          open_to_claim?: boolean
           priority?: string
           problem_summary?: string | null
+          required_team_size?: number
           scheduled_date?: string
           secondary_technician_id?: string | null
           site_id?: string | null
@@ -2363,6 +2499,52 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      member_skills: {
+        Row: {
+          assigned_by: string | null
+          company_id: string
+          created_at: string
+          skill_id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          company_id?: string
+          created_at?: string
+          skill_id: string
+          user_id: string
+        }
+        Update: {
+          assigned_by?: string | null
+          company_id?: string
+          created_at?: string
+          skill_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_skills_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_skills_skill_id_fkey"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "company_skills"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_skills_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -3823,6 +4005,7 @@ export type Database = {
         Returns: string
       }
       branding_offers: { Args: never; Returns: Json }
+      claim_open_job: { Args: { _job: string }; Returns: string }
       company_app_product_id: { Args: never; Returns: string }
       company_module_access: {
         Args: { _company: string; _module: string }
