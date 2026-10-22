@@ -14,11 +14,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Eye } from "lucide-react";
 
 export function BrandControls({ template: t, onChange, logo, companyId }: { template: PdfTemplate; onChange: (t: PdfTemplate) => void; logo?: string; companyId: string }) {
   const [palette, setPalette] = useState<string[]>([]);
+  const [peek, setPeek] = useState(false);
   const on = usePlanFeatures();
   return <section className="grid gap-6 border-b pb-6 lg:grid-cols-2">
+    <Button type="button" className="fixed bottom-4 right-4 z-40 shadow-lg lg:hidden" onClick={() => setPeek(true)}><Eye className="mr-2 h-4 w-4" />Live preview</Button>
+    <Dialog open={peek} onOpenChange={setPeek}><DialogContent className="max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>Live preview</DialogTitle></DialogHeader><DocumentPreview template={t} logo={logo} /></DialogContent></Dialog>
     <div className="space-y-5"><h2 className="text-lg font-semibold">Document & Brand Studio</h2>
       <BrandingLock allowed={on("branding_documents")} feature="branding_documents"><div className="grid grid-cols-3 gap-2">{DOCUMENT_STYLES.map((s) => <Button key={s} variant={t.stylePreset === s ? "default" : "outline"} onClick={() => onChange({ ...t, stylePreset: s, font: s === "classic" ? "serif" : s === "technical" ? "mono" : "sans" })} className="h-auto min-h-10 whitespace-normal capitalize">{s === "service" ? "Standard Service Sheet" : s}</Button>)}</div></BrandingLock>
       <div className="grid grid-cols-2 gap-3">{(["primaryColor", "accentColor"] as const).map((key) => <div key={key} className="space-y-2"><Label htmlFor={key}>{key === "primaryColor" ? "Brand colour" : "Accent colour"}</Label><div className="flex gap-2"><Input disabled={key === "accentColor" && !on("branding_documents")} id={key} aria-label={key === "primaryColor" ? "Brand colour" : "Accent colour"} type="color" className="h-10 w-14 p-1" value={t[key]} onChange={(e) => onChange({ ...t, [key]: e.target.value })} /><Input disabled={key === "accentColor" && !on("branding_documents")} aria-label={`${key} hex`} value={t[key]} onChange={(e) => onChange({ ...t, [key]: validColor(e.target.value, t[key]) })} /></div></div>)}</div>
