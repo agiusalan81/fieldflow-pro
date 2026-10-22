@@ -5,6 +5,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, isManager } from "@/lib/profile";
+import { canSeeMember } from "@/lib/member-registration";
+import type { Role } from "@/lib/profile";
 import { AppShell, EmptyState } from "@/components/app-shell";
 
 export const Route = createFileRoute("/_authenticated/team")({
@@ -55,7 +57,7 @@ function LiveAvailability() {
     if (on) return { s: "clocked_in", sub: `since ${new Date(on.started_at).toTimeString().slice(0, 5)}` };
     return { s: "available", sub: "" };
   };
-  const rows = (data?.users ?? []).map((u) => ({ u, ...statusOf(u.id) }));
+  const rows = (data?.users ?? []).filter((u) => !!profile && canSeeMember(profile.role, u.role as Role)).map((u) => ({ u, ...statusOf(u.id) }));
   const counts = (Object.keys(LABEL) as Status[]).map((k) => [k, rows.filter((r) => r.s === k).length] as const);
   return (
     <>

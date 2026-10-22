@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { currentPosition, etaBadge, etaText, travelEta } from "@/lib/travel-eta";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Car, FileText, MapPin } from "lucide-react";
@@ -66,7 +67,7 @@ export function JobTravelActions({ profile, jobId, address, readOnly = false, as
   const openSheet = (id?: string) => readOnly ? <Button disabled className="h-11"><FileText className="mr-1 h-4 w-4" />Open job sheet</Button> : <Button asChild variant="outline" className="h-11">{id ? <Link to="/sheets/$sheetId" params={{ sheetId: id }}><FileText className="mr-1 h-4 w-4" />Open job sheet</Link> : <Link to="/sheets/new" search={{ jobId }}><FileText className="mr-1 h-4 w-4" />Open job sheet</Link>}</Button>;
   return <>
     <div className="grid gap-2">
-      {!finished && !assisting && <Button className="h-11" disabled={readOnly || busy || isPending || isError || travelling} onClick={start}><Car className="mr-1 h-4 w-4" />{busy ? "Starting…" : travelling ? "In transit" : "Start travel"}</Button>}
+      {!finished && !assisting && <Button className="h-11" disabled={readOnly || busy || isPending || isError || travelling} onClick={start}><Car className="mr-1 h-4 w-4" />{busy ? "Starting…" : travelling ? `In transit${eta ? ` · ${etaBadge(eta)}` : ""}` : "Start travel"}</Button>}
       {assisting ? sheet ? openSheet(sheet.id) : <span className="text-xs text-muted-foreground">Waiting for the lead to start</span> : openSheet(sheet?.id)}
       {isError && <Button variant="ghost" onClick={() => qc.invalidateQueries({ queryKey: ["job-travel-sheet", jobId] })}>Retry job status</Button>}
     </div>
@@ -74,6 +75,7 @@ export function JobTravelActions({ profile, jobId, address, readOnly = false, as
       <DialogContent>
         <DialogHeader><DialogTitle>Travel started</DialogTitle></DialogHeader>
         <p className="break-words text-sm text-muted-foreground">{address || "No address on file"}</p>
+        <p className="text-sm font-medium">{eta ? `GPS estimate: ${etaText(eta)}` : "GPS estimate unavailable — location or address could not be found."}</p>
         {address && <div className="grid gap-2 sm:grid-cols-2">
           <Button asChild variant="outline"><a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`} target="_blank" rel="noopener noreferrer"><MapPin className="mr-1 h-4 w-4" />Google Maps</a></Button>
           <Button asChild variant="outline"><a href={`https://waze.com/ul?q=${encodeURIComponent(address)}&navigate=yes`} target="_blank" rel="noopener noreferrer"><MapPin className="mr-1 h-4 w-4" />Waze</a></Button>
