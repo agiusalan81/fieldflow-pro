@@ -15,6 +15,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { EVENTS, parseIntegrations, renderTemplate } from "@/lib/integrations";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, useCompanyUsers, initialsOf } from "@/lib/profile";
+import { usePlanFeatures } from "@/lib/plan-features";
+import { clampTeamSize, skillMatchScore } from "@/lib/skills";
 import { matchesSheetFilter, matchesSheetDetails, validateCombinedSheets } from "@/lib/jobsheets";
 import { matchesSheetSearch } from "@/lib/dwr";
 import { AppShell, EmptyState } from "@/components/app-shell";
@@ -303,8 +305,15 @@ function NewJobDialog() {
   const navigate = useNavigate();
   const [open, setOpenRaw] = useState(!!search.new);
   const setOpen = (o: boolean) => { setOpenRaw(o); if (!o && search.new) navigate({ to: "/admin/jobs", search: {}, replace: true }); };
-  const empty = { client_id: "", site_id: "none", asset_id: "none", tech: "none", assistant: "none", scheduled_date: new Date().toISOString().slice(0, 10), window_start: "", window_end: "", priority: "normal", problem_summary: "" };
+  const empty = { client_id: "", site_id: "none", asset_id: "none", tech: "none", assistant: "none", scheduled_date: new Date().toISOString().slice(0, 10), window_start: "", window_end: "", priority: "normal", problem_summary: "", teamSize: 1, open: false, skills: [] as string[], crew: [] as string[] };
   const [f, setF] = useState(empty);
+  const feature = usePlanFeatures(!!profile);
+  const smart = feature("skills_dispatch");
+  const { data: skillList = [] } = useQuery({ queryKey: ["company-skills"], enabled: smart, queryFn: async () => (await supabase.from("company_skills").select("id,name,category,archived").order("name")).data ?? [] });
+  const { data: memberSkills = [] } = useQuery({ queryKey: ["member-skills"], enabled: smart, queryFn: async () => (await supabase.from("member_skills").select("user_id,skill_id")).data ?? [] });
+  const skillsOf = (u: string) => memberSkills.filter(m => m.user_id === u).map(m => m.skill_id);
+  const ranked = smart && f.skills.length ? [...users].sort((a, b) => skillMatchScore(skillsOf(b.id), f.skills) - skillMatchScore(skillsOf(a.id), f.skills)) : users;
+  const label = (u: { id: string; full_name: string }) => smart && f.skills.length ? `${u.full_name} · ${skillMatchScore(skillsOf(u.id), f.skills)}/${f.skills.length} skills` : u.full_name;
   const { data: clients = [] } = useQuery({ queryKey: ["clients"], queryFn: async () => (await supabase.from("clients").select("id, name").order("name")).data ?? [] });
   const { data: sites = [] } = useQuery({ queryKey: ["sites"], queryFn: async () => (await supabase.from("sites").select("id, client_id, name").order("name")).data ?? [] });
   const { data: assets = [] } = useQuery({ queryKey: ["assets-all"], queryFn: async () => (await supabase.from("assets").select("id, client_id, site_id, reference_number, asset_category")).data ?? [] });
@@ -312,13 +321,22 @@ function NewJobDialog() {
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile || !f.client_id) { toast.error("Pick a client"); return; }
+    const teamSize = clampTeamSize(f.teamSize, smart);
+    const named = [f.tech, f.assistant].filter(x => x !== "none").length + f.crew.length;
+    if (named > teamSize) { toast.error(`You picked ${named} people for a team of ${teamSize}`); return; }
+    if (!f.open && f.tech === "none" && f.crew.length) { toast.error("Choose a lead technician"); return; }
     const { data: job, error } = await supabase.from("jobs").insert({
       company_id: profile.company_id, client_id: f.client_id,
       site_id: f.site_id === "none" ? null : f.site_id, asset_id: f.asset_id === "none" ? null : f.asset_id,
       assigned_technician_id: f.tech === "none" ? null : f.tech, secondary_technician_id: f.assistant === "none" ? null : f.assistant, scheduled_date: f.scheduled_date,
       window_start: f.window_start || null, window_end: f.window_end || null, priority: f.priority, problem_summary: f.problem_summary || null,
-    }).select("job_number").single();
+      ...(smart ? { required_team_size: teamSize, open_to_claim: f.open && named < teamSize } : {}),
+    }).select("id, job_number").single();
     if (error) { toast.error(error.message); return; }
+    if (smart && job) {
+      if (f.skills.length) { const r = await supabase.from("job_skills").insert(f.skills.map(skill_id => ({ job_id: job.id, skill_id, company_id: profile.company_id, mandatory: true }))); if (r.error) toast.error(r.error.message); }
+      if (f.crew.length) { const r = await supabase.from("job_crew").insert(f.crew.map(user_id => ({ job_id: job.id, user_id, company_id: profile.company_id }))); if (r.error) toast.error(r.error.message); }
+    }
     if (f.priority === "urgent" && f.tech !== "none") {
       const { data: cs } = await supabase.from("company_settings").select("integrations").eq("company_id", profile.company_id).maybeSingle();
       const t = parseIntegrations(cs?.integrations).templates.emergency_dispatch;
