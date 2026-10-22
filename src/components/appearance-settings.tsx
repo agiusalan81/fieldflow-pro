@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useCompanyRules } from "@/lib/company";
 import { supabase } from "@/integrations/supabase/client";
 import { usePlanFeatures } from "@/lib/plan-features";
-import { appearanceVariables, contrastRatio, ICON_PRESETS, INDUSTRY_PRESETS, INDUSTRY_LABELS, type Appearance } from "@/lib/branding";
+import { appearanceVariables, contrastRatio, ICON_PRESETS, INDUSTRY_LABELS, type Appearance } from "@/lib/branding";
 import { resolveAppearanceAssets, brandDownload } from "@/lib/branding-assets";
 import { BrandingLock } from "./branding-lock";
 import { BrandingUpload } from "./branding-upload";
