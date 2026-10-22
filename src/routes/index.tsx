@@ -104,7 +104,7 @@ function Landing() {
 
   const live = catalog.plans.length > 0;
   const viewPlans = live ? catalog.plans.map(toViewPlan) : fallbackPlans;
-  const plan = viewPlans.find((p) => p.name === sel) ?? viewPlans[0];
+  const plan = viewPlans.find((p) => p.name === sel) ?? viewPlans[0] ?? fallbackPlans[0];
 
   const livePacks = catalog.packs.filter((p) => p.modules.length > 0);
   const packs = live
