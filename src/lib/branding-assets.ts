@@ -54,7 +54,8 @@ const STANDARD_FAMILY = { sans: '"IBM Plex Sans", sans-serif', serif: '"Lora", G
 /** On-screen style for one text layer (company name, headings, details). */
 export function layerStyle(t: PdfTemplate, k: TextLayerKey): import("react").CSSProperties {
   const l = t.textStyles?.[k] ?? DEFAULT_TEXT_STYLES[k];
-  return { fontFamily: l.font === "document" ? documentFontFamily(t) : STANDARD_FAMILY[l.font], color: layerColor(t, k), fontWeight: l.bold ? 700 : 400, fontStyle: l.italic ? "italic" : "normal" };
+  const fill = l.background ? { backgroundColor: l.background, padding: "2px 8px", borderRadius: 6, display: "inline-block" } : {};
+  return { fontFamily: l.font === "document" ? documentFontFamily(t) : STANDARD_FAMILY[l.font], color: layerColor(t, k), fontWeight: l.bold ? 700 : 400, fontStyle: l.italic ? "italic" : "normal", ...fill };
 }
 /** PDF font + colour for each text layer. Company fonts have no separate italic, so italic applies only to standard families. */
 export async function pdfLayerFonts(doc: import("pdf-lib").PDFDocument, t: PdfTemplate, base: { font: import("pdf-lib").PDFFont; bold: import("pdf-lib").PDFFont }) {

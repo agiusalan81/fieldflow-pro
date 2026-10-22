@@ -80,7 +80,8 @@ export async function buildPdf(d: PdfSheetData) {
     return out;
   };
   const text = (t: string, x: number, size = 10, f = font, color = colour(d.template.fieldText ?? "#202020")) => page.drawText(safe(t), { x, y, size, font: f, color });
-  const label = (t: string) => { need(30); y -= d.template.stylePreset === "compact" ? 3 : 8; text(t.toUpperCase(), M, 8, layers.label.font, layers.label.color); y -= 14; };
+  const labelFill = d.template.textStyles?.label?.background;
+  const label = (t: string) => { need(30); y -= d.template.stylePreset === "compact" ? 3 : 8; const v = safe(t.toUpperCase()); if (labelFill) page.drawRectangle({ x: M - 3, y: y - 3, width: layers.label.font.widthOfTextAtSize(v, 8) + 6, height: 12, color: colour(labelFill) }); text(v, M, 8, layers.label.font, layers.label.color); y -= 14; };
   const para = (t: string) => { for (const l of wrap(t || "-", 10, W - 2 * M, layers.detail.font)) { need(14); page.drawRectangle({x:M,y:y-3,width:W-2*M,height:14,color:colour(d.template.fieldBackground ?? "#ffffff")}); text(l, M, 10, layers.detail.font, layers.detail.color); y -= 14; } };
 
   if (d.logo?.startsWith("data:image/png")) {
