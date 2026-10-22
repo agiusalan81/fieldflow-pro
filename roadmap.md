@@ -175,3 +175,9 @@
 - [x] Phase 4: mobile as-built QS tally counters and estimate vs installed variance
 - [x] Phone install name FieldBridge
 - [x] Site survey: rename from As-built tally, delete survey, row photos
+
+## Document text styles & operating trades (22 Oct 2026)
+- [x] Brand Studio: separate font, colour, bold, italic for company name, field headings, field details (preview + PDFs)
+- [x] Rename "Trades we work in" to "Operating Trades & Services"; add Drains main industry
+- [x] Price list trade picker shows only operating trades, opens on main industry
+- [ ] HQ trade modules for monetisation (planned, not built)
