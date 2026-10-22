@@ -36,7 +36,7 @@ const plans = [
   { name: "Enterprise", price: 399, users: 20, gb: 250, points: ["Every module included", "Smart dispatch & payroll", "Priority onboarding"] },
 ];
 
-const faqs = [
+const faqs: [string, string][] = [
   ["Do I need a card for the trial?", "No. Create your company, invite your team and use FieldBridge free for 60 days. We only discuss a plan when you’re ready."],
   ["Is it only for lifts?", "Lifts and escalators come first, but HVAC, electrical, CCTV and other trades can rename fields, checklists and job types to suit."],
   ["Is our data kept separate?", "Yes. Every company has its own isolated workspace, with role-based access for superusers, office admins, supervisors and technicians."],
