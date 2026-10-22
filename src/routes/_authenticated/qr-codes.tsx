@@ -46,10 +46,10 @@ function QrPage() {
       <div className="mx-auto max-w-4xl space-y-5">
         <p className="text-sm text-muted-foreground">Pick a lift or asset, then tap the QR button to preview and print branded stickers: Technical data & history for your team, or Report a fault for building occupants.</p>
         <div className="grid gap-3 sm:grid-cols-3">
-          <NativeSelect aria-label="Client" value={client} onChange={e => { setClient(e.target.value); setSite(''); }}>
+          <NativeSelect aria-label="Client" value={client} onValueChange={v => { setClient(v); setSite(""); }}>
             <option value="">All clients</option>{clients.map(([id, n]) => <option key={id} value={id}>{n}</option>)}
           </NativeSelect>
-          <NativeSelect aria-label="Site" value={site} onChange={e => setSite(e.target.value)}>
+          <NativeSelect aria-label="Site" value={site} onValueChange={setSite}>
             <option value="">All sites</option>{sites.map(([id, n]) => <option key={id} value={id}>{n}</option>)}
           </NativeSelect>
           <Input aria-label="Search equipment" placeholder="Search reference…" value={q} onChange={e => setQ(e.target.value)} />
