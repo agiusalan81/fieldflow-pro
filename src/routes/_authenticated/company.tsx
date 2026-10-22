@@ -465,7 +465,7 @@ function SettingsSections({ superuser, companyId, userId }: { superuser: boolean
       <section className="min-w-0">
         <h2 ref={heading} tabIndex={-1} className="mb-4 scroll-mt-24 text-lg font-semibold text-foreground outline-none">{current.label}</h2>
         {all.filter(item => visited.includes(item.key)).map(item => <div key={item.key} hidden={item.key !== current.key}>{item.render()}</div>)}
-        {current.key !== "profile" && <nav aria-label="Previous and next settings section" className={`mt-6 flex flex-wrap justify-between gap-2 border-t pt-4 ${current.key === "branding" ? "pb-16 lg:pb-0" : ""}`}>{navigation}</nav>}
+        {<nav aria-label="Previous and next settings section" className={`mt-6 flex flex-wrap justify-between gap-2 border-t pt-4 ${current.key === "branding" ? "pb-16 lg:pb-0" : ""}`}>{navigation}</nav>}
       </section>
     </div>
   );
