@@ -57,3 +57,39 @@ export function storageLevel(usedBytes: number, allowanceGb: number) {
   const pct = allowanceGb > 0 ? (usedBytes / (allowanceGb * 1024 ** 3)) * 100 : 100;
   return { pct: r2(pct), level: pct >= 100 ? "full" : pct >= 90 ? "critical" : pct >= 80 ? "warning" : "ok" } as const;
 }
+
+/** Invoice totals in the payment provider's smallest unit (cents). */
+export function toMinorUnits(total: number) { return Math.round(Number(total) * 100); }
+/** A payment settles an invoice only when currency and exact amount match. */
+export function paymentMatches(inv: { total: number | string; currency: string }, amountMinor: number | null | undefined, currency: string | null | undefined) {
+  return amountMinor === toMinorUnits(Number(inv.total)) && (currency ?? "").toLowerCase() === inv.currency.toLowerCase();
+}
+/** Invoices a company can pay online. */
+export const PAYABLE_STATUSES = ["sent", "overdue", "suspended"] as const;
+export function isPayable(inv: { status: string; total: number | string }) {
+  return (PAYABLE_STATUSES as readonly string[]).includes(inv.status) && Number(inv.total) > 0;
+}
+/** Unpaid issued invoice more than this many days past due makes the company read-only. */
+export const READ_ONLY_AFTER_DAYS = 14;
+export function isLapsed(inv: { status: string; due_date: string }, today: string) {
+  if (!(PAYABLE_STATUSES as readonly string[]).includes(inv.status)) return false;
+  const d = new Date(`${inv.due_date}T00:00:00Z`).getTime() + READ_ONLY_AFTER_DAYS * 86400000;
+  return new Date(`${today}T00:00:00Z`).getTime() > d;
+}
+/** Upgrades apply now; downgrades (lower package price) wait for the next renewal. */
+export function classifyChange(oldPrice: number, newPrice: number): "upgrade" | "downgrade" | "same" {
+  return newPrice > oldPrice ? "upgrade" : newPrice < oldPrice ? "downgrade" : "same";
+}
+/** Net amount for the rest of the current period after an upgrade, counting `today` as a remaining day. */
+export function upgradeProration(oldPrice: number, newPrice: number, periodStart: string, periodEnd: string, today: string) {
+  const ms = (d: string) => new Date(`${d}T00:00:00Z`).getTime();
+  const total = Math.round((ms(periodEnd) - ms(periodStart)) / 86400000) + 1;
+  const left = Math.round((ms(periodEnd) - ms(today)) / 86400000) + 1;
+  if (newPrice <= oldPrice || total <= 0 || left <= 0) return { days_left: Math.max(0, left), period_days: total, amount: 0 };
+  return { days_left: Math.min(left, total), period_days: total, amount: r2((newPrice - oldPrice) * Math.min(left, total) / total) };
+}
+/** The next renewal invoice is prepared 7 days before the current period ends. */
+export const RENEWAL_LEAD_DAYS = 7;
+export function renewalDue(lastPeriodEnd: string, today: string) {
+  return new Date(`${today}T00:00:00Z`).getTime() >= new Date(`${lastPeriodEnd}T00:00:00Z`).getTime() - RENEWAL_LEAD_DAYS * 86400000;
+}
