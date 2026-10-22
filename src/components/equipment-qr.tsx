@@ -11,7 +11,7 @@ import { Dialog,DialogContent,DialogHeader,DialogTitle } from '@/components/ui/d
 
 const LABELS = { technical: 'Technical data & history', report: 'Report a fault' } as const;
 
-function Sticker({title,reference,src,logo,company}:{title:string;reference:string;src:string;logo?:string;company:string}){
+function Sticker({title,reference,src,logo,company}:{title:string;reference:string;src:string;logo?:string|undefined;company:string}){
  return <div className="mx-auto w-full max-w-[280px] rounded-lg border bg-card p-4 text-center text-card-foreground">
   <p className="text-xs text-muted-foreground">{reference}</p>
   <p className="mb-3 font-medium">{title}</p>

@@ -1,5 +1,5 @@
 /** Builds a branded QR sticker (title, QR with centre logo, company footer) as a PNG data URL. */
-export async function brandedQr(url: string, logo?: string, size = 600): Promise<string> {
+export async function brandedQr(url: string, logo?: string | undefined, size = 600): Promise<string> {
   const qr = await import("qrcode");
   const canvas = document.createElement("canvas");
   // High error correction so a centre logo (≤ ~22% width) still scans.
