@@ -191,4 +191,4 @@
 - [x] Team chat placed beside Team in admin and supervisor menus
 - [x] Branded equipment QR stickers with company logo in the centre
 - [ ] Fleet menu shows only when company plan has Fleet Management switched on (check HQ plan)
-- [ ] Company Settings Previous/Next buttons and mobile live preview (next batch)
+- [ ] Company Settings: bottom Previous/Next navigation, retain unsaved section edits, and full-height mobile document/form preview (in progress).
