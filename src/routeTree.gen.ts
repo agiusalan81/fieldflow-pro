@@ -56,6 +56,8 @@ import { Route as AuthenticatedPrintSheetIdRouteImport } from './routes/_authent
 import { Route as AuthenticatedSheetsIndexRouteImport } from './routes/_authenticated/sheets.index'
 import { Route as AuthenticatedSheetsSheetIdRouteImport } from './routes/_authenticated/sheets.$sheetId'
 import { Route as AuthenticatedSheetsNewRouteImport } from './routes/_authenticated/sheets.new'
+import { Route as ApiPublicJobsBillingDailyRouteImport } from './routes/api/public/jobs/billing-daily'
+import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 
 const IndexRoute = IndexRouteImport.update({
@@ -307,6 +309,18 @@ const AuthenticatedSheetsNewRoute = AuthenticatedSheetsNewRouteImport.update({
   path: '/sheets/new',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicJobsBillingDailyRoute =
+  ApiPublicJobsBillingDailyRouteImport.update({
+    id: '/api/public/jobs/billing-daily',
+    path: '/api/public/jobs/billing-daily',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicPaymentsWebhookRoute =
+  ApiPublicPaymentsWebhookRouteImport.update({
+    id: '/api/public/payments/webhook',
+    path: '/api/public/payments/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LovableEmailTransactionalPreviewRoute =
   LovableEmailTransactionalPreviewRouteImport.update({
     id: '/lovable/email/transactional/preview',
@@ -361,6 +375,8 @@ export interface FileRoutesByFullPath {
   '/sheets/$sheetId': typeof AuthenticatedSheetsSheetIdRoute
   '/sheets/new': typeof AuthenticatedSheetsNewRoute
   '/sheets/': typeof AuthenticatedSheetsIndexRoute
+  '/api/public/jobs/billing-daily': typeof ApiPublicJobsBillingDailyRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesByTo {
@@ -410,6 +426,8 @@ export interface FileRoutesByTo {
   '/sheets/$sheetId': typeof AuthenticatedSheetsSheetIdRoute
   '/sheets/new': typeof AuthenticatedSheetsNewRoute
   '/sheets': typeof AuthenticatedSheetsIndexRoute
+  '/api/public/jobs/billing-daily': typeof ApiPublicJobsBillingDailyRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesById {
@@ -461,6 +479,8 @@ export interface FileRoutesById {
   '/_authenticated/sheets/$sheetId': typeof AuthenticatedSheetsSheetIdRoute
   '/_authenticated/sheets/new': typeof AuthenticatedSheetsNewRoute
   '/_authenticated/sheets/': typeof AuthenticatedSheetsIndexRoute
+  '/api/public/jobs/billing-daily': typeof ApiPublicJobsBillingDailyRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRouteTypes {
@@ -512,6 +532,8 @@ export interface FileRouteTypes {
     | '/sheets/$sheetId'
     | '/sheets/new'
     | '/sheets/'
+    | '/api/public/jobs/billing-daily'
+    | '/api/public/payments/webhook'
     | '/lovable/email/transactional/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -561,6 +583,8 @@ export interface FileRouteTypes {
     | '/sheets/$sheetId'
     | '/sheets/new'
     | '/sheets'
+    | '/api/public/jobs/billing-daily'
+    | '/api/public/payments/webhook'
     | '/lovable/email/transactional/preview'
   id:
     | '__root__'
@@ -611,6 +635,8 @@ export interface FileRouteTypes {
     | '/_authenticated/sheets/$sheetId'
     | '/_authenticated/sheets/new'
     | '/_authenticated/sheets/'
+    | '/api/public/jobs/billing-daily'
+    | '/api/public/payments/webhook'
     | '/lovable/email/transactional/preview'
   fileRoutesById: FileRoutesById
 }
@@ -623,6 +649,8 @@ export interface RootRouteChildren {
   ProblemTokenRoute: typeof ProblemTokenRoute
   ReferralCodeRoute: typeof ReferralCodeRoute
   ReportTokenRoute: typeof ReportTokenRoute
+  ApiPublicJobsBillingDailyRoute: typeof ApiPublicJobsBillingDailyRoute
+  ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
 
@@ -957,6 +985,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSheetsNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/jobs/billing-daily': {
+      id: '/api/public/jobs/billing-daily'
+      path: '/api/public/jobs/billing-daily'
+      fullPath: '/api/public/jobs/billing-daily'
+      preLoaderRoute: typeof ApiPublicJobsBillingDailyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/payments/webhook': {
+      id: '/api/public/payments/webhook'
+      path: '/api/public/payments/webhook'
+      fullPath: '/api/public/payments/webhook'
+      preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lovable/email/transactional/preview': {
       id: '/lovable/email/transactional/preview'
       path: '/lovable/email/transactional/preview'
@@ -1072,6 +1114,8 @@ const rootRouteChildren: RootRouteChildren = {
   ProblemTokenRoute: ProblemTokenRoute,
   ReferralCodeRoute: ReferralCodeRoute,
   ReportTokenRoute: ReportTokenRoute,
+  ApiPublicJobsBillingDailyRoute: ApiPublicJobsBillingDailyRoute,
+  ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
 export const routeTree = rootRouteImport
