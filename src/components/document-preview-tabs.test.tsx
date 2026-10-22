@@ -17,7 +17,7 @@ describe("mobile document preview interaction", () => {
     const draft = { ...DEFAULT_TEMPLATE, header: "Unsaved draft" };
     rerender(<MobileDocumentPreview template={draft} />);
     expect(renderPreview).toHaveBeenLastCalledWith(expect.objectContaining({ template: draft, mode: "form" }));
-    fireEvent.click(screen.getByRole("button", { name: "Close", exact: true }));
+    fireEvent.click(screen.getByText("Close", { selector: "button" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   });
 });
