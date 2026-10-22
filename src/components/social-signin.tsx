@@ -14,6 +14,8 @@ export function SocialSignin({ onSuccess, onError, inviteToken }: { onSuccess: (
     } catch(e) { onError(e instanceof Error?e.message:"Could not sign in. Please try again."); }
     finally { setBusy(null); }
   };
-  const providers = ["google", "microsoft"] as const;
-  return <div className="grid gap-2">{providers.map(provider=><Button key={provider} type="button" variant="outline" className="h-11 w-full" disabled={busy!==null} onClick={()=>signIn(provider)}>{busy===provider?"Connecting…":`Continue with ${provider==="google"?"Google":"Microsoft"}`}</Button>)}</div>;
+  return <div className="grid gap-2">
+    <Button type="button" variant="outline" className="h-11 w-full" disabled={busy!==null} onClick={()=>signIn("google")}>{busy==="google"?"Connecting…":"Continue with Google"}</Button>
+    <Button type="button" variant="outline" className="h-11 w-full" disabled aria-disabled="true" title="Microsoft sign-in is coming soon">Continue with Microsoft — Coming soon</Button>
+  </div>;
 }
