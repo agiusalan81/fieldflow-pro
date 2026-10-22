@@ -5,6 +5,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { parseIntegrations, renderTemplate } from "@/lib/integrations";
 import { canSendNotice, waNumber } from "@/lib/client-notices";
 import { rawEmail } from "@/lib/sendJobSheetEmail";
+import { etaText } from "@/lib/travel-eta";
 
 /** Sends the "on the way", "no one to open" or "client left unsigned" message to the client's contacts by email and/or WhatsApp. */
 export const sendClientNotice = createServerFn({ method: "POST" })

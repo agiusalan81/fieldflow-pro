@@ -26,11 +26,23 @@ export function JobTravelActions({ profile, jobId, address, readOnly = false, as
     },
   });
   const travelling = sheet?.status === "in_transit";
+  const [eta, setEta] = useState<{ km: number; minutes: number } | null>(null);
+  // While in transit, refresh distance/time from live GPS every minute.
+  useEffect(() => {
+    if (!travelling || !address) return;
+    let off = false;
+    const tick = async () => { const p = await currentPosition(); if (!p || off) return; const e = await travelEta(p, address); if (!off && e) setEta(e); };
+    void tick(); const t = setInterval(tick, 60000);
+    return () => { off = true; clearInterval(t); };
+  }, [travelling, address]);
   const finished = sheet?.status === "completed" || sheet?.status === "in_progress";
   const start = async () => {
     if (readOnly || assisting || busy) return;
     setBusy(true);
     try {
+      const pos = address ? await currentPosition() : null;
+      const first = pos && address ? await travelEta(pos, address) : null;
+      setEta(first);
       const id = await startJobTravel(profile, jobId);
       setStartedId(id);
       setNotice(null);
@@ -39,7 +51,7 @@ export function JobTravelActions({ profile, jobId, address, readOnly = false, as
         setNotice("The “on the way” message is switched off in Company settings → Messages & emails, so the client was not notified.");
       } else {
         try {
-          const res = await sendClientNotice({ data: { sheetId: id, event: "on_my_way" } });
+          const res = await sendClientNotice({ data: { sheetId: id, event: "on_my_way", ...(first ? { eta: { km: Math.round(first.km * 10) / 10, minutes: Math.min(600, first.minutes) } } : {}) } });
           const ok = [...new Set(res.result.filter((r) => r.ok).map((r) => (r.channel === "email" ? "email" : "WhatsApp")))];
           const bad = res.result.filter((r) => !r.ok).map((r) => r.error).filter(Boolean);
           setNotice(ok.length ? `Client notified by ${ok.join(" and ")}.${bad.length ? ` ${bad.join(" · ")}` : ""}` : `Client could not be notified — ${bad.join(" · ") || "no channel available"}.`);
