@@ -3006,13 +3006,17 @@ export type Database = {
           id: string
           invoice_number: string
           issue_date: string
+          kind: string
           lines: Json
           notes: string | null
           paid_at: string | null
+          payment_error: string | null
           payment_ref: string | null
           period_end: string
           period_start: string
           status: string
+          stripe_payment_intent: string | null
+          stripe_session_id: string | null
           subscription_id: string
           subtotal: number
           total: number
@@ -3029,13 +3033,17 @@ export type Database = {
           id?: string
           invoice_number?: string
           issue_date?: string
+          kind?: string
           lines?: Json
           notes?: string | null
           paid_at?: string | null
+          payment_error?: string | null
           payment_ref?: string | null
           period_end: string
           period_start: string
           status?: string
+          stripe_payment_intent?: string | null
+          stripe_session_id?: string | null
           subscription_id: string
           subtotal?: number
           total?: number
@@ -3052,13 +3060,17 @@ export type Database = {
           id?: string
           invoice_number?: string
           issue_date?: string
+          kind?: string
           lines?: Json
           notes?: string | null
           paid_at?: string | null
+          payment_error?: string | null
           payment_ref?: string | null
           period_end?: string
           period_start?: string
           status?: string
+          stripe_payment_intent?: string | null
+          stripe_session_id?: string | null
           subscription_id?: string
           subtotal?: number
           total?: number
@@ -3164,6 +3176,24 @@ export type Database = {
           },
         ]
       }
+      platform_payment_events: {
+        Row: {
+          created_at: string
+          event_id: string
+          event_type: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          event_type: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          event_type?: string
+        }
+        Relationships: []
+      }
       platform_products: {
         Row: {
           active: boolean
@@ -3257,46 +3287,58 @@ export type Database = {
       platform_subscriptions: {
         Row: {
           agreed_price: number
+          auto_charge: boolean
+          auto_issue: boolean
           cadence: string
           company_id: string | null
           created_at: string
           external_tenant_id: string | null
           id: string
           pack_ids: string[]
+          pending_change: Json | null
           plan_id: string | null
           product_id: string
           seats: number
           status: string
+          stripe_customer_id: string | null
           tenant_name: string
           trial_ends_at: string
         }
         Insert: {
           agreed_price?: number
+          auto_charge?: boolean
+          auto_issue?: boolean
           cadence?: string
           company_id?: string | null
           created_at?: string
           external_tenant_id?: string | null
           id?: string
           pack_ids?: string[]
+          pending_change?: Json | null
           plan_id?: string | null
           product_id: string
           seats?: number
           status?: string
+          stripe_customer_id?: string | null
           tenant_name?: string
           trial_ends_at?: string
         }
         Update: {
           agreed_price?: number
+          auto_charge?: boolean
+          auto_issue?: boolean
           cadence?: string
           company_id?: string | null
           created_at?: string
           external_tenant_id?: string | null
           id?: string
           pack_ids?: string[]
+          pending_change?: Json | null
           plan_id?: string | null
           product_id?: string
           seats?: number
           status?: string
+          stripe_customer_id?: string | null
           tenant_name?: string
           trial_ends_at?: string
         }
@@ -4129,6 +4171,10 @@ export type Database = {
       branding_offers: { Args: never; Returns: Json }
       claim_open_job: { Args: { _job: string }; Returns: string }
       company_app_product_id: { Args: never; Returns: string }
+      company_invoice_lapsed: {
+        Args: { _subscription: string }
+        Returns: boolean
+      }
       company_module_access: {
         Args: { _company: string; _module: string }
         Returns: boolean
