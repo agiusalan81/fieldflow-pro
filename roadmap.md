@@ -191,4 +191,5 @@
 - [x] Team chat placed beside Team in admin and supervisor menus
 - [x] Branded equipment QR stickers with company logo in the centre
 - [ ] Fleet menu shows only when company plan has Fleet Management switched on (check HQ plan)
-- [ ] Company Settings: bottom Previous/Next navigation, retain unsaved section edits, and full-height mobile document/form preview (in progress).
+- [x] Company Settings: bottom Previous/Next navigation (Next beside profile Save), retained unsaved section edits, shared full-height mobile document/form preview. 19 focused tests passed; isolated 406×753 browser preview size/tab/close checks passed, no horizontal overflow; latest build OK.
+- [ ] Verify Previous/Next and retained edits end-to-end with office access (blocked: requesting account opens Company Settings as Technician and is correctly denied).
