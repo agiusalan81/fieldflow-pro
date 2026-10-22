@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { CheckCircle2, Mail, Plus, Trash2 } from "lucide-react";
+import { CheckCircle2, Download, Mail, Plus, Trash2 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { sendTestEmail } from "@/lib/invites.functions";
 import { supabase } from "@/integrations/supabase/client";
-import { ACCOUNTING, CHANNELS, EVENTS, MERGE_TAGS, SAMPLE, TAG_LABELS, toFriendly, fromFriendly, parseIntegrations, renderTemplate, type Integrations, type ChannelKey } from "@/lib/integrations";
+import { ACCOUNTING, ACCOUNTING_GUIDES, CHANNELS, EVENTS, MERGE_TAGS, SAMPLE, TAG_LABELS, toFriendly, fromFriendly, parseIntegrations, renderTemplate, type AccountingKey, type Integrations, type ChannelKey } from "@/lib/integrations";
+import { accountingGuidePdf } from "@/lib/accounting-guide-pdf";
+import { useCompanyTitle } from "@/lib/company-name";
 import { parseRates, ZERO_RATES, type Rates } from "@/lib/billing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,6 +61,34 @@ function EmailDeliveryCard({ companyId }: { companyId: string }) {
         </div>
       </div>
     </section>
+  );
+}
+
+function AccountingGuide({ provider }: { provider: AccountingKey }) {
+  const g = ACCOUNTING_GUIDES[provider];
+  const company = useCompanyTitle("").trim();
+  const name = ACCOUNTING.find((a) => a.key === provider)?.label ?? provider;
+  const download = async () => {
+    try {
+      const pdf = await accountingGuidePdf(provider, company);
+      const url = URL.createObjectURL(new Blob([pdf as unknown as BlobPart], { type: "application/pdf" }));
+      const a = document.createElement("a"); a.href = url; a.download = `Connect_${name.replace(/\W+/g, "_")}_guide.pdf`; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 30_000);
+    } catch { toast.error("Could not create the guide"); }
+  };
+  return (
+    <details className="rounded-lg border bg-muted/40 p-4 text-sm" open>
+      <summary className="cursor-pointer font-medium text-foreground">How to connect {name}</summary>
+      <p className="mt-2 text-muted-foreground">{g.intro}</p>
+      <p className="mt-3 font-medium text-foreground">Before you start</p>
+      <ul className="list-disc pl-5 text-muted-foreground">{g.before.map((b) => <li key={b}>{b}</li>)}</ul>
+      <p className="mt-3 font-medium text-foreground">Steps</p>
+      <ol className="list-decimal space-y-1 pl-5 text-muted-foreground">{g.steps.map((s) => <li key={s}>{s}</li>)}</ol>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Button type="button" size="sm" variant="outline" onClick={download}><Download className="mr-1 h-4 w-4" />Download guide (PDF)</Button>
+        <Button asChild size="sm" variant="ghost"><a href={g.link} target="_blank" rel="noreferrer">{name} help centre</a></Button>
+      </div>
+    </details>
   );
 }
 
@@ -170,6 +200,7 @@ export function IntegrationsSettings({ companyId, part }: { companyId: string; p
           </div>
           <label className="flex items-center gap-2 self-end pb-2 text-sm"><Switch checked={acc.require_review} onCheckedChange={(b) => setAcc({ require_review: b })} />Office admin reviews every job sheet before export</label>
         </div>
+        {acc.provider && <AccountingGuide provider={acc.provider} />}
         {acc.provider && (<>
           {acc.provider === "webhook" ? (
             <div className="space-y-1.5"><Label>Webhook URL</Label><Input placeholder="https://…" value={acc.webhook_url} onChange={(e) => setAcc({ webhook_url: e.target.value })} /></div>

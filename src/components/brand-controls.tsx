@@ -14,11 +14,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Eye } from "lucide-react";
 
 export function BrandControls({ template: t, onChange, logo, companyId }: { template: PdfTemplate; onChange: (t: PdfTemplate) => void; logo?: string; companyId: string }) {
   const [palette, setPalette] = useState<string[]>([]);
+  const [peek, setPeek] = useState(false);
   const on = usePlanFeatures();
   return <section className="grid gap-6 border-b pb-6 lg:grid-cols-2">
+    <Button type="button" className="fixed bottom-4 right-4 z-40 shadow-lg lg:hidden" onClick={() => setPeek(true)}><Eye className="mr-2 h-4 w-4" />Live preview</Button>
+    <Dialog open={peek} onOpenChange={setPeek}><DialogContent className="max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>Live preview</DialogTitle></DialogHeader><DocumentPreview template={t} logo={logo} /></DialogContent></Dialog>
     <div className="space-y-5"><h2 className="text-lg font-semibold">Document & Brand Studio</h2>
       <BrandingLock allowed={on("branding_documents")} feature="branding_documents"><div className="grid grid-cols-3 gap-2">{DOCUMENT_STYLES.map((s) => <Button key={s} variant={t.stylePreset === s ? "default" : "outline"} onClick={() => onChange({ ...t, stylePreset: s, font: s === "classic" ? "serif" : s === "technical" ? "mono" : "sans" })} className="h-auto min-h-10 whitespace-normal capitalize">{s === "service" ? "Standard Service Sheet" : s}</Button>)}</div></BrandingLock>
       <div className="grid grid-cols-2 gap-3">{(["primaryColor", "accentColor"] as const).map((key) => <div key={key} className="space-y-2"><Label htmlFor={key}>{key === "primaryColor" ? "Brand colour" : "Accent colour"}</Label><div className="flex gap-2"><Input disabled={key === "accentColor" && !on("branding_documents")} id={key} aria-label={key === "primaryColor" ? "Brand colour" : "Accent colour"} type="color" className="h-10 w-14 p-1" value={t[key]} onChange={(e) => onChange({ ...t, [key]: e.target.value })} /><Input disabled={key === "accentColor" && !on("branding_documents")} aria-label={`${key} hex`} value={t[key]} onChange={(e) => onChange({ ...t, [key]: validColor(e.target.value, t[key]) })} /></div></div>)}</div>
@@ -29,7 +34,7 @@ export function BrandControls({ template: t, onChange, logo, companyId }: { temp
       <BrandingLock allowed={on("branding_documents")} feature="branding_documents"><TextLayerControls template={t} onChange={onChange} /></BrandingLock>
       <details className="border-t pt-3"><summary className="cursor-pointer font-medium">Field names</summary><div className="mt-3 grid gap-3 sm:grid-cols-2">{Object.entries(FIELD_LABELS).map(([key, label]) => <div key={key} className="space-y-1"><Label htmlFor={`word-${key}`}>{label}</Label><Input id={`word-${key}`} maxLength={80} placeholder={label} value={t.labels[key] ?? ""} onChange={(e) => onChange({ ...t, labels: { ...t.labels, [key]: e.target.value } })} /></div>)}</div></details>
     </div>
-    <Tabs defaultValue="paper"><TabsList className="mb-4"><TabsTrigger value="paper">Client document</TabsTrigger><TabsTrigger value="form">Entry form</TabsTrigger></TabsList><TabsContent value="paper"><DocumentPreview template={t} logo={logo} /></TabsContent><TabsContent value="form"><DocumentPreview template={t} logo={logo} mode="form" /></TabsContent></Tabs>
+    <Tabs defaultValue="paper" className="lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:self-start lg:overflow-y-auto"><TabsList className="mb-4"><TabsTrigger value="paper">Client document</TabsTrigger><TabsTrigger value="form">Entry form</TabsTrigger></TabsList><TabsContent value="paper"><DocumentPreview template={t} logo={logo} /></TabsContent><TabsContent value="form"><DocumentPreview template={t} logo={logo} mode="form" /></TabsContent></Tabs>
   </section>;
 }
 
@@ -46,6 +51,11 @@ function TextLayerControls({ template: t, onChange }: { template: PdfTemplate; o
         <Button type="button" size="icon" variant={l.bold ? "default" : "outline"} aria-label={`${label} bold`} aria-pressed={l.bold} onClick={() => set(key, { bold: !l.bold })}><Bold className="h-4 w-4" /></Button>
         <Button type="button" size="icon" variant={l.italic ? "default" : "outline"} aria-label={`${label} italic`} aria-pressed={l.italic} onClick={() => set(key, { italic: !l.italic })}><Italic className="h-4 w-4" /></Button>
         {l.color && <Button type="button" size="sm" variant="ghost" onClick={() => set(key, { color: "" })}>Reset colour</Button>}
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Label className="text-xs">Button background</Label>
+        <Input type="color" aria-label={`${label} background`} className="h-9 w-14 p-1" value={l.background || "#ffffff"} onChange={e => set(key, { background: e.target.value })} />
+        {l.background ? <Button type="button" size="sm" variant="ghost" onClick={() => set(key, { background: "" })}>No background</Button> : <span className="text-xs text-muted-foreground">Off — pick a colour to show it as a button</span>}
       </div>
       {l.italic && l.font === "document" && t.documentFont === "custom" && <p className="text-xs text-muted-foreground">Uploaded company fonts print upright in PDFs; choose a standard font for italic PDFs.</p>}
     </div>; })}

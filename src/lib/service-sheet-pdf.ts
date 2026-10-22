@@ -40,7 +40,8 @@ export async function buildServicePdf(d: PdfSheetData) {
   const fieldHex = d.template.fieldBackground ?? "#ffffff";
   const fieldColor = rgb(parseInt(fieldHex.slice(1,3),16)/255,parseInt(fieldHex.slice(3,5),16)/255,parseInt(fieldHex.slice(5,7),16)/255);
   const para = (value: string) => { for(const valueLine of wrap(value,width,9,layers.detail.font)) { need(13); page.drawRectangle({x:M,y:y-3,width,height:13,color:fieldColor}); text(valueLine,M,y,9,false,layers.detail); y-=13; } };
-  const label = (value: string) => { need(35); y-=8; text(value.toUpperCase(),M,y,8,true,layers.label); y-=14; };
+  const labelFill = d.template.textStyles?.label?.background;
+  const label = (value: string) => { need(35); y-=8; const v=safe(value.toUpperCase()); if(labelFill) page.drawRectangle({x:M-3,y:y-3,width:layers.label.font.widthOfTextAtSize(v,8)+6,height:12,color:rgb(parseInt(labelFill.slice(1,3),16)/255,parseInt(labelFill.slice(3,5),16)/255,parseInt(labelFill.slice(5,7),16)/255)}); text(v,M,y,8,true,layers.label); y-=14; };
   const image = async (data: string | null | undefined,x: number,top: number,w: number,h: number) => {
     if (!data?.startsWith("data:image/")) return;
     try { const img = data.startsWith("data:image/png") ? await doc.embedPng(data) : await doc.embedJpg(data); const scale=Math.min(w/img.width,h/img.height); page.drawImage(img,{x:x+(w-img.width*scale)/2,y:top-img.height*scale,width:img.width*scale,height:img.height*scale}); } catch { /* Invalid optional image must not prevent delivery. */ }

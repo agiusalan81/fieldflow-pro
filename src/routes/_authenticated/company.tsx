@@ -17,6 +17,7 @@ import { CURRENCIES } from "@/lib/locale";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DocumentSettings } from "@/components/document-settings";
 import { DocumentLibrary } from "@/components/document-library";
+import { useCompanyTitle } from "@/lib/company-name";
 import { SafetySettings } from "@/components/safety-settings";
 import { IntegrationsSettings } from "@/components/integrations-settings";
 import { AppShell, EmptyState } from "@/components/app-shell";
@@ -391,6 +392,7 @@ function AccessTab({ companyId }: { companyId: string }) {
 
 type SectionItem = { key: string; label: string; render: () => React.ReactNode };
 function SettingsSections({ superuser, companyId, userId }: { superuser: boolean; companyId: string; userId: string }) {
+  const libraryName = useCompanyTitle("document library");
   const groups: { title: string; items: SectionItem[] }[] = [
     { title: "Company & brand", items: [
       { key: "profile", label: "Profile & details", render: () => <ProfileTab companyId={companyId} part="details" /> },
@@ -405,7 +407,7 @@ function SettingsSections({ superuser, companyId, userId }: { superuser: boolean
     ] },
     { title: "Documents & legal", items: [
       { key: "terms", label: "Terms & conditions", render: () => <DocumentSettings companyId={companyId} part="terms" /> },
-      { key: "library", label: "Document library", render: () => <DocumentLibrary companyId={companyId} userId={userId} /> },
+      { key: "library", label: libraryName, render: () => <DocumentLibrary companyId={companyId} userId={userId} /> },
     ] },
     { title: "Commercial & integrations", items: [
       { key: "estimates", label: "Estimates & suppliers", render: () => <EstimateSettings companyId={companyId} /> },

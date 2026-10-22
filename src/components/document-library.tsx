@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { digitizeLibraryDocument } from "@/lib/document-library.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { DocumentMasters } from "@/components/document-masters";
+import { useCompanyTitle } from "@/lib/company-name";
 
 const BUCKET = "company-documents";
 
@@ -36,6 +37,7 @@ type Doc = {
 const fmtSize = (b: number) => (b >= 1_000_000 ? `${(b / 1_000_000).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1000))} KB`);
 
 export function DocumentLibrary({ companyId, userId }: { companyId: string; userId: string }) {
+  const libraryName = useCompanyTitle("document library");
   const digitize = useServerFn(digitizeLibraryDocument);
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -104,7 +106,7 @@ export function DocumentLibrary({ companyId, userId }: { companyId: string; user
   return (
     <section className="space-y-5 rounded-xl border bg-card p-5">
       <div>
-        <h2 className="font-medium text-foreground">Document library</h2>
+        <h2 className="font-medium text-foreground">{libraryName}</h2>
         <p className="text-sm text-muted-foreground">
           Upload your existing checklists, contracts and terms &amp; conditions. These become the source documents the app
           uses to auto-fill checklists, contract details and T&amp;C presets.
@@ -174,7 +176,7 @@ export function DocumentLibrary({ companyId, userId }: { companyId: string; user
         <DialogContent>
           <DialogHeader><DialogTitle>Delete document?</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">
-            “{deleting?.name}” will be permanently removed from the document library.
+            “{deleting?.name}” will be permanently removed from the {libraryName}.
           </p>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setDeleting(null)}>Cancel</Button>

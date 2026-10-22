@@ -1,4 +1,8 @@
 # Roadmap
+- [x] Brand studio: sticky preview; heading background (button look) in preview + PDFs.
+- [x] Technical data structure: guide + one-tap suggestions; same suggestions for Estimates & suppliers.
+- [x] "[Company] document library" / technical library naming.
+- [x] Accounting: provider picker with step-by-step connection guide (Zoho, QuickBooks, Xero, Sage, webhook).
 - [x] Restore office billing review from completed Job sheets rows and refresh list/attention queries after saves. Real authorised account opened sheet #007626 with rates, totals and approval controls; 11 billing tests passed, build OK. No real billing approval or accounting export performed.
 - [x] Approved six-part batch: Pending Works guarded routing/private thumbnails; annual-leave blackouts/operational review; unified Team/confirmed roles; range swaps/menu badge with manager approval; plate/case-insensitive label fixes; private equipment/public problem QR; compact manager alerts. 49 focused tests passed; signed-in category filtering, technical QR, swap dates and unauthorised-write denial verified.
 - [x] Six-part manager end-to-end checks: Pending Works dispatch/save, role confirmation/save, blackout approval, swap manager approval, Fleet save and public-report QR creation/read-back (blocked: current requesting account is Technician; needs a consenting permitted manager account).
