@@ -4071,6 +4071,23 @@ export type Database = {
       my_commercial_status: { Args: never; Returns: Json }
       my_registration_status: { Args: never; Returns: string }
       my_role: { Args: never; Returns: Database["public"]["Enums"]["app_role"] }
+      open_jobs_for_me: {
+        Args: never
+        Returns: {
+          client_name: string
+          id: string
+          job_number: number
+          places_left: number
+          priority: string
+          problem_summary: string
+          required_team_size: number
+          scheduled_date: string
+          site_name: string
+          skills: string[]
+          window_end: string
+          window_start: string
+        }[]
+      }
       platform_company_directory: {
         Args: never
         Returns: {
