@@ -5,7 +5,8 @@ import { BrandingUpload } from "./branding-upload";
 import { DOCUMENT_FONT_OPTIONS } from "@/lib/branding-assets";
 import { Pipette } from "lucide-react";
 import { toast } from "sonner";
-import { DOCUMENT_STYLES, FIELD_LABELS, validColor, type PdfTemplate } from "@/lib/documents";
+import { DEFAULT_TEXT_STYLES, DOCUMENT_STYLES, FIELD_LABELS, TEXT_LAYERS, layerColor, validColor, type PdfTemplate, type TextLayer, type TextLayerKey } from "@/lib/documents";
+import { Bold, Italic } from "lucide-react";
 import { extractPalette } from "@/lib/palette-extractor";
 import { DocumentPreview } from "@/components/document-preview";
 import { Button } from "@/components/ui/button";
@@ -25,8 +26,28 @@ export function BrandControls({ template: t, onChange, logo, companyId }: { temp
       <BrandingLock allowed={on("branding_fonts")} feature="branding_fonts"><div className="space-y-2"><Label>Document font</Label><Select value={t.documentFont ?? "standard"} onValueChange={font => onChange({ ...t, documentFont: font as PdfTemplate["documentFont"] })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{DOCUMENT_FONT_OPTIONS.map(f => <SelectItem key={f.value} value={f.value} disabled={f.value === "custom" && (!on("branding_custom_fonts") || !t.fontPath)}>{f.label}</SelectItem>)}</SelectContent></Select></div><Select value={t.font} onValueChange={font => onChange({ ...t, font: font as PdfTemplate["font"] })}><SelectTrigger aria-label="Standard font family"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="sans">Clean sans</SelectItem><SelectItem value="serif">Classic serif</SelectItem><SelectItem value="mono">Technical mono</SelectItem></SelectContent></Select></BrandingLock>
       <BrandingLock allowed={on("branding_custom_fonts")} feature="branding_custom_fonts"><BrandingUpload companyId={companyId} kind="fonts" label="Custom document font" path={t.fontPath ?? ""} onChange={(fontPath, fontName) => onChange({ ...t, fontPath, fontName, documentFont: fontPath ? "custom" : "standard" })} />{t.fontName && <p className="break-words text-xs">{t.fontName}</p>}</BrandingLock>
       <BrandingLock allowed={on("branding_documents")} feature="branding_documents"><div className="space-y-2"><Label>Document frame</Label><Select value={t.frame ?? "none"} onValueChange={frame => onChange({ ...t, frame: frame as PdfTemplate["frame"] })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">No frame</SelectItem><SelectItem value="line">Fine line</SelectItem><SelectItem value="double">Double line</SelectItem></SelectContent></Select></div><BrandingUpload companyId={companyId} kind="backgrounds" label="Document background" path={t.backgroundPath ?? ""} onChange={backgroundPath => onChange({ ...t, backgroundPath })} /><div className="grid grid-cols-2 gap-3">{([['fieldBackground','Document field background'],['fieldText','Document field text']] as const).map(([key,label]) => <div key={key} className="space-y-2"><Label>{label}</Label><Input type="color" aria-label={label} className="h-10 w-14 p-1" value={t[key] ?? (key === "fieldBackground" ? "#ffffff" : "#202020")} onChange={e => onChange({ ...t, [key]: e.target.value })} /></div>)}</div></BrandingLock>
+      <BrandingLock allowed={on("branding_documents")} feature="branding_documents"><TextLayerControls template={t} onChange={onChange} /></BrandingLock>
       <details className="border-t pt-3"><summary className="cursor-pointer font-medium">Field names</summary><div className="mt-3 grid gap-3 sm:grid-cols-2">{Object.entries(FIELD_LABELS).map(([key, label]) => <div key={key} className="space-y-1"><Label htmlFor={`word-${key}`}>{label}</Label><Input id={`word-${key}`} maxLength={80} placeholder={label} value={t.labels[key] ?? ""} onChange={(e) => onChange({ ...t, labels: { ...t.labels, [key]: e.target.value } })} /></div>)}</div></details>
     </div>
     <Tabs defaultValue="paper"><TabsList className="mb-4"><TabsTrigger value="paper">Client document</TabsTrigger><TabsTrigger value="form">Entry form</TabsTrigger></TabsList><TabsContent value="paper"><DocumentPreview template={t} logo={logo} /></TabsContent><TabsContent value="form"><DocumentPreview template={t} logo={logo} mode="form" /></TabsContent></Tabs>
   </section>;
+}
+
+/** Separate font, colour, bold and italic for company name, field headings and field details. */
+function TextLayerControls({ template: t, onChange }: { template: PdfTemplate; onChange: (t: PdfTemplate) => void }) {
+  const styles = t.textStyles ?? DEFAULT_TEXT_STYLES;
+  const set = (k: TextLayerKey, patch: Partial<TextLayer>) => onChange({ ...t, textStyles: { ...styles, [k]: { ...styles[k], ...patch } } });
+  return <div className="space-y-3 border-t pt-4"><div><h3 className="font-medium">Text styles</h3><p className="text-sm text-muted-foreground">Style the company name, field headings and field details separately.</p></div>
+    {TEXT_LAYERS.map(({ key, label, hint }) => { const l = styles[key]; const colour = layerColor(t, key); return <div key={key} className="space-y-2 rounded-lg border p-3">
+      <div><p className="text-sm font-medium">{label}</p><p className="text-xs text-muted-foreground">{hint}</p></div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Select value={l.font} onValueChange={v => set(key, { font: v as TextLayer["font"] })}><SelectTrigger aria-label={`${label} font`} className="w-44"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="document">Document font</SelectItem><SelectItem value="sans">Clean sans</SelectItem><SelectItem value="serif">Classic serif</SelectItem><SelectItem value="mono">Technical mono</SelectItem></SelectContent></Select>
+        <Input type="color" aria-label={`${label} colour`} className="h-10 w-14 p-1" value={colour} onChange={e => set(key, { color: e.target.value })} />
+        <Button type="button" size="icon" variant={l.bold ? "default" : "outline"} aria-label={`${label} bold`} aria-pressed={l.bold} onClick={() => set(key, { bold: !l.bold })}><Bold className="h-4 w-4" /></Button>
+        <Button type="button" size="icon" variant={l.italic ? "default" : "outline"} aria-label={`${label} italic`} aria-pressed={l.italic} onClick={() => set(key, { italic: !l.italic })}><Italic className="h-4 w-4" /></Button>
+        {l.color && <Button type="button" size="sm" variant="ghost" onClick={() => set(key, { color: "" })}>Reset colour</Button>}
+      </div>
+      {l.italic && l.font === "document" && t.documentFont === "custom" && <p className="text-xs text-muted-foreground">Uploaded company fonts print upright in PDFs; choose a standard font for italic PDFs.</p>}
+    </div>; })}
+  </div>;
 }
