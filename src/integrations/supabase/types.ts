@@ -2872,6 +2872,7 @@ export type Database = {
           referral_reward: number
           sort_order: number
           state: string
+          storage_gb: number
           yearly_price: number
         }
         Insert: {
@@ -2889,6 +2890,7 @@ export type Database = {
           referral_reward?: number
           sort_order?: number
           state?: string
+          storage_gb?: number
           yearly_price?: number
         }
         Update: {
@@ -2906,6 +2908,7 @@ export type Database = {
           referral_reward?: number
           sort_order?: number
           state?: string
+          storage_gb?: number
           yearly_price?: number
         }
         Relationships: [
@@ -2958,6 +2961,122 @@ export type Database = {
             foreignKeyName: "platform_conversions_subscription_id_fkey"
             columns: ["subscription_id"]
             isOneToOne: true
+            referencedRelation: "platform_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_invoice_reminders: {
+        Row: {
+          created_at: string
+          id: string
+          invoice_id: string
+          stage: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invoice_id: string
+          stage: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          stage?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_invoice_reminders_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "platform_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_invoices: {
+        Row: {
+          collection: string
+          company_id: string | null
+          created_at: string
+          currency: string
+          discount: number
+          due_date: string
+          id: string
+          invoice_number: string
+          issue_date: string
+          lines: Json
+          notes: string | null
+          paid_at: string | null
+          payment_ref: string | null
+          period_end: string
+          period_start: string
+          status: string
+          subscription_id: string
+          subtotal: number
+          total: number
+          vat: number
+          vat_rate: number
+        }
+        Insert: {
+          collection?: string
+          company_id?: string | null
+          created_at?: string
+          currency?: string
+          discount?: number
+          due_date: string
+          id?: string
+          invoice_number?: string
+          issue_date?: string
+          lines?: Json
+          notes?: string | null
+          paid_at?: string | null
+          payment_ref?: string | null
+          period_end: string
+          period_start: string
+          status?: string
+          subscription_id: string
+          subtotal?: number
+          total?: number
+          vat?: number
+          vat_rate?: number
+        }
+        Update: {
+          collection?: string
+          company_id?: string | null
+          created_at?: string
+          currency?: string
+          discount?: number
+          due_date?: string
+          id?: string
+          invoice_number?: string
+          issue_date?: string
+          lines?: Json
+          notes?: string | null
+          paid_at?: string | null
+          payment_ref?: string | null
+          period_end?: string
+          period_start?: string
+          status?: string
+          subscription_id?: string
+          subtotal?: number
+          total?: number
+          vat?: number
+          vat_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_invoices_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_invoices_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
             referencedRelation: "platform_subscriptions"
             referencedColumns: ["id"]
           },
@@ -4014,6 +4133,7 @@ export type Database = {
         Args: { _company: string; _module: string }
         Returns: boolean
       }
+      company_storage_usage: { Args: { _company: string }; Returns: Json }
       create_equipment_report_link: {
         Args: { _asset: string }
         Returns: string
