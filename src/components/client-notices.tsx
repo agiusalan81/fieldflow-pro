@@ -88,15 +88,23 @@ export function DepartureAlerts({ userId }: { userId: string }) {
 export function NoAccessButton({ profile, jobs }: { profile: Profile; jobs: { id: string; job_number: number; clients: { name: string } | null; sites: { name: string } | null }[] }) {
   const [open, setOpen] = useState(false);
   const [jobId, setJobId] = useState<string | null>(null);
+  const [mode, setMode] = useState<"job" | "site">(jobs.length ? "job" : "site");
+  const [siteId, setSiteId] = useState("");
+  const [siteSearch, setSiteSearch] = useState("");
   const [note, setNote] = useState("");
+  useEffect(() => { if (open) { setMode(jobs.length ? "job" : "site"); if (jobs.length === 1 && jobs[0]) setJobId(jobs[0].id); } }, [open, jobs]);
+  const sites = useQuery({ enabled: open && mode === "site", queryKey: ["no-access-sites"], queryFn: async () => { const r = await supabase.from("sites").select("id, name, address, client_id, clients(name)").order("name").limit(500); if (r.error) throw r.error; return r.data; } });
+  const site = sites.data?.find((x) => x.id === siteId);
+  const ready = mode === "job" ? !!jobId : !!site;
   const [busy, setBusy] = useState(false);
   const qc = useQueryClient();
   const enabled = useNoticeEnabled("no_access");
   const go = async () => {
-    if (!jobId) { toast.error("Pick the job you attended"); return; }
+    if (!ready) { toast.error(mode === "job" ? "Pick the job you attended" : "Pick the site you attended"); return; }
     setBusy(true);
     try {
-      const id = await createDraftSheet(profile, jobId);
+      const id = await createDraftSheet(profile, mode === "job" ? jobId ?? undefined : undefined);
+      if (mode === "site" && site) { const { error: se } = await supabase.from("job_sheets").update({ client_id: site.client_id, site_id: site.id }).eq("id", id); if (se) throw se; }
       const now = new Date();
       const t = now.toTimeString().slice(0, 5);
       const { error } = await supabase.from("job_sheets").update({
@@ -106,11 +114,11 @@ export function NoAccessButton({ profile, jobs }: { profile: Profile; jobs: { id
       if (error) throw error;
       await supabase.from("jobsheet_time_logs").delete().eq("jobsheet_id", id);
       await supabase.from("jobsheet_time_logs").insert({ jobsheet_id: id, company_id: profile.company_id, log_date: now.toISOString().slice(0, 10), time_in: t, time_out: t, daily_work_description: "Attended — no access", technician_initials: [], sort_order: 0 });
-      await supabase.from("jobs").update({ acknowledged_at: now.toISOString() }).eq("id", jobId);
+      if (mode === "job" && jobId) await supabase.from("jobs").update({ acknowledged_at: now.toISOString() }).eq("id", jobId);
       const res = await sendClientNotice({ data: { sheetId: id, event: "no_access" } });
       report(res.result);
       qc.invalidateQueries({ queryKey: ["today-jobs"] });
-      setOpen(false); setJobId(null); setNote("");
+      setOpen(false); setJobId(null); setSiteId(""); setSiteSearch(""); setNote("");
     } catch (e) { toast.error((e as Error).message); } finally { setBusy(false); }
   };
   if (!enabled) return null;
@@ -120,7 +128,20 @@ export function NoAccessButton({ profile, jobs }: { profile: Profile; jobs: { id
       <DialogContent>
         <DialogHeader><DialogTitle>Nobody to open</DialogTitle></DialogHeader>
         <p className="text-sm text-muted-foreground">Records your visit and sends the client the "no one to open" message by email and WhatsApp.</p>
-        {jobs.length === 0 ? <p className="text-sm text-muted-foreground">No jobs for you today.</p> : (
+        <div className="grid grid-cols-2 gap-2"><Button type="button" size="sm" variant={mode === "job" ? "default" : "outline"} onClick={() => setMode("job")}>My jobs today</Button><Button type="button" size="sm" variant={mode === "site" ? "default" : "outline"} onClick={() => setMode("site")}>Pick a site (phoned in)</Button></div>
+        {mode === "site" ? (
+          <div className="space-y-2">
+            <Input placeholder="Search site, address or client" value={siteSearch} onChange={(e) => setSiteSearch(e.target.value)} />
+            <ul className="max-h-64 space-y-2 overflow-y-auto">
+              {sites.isLoading && <li className="text-sm text-muted-foreground">Loading sites…</li>}
+              {(sites.data ?? []).filter((x) => { const q = siteSearch.trim().toLowerCase(); return !q || `${x.name} ${x.address ?? ""} ${x.clients?.name ?? ""}`.toLowerCase().includes(q); }).slice(0, 50).map((x) => (
+                <li key={x.id}><button type="button" onClick={() => setSiteId(x.id)} className={`w-full rounded-lg border p-3 text-left text-sm ${siteId === x.id ? "border-primary bg-primary/10" : ""}`}>
+                  <span className="font-medium text-foreground">{x.name}</span><span className="block text-muted-foreground">{x.clients?.name}{x.address ? ` · ${x.address}` : ""}</span>
+                </button></li>
+              ))}
+            </ul>
+          </div>
+        ) : jobs.length === 0 ? <p className="text-sm text-muted-foreground">No jobs for you today — use "Pick a site".</p> : (
           <ul className="max-h-64 space-y-2 overflow-y-auto">
             {jobs.map((j) => (
               <li key={j.id}><button type="button" onClick={() => setJobId(j.id)} className={`w-full rounded-lg border p-3 text-left text-sm ${jobId === j.id ? "border-primary bg-primary/10" : ""}`}>
@@ -130,7 +151,8 @@ export function NoAccessButton({ profile, jobs }: { profile: Profile; jobs: { id
           </ul>
         )}
         <Textarea rows={2} placeholder="Optional note (e.g. rang the bell twice, called contact)" value={note} onChange={(e) => setNote(e.target.value)} />
-        <Button className="h-11" disabled={busy || !jobId} onClick={go}>Record visit & notify client</Button>
+        <Button className="h-11" disabled={busy || !ready} onClick={go}>Record visit & notify client</Button>
+        {!ready && <p className="text-center text-xs text-muted-foreground">{mode === "job" ? "Tap the job you attended to continue" : "Tap the site you attended to continue"}</p>}
       </DialogContent>
     </Dialog>
   );
