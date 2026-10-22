@@ -1,0 +1,1 @@
+ALTER TABLE public.company_settings ADD COLUMN IF NOT EXISTS trades text[] NOT NULL DEFAULT '{}'::text[];
