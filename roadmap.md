@@ -200,4 +200,4 @@
 - [x] Storage add-on, HQ invoices & reminders
 - [ ] Online card payments — waiting for provider confirmation (Paddle recommended)
 
-- [ ] Billing review: audit catalog/entitlement/invoices/payments, ask owner questions, fix gaps, add Stripe invoice checkout + test guide
+- [x] Billing review: online invoice payments, saved cards, renewals, reminders, read-only lapse, upgrade/downgrade rules
