@@ -22,7 +22,7 @@ export function DocumentPreviewTabs({ template, logo, className }: PreviewProps 
 export function MobileDocumentPreview(props: PreviewProps) {
   const [open, setOpen] = useState(false);
   return <>
-    <Button type="button" className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-4 z-40 h-11 shadow-lg lg:hidden" onClick={() => setOpen(true)}><Eye className="mr-2 h-4 w-4" />View live preview</Button>
+    <Button type="button" className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] right-4 z-40 h-11 shadow-lg lg:hidden" onClick={() => setOpen(true)}><Eye className="mr-2 h-4 w-4" />View live preview</Button>
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetContent side="bottom" aria-describedby={undefined} className="flex h-[100dvh] flex-col gap-3 p-3 pt-5 [&>button]:hidden">
         <SheetHeader className="flex-row items-center justify-between space-y-0 text-left">
