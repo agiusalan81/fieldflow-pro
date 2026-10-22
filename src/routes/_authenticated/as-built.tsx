@@ -8,6 +8,7 @@ import type { Json } from "@/integrations/supabase/types";
 import { useProfile, isManager } from "@/lib/profile";
 import { usePlanFeatures } from "@/lib/plan-features";
 import { TRADES } from "@/lib/price-list";
+import { useCompanyRules } from "@/lib/company";
 import { finalAccount, finalQty, linesFromProposal, tally, unresolved, variance, varianceValue, type ReviewDecision, type SurveyLine, type SurveyReview } from "@/lib/as-built";
 import type { Line } from "@/lib/proposals";
 import { AppShell, EmptyState } from "@/components/app-shell";
@@ -42,7 +43,11 @@ function AsBuiltPage() {
 }
 
 function List({ companyId, manager, onOpen }: { companyId: string; manager: boolean; onOpen: (id: string) => void }) {
+  const company = useCompanyRules();
+  const chosen = company.data?.trades ?? [];
+  const trades = chosen.length ? TRADES.filter((t) => chosen.includes(t.key)) : TRADES;
   const [trade, setTrade] = useState("electrical");
+  useEffect(() => { if (!trades.some((t) => t.key === trade) && trades[0]) setTrade(trades[0].key); }, [trades, trade]);
   const [proposal, setProposal] = useState("");
   const q = useQuery({ queryKey: ["qs_surveys"], queryFn: async () => { const r = await supabase.from("qs_surveys").select("id, title, trade, site_label, status, updated_at").order("updated_at", { ascending: false }); if (r.error) throw r.error; return r.data; } });
   const props = useQuery({ enabled: manager, queryKey: ["proposals-for-survey"], queryFn: async () => { const r = await supabase.from("proposals").select("id, reference, title, trade, lines").order("updated_at", { ascending: false }); if (r.error) throw r.error; return r.data; } });
@@ -55,7 +60,7 @@ function List({ companyId, manager, onOpen }: { companyId: string; manager: bool
   return <div className="mx-auto max-w-4xl space-y-4">
     <div className="flex flex-wrap items-end gap-2">
       {manager && <div className="min-w-56 flex-1 space-y-1"><Label htmlFor="ab-prop">Start from proposal</Label><select id="ab-prop" className={sel} value={proposal} onChange={(e) => setProposal(e.target.value)}><option value="">No proposal (blank)</option>{props.data?.map((p) => <option key={p.id} value={p.id}>{p.reference} {p.title}</option>)}</select></div>}
-      {!proposal && <div className="min-w-48 space-y-1"><Label htmlFor="ab-trade">Trade</Label><select id="ab-trade" className={sel} value={trade} onChange={(e) => setTrade(e.target.value)}>{TRADES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}</select></div>}
+      {!proposal && <div className="min-w-48 space-y-1"><Label htmlFor="ab-trade">Trade</Label><select id="ab-trade" className={sel} value={trade} onChange={(e) => setTrade(e.target.value)}>{trades.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}</select></div>}
       <Button onClick={create}><Plus className="mr-1 h-4 w-4" />New survey</Button>
     </div>
     {q.isLoading ? <p className="text-muted-foreground">Loading…</p> : !q.data?.length ? <EmptyState>No site surveys yet.</EmptyState> :

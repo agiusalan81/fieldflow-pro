@@ -552,6 +552,7 @@ export type Database = {
           technical_structure: Json
           terms: Json
           theme: Json
+          trades: string[]
           updated_at: string
           vat_number: string
           website: string | null
@@ -599,6 +600,7 @@ export type Database = {
           technical_structure?: Json
           terms?: Json
           theme?: Json
+          trades?: string[]
           updated_at?: string
           vat_number?: string
           website?: string | null
@@ -646,6 +648,7 @@ export type Database = {
           technical_structure?: Json
           terms?: Json
           theme?: Json
+          trades?: string[]
           updated_at?: string
           vat_number?: string
           website?: string | null
