@@ -35,7 +35,7 @@ function SkillsPage() {
   const [name, setName] = useState(""); const [category, setCategory] = useState(""); const [showArchived, setShowArchived] = useState(false);
   const refresh = () => { qc.invalidateQueries({ queryKey: ["company-skills"] }); qc.invalidateQueries({ queryKey: ["member-skills"] }); };
 
-  if (!feature("skills_dispatch")) return <AppShell title="Skills & specialties"><EmptyState title="Skills & Smart Dispatch is not in your plan" hint="Ask your company owner to add this module from Billing & Plan." /></AppShell>;
+  if (!feature("skills_dispatch")) return <AppShell title="Skills & specialties"><EmptyState>Skills & Smart Dispatch is not in your plan. Ask your company owner to add this module from Billing & Plan.</EmptyState></AppShell>;
 
   const all = skills.data ?? [];
   const active = all.filter(s => !s.archived);
@@ -58,7 +58,7 @@ function SkillsPage() {
   if (!manager) {
     const mine = active.filter(s => p && has(p.id, s.id));
     return <AppShell title="My skills"><div className="space-y-3"><p className="text-sm text-muted-foreground">Your supervisor or office assigns these. They decide which open jobs you can claim.</p>
-      {mine.length ? <div className="flex flex-wrap gap-2">{mine.map(s => <span key={s.id} className="rounded-full border bg-secondary px-3 py-1.5 text-sm text-secondary-foreground">{s.name}</span>)}</div> : <EmptyState title="No skills assigned yet" hint="Ask your supervisor to add your skills." />}
+      {mine.length ? <div className="flex flex-wrap gap-2">{mine.map(s => <span key={s.id} className="rounded-full border bg-secondary px-3 py-1.5 text-sm text-secondary-foreground">{s.name}</span>)}</div> : <EmptyState>No skills assigned yet. Ask your supervisor to add your skills.</EmptyState>}
     </div></AppShell>;
   }
 
@@ -82,7 +82,7 @@ function SkillsPage() {
         </section>
         <section className="space-y-3">
           <h2 className="font-medium">Team skills</h2>
-          {!active.length ? <EmptyState title="Add a skill first" hint="Then tap skills under each person to assign them." /> : members.map(u => (
+          {!active.length ? <EmptyState>Add a skill first. Then tap skills under each person to assign them.</EmptyState> : members.map(u => (
             <div key={u.id} className="rounded-xl border bg-card p-4">
               <p className="font-medium">{u.full_name} <span className="text-xs capitalize text-muted-foreground">· {u.role}</span></p>
               <div className="mt-2 flex flex-wrap gap-2">{active.map(s => { const on = has(u.id, s.id); return <button key={s.id} type="button" aria-pressed={on} onClick={() => toggle(u.id, s.id)} className={`min-h-9 rounded-full border px-3 text-sm ${on ? "border-primary bg-primary text-primary-foreground" : "bg-background text-foreground"}`}>{on ? "✓ " : ""}{s.name}</button>; })}</div>

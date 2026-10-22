@@ -26,7 +26,7 @@ function AvailableJobs() {
   const qc = useQueryClient();
   const [busy, setBusy] = useState<string | null>(null);
   const jobs = useQuery({ queryKey: ["open-jobs"], refetchInterval: 30_000, queryFn: async () => { const r = await supabase.rpc("open_jobs_for_me"); if (r.error) throw r.error; return r.data ?? []; } });
-  if (!feature("skills_dispatch")) return <AppShell title="Available jobs"><EmptyState title="Not included in your plan" hint="Open job claiming is part of Skills & Smart Dispatch." /></AppShell>;
+  if (!feature("skills_dispatch")) return <AppShell title="Available jobs"><EmptyState>Not included in your plan. Open job claiming is part of Skills & Smart Dispatch.</EmptyState></AppShell>;
   const claim = async (id: string) => {
     setBusy(id);
     const r = await supabase.rpc("claim_open_job", { _job: id });
@@ -38,7 +38,7 @@ function AvailableJobs() {
     <AppShell title="Available jobs">
       <div className="space-y-3">
         <p className="text-sm text-muted-foreground">Jobs open to the team that match your skills. You must be clocked in to claim.</p>
-        {jobs.isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : !(jobs.data ?? []).length ? <EmptyState title="No open jobs right now" hint="New open jobs appear here automatically." /> : (jobs.data ?? []).map(j => (
+        {jobs.isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : !(jobs.data ?? []).length ? <EmptyState>No open jobs right now. New open jobs appear here automatically.</EmptyState> : (jobs.data ?? []).map(j => (
           <div key={j.id} className="rounded-xl border bg-card p-4">
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div><p className="font-medium">#{j.job_number} · {j.client_name ?? "Client"}{j.site_name ? ` · ${j.site_name}` : ""}</p>
