@@ -185,3 +185,10 @@
 - [x] Rename "Trades we work in" to "Operating Trades & Services"; add Drains main industry
 - [x] Price list trade picker shows only operating trades, opens on main industry
 - [ ] HQ trade modules for monetisation (planned, not built)
+
+## Team, QR & menu batch (22 Oct 2026)
+- [x] Registered team list locked by level in the database (supervisor → sup+tech; admin → +admins; superuser → all)
+- [x] Team chat placed beside Team in admin and supervisor menus
+- [x] Branded equipment QR stickers with company logo in the centre
+- [ ] Fleet menu shows only when company plan has Fleet Management switched on (check HQ plan)
+- [ ] Company Settings Previous/Next buttons and mobile live preview (next batch)
