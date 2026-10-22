@@ -70,7 +70,7 @@ export function DocumentSettings({ companyId, part }: { companyId: string; part:
     if (readError) { toast.error(readError.message); setSaving(false); return; }
     const prior = (latest?.pdf_template ?? {}) as Record<string, unknown>;
     const next = { ...prior, primaryColor: t.primaryColor, labels: t.labels, header: t.header, footer: t.footer, showTravel: t.showTravel,
-      ...(planOn("branding_documents") ? { order: t.order, hidden: t.hidden, stylePreset: t.stylePreset, accentColor: t.accentColor, frame: t.frame, backgroundPath: t.backgroundPath, fieldBackground: t.fieldBackground, fieldText: t.fieldText } : {}),
+      ...(planOn("branding_documents") ? { order: t.order, hidden: t.hidden, stylePreset: t.stylePreset, accentColor: t.accentColor, frame: t.frame, backgroundPath: t.backgroundPath, fieldBackground: t.fieldBackground, fieldText: t.fieldText, textStyles: t.textStyles } : {}),
       ...(planOn("branding_fonts") ? { font: t.font, documentFont: t.documentFont } : {}),
       ...(planOn("branding_custom_fonts") ? { fontPath: t.fontPath, fontName: t.fontName } : {}) };
     const { error } = await supabase.from("company_settings").upsert({ company_id: companyId, pdf_template: next as never, terms: terms as never, note_presets: presets.filter((p) => p.label.trim()) as never });

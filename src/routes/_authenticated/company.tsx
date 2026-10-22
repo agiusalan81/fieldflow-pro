@@ -326,7 +326,7 @@ function IndustryTab({ companyId }: { companyId: string }) {
       const appearance = { ...((theme["appearance"] ?? {}) as Record<string, unknown>), ...(on("branding_industry") ? { industryPreset: preset } : {}) };
       const { error } = await supabase.from("company_settings").upsert({ company_id: companyId, industry: INDUSTRY_LABELS[preset], trades, theme: { ...theme, appearance } as never });
       if (error) throw error;
-      await qc.invalidateQueries({ queryKey: ["company-settings"] }); toast.success("Industry & trades saved");
+      await qc.invalidateQueries({ queryKey: ["company-settings"] }); toast.success("Industry & services saved");
     } catch (e) { toast.error(e instanceof Error ? e.message : "Could not save"); } finally { setBusy(false); }
   };
   return (
@@ -343,7 +343,7 @@ function IndustryTab({ companyId }: { companyId: string }) {
         {!on("branding_industry") && <p className="text-xs text-muted-foreground">Industry-specific menu wording is available on higher plans; your choice is still saved.</p>}
       </section>
       <section className="space-y-3 rounded-xl border bg-card p-5">
-        <div><h2 className="font-medium text-foreground">Trades we work in</h2><p className="text-sm text-muted-foreground">Tick every trade your company does. Site surveys, estimates and proposals only offer these. Leave all off to show every trade.</p></div>
+        <div><h2 className="font-medium text-foreground">Operating Trades & Services</h2><p className="text-sm text-muted-foreground">Select the trade disciplines your company delivers. Price lists, site surveys and estimates only offer these. Leave all off to show every trade.</p></div>
         <div className="grid gap-2 sm:grid-cols-2">
           {TRADES.map((t) => (
             <label key={t.key} className="flex cursor-pointer items-center gap-3 rounded-lg border p-3 text-sm">
@@ -352,7 +352,7 @@ function IndustryTab({ companyId }: { companyId: string }) {
           ))}
         </div>
       </section>
-      <Button className="h-11" disabled={busy} onClick={save}>{busy ? "Saving…" : "Save industry & trades"}</Button>
+      <Button className="h-11" disabled={busy} onClick={save}>{busy ? "Saving…" : "Save industry & services"}</Button>
     </div>
   );
 }

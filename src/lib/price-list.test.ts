@@ -11,3 +11,15 @@ describe("price list", () => {
     expect(left.length).toBe(all.length - 1);
   });
 });
+
+import { operatingTrades, defaultTrade } from "./price-list";
+describe("operating trades", () => {
+  it("offers only ticked trades plus custom", () => {
+    expect(operatingTrades(["electrical", "plumbing", "drains"]).map((t) => t.key)).toEqual(["electrical", "plumbing", "drains", "custom"]);
+  });
+  it("offers every trade when none ticked", () => { expect(operatingTrades([]).length).toBe(8); });
+  it("opens on the main industry's trade", () => {
+    expect(defaultTrade(operatingTrades(["electrical", "plumbing", "drains"]), "plumbing")).toBe("plumbing");
+    expect(defaultTrade(operatingTrades(["plumbing", "drains"]), "electrical")).toBe("plumbing");
+  });
+});
