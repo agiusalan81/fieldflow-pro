@@ -6,6 +6,7 @@ export const PLAN_FEATURES = [
   { key: "core", label: "Core: job sheets, schedule, clients, team" },
   { key: "tracking", label: "Shift location & live map" },
   { key: "fleet_management", label: "Fleet Management: routes, mileage & fuel" },
+  { key: "skills_dispatch", label: "Skills & Smart Dispatch: custom skills, crews, open jobs" },
   { key: "receipts", label: "Receipt scan to PDF" },
   { key: "technical_library", label: "Technical library" },
   { key: "standby", label: "On-call rota & swaps" },
