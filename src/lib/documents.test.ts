@@ -24,3 +24,14 @@ describe("terms & conditions", () => {
     expect(termsFor(t, "estimate")).toBe("Valid 30 days");
   });
 });
+
+import { parseTemplate as parseT, layerColor } from "./documents";
+describe("document text layers", () => {
+  it("keeps separate company, heading and detail styles", () => {
+    const t = parseT({ textStyles: { company: { font: "serif", color: "#112233", bold: true, italic: true }, detail: { italic: true } } });
+    expect(t.textStyles?.company).toEqual({ font: "serif", color: "#112233", bold: true, italic: true });
+    expect(t.textStyles?.label.bold).toBe(true);
+    expect(t.textStyles?.detail.italic).toBe(true);
+  });
+  it("headings default to the brand colour", () => { const t = parseT({ primaryColor: "#abcdef" }); expect(layerColor(t, "label")).toBe("#abcdef"); });
+});
