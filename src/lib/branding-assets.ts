@@ -1,4 +1,4 @@
-import type { PdfTemplate } from "./documents";
+import { layerColor, DEFAULT_TEXT_STYLES, type PdfTemplate, type TextLayerKey } from "./documents";
 import type { Appearance } from "./branding";
 import lato from "@/assets/branding-lato.ttf.asset.json";
 import abel from "@/assets/branding-abel.ttf.asset.json";
@@ -49,4 +49,22 @@ export async function pdfPageDecoration(doc: import("pdf-lib").PDFDocument, t: P
     if (image) page.drawImage(image, { x: 0, y: 0, width, height, opacity: .12 });
     if (t.frame && t.frame !== "none") { for (const inset of t.frame === "double" ? [18, 23] : [18]) page.drawRectangle({ x: inset, y: inset, width: width - 2 * inset, height: height - 2 * inset, borderWidth: .8, borderColor: hex(t.primaryColor) }); }
   };
+}
+const STANDARD_FAMILY = { sans: '"IBM Plex Sans", sans-serif', serif: '"Lora", Georgia, serif', mono: '"IBM Plex Mono", monospace' } as const;
+/** On-screen style for one text layer (company name, headings, details). */
+export function layerStyle(t: PdfTemplate, k: TextLayerKey): import("react").CSSProperties {
+  const l = t.textStyles?.[k] ?? DEFAULT_TEXT_STYLES[k];
+  return { fontFamily: l.font === "document" ? documentFontFamily(t) : STANDARD_FAMILY[l.font], color: layerColor(t, k), fontWeight: l.bold ? 700 : 400, fontStyle: l.italic ? "italic" : "normal" };
+}
+/** PDF font + colour for each text layer. Company fonts have no separate italic, so italic applies only to standard families. */
+export async function pdfLayerFonts(doc: import("pdf-lib").PDFDocument, t: PdfTemplate, base: { font: import("pdf-lib").PDFFont; bold: import("pdf-lib").PDFFont }) {
+  const { StandardFonts, rgb } = await import("pdf-lib");
+  const names = { sans: ["Helvetica", "HelveticaBold", "HelveticaOblique", "HelveticaBoldOblique"], serif: ["TimesRoman", "TimesRomanBold", "TimesRomanItalic", "TimesRomanBoldItalic"], mono: ["Courier", "CourierBold", "CourierOblique", "CourierBoldOblique"] } as const;
+  const hex = (v: string) => rgb(parseInt(v.slice(1, 3), 16) / 255, parseInt(v.slice(3, 5), 16) / 255, parseInt(v.slice(5, 7), 16) / 255);
+  const one = async (k: TextLayerKey) => {
+    const l = t.textStyles?.[k] ?? DEFAULT_TEXT_STYLES[k];
+    const font = l.font === "document" ? (l.bold ? base.bold : base.font) : await doc.embedFont(StandardFonts[names[l.font][(l.bold ? 1 : 0) + (l.italic ? 2 : 0)] as keyof typeof StandardFonts]);
+    return { font, color: hex(layerColor(t, k)) };
+  };
+  return { company: await one("company"), label: await one("label"), detail: await one("detail") };
 }
