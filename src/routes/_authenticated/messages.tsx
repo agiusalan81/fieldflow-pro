@@ -80,6 +80,8 @@ function Messages() {
   const lastOf = (t: Thread) => [...msgs].reverse().find((m) => inThread(t, m));
   const current = active ? msgs.filter((m) => inThread(active, m)) : [];
   const nameOf = (id: string) => users.find((u) => u.id === id)?.full_name ?? "Someone";
+  const ROLE_LABEL: Record<string, string> = { technician: "Tech", admin: "Admin", supervisor: "Supervisor", superuser: "Superuser" };
+  const roleOf = (id: string) => { const r = users.find((u) => u.id === id)?.role; return r ? ROLE_LABEL[r] ?? r : ""; };
 
   useEffect(() => { endRef.current?.scrollIntoView({ block: "end" }); }, [current.length, active?.id]);
 
@@ -138,7 +140,7 @@ function Messages() {
                       {t.kind === "job" ? <Hash className="h-4 w-4" /> : <User className="h-4 w-4" />}
                     </span>
                     <span className="min-w-0">
-                      <span className="block truncate text-sm font-medium text-foreground">{t.label}</span>
+                      <span className="block truncate text-sm font-medium text-foreground">{t.label}{t.kind === "user" && roleOf(t.id) && <span className="ml-2 rounded bg-muted px-1.5 text-xs font-normal text-muted-foreground">{roleOf(t.id)}</span>}</span>
                       <span className={`block truncate text-xs ${unread[keyOf(t)] ? "font-semibold text-foreground" : "text-muted-foreground"}`}>{last?.message_text ?? "No messages yet"}</span>
                     </span>
                     {!!unread[keyOf(t)] && <span aria-label={`${unread[keyOf(t)]} unread`} className="col-start-3 row-start-1 rounded-full bg-destructive px-1.5 text-xs text-destructive-foreground">{unread[keyOf(t)]}</span>}
