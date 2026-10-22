@@ -2,8 +2,8 @@ import type { CSSProperties } from "react";
 import { validColor } from "./documents";
 
 export const ICON_PRESETS = ["outline", "strong", "duotone"] as const;
-export const INDUSTRY_PRESETS = ["general", "lifts", "hvac", "electrical", "plumbing"] as const;
-export const INDUSTRY_LABELS = { general: "General field service", lifts: "Lifts & escalators", hvac: "Heating & cooling", electrical: "Electrical", plumbing: "Plumbing" };
+export const INDUSTRY_PRESETS = ["general", "lifts", "hvac", "electrical", "plumbing", "drains"] as const;
+export const INDUSTRY_LABELS = { general: "General field service", lifts: "Lifts & escalators", hvac: "Heating & cooling", electrical: "Electrical", plumbing: "Plumbing", drains: "Drains & drainage" };
 export type Appearance = { backgroundPath: string; menuBackgroundPath: string; fieldBackground: string; fieldText: string; iconPreset: typeof ICON_PRESETS[number]; industryPreset: typeof INDUSTRY_PRESETS[number]; backgroundData?: string; menuBackgroundData?: string };
 export const DEFAULT_APPEARANCE: Appearance = { backgroundPath: "", menuBackgroundPath: "", fieldBackground: "", fieldText: "", iconPreset: "outline", industryPreset: "general" };
 export function brandPath(v: unknown) { return typeof v === "string" && /^[0-9a-f-]{36}\/(backgrounds|fonts)\/[a-zA-Z0-9._-]+$/.test(v) ? v : ""; }

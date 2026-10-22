@@ -3,8 +3,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, Trash2, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { TRADES, UNITS, missingStarter, type TradeKey } from "@/lib/price-list";
+import { UNITS, defaultTrade, missingStarter, type TradeKey } from "@/lib/price-list";
 import { usePlanFeatures } from "@/lib/plan-features";
+import { useCompanyRules } from "@/lib/company";
+import { operatingTrades } from "@/lib/price-list";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,7 +21,11 @@ const sel = "h-10 w-full rounded-md border bg-background px-3 text-foreground";
 export function PriceListSettings({ companyId }: { companyId: string }) {
   const on = usePlanFeatures();
   const qc = useQueryClient();
-  const [trade, setTrade] = useState<TradeKey>("electrical");
+  const { data: rules } = useCompanyRules();
+  const options = operatingTrades(rules?.trades ?? []);
+  const [picked, setPicked] = useState<TradeKey | null>(null);
+  const trade: TradeKey = picked && options.some((o) => o.key === picked) ? picked : defaultTrade(options, rules?.appearance.industryPreset);
+  const setTrade = setPicked;
   const [draft, setDraft] = useState(blank);
   const [busy, setBusy] = useState(false);
   const q = useQuery({
@@ -58,7 +64,7 @@ export function PriceListSettings({ companyId }: { companyId: string }) {
     <div className="space-y-6">
       <p className="text-sm text-muted-foreground">Set your own items, installation methods and rates. Estimates and quantity surveys will use these prices.</p>
       <div className="flex flex-wrap items-end gap-3">
-        <div className="min-w-56 space-y-1"><Label htmlFor="pl-trade">Trade</Label><select id="pl-trade" className={sel} value={trade} onChange={(e) => setTrade(e.target.value as TradeKey)}>{TRADES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}</select></div>
+        <div className="min-w-56 space-y-1"><Label htmlFor="pl-trade">Trade</Label><select id="pl-trade" className={sel} value={trade} onChange={(e) => setTrade(e.target.value as TradeKey)}>{options.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}</select></div>
         {trade !== "custom" && <Button variant="outline" disabled={busy} onClick={importStarter}><Download className="mr-1 h-4 w-4" />Add starter items</Button>}
       </div>
 

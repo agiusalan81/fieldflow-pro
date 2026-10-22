@@ -10,6 +10,17 @@ export const TRADES = [
   { key: "custom", label: "Other / custom" },
 ] as const;
 export type TradeKey = (typeof TRADES)[number]["key"];
+/** Trades a company offers: its ticked operating trades plus Other / custom; every trade when none are ticked. */
+export function operatingTrades(selected: readonly string[]) {
+  const chosen = TRADES.filter((t) => t.key === "custom" || selected.includes(t.key));
+  return chosen.length > 1 ? chosen : [...TRADES];
+}
+const PRESET_TRADE: Record<string, TradeKey> = { lifts: "elevator", hvac: "hvac", electrical: "electrical", plumbing: "plumbing", drains: "drains" };
+/** Opens on the main industry's trade when offered, else the first offered trade. */
+export function defaultTrade(options: readonly { key: TradeKey }[], mainIndustry?: string): TradeKey {
+  const main = mainIndustry ? PRESET_TRADE[mainIndustry] : undefined;
+  return main && options.some((o) => o.key === main) ? main : options[0]?.key ?? "custom";
+}
 export const UNITS = ["each", "point", "m", "ft", "m²", "hour", "day", "set", "lump sum"] as const;
 
 export type StarterItem = { trade: TradeKey; category: string; name: string; unit: string; is_tally?: boolean };
