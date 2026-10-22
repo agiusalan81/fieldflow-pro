@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { digitizeLibraryDocument } from "@/lib/document-library.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { DocumentMasters } from "@/components/document-masters";
+import { useCompanyTitle } from "@/lib/company-name";
 
 const BUCKET = "company-documents";
 
@@ -36,6 +37,7 @@ type Doc = {
 const fmtSize = (b: number) => (b >= 1_000_000 ? `${(b / 1_000_000).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1000))} KB`);
 
 export function DocumentLibrary({ companyId, userId }: { companyId: string; userId: string }) {
+  const libraryName = useCompanyTitle("document library");
   const digitize = useServerFn(digitizeLibraryDocument);
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
