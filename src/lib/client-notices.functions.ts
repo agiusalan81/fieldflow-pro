@@ -9,7 +9,7 @@ import { rawEmail } from "@/lib/sendJobSheetEmail";
 /** Sends the "on the way", "no one to open" or "client left unsigned" message to the client's contacts by email and/or WhatsApp. */
 export const sendClientNotice = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ sheetId: z.string().uuid(), event: z.enum(["no_access", "unsigned_left", "on_my_way"]) }).parse(d))
+  .inputValidator((d) => z.object({ sheetId: z.string().uuid(), event: z.enum(["no_access", "unsigned_left", "on_my_way"]), eta: z.object({ km: z.number().min(0).max(500), minutes: z.number().min(1).max(600) }).optional() }).parse(d))
   .handler(async ({ data, context }) => {
     const sb = context.supabase;
     const { data: sheet, error } = await sb.from("job_sheets")
@@ -36,9 +36,11 @@ export const sendClientNotice = createServerFn({ method: "POST" })
       client_name: sheet.clients?.name, contact_name: first?.first_name ?? "", site_name: sheet.sites?.name ?? sheet.sites?.address ?? "",
       site_address: sheet.sites?.address, technician_name: sheet.users?.full_name ?? sheet.technician_name ?? "", asset_reference: sheet.assets?.reference_number ?? "the equipment",
       jobsheet_number: sheet.jobsheet_number, arrival_time: new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: tz }),
-      eta_window: "", company_name: company?.name, company_phone: settings?.office_phone ?? "",
+      eta_window: data.event === "on_my_way" ? etaText(data.eta ?? null) : "", company_name: company?.name, company_phone: settings?.office_phone ?? "",
     };
-    const text = renderTemplate(tpl.body, values);
+    let text = renderTemplate(tpl.body, values);
+    // Templates without {{eta_window}} still get the GPS estimate appended.
+    if (data.event === "on_my_way" && values.eta_window && !/eta_window/.test(tpl.body)) text += `\nEstimated arrival: ${values.eta_window}.`;
     const result: { channel: string; to: string; ok: boolean; error?: string }[] = [];
 
     if (tpl.channels.includes("email")) {
