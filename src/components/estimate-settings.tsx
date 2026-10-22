@@ -54,7 +54,8 @@ export function EstimateSettings({ companyId }: { companyId: string }) {
         <h2 className="font-medium">Drop-down choices & defaults</h2>
         <Select value={field} onValueChange={setField}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{RFQ_FIELDS.filter((x) => x.type === "select").map((x) => <SelectItem key={x.key} value={x.key}>{x.label}</SelectItem>)}</SelectContent></Select>
         <Label className="text-xs">Choices (comma separated — empty uses the standard list)</Label>
-        <Input key={`o-${field}`} placeholder={(f.options ?? []).join(", ")} defaultValue={(v.options[field] ?? []).join(", ")} onBlur={(e) => set({ options: { ...v.options, [field]: list(e.target.value) } })} />
+        <Input key={`o-${field}-${(v.options[field] ?? []).join("|")}`} placeholder={(f.options ?? []).join(", ")} defaultValue={(v.options[field] ?? []).join(", ")} onBlur={(e) => set({ options: { ...v.options, [field]: list(e.target.value) } })} />
+        <SuggestionChips value={(v.options[field] ?? []).join(", ")} suggestions={[...(f.options ?? [])]} onChange={(next) => set({ options: { ...v.options, [field]: list(next) } })} />
         <Label className="text-xs">Company default</Label>
         <Input key={`d-${field}`} placeholder="e.g. 400V 3-phase 50Hz" defaultValue={v.defaults[field] ?? ""} onBlur={(e) => set({ defaults: { ...v.defaults, [field]: e.target.value.trim() } })} />
       </section>
