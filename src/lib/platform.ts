@@ -19,4 +19,9 @@ export function effectiveModules(base: string[], packs: string[][], overrides: {
   const modules = new Set(["core", ...base, ...packs.flat()]);
   for (const o of overrides) if (new Date(o.starts_at).getTime() <= now && new Date(o.ends_at).getTime() > now) { if (o.enabled) modules.add(o.module); else modules.delete(o.module); }
   return [...modules];
+}export const PERMANENT_UNTIL = "2099-12-31T23:59:59.000Z";
+export const SETUP_REASON = "Setup package";
+/** Per-company items charge once; per-user items charge once per user. */
+export function packagePrice(items: { price: number; billing_basis: string }[], users: number) {
+  return items.reduce((sum, i) => sum + i.price * (i.billing_basis === "per_user" ? Math.max(0, users) : 1), 0);
 }
