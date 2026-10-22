@@ -299,7 +299,9 @@ function AdminJobs() {
 
 function NewJobDialog() {
   const { data: profile } = useProfile();
-  const { data: users = [] } = useCompanyUsers();
+  const { data: allUsers = [] } = useCompanyUsers();
+  // Field crew are supervisors and technicians only; office staff dispatch but are not crew.
+  const users = allUsers.filter(u => u.role === "technician" || u.role === "supervisor");
   const qc = useQueryClient();
   const search = Route.useSearch();
   const navigate = useNavigate();

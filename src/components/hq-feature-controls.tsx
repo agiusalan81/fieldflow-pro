@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { PLAN_FEATURES } from "@/lib/plan-features";
+import { PLAN_FEATURES, MODULE_DESCRIPTIONS } from "@/lib/plan-features";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 
@@ -29,7 +29,7 @@ export function HQFeatureMatrix({ catalog, modules, onEdit }: { catalog: Catalog
   return <div className="overflow-x-auto border"><table className="w-full border-collapse text-sm">
     <caption className="sr-only">Tier and pack feature composition</caption>
     <thead><tr className="border-b bg-muted/40"><th scope="col" className="min-w-64 p-4 text-left">Features</th>{catalog.map(item => <th key={item.id} scope="col" className="min-w-36 p-3 text-center"><Button variant="ghost" size="sm" onClick={() => onEdit(item)}>{item.name}</Button><p className="font-normal text-xs capitalize text-muted-foreground">{item.kind === "plan" ? "Tier" : "Pack"} · {item.state}</p></th>)}</tr></thead>
-    <tbody>{features.map(feature => <tr key={feature.key} className="border-b last:border-b-0"><th scope="row" className="p-4 text-left font-medium">{feature.label}</th>{catalog.map(item => <td key={item.id} className="p-3 text-center"><Switch aria-label={`${item.name}: ${feature.label}`} checked={item.modules.includes(feature.key)} disabled={mutation.isPending || (feature.key === "core" && item.kind === "plan")} onCheckedChange={enabled => mutation.mutate({ id: item.id, module: feature.key, enabled })} /></td>)}</tr>)}</tbody>
+    <tbody>{features.map(feature => <tr key={feature.key} className="border-b last:border-b-0"><th scope="row" className="p-4 text-left font-medium">{feature.label}{MODULE_DESCRIPTIONS[feature.key] && <p className="mt-1 max-w-sm text-xs font-normal text-muted-foreground">{MODULE_DESCRIPTIONS[feature.key]}</p>}</th>{catalog.map(item => <td key={item.id} className="p-3 text-center"><Switch aria-label={`${item.name}: ${feature.label}`} checked={item.modules.includes(feature.key)} disabled={mutation.isPending || (feature.key === "core" && item.kind === "plan")} onCheckedChange={enabled => mutation.mutate({ id: item.id, module: feature.key, enabled })} /></td>)}</tr>)}</tbody>
   </table></div>;
 }
 export function HQCompanyPacks({ subscription, packs, companyName }: { subscription: Subscription; packs: Catalog[]; companyName: string }) {

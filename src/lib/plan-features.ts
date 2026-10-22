@@ -30,6 +30,34 @@ export const PLAN_FEATURES = [
 ] as const;
 export type PlanFeature = (typeof PLAN_FEATURES)[number]["key"];
 
+/** Plain-language overview of what each module unlocks, shown in HQ. */
+export const MODULE_DESCRIPTIONS: Record<string, string> = {
+  core: "Job sheets, schedule, dispatch, clients, sites, equipment and team. Always included.",
+  tracking: "Technicians share location only while clocked in; managers see them on a live map.",
+  fleet_management: "Vehicle list, daily routes and replay, mileage and fuel cost estimates.",
+  skills_dispatch: "Custom skill catalogue, skill matching, crews larger than two, and open jobs technicians can claim.",
+  receipts: "Photograph receipts on the job; they are saved as private PDFs on the sheet.",
+  technical_library: "Private manuals and drawings by trade, maker and model, with AI search over approved pages.",
+  standby: "On-call rota, standby allowances and swap requests with manager approval.",
+  estimates: "Trade-specific estimates and lift requests for quotation sent to suppliers.",
+  qs_pricing: "Company price lists, bills of quantities and as-built quantity surveying.",
+  supplier_email: "Email suppliers from estimates and send automatic follow-up reminders.",
+  contracts: "Maintenance agreements, contract tiers and renewal reminders.",
+  payroll: "Hours, overtime and gross earnings with issued payslips that cannot be changed.",
+  safety: "Safety checklists and a fault library used on job sheets.",
+  reports: "Share client reports through secure, expiring links.",
+  digitization: "Scan paper documents and turn photos into searchable PDFs.",
+  custom_app_title: "Show the company's own app name instead of FieldBridge.",
+  branding_basic: "Company logo and colours on the app and documents.",
+  branding_advanced: "Brand Studio themes and backgrounds.",
+  branding_fonts: "A larger choice of fonts for documents.",
+  branding_custom_fonts: "Upload the company's own font files.",
+  branding_documents: "Document Studio frames, text styles and field fills.",
+  branding_industry: "Icons and wording tailored to the company's trade.",
+  client_presentation: "Branded presentation for clients across reports and emails.",
+  payroll_statutory_mt: "Malta tax, social security and statutory bonus calculations.",
+};
+
 export const DEFAULT_APP_TITLE = "FieldBridge";
 /** Tenant's own app title only when their plan includes it; otherwise FieldBridge. */
 export function resolveAppTitle(custom: string | undefined | null, allowed: boolean) {
