@@ -25,3 +25,15 @@ export const SETUP_REASON = "Setup package";
 export function packagePrice(items: { price: number; billing_basis: string }[], users: number) {
   return items.reduce((sum, i) => sum + i.price * (i.billing_basis === "per_user" ? Math.max(0, users) : 1), 0);
 }
+const r2 = (n: number) => Math.round(n * 100) / 100;
+/** Monthly = full year / 12; quarterly = discounted year / 4; yearly = discounted year. */
+export function cadencePrices(fullYear: number, quarterlyDiscount: number, yearlyDiscount: number) {
+  const pct = (d: number) => 1 - Math.min(100, Math.max(0, d)) / 100;
+  return { monthly_price: r2(fullYear / 12), quarterly_price: r2(fullYear * pct(quarterlyDiscount) / 4), yearly_price: r2(fullYear * pct(yearlyDiscount)) };
+}
+/** Recovers the full-year price and discounts from saved prices. */
+export function cadenceDiscounts(p: { monthly_price?: number | null; quarterly_price?: number | null; yearly_price?: number | null }) {
+  const full = r2(Number(p.monthly_price ?? 0) * 12);
+  const d = (v: number) => (full > 0 ? r2(Math.max(0, (1 - v / full) * 100)) : 0);
+  return { fullYear: full, quarterlyDiscount: d(Number(p.quarterly_price ?? 0) * 4), yearlyDiscount: d(Number(p.yearly_price ?? 0)) };
+}
