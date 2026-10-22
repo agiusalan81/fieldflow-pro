@@ -52,3 +52,5 @@
 - Chat Web Push sends sender + short preview end-to-end encrypted (RFC 8291 aes128gcm in web-push.functions.ts, WEB_PUSH_SEED key, push-sw.js in app SW).: readable alerts; push service cannot read text.
 - FieldBridge subscription invoices live in platform_invoices (frozen once issued by trigger) with rules in tested saas-billing.ts; storage usage via company_storage_usage RPC.: immutable billing history.
 - FieldBridge payments: invoice checkout in payments.functions.ts (superuser via RLS), signed webhook at api/public/payments/webhook settles only exact-amount matches idempotently; daily cron api/public/jobs/billing-daily runs saas-billing.server.ts (renewals, overdue, saved-card charges, reminder emails); company_invoice_lapsed() drives read-only access.: server-verified payment state and one entitlement source.
+
+- Landing page reads pricing live: anon SELECT policy `catalog_public_read` (state=active only) on platform_catalog + listPublicCatalog server fn (publishable client); index.tsx falls back to static copy if the fetch fails.
