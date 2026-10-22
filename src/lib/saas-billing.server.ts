@@ -81,7 +81,7 @@ export async function runDailyBilling(admin: Admin, env: StripeEnv, appUrl: stri
       const own = (invoices ?? []).filter((i) => i.subscription_id === sub.id);
       const last = own.filter((i) => i.kind === "renewal" && i.status !== "void").sort((a, b) => b.period_start.localeCompare(a.period_start))[0];
       if (last && renewalDue(last.period_end, today)) {
-        const next = billingPeriod(last.period_end, "monthly").period_start === last.period_end ? addDays(last.period_end, 1) : addDays(last.period_end, 1);
+        const next = addDays(last.period_end, 1);
         if (!own.some((i) => i.kind === "renewal" && i.period_start === next)) {
           if (sub.pending_change && typeof sub.pending_change === "object") {
             const p = sub.pending_change as Partial<Sub>;
