@@ -2858,6 +2858,7 @@ export type Database = {
       }
       platform_catalog: {
         Row: {
+          billing_basis: string
           branding_required: boolean
           created_at: string
           id: string
@@ -2874,6 +2875,7 @@ export type Database = {
           yearly_price: number
         }
         Insert: {
+          billing_basis?: string
           branding_required?: boolean
           created_at?: string
           id?: string
@@ -2890,6 +2892,7 @@ export type Database = {
           yearly_price?: number
         }
         Update: {
+          billing_basis?: string
           branding_required?: boolean
           created_at?: string
           id?: string

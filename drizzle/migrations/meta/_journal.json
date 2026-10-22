@@ -519,6 +519,13 @@
       "when": 1792680053078,
       "tag": "0073_skills_dispatch_claim_fix",
       "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1792682381835,
+      "tag": "0074_migration",
+      "breakpoints": true
     }
   ]
 }
