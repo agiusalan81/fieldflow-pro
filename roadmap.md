@@ -196,3 +196,6 @@
 - [x] Microsoft sign-in shown as disabled "Coming soon"; duplicate Profile Prev/Next removed; larger job-sheet Previous/Next with "Sheet X of Y".
 - [x] Skills & Smart Dispatch module (HQ key skills_dispatch): custom skills catalogue, supervisor/admin skill assignment, team size up to 30 with Add technician crew, required skills, open jobs with atomic first-come claim (clocked-in + mandatory skills).
 - [ ] Show extra crew members on their Today/Schedule and the shared sheet/DWR (crew currently recorded on the job only).
+
+- [x] Storage add-on, HQ invoices & reminders
+- [ ] Online card payments — waiting for provider confirmation (Paddle recommended)
