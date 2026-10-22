@@ -29,6 +29,7 @@ import { Route as AuthenticatedPayrollRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedPendingWorksRouteImport } from './routes/_authenticated/pending-works'
 import { Route as AuthenticatedPlatformRouteImport } from './routes/_authenticated/platform'
 import { Route as AuthenticatedProposalsRouteImport } from './routes/_authenticated/proposals'
+import { Route as AuthenticatedQrCodesRouteImport } from './routes/_authenticated/qr-codes'
 import { Route as AuthenticatedScheduleRouteImport } from './routes/_authenticated/schedule'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedStandbyRouteImport } from './routes/_authenticated/standby'
@@ -153,6 +154,11 @@ const AuthenticatedPlatformRoute = AuthenticatedPlatformRouteImport.update({
 const AuthenticatedProposalsRoute = AuthenticatedProposalsRouteImport.update({
   id: '/proposals',
   path: '/proposals',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedQrCodesRoute = AuthenticatedQrCodesRouteImport.update({
+  id: '/qr-codes',
+  path: '/qr-codes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedScheduleRoute = AuthenticatedScheduleRouteImport.update({
@@ -315,6 +321,7 @@ export interface FileRoutesByFullPath {
   '/pending-works': typeof AuthenticatedPendingWorksRoute
   '/platform': typeof AuthenticatedPlatformRoute
   '/proposals': typeof AuthenticatedProposalsRoute
+  '/qr-codes': typeof AuthenticatedQrCodesRoute
   '/schedule': typeof AuthenticatedScheduleRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/standby': typeof AuthenticatedStandbyRoute
@@ -361,6 +368,7 @@ export interface FileRoutesByTo {
   '/pending-works': typeof AuthenticatedPendingWorksRoute
   '/platform': typeof AuthenticatedPlatformRoute
   '/proposals': typeof AuthenticatedProposalsRoute
+  '/qr-codes': typeof AuthenticatedQrCodesRoute
   '/schedule': typeof AuthenticatedScheduleRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/standby': typeof AuthenticatedStandbyRoute
@@ -409,6 +417,7 @@ export interface FileRoutesById {
   '/_authenticated/pending-works': typeof AuthenticatedPendingWorksRoute
   '/_authenticated/platform': typeof AuthenticatedPlatformRoute
   '/_authenticated/proposals': typeof AuthenticatedProposalsRoute
+  '/_authenticated/qr-codes': typeof AuthenticatedQrCodesRoute
   '/_authenticated/schedule': typeof AuthenticatedScheduleRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/standby': typeof AuthenticatedStandbyRoute
@@ -457,6 +466,7 @@ export interface FileRouteTypes {
     | '/pending-works'
     | '/platform'
     | '/proposals'
+    | '/qr-codes'
     | '/schedule'
     | '/settings'
     | '/standby'
@@ -503,6 +513,7 @@ export interface FileRouteTypes {
     | '/pending-works'
     | '/platform'
     | '/proposals'
+    | '/qr-codes'
     | '/schedule'
     | '/settings'
     | '/standby'
@@ -550,6 +561,7 @@ export interface FileRouteTypes {
     | '/_authenticated/pending-works'
     | '/_authenticated/platform'
     | '/_authenticated/proposals'
+    | '/_authenticated/qr-codes'
     | '/_authenticated/schedule'
     | '/_authenticated/settings'
     | '/_authenticated/standby'
@@ -729,6 +741,13 @@ declare module '@tanstack/react-router' {
       path: '/proposals'
       fullPath: '/proposals'
       preLoaderRoute: typeof AuthenticatedProposalsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/qr-codes': {
+      id: '/_authenticated/qr-codes'
+      path: '/qr-codes'
+      fullPath: '/qr-codes'
+      preLoaderRoute: typeof AuthenticatedQrCodesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/schedule': {
@@ -941,6 +960,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPendingWorksRoute: typeof AuthenticatedPendingWorksRoute
   AuthenticatedPlatformRoute: typeof AuthenticatedPlatformRoute
   AuthenticatedProposalsRoute: typeof AuthenticatedProposalsRoute
+  AuthenticatedQrCodesRoute: typeof AuthenticatedQrCodesRoute
   AuthenticatedScheduleRoute: typeof AuthenticatedScheduleRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedStandbyRoute: typeof AuthenticatedStandbyRoute
@@ -977,6 +997,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPendingWorksRoute: AuthenticatedPendingWorksRoute,
   AuthenticatedPlatformRoute: AuthenticatedPlatformRoute,
   AuthenticatedProposalsRoute: AuthenticatedProposalsRoute,
+  AuthenticatedQrCodesRoute: AuthenticatedQrCodesRoute,
   AuthenticatedScheduleRoute: AuthenticatedScheduleRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedStandbyRoute: AuthenticatedStandbyRoute,
