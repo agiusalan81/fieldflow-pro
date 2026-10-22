@@ -498,6 +498,13 @@
       "when": 1792647580389,
       "tag": "0070_company_trades",
       "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1792661107553,
+      "tag": "0071_team_hierarchy_visibility",
+      "breakpoints": true
     }
   ]
 }
