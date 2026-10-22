@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { AppearanceSettings } from "@/components/appearance-settings";
+import { INDUSTRY_PRESETS, INDUSTRY_LABELS, type Appearance } from "@/lib/branding";
 import { BrandingLock } from "@/components/branding-lock";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -60,9 +61,9 @@ function CompanyPage() {
 function HoursTab({ companyId }: { companyId: string }) {
   const { data } = useCompanyRules();
   const qc = useQueryClient();
-  const [f, setF] = useState<null | { work_days: number[]; work_start: string; work_end: string; after_hours_rate: number; saturday_rate: number; sunday_rate: number; holiday_rate: number; holidays: string; renewal_notice_days: number; industry: string; trades: string[]; idle_timeout_minutes: number; location_ping_seconds: number; break_enabled: boolean; breaks_per_shift: number; break_minutes: number; currency: string; default_country_code: string; equipment_label: string; equipment_categories: string }>(null);
+  const [f, setF] = useState<null | { work_days: number[]; work_start: string; work_end: string; after_hours_rate: number; saturday_rate: number; sunday_rate: number; holiday_rate: number; holidays: string; renewal_notice_days: number; idle_timeout_minutes: number; location_ping_seconds: number; break_enabled: boolean; breaks_per_shift: number; break_minutes: number; currency: string; default_country_code: string; equipment_label: string; equipment_categories: string }>(null);
   useEffect(() => {
-    if (data && !f) setF({ ...data.rules, holidays: data.rules.public_holidays.join(", "), renewal_notice_days: data.renewalDays, industry: data.industry, trades: data.trades, idle_timeout_minutes: data.idleTimeout, location_ping_seconds: data.pingSeconds, break_enabled: data.breaks.enabled, breaks_per_shift: data.breaks.count, break_minutes: data.breaks.minutes, currency: data.locale.currency, default_country_code: data.locale.countryCode, equipment_label: data.locale.equipmentLabel, equipment_categories: data.equipmentCategories.join(", ") });
+    if (data && !f) setF({ ...data.rules, holidays: data.rules.public_holidays.join(", "), renewal_notice_days: data.renewalDays, idle_timeout_minutes: data.idleTimeout, location_ping_seconds: data.pingSeconds, break_enabled: data.breaks.enabled, breaks_per_shift: data.breaks.count, break_minutes: data.breaks.minutes, currency: data.locale.currency, default_country_code: data.locale.countryCode, equipment_label: data.locale.equipmentLabel, equipment_categories: data.equipmentCategories.join(", ") });
   }, [data, f]);
   if (!f) return null;
   const save = async () => {
@@ -110,10 +111,6 @@ function HoursTab({ companyId }: { companyId: string }) {
       <div className="space-y-1.5"><Label>Public holidays (dates, comma separated)</Label><Input className="h-11" placeholder="2026-12-25, 2026-12-26" value={f.holidays} onChange={(e) => setF({ ...f, holidays: e.target.value })} /></div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5"><Label>Contract renewal reminder (days before expiry)</Label><Input className="h-11" type="number" min={1} value={f.renewal_notice_days} onChange={(e) => setF({ ...f, renewal_notice_days: Number(e.target.value) || 30 })} /></div>
-        <div className="space-y-1.5"><Label>Line of work</Label><Input className="h-11" placeholder="e.g. Lifts & escalators" value={f.industry} onChange={(e) => setF({ ...f, industry: e.target.value })} /></div>
-      </div>
-      <div className="space-y-2"><Label>Trades we work in</Label><p className="text-xs text-muted-foreground">Site surveys only offer these trades. Leave all off to show every trade.</p>
-        <div className="flex flex-wrap gap-2">{TRADES.map((t) => { const on = f.trades.includes(t.key); return <Button key={t.key} type="button" size="sm" variant={on ? "default" : "outline"} onClick={() => setF({ ...f, trades: on ? f.trades.filter((x) => x !== t.key) : [...f.trades, t.key] })}>{t.label}</Button>; })}</div>
       </div>
       <div className="space-y-3 rounded-lg border p-4">
         <h3 className="text-sm font-medium">Region & wording</h3>
@@ -213,7 +210,7 @@ function LogoCard({ companyId, current }: { companyId: string; current: string }
   );
 }
 
-function ProfileTab({ companyId }: { companyId: string }) {
+function ProfileTab({ companyId, part }: { companyId: string; part: "details" | "fonts" }) {
   const { data } = useCompanyRules();
   const { data: profile } = useProfile();
   const planOn = usePlanFeatures();
@@ -239,7 +236,7 @@ function ProfileTab({ companyId }: { companyId: string }) {
     const storedTheme = { ...((currentTheme?.theme ?? {}) as Record<string, unknown>), ...(planOn("branding_fonts") ? { headers: t.headers, fields: t.fields } : {}) };
     const { error } = await supabase.from("company_settings").upsert({ company_id: companyId, ...p, company_address: formatOfficeAddress(p.office_address), office_address: p.office_address as never, theme: storedTheme as never, ...(titleAllowed ? { app_title: appTitle.trim().slice(0, 40) } : {}) });
     if (error) { toast.error(error.message); return; }
-    toast.success("Company profile saved");
+    toast.success("Saved");
     qc.invalidateQueries({ queryKey: ["company-settings"] });
     qc.invalidateQueries({ queryKey: ["profile"] });
   };
@@ -275,6 +272,13 @@ function ProfileTab({ companyId }: { companyId: string }) {
       </div>
     );
   };
+  if (part === "fonts") return (
+    <section className="space-y-4 rounded-xl border bg-card p-5">
+      <div><h2 className="font-medium text-foreground">App fonts</h2><p className="text-sm text-muted-foreground">Changes preview live across the app. Save to apply for everyone in your company.</p></div>
+      <BrandingLock allowed={planOn("branding_fonts")} feature="branding_fonts"><div className="grid gap-4 md:grid-cols-2">{style("headers", "Headers & titles")}{style("fields", "Field labels")}</div>
+      <div className="mt-3 flex flex-wrap gap-2"><Button type="button" variant="outline" size="sm" onClick={() => setT({ ...t, ...DEFAULT_THEME })}>Reset fonts</Button><Button type="button" size="sm" onClick={save}>Save fonts</Button></div></BrandingLock>
+    </section>
+  );
   return (
     <div className="space-y-4">
       <section className="space-y-4 rounded-xl border bg-card p-5">
@@ -300,13 +304,55 @@ function ProfileTab({ companyId }: { companyId: string }) {
         <div className="space-y-1.5"><Label htmlFor="company-pe-number">PE number (Principal Employer)</Label><Input id="company-pe-number" value={p.pe_number} onChange={e=>setP({...p,pe_number:e.target.value})}/></div>
         <div className="space-y-3"><h3 className="font-medium">Office address</h3><div className="grid gap-3 sm:grid-cols-2">{([['building','Building name / number'],['street','Street address'],['city','City / locality'],['postalCode','Postal code']] as const).map(([key,label])=><div key={key} className="space-y-1.5"><Label htmlFor={`office-${key}`}>{label}</Label><Input id={`office-${key}`} className="h-11" maxLength={200} value={p.office_address[key]} onChange={e=>setP({...p,office_address:{...p.office_address,[key]:e.target.value}})} /></div>)}</div><p className="text-sm text-muted-foreground">{formatOfficeAddress(p.office_address)}</p></div><div className="space-y-1.5"><Label htmlFor="company-vat">VAT / Tax number</Label><Input id="company-vat" className="h-11" maxLength={60} value={p.vat_number} onChange={e=>setP({...p,vat_number:e.target.value})}/></div>
       </section>
-      <section className="space-y-4 rounded-xl border bg-card p-5">
-        <div><h2 className="font-medium text-foreground">Fonts</h2><p className="text-sm text-muted-foreground">Changes preview live across the app. Save to apply for everyone in your company.</p></div>
-        <BrandingLock allowed={planOn("branding_fonts")} feature="branding_fonts"><div className="grid gap-4 md:grid-cols-2">{style("headers", "Headers & titles")}{style("fields", "Field labels")}</div>
-        <Button type="button" variant="outline" size="sm" onClick={() => setT({ ...t, ...DEFAULT_THEME })}>Reset fonts</Button></BrandingLock>
+      <Button className="h-11" onClick={save}>Save company details</Button>
+    </div>
+  );
+}
+
+function IndustryTab({ companyId }: { companyId: string }) {
+  const { data } = useCompanyRules();
+  const on = usePlanFeatures();
+  const qc = useQueryClient();
+  const [preset, setPreset] = useState<Appearance["industryPreset"] | null>(null);
+  const [trades, setTrades] = useState<string[]>([]);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { if (data && preset === null) { setPreset(data.appearance.industryPreset); setTrades(data.trades); } }, [data, preset]);
+  if (!data || preset === null) return null;
+  const save = async () => {
+    setBusy(true);
+    try {
+      const { data: cur, error: re } = await supabase.from("company_settings").select("theme").maybeSingle(); if (re) throw re;
+      const theme = (cur?.theme ?? {}) as Record<string, unknown>;
+      const appearance = { ...((theme["appearance"] ?? {}) as Record<string, unknown>), ...(on("branding_industry") ? { industryPreset: preset } : {}) };
+      const { error } = await supabase.from("company_settings").upsert({ company_id: companyId, industry: INDUSTRY_LABELS[preset], trades, theme: { ...theme, appearance } as never });
+      if (error) throw error;
+      await qc.invalidateQueries({ queryKey: ["company-settings"] }); toast.success("Industry & trades saved");
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Could not save"); } finally { setBusy(false); }
+  };
+  return (
+    <div className="space-y-4">
+      <section className="space-y-3 rounded-xl border bg-card p-5">
+        <div><h2 className="font-medium text-foreground">Main industry</h2><p className="text-sm text-muted-foreground">Sets the wording of menus and job sheets across the app.</p></div>
+        <div role="radiogroup" aria-label="Main industry" className="grid gap-2 sm:grid-cols-2">
+          {INDUSTRY_PRESETS.map((k) => (
+            <label key={k} className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 text-sm ${preset === k ? "border-primary bg-primary/10" : ""}`}>
+              <input type="radio" name="industry" className="h-4 w-4 accent-primary" checked={preset === k} onChange={() => setPreset(k)} />{INDUSTRY_LABELS[k]}
+            </label>
+          ))}
+        </div>
+        {!on("branding_industry") && <p className="text-xs text-muted-foreground">Industry-specific menu wording is available on higher plans; your choice is still saved.</p>}
       </section>
-      <Button className="h-11" onClick={save}>Save profile & branding</Button>
-      <AppearanceSettings companyId={companyId} />
+      <section className="space-y-3 rounded-xl border bg-card p-5">
+        <div><h2 className="font-medium text-foreground">Trades we work in</h2><p className="text-sm text-muted-foreground">Tick every trade your company does. Site surveys, estimates and proposals only offer these. Leave all off to show every trade.</p></div>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {TRADES.map((t) => (
+            <label key={t.key} className="flex cursor-pointer items-center gap-3 rounded-lg border p-3 text-sm">
+              <Checkbox checked={trades.includes(t.key)} onCheckedChange={(c) => setTrades(c ? [...trades, t.key] : trades.filter((x) => x !== t.key))} />{t.label}
+            </label>
+          ))}
+        </div>
+      </section>
+      <Button className="h-11" disabled={busy} onClick={save}>{busy ? "Saving…" : "Save industry & trades"}</Button>
     </div>
   );
 }
@@ -346,20 +392,24 @@ function AccessTab({ companyId }: { companyId: string }) {
 type SectionItem = { key: string; label: string; render: () => React.ReactNode };
 function SettingsSections({ superuser, companyId, userId }: { superuser: boolean; companyId: string; userId: string }) {
   const groups: { title: string; items: SectionItem[] }[] = [
-    { title: "Company & brand", items: [{ key: "profile", label: "Profile & branding", render: () => <ProfileTab companyId={companyId} /> }] },
+    { title: "Company & brand", items: [
+      { key: "profile", label: "Profile & details", render: () => <ProfileTab companyId={companyId} part="details" /> },
+      { key: "industry", label: "Industry & trades", render: () => <IndustryTab companyId={companyId} /> },
+      { key: "branding", label: "Branding & PDF styling", render: () => <div className="space-y-6"><AppearanceSettings companyId={companyId} /><ProfileTab companyId={companyId} part="fonts" /><DocumentSettings companyId={companyId} part="branding" /></div> },
+      { key: "messaging", label: "Messages & emails", render: () => <IntegrationsSettings part="messaging" companyId={companyId} /> },
+    ] },
     { title: "Operations & hours", items: [{ key: "hours", label: "Hours & overtime", render: () => <HoursTab companyId={companyId} /> }] },
     { title: "Field & safety", items: [
       { key: "technical", label: "Technical data structure", render: () => <TechnicalStructure companyId={companyId} /> },
       { key: "safety", label: "Safety & faults", render: () => <SafetySettings companyId={companyId} /> },
     ] },
-    { title: "Documents & PDFs", items: [
-      { key: "documents", label: "PDF & terms", render: () => <DocumentSettings companyId={companyId} /> },
+    { title: "Documents & legal", items: [
+      { key: "terms", label: "Terms & conditions", render: () => <DocumentSettings companyId={companyId} part="terms" /> },
       { key: "library", label: "Document library", render: () => <DocumentLibrary companyId={companyId} userId={userId} /> },
     ] },
     { title: "Commercial & integrations", items: [
       { key: "estimates", label: "Estimates & suppliers", render: () => <EstimateSettings companyId={companyId} /> },
       { key: "pricelist", label: "Price list", render: () => <PriceListSettings companyId={companyId} /> },
-      { key: "messaging", label: "Messages & emails", render: () => <IntegrationsSettings part="messaging" companyId={companyId} /> },
       { key: "integrations", label: "Accounting", render: () => <IntegrationsSettings part="accounting" companyId={companyId} /> },
     ] },
     ...(superuser ? [{ title: "Security & access", items: [{ key: "access", label: "Role access", render: () => <AccessTab companyId={companyId} /> }] }] : []),

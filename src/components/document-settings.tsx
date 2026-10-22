@@ -23,7 +23,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 
 const label = (k: string) => BLOCKS.find((b) => b.key === k)?.label ?? k;
 
-export function DocumentSettings({ companyId }: { companyId: string }) {
+export function DocumentSettings({ companyId, part }: { companyId: string; part: "branding" | "terms" }) {
   const planOn = usePlanFeatures();
   const qc = useQueryClient();
   const { data } = useQuery({
@@ -112,6 +112,7 @@ export function DocumentSettings({ companyId }: { companyId: string }) {
 
   return (
     <div className="space-y-4">
+      {part === "branding" && <>
       <BrandControls companyId={companyId} template={resolved ? { ...t, fontData: resolved.fontData, backgroundData: resolved.backgroundData } : t} onChange={value => { const { fontData: _f, backgroundData: _b, ...stored } = value; setT(stored); }} logo={data?.logo_data ?? ""} />
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="space-y-4 rounded-xl border bg-card p-5">
@@ -142,7 +143,9 @@ export function DocumentSettings({ companyId }: { companyId: string }) {
           <p className="mt-2 text-xs text-muted-foreground">Sample data shown. Download the sample PDF to see the exact file the client receives by email.</p>
         </section>
       </div>
+      </>}
 
+      {part === "terms" && <>
       <section className="space-y-4 rounded-xl border bg-card p-5">
         <div><h2 className="font-medium text-foreground">Terms & conditions</h2><p className="text-sm text-muted-foreground">Printed at the end of the client PDF when switched on. Write your own text, or import it from a document in the library.</p></div>
         {DOC_TYPES.map((d) => (
@@ -193,7 +196,9 @@ export function DocumentSettings({ companyId }: { companyId: string }) {
         <Button size="sm" variant="outline" onClick={() => setPresets([...presets, { label: "", text: "" }])}><Plus className="mr-1 h-4 w-4" />Add preset</Button>
       </section>
 
-      <Button className="h-11" disabled={saving} onClick={save}>{saving ? "Saving…" : "Save document templates"}</Button>
+      </>}
+
+      <Button className="h-11" disabled={saving} onClick={save}>{saving ? "Saving…" : part === "terms" ? "Save terms & notes" : "Save PDF styling"}</Button>
     </div>
   );
 }
