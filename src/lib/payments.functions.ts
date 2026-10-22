@@ -28,7 +28,7 @@ export const createInvoiceCheckout = createServerFn({ method: "POST" })
       if (!customer) {
         const { data: { user } } = await context.supabase.auth.getUser();
         const found = await stripe.customers.search({ query: `metadata['companyId']:'${sub.company_id}'`, limit: 1 });
-        customer = found.data[0]?.id ?? (await stripe.customers.create({ email: user?.email ?? undefined, metadata: { companyId: sub.company_id ?? "", userId: context.userId } })).id;
+        customer = found.data[0]?.id ?? (await stripe.customers.create({ ...(user?.email ? { email: user.email } : {}), metadata: { companyId: sub.company_id ?? "", userId: context.userId } })).id;
         await supabaseAdmin.from("platform_subscriptions").update({ stripe_customer_id: customerRef(data.environment, customer) }).eq("id", sub.id);
       }
       const description = `FieldBridge invoice ${inv.invoice_number}`;

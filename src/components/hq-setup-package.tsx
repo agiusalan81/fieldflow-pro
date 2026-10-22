@@ -2,7 +2,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Settings2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
+import type { Database, Json } from "@/integrations/supabase/types";
+import { buildInvoice, classifyChange, upgradeProration } from "@/lib/saas-billing";
 import { PLAN_FEATURES } from "@/lib/plan-features";
 import { packagePrice, PERMANENT_UNTIL, SETUP_REASON } from "@/lib/platform";
 import { Button } from "@/components/ui/button";
@@ -47,12 +48,38 @@ export function HQSetupPackage({ subscription, catalog, modules, overrides, comp
   const save = async () => {
     setSaving(true);
     try {
-      const r = await supabase.from("platform_subscriptions").update({ plan_id: plan, pack_ids: packs, seats: users, cadence, agreed_price: price }).eq("id", subscription.id);
-      if (r.error) throw r.error;
+      const oldItems = catalog.filter((c) => c.id === subscription.plan_id || (subscription.pack_ids ?? []).includes(c.id));
+      const oldPrice = Number(subscription.agreed_price) > 0 ? Number(subscription.agreed_price) : packagePrice(oldItems.map((c) => ({ price: priceFor(c, subscription.cadence), billing_basis: c.billing_basis })), subscription.seats);
+      const newPrice = price > 0 ? price : suggested;
+      const change = { plan_id: plan, pack_ids: packs, seats: users, cadence, agreed_price: price };
+      const kind = cadence !== subscription.cadence ? "downgrade" : classifyChange(oldPrice, newPrice);
+      const today = new Date().toISOString().slice(0, 10);
+      const cur = await supabase.from("platform_invoices").select("*").eq("subscription_id", subscription.id).eq("kind", "renewal").neq("status", "void").lte("period_start", today).gte("period_end", today).order("period_start", { ascending: false }).limit(1).maybeSingle();
+      if (cur.error) throw cur.error;
+      let note = "";
+      if (kind === "downgrade" && cur.data) {
+        // Downgrades and billing-period changes start at the next renewal; the company keeps what it paid for until then.
+        const r = await supabase.from("platform_subscriptions").update({ pending_change: change }).eq("id", subscription.id);
+        if (r.error) throw r.error;
+        note = ` Lower package starts at renewal on ${cur.data.period_end}.`;
+      } else {
+        const r = await supabase.from("platform_subscriptions").update({ ...change, pending_change: null }).eq("id", subscription.id);
+        if (r.error) throw r.error;
+        if (kind === "upgrade" && cur.data) {
+          const pr = upgradeProration(oldPrice, newPrice, cur.data.period_start, cur.data.period_end, today);
+          if (pr.amount > 0) {
+            const inv = buildInvoice([{ name: `Upgrade for ${pr.days_left} of ${pr.period_days} days remaining`, price: pr.amount, billing_basis: "company" }], users, null, Number(cur.data.vat_rate));
+            const due = new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10);
+            const i = await supabase.from("platform_invoices").insert({ subscription_id: subscription.id, company_id: subscription.company_id, kind: "upgrade", period_start: today, period_end: cur.data.period_end, issue_date: today, due_date: due, status: subscription.auto_issue ? "sent" : "draft", currency: cur.data.currency, ...inv, lines: inv.lines as unknown as Json });
+            if (i.error) throw i.error;
+            note = ` Upgrade invoice for ${money(inv.total)} ${subscription.auto_issue ? "issued" : "created as a draft"}.`;
+          }
+        }
+      }
       if (setup.length) { const d = await supabase.from("platform_overrides").delete().in("id", setup.map((o) => o.id)); if (d.error) throw d.error; }
       const rows = Object.entries(modes).filter(([m, v]) => v !== "package" && m !== "core").map(([module, v]) => ({ subscription_id: subscription.id, module, enabled: v === "on", starts_at: new Date().toISOString(), ends_at: PERMANENT_UNTIL, reason: SETUP_REASON }));
       if (rows.length) { const i = await supabase.from("platform_overrides").insert(rows); if (i.error) throw i.error; }
-      toast.success(`Setup package saved for ${companyName}`); setOpen(false); onSaved();
+      toast.success(`Setup package saved for ${companyName}.${note}`); setOpen(false); onSaved();
     } catch (e) { toast.error(e instanceof Error ? e.message : "Could not save the setup package"); } finally { setSaving(false); }
   };
 
@@ -68,6 +95,7 @@ export function HQSetupPackage({ subscription, catalog, modules, overrides, comp
       <div className="space-y-2">{modules.filter((m) => m !== "core").map((m) => <div key={m} className="flex items-center justify-between gap-2 text-sm"><span>{PLAN_FEATURES.find((f) => f.key === m)?.label ?? m}<span className="ml-2 text-xs text-muted-foreground">{included.has(m) ? "in package" : "not in package"}</span></span><NativeSelect aria-label={`${m} access`} value={modes[m] ?? "package"} onValueChange={(v) => setModes({ ...modes, [m]: v as Mode })}><option value="package">From package</option><option value="on">Always on</option><option value="off">Always off</option></NativeSelect></div>)}</div>
       <div className="grid grid-cols-2 gap-2"><div><Label>Users</Label><Input type="number" min={0} value={users} onChange={(e) => setUsers(Number(e.target.value))} /></div><div><Label>Billing period</Label><NativeSelect aria-label="Billing period" value={cadence} onValueChange={setCadence}>{["monthly", "quarterly", "yearly"].map((x) => <option key={x} value={x}>{x}</option>)}</NativeSelect></div></div>
       <div className="flex flex-wrap items-end gap-2"><div className="flex-1"><Label>Agreed price / period</Label><Input type="number" min={0} value={price} onChange={(e) => setPrice(Number(e.target.value))} /></div><Button type="button" variant="outline" onClick={() => setPrice(suggested)}>Use suggested {money(suggested)}</Button></div>
+      <p className="text-xs text-muted-foreground">Upgrades apply now and create an invoice for the rest of the current period. Downgrades and billing-period changes start at the next renewal.</p>
       <Button disabled={saving} onClick={save}>{saving ? "Saving…" : "Save setup package"}</Button>
       <DialogFooter><DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose></DialogFooter>
     </DialogContent></Dialog>
