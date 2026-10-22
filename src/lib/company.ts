@@ -21,6 +21,7 @@ export function useCompanyRules() {
         : DEFAULT_RULES;
       return {
         rules, renewalDays: data?.renewal_notice_days ?? 30, industry: data?.industry ?? "", exists: !!data,
+        trades: (data?.trades ?? []) as string[],
         idleTimeout: data?.idle_timeout_minutes ?? 30,
         pingSeconds: data?.location_ping_seconds ?? 30,
         breaks: { enabled: data?.break_enabled ?? true, count: data?.breaks_per_shift ?? 1, minutes: data?.break_minutes ?? 30 },
