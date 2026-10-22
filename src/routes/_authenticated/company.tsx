@@ -410,10 +410,6 @@ function SettingsSections({ superuser, companyId, userId }: { superuser: boolean
     heading.current?.scrollIntoView({ block: "start", behavior: "instant" });
     heading.current?.focus({ preventScroll: true });
   }, [active]);
-  const navigation = <>
-    <Button type="button" variant="outline" className="h-11" disabled={activeIndex <= 0} onClick={() => { const previous = all[activeIndex - 1]; if (previous) selectSection(previous.key); }}><ArrowLeft className="mr-2 h-4 w-4" />Previous</Button>
-    <Button type="button" variant="outline" className="h-11" disabled={activeIndex === all.length - 1} onClick={() => { const next = all[activeIndex + 1]; if (next) selectSection(next.key); }}>Next<ArrowRight className="ml-2 h-4 w-4" /></Button>
-  </>;
   const groups: { title: string; items: SectionItem[] }[] = [
     { title: "Company & brand", items: [
       { key: "profile", label: "Profile & details", render: () => <ProfileTab companyId={companyId} part="details" navigation={navigation} /> },
@@ -441,6 +437,10 @@ function SettingsSections({ superuser, companyId, userId }: { superuser: boolean
   const activeIndex = Math.max(0, all.findIndex((i) => i.key === active));
   const current = all[activeIndex];
   if (!current) return null;
+  const navigation = <>
+    <Button type="button" variant="outline" className="h-11" disabled={activeIndex <= 0} onClick={() => { const previous = all[activeIndex - 1]; if (previous) selectSection(previous.key); }}><ArrowLeft className="mr-2 h-4 w-4" />Previous</Button>
+    <Button type="button" variant="outline" className="h-11" disabled={activeIndex === all.length - 1} onClick={() => { const next = all[activeIndex + 1]; if (next) selectSection(next.key); }}>Next<ArrowRight className="ml-2 h-4 w-4" /></Button>
+  </>;
   return (
     <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-[220px_minmax(0,1fr)]">
       <div className="md:hidden">
