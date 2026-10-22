@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 const InvoiceCheckout = lazy(() => import("@/components/invoice-checkout").then((m) => ({ default: m.InvoiceCheckout })));
-const paymentsReady = !!import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN;
+const paymentsReady = !!import.meta.env['VITE_PAYMENTS_CLIENT_TOKEN'];
 
 const MESSAGES = {
   ok: "",

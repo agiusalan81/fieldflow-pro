@@ -23,7 +23,7 @@ function InvoiceReminder({ companyName = "your company", invoiceNumber = "FB-100
 
 export const template: TemplateEntry = {
   component: InvoiceReminder,
-  subject: (d) => `${d.stage ?? "Invoice"} — FieldBridge invoice ${d.invoiceNumber ?? ""}`,
+  subject: (d) => `${d["stage"] ?? "Invoice"} — FieldBridge invoice ${d["invoiceNumber"] ?? ""}`,
   displayName: "FieldBridge invoice reminder",
   previewData: { companyName: "Minakel", invoiceNumber: "FB-1001", stage: "Due in 3 days", total: "€177.00", dueDate: "2026-11-15" },
 };
