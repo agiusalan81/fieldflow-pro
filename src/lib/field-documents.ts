@@ -5,6 +5,22 @@ export const DEFAULT_TECH_STRUCTURE = {
   tags: ['Fault codes', 'Programming', 'Schematics', 'Maintenance', 'Parts', 'Technical bulletins', 'Commissioning', 'Safety procedures'],
 };
 export type TechStructure = typeof DEFAULT_TECH_STRUCTURE;
+/** Guidance and one-tap suggestions shown beside each Technical data structure field. */
+export const TECH_GUIDE: Record<string, { hint: string; suggestions: string[] }> = {
+  trade: { hint: 'The main discipline a document belongs to.', suggestions: ['Lifts', 'Escalators', 'HVAC', 'Electrical', 'Plumbing', 'Drains', 'Fire & Security'] },
+  manufacturer: { hint: 'Brands of equipment your team services.', suggestions: ['Otis', 'Schindler', 'Kone', 'TK Elevator', 'Orona', 'Wittur', 'Mitsubishi', 'Fermator'] },
+  model: { hint: 'Model or controller family, so technicians find the exact manual.', suggestions: ['Gen2', 'MonoSpace', '3300', '5500', 'Synergy', 'Arca II'] },
+  subsystem: { hint: 'The part of the equipment the document covers.', suggestions: ['Controller', 'Drive / inverter', 'Door operator', 'Safety gear / governor', 'Hydraulic unit', 'Car operating panel (COP)', 'Landing push buttons (LOP)', 'Machine / motor'] },
+  documentType: { hint: 'What kind of document it is.', suggestions: ['Manual', 'Schematic', 'Technical bulletin', 'S.O.P. / Safety Procedure', 'Fault code guide', 'Parts catalogue', 'Commissioning guide'] },
+  revision: { hint: 'Edition, so old and new versions are not mixed up.', suggestions: ['Rev A', 'Rev B', 'Rev C', 'Latest', 'Obsolete'] },
+  language: { hint: 'Language the document is written in.', suggestions: ['English', 'Maltese', 'Italian', 'German', 'Spanish', 'French'] },
+  tags: { hint: 'Topics inside a document; technicians tick these to jump to the right pages.', suggestions: ['Fault codes', 'Programming', 'Schematics', 'Maintenance', 'Parts', 'Commissioning', 'Safety procedures', 'Adjustments'] },
+};
+/** Adds a suggestion to a comma-separated list unless already present (case-insensitive). */
+export function addChoice(list: string, item: string) {
+  const parts = list.split(',').map(x => x.trim()).filter(Boolean);
+  return parts.some(p => p.toLowerCase() === item.toLowerCase()) ? parts.join(', ') : [...parts, item].join(', ');
+}
 export function technicalStructure(raw: unknown): TechStructure {
   const r = raw && typeof raw === 'object' ? raw as Partial<TechStructure> : {};
   return { labels: { ...DEFAULT_TECH_STRUCTURE.labels, ...r.labels }, options: { ...DEFAULT_TECH_STRUCTURE.options, ...r.options }, tags: Array.isArray(r.tags) ? r.tags : DEFAULT_TECH_STRUCTURE.tags };
