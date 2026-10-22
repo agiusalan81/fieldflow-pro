@@ -373,20 +373,30 @@ function NewJobDialog() {
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent><SelectItem value="none">No lift</SelectItem>{assets.filter((a) => a.client_id === f.client_id).map((a) => <SelectItem key={a.id} value={a.id}>{a.reference_number} · {a.asset_category}</SelectItem>)}</SelectContent>
             </Select>
-            <div className="space-y-1"><Label>Lead technician</Label><Select value={f.tech} onValueChange={(v) => setF({ ...f, tech: v, assistant: v === f.assistant || v === "none" ? "none" : f.assistant })}>
+            <div className="space-y-1"><Label>Lead technician</Label><Select value={f.tech} onValueChange={(v) => setF({ ...f, tech: v, assistant: v === f.assistant || v === "none" ? "none" : f.assistant, crew: f.crew.filter(c => c !== v) })}>
               <SelectTrigger aria-label="Lead technician"><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="none">Unassigned</SelectItem>{users.map((u) => <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>)}</SelectContent>
+              <SelectContent><SelectItem value="none">{smart && f.open ? "First to claim" : "Unassigned"}</SelectItem>{ranked.map((u) => <SelectItem key={u.id} value={u.id}>{label(u)}</SelectItem>)}</SelectContent>
             </Select>
             </div>
-            <div className="space-y-1"><Label>Assisting technician</Label><Select value={f.assistant} disabled={f.tech === "none"} onValueChange={assistant => setF({ ...f, assistant })}>
+            <div className="space-y-1"><Label>Assisting technician</Label><Select value={f.assistant} disabled={f.tech === "none"} onValueChange={assistant => setF({ ...f, assistant, crew: f.crew.filter(c => c !== assistant) })}>
               <SelectTrigger aria-label="Assisting technician"><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="none">No assistant</SelectItem>{users.filter(u => u.id !== f.tech).map(u => <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>)}</SelectContent>
+              <SelectContent><SelectItem value="none">No assistant</SelectItem>{ranked.filter(u => u.id !== f.tech).map(u => <SelectItem key={u.id} value={u.id}>{label(u)}</SelectItem>)}</SelectContent>
             </Select></div>
             <Select value={f.priority} onValueChange={(v) => setF({ ...f, priority: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>{["low", "normal", "high", "urgent"].map((p) => <SelectItem key={p} value={p} className="capitalize">{p}</SelectItem>)}</SelectContent>
             </Select>
           </div>
+          {smart && <div className="space-y-3 rounded-lg border p-3">
+            <p className="text-sm font-medium">Smart dispatch</p>
+            <div className="space-y-1"><Label htmlFor="team-size">Required team size</Label><Input id="team-size" className="h-11 w-28" type="number" min={1} max={30} value={f.teamSize} onChange={e => setF({ ...f, teamSize: clampTeamSize(Number(e.target.value), true) })} /></div>
+            {!!skillList.filter(s => !s.archived).length && <div className="space-y-1"><Label>Required skills</Label><div className="flex flex-wrap gap-2">{skillList.filter(s => !s.archived).map(s => { const on = f.skills.includes(s.id); return <button key={s.id} type="button" aria-pressed={on} onClick={() => setF({ ...f, skills: on ? f.skills.filter(x => x !== s.id) : [...f.skills, s.id] })} className={`min-h-9 rounded-full border px-3 text-sm ${on ? "border-primary bg-primary text-primary-foreground" : "bg-background"}`}>{s.name}</button>; })}</div></div>}
+            {f.tech !== "none" && f.assistant !== "none" && f.teamSize > 2 && <div className="space-y-2"><Label>More crew</Label>
+              {f.crew.map((c, i) => <div key={i} className="flex gap-2"><select aria-label={`Crew member ${i + 3}`} className="h-11 flex-1 rounded-md border bg-background px-2 text-sm" value={c} onChange={e => setF({ ...f, crew: f.crew.map((x, j) => j === i ? e.target.value : x) })}>{ranked.filter(u => u.id === c || ![f.tech, f.assistant, ...f.crew].includes(u.id)).map(u => <option key={u.id} value={u.id}>{label(u)}</option>)}</select><Button type="button" variant="outline" className="h-11" onClick={() => setF({ ...f, crew: f.crew.filter((_, j) => j !== i) })} aria-label="Remove crew member"><X className="h-4 w-4" /></Button></div>)}
+              {2 + f.crew.length < f.teamSize && (() => { const next = ranked.find(u => ![f.tech, f.assistant, ...f.crew].includes(u.id)); return next ? <Button type="button" variant="outline" className="h-11" onClick={() => setF({ ...f, crew: [...f.crew, next.id] })}><Plus className="mr-1 h-4 w-4" />Add technician</Button> : null; })()}
+            </div>}
+            <label className="flex items-start gap-2 text-sm"><Checkbox checked={f.open} onCheckedChange={v => setF({ ...f, open: v === true })} /><span>Open to eligible technicians — clocked-in team members with the required skills can claim the remaining places ({Math.max(0, f.teamSize - ([f.tech, f.assistant].filter(x => x !== "none").length + f.crew.length))} left).</span></label>
+          </div>}
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1.5"><Label>Date</Label><Input type="date" required value={f.scheduled_date} onChange={(e) => setF({ ...f, scheduled_date: e.target.value })} /></div>
             <div className="space-y-1.5"><Label>From</Label><Input type="time" value={f.window_start} onChange={(e) => setF({ ...f, window_start: e.target.value })} /></div>
