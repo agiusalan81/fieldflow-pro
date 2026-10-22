@@ -1,3 +1,4 @@
+import { TRADES } from "@/lib/price-list";
 import { TechnicalStructure } from "@/components/technical-structure";
 import { EstimateSettings } from "@/components/estimate-settings";
 import { PriceListSettings } from "@/components/price-list-settings";
@@ -59,9 +60,9 @@ function CompanyPage() {
 function HoursTab({ companyId }: { companyId: string }) {
   const { data } = useCompanyRules();
   const qc = useQueryClient();
-  const [f, setF] = useState<null | { work_days: number[]; work_start: string; work_end: string; after_hours_rate: number; saturday_rate: number; sunday_rate: number; holiday_rate: number; holidays: string; renewal_notice_days: number; industry: string; idle_timeout_minutes: number; location_ping_seconds: number; break_enabled: boolean; breaks_per_shift: number; break_minutes: number; currency: string; default_country_code: string; equipment_label: string; equipment_categories: string }>(null);
+  const [f, setF] = useState<null | { work_days: number[]; work_start: string; work_end: string; after_hours_rate: number; saturday_rate: number; sunday_rate: number; holiday_rate: number; holidays: string; renewal_notice_days: number; industry: string; trades: string[]; idle_timeout_minutes: number; location_ping_seconds: number; break_enabled: boolean; breaks_per_shift: number; break_minutes: number; currency: string; default_country_code: string; equipment_label: string; equipment_categories: string }>(null);
   useEffect(() => {
-    if (data && !f) setF({ ...data.rules, holidays: data.rules.public_holidays.join(", "), renewal_notice_days: data.renewalDays, industry: data.industry, idle_timeout_minutes: data.idleTimeout, location_ping_seconds: data.pingSeconds, break_enabled: data.breaks.enabled, breaks_per_shift: data.breaks.count, break_minutes: data.breaks.minutes, currency: data.locale.currency, default_country_code: data.locale.countryCode, equipment_label: data.locale.equipmentLabel, equipment_categories: data.equipmentCategories.join(", ") });
+    if (data && !f) setF({ ...data.rules, holidays: data.rules.public_holidays.join(", "), renewal_notice_days: data.renewalDays, industry: data.industry, trades: data.trades, idle_timeout_minutes: data.idleTimeout, location_ping_seconds: data.pingSeconds, break_enabled: data.breaks.enabled, breaks_per_shift: data.breaks.count, break_minutes: data.breaks.minutes, currency: data.locale.currency, default_country_code: data.locale.countryCode, equipment_label: data.locale.equipmentLabel, equipment_categories: data.equipmentCategories.join(", ") });
   }, [data, f]);
   if (!f) return null;
   const save = async () => {
@@ -110,6 +111,9 @@ function HoursTab({ companyId }: { companyId: string }) {
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5"><Label>Contract renewal reminder (days before expiry)</Label><Input className="h-11" type="number" min={1} value={f.renewal_notice_days} onChange={(e) => setF({ ...f, renewal_notice_days: Number(e.target.value) || 30 })} /></div>
         <div className="space-y-1.5"><Label>Line of work</Label><Input className="h-11" placeholder="e.g. Lifts & escalators" value={f.industry} onChange={(e) => setF({ ...f, industry: e.target.value })} /></div>
+      </div>
+      <div className="space-y-2"><Label>Trades we work in</Label><p className="text-xs text-muted-foreground">Site surveys only offer these trades. Leave all off to show every trade.</p>
+        <div className="flex flex-wrap gap-2">{TRADES.map((t) => { const on = f.trades.includes(t.key); return <Button key={t.key} type="button" size="sm" variant={on ? "default" : "outline"} onClick={() => setF({ ...f, trades: on ? f.trades.filter((x) => x !== t.key) : [...f.trades, t.key] })}>{t.label}</Button>; })}</div>
       </div>
       <div className="space-y-3 rounded-lg border p-4">
         <h3 className="text-sm font-medium">Region & wording</h3>
