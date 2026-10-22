@@ -1,3 +1,4 @@
+import { QrCode } from "lucide-react";
 import { ActionNotifications, ChatBadge, OnCallBadge } from "@/components/action-notifications";
 import { usePlanFeatures, resolveAppTitle } from "@/lib/plan-features";
 import { DepartureAlerts } from "@/components/client-notices";
@@ -62,6 +63,7 @@ const adminNav: NavItem[] = [
   { group: "Team & roster", to: "/dwr", label: "Daily works reports", icon: FileText },
   { group: "Team & roster", to: "/admin/leave", label: "Leave approvals", icon: CalendarDays, module: "leave_approvals" },
   { group: "Clients & commercial", to: "/admin/entities", label: "Clients & assets", icon: Users, module: "clients" },
+  { group: "Clients & commercial", to: "/qr-codes", label: "QR code generator", icon: QrCode, module: "clients" },
   { group: "Clients & commercial", to: "/contracts", label: "Contracts", icon: FileSignature, module: "contracts", feature: "contracts" },
   { group: "Clients & commercial", to: "/estimates", label: "Estimates", icon: Calculator, module: "estimates", feature: "estimates" },
   { group: "Clients & commercial", to: "/proposals", label: "Proposals", icon: FileText, module: "estimates", feature: "qs_pricing" },
@@ -93,6 +95,7 @@ const supervisorNav: NavItem[] = [
   { group: "Team", to: "/admin/leave", label: "Leave approvals", icon: CalendarDays, module: "leave_approvals" },
   { group: "Team", to: "/pending-works", label: "Pending works", icon: Hammer, module: "pending_works" },
   { group: "Clients & estimates", to: "/admin/entities", label: "Clients & assets", icon: Users, module: "clients" },
+  { group: "Clients & estimates", to: "/qr-codes", label: "QR code generator", icon: QrCode, module: "clients" },
   { group: "Clients & estimates", to: "/estimates", label: "Estimates", icon: Calculator, module: "estimates", feature: "estimates" },
   { group: "Clients & estimates", to: "/proposals", label: "Proposals", icon: FileText, module: "estimates", feature: "qs_pricing" },
   { group: "Clients & estimates", to: "/as-built", label: "Site survey", icon: Calculator, feature: "qs_pricing" },
@@ -233,7 +236,9 @@ export function AppShell({ title, actions, children }: { title: string; actions?
 
   const { data: company } = useCompanyRules();
   const appearance = company?.appearance ?? DEFAULT_APPEARANCE;
-  const items = baseItems.map(i => ({ ...i, label: industrySheetLabel(appearance.industryPreset, i.label) }));
+  const coName = profile?.companies?.name?.trim();
+  const personal: Record<string, string> = coName ? { "Team": `${coName} Team`, "Team chat": `${coName} Chat`, "Technical library": `${coName} Technical library` } : {};
+  const items = baseItems.map(i => ({ ...i, label: personal[i.label] ?? industrySheetLabel(appearance.industryPreset, i.label) }));
   const appTitle = resolveAppTitle(company?.appTitle, planOn("custom_app_title"));
   useEffect(() => { applyTypography(company?.theme); return () => applyTypography(undefined); }, [company?.theme]);
   useEffect(() => {
@@ -305,8 +310,8 @@ export function AppShell({ title, actions, children }: { title: string; actions?
               {footer}
             </SheetContent>
           </Sheet>
-          <h1 className="min-w-0 flex-1 truncate font-display text-xl text-foreground sm:text-2xl">{title}</h1>
-          <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-2">
+          <h1 className="min-w-0 flex-1 basis-[calc(100%-3.5rem)] break-words font-display sm:basis-auto sm:truncate text-xl text-foreground sm:text-2xl">{title}</h1>
+          <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:ml-auto sm:w-auto">
             {!preview.active && <ActionNotifications />}
             <HelpButton />
             {actor && !preview.active && actor.role === actor.real_role && <WelcomeGuide profile={actor} allowed={items.map(i=>i.to)} />}
