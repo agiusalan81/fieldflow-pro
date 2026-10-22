@@ -8,6 +8,14 @@ export function memberFullName(firstName: string, surname: string) {
   if (!firstName.trim() || !surname.trim()) throw new Error("Enter your first name and surname.");
   return `${firstName.trim()} ${surname.trim()}`.slice(0, 200);
 }
+/** Team lists show the viewer's level and below: supervisor → supervisors + technicians; office admin → + admins; superuser → everyone. */
+export function visibleRoles(viewer: Role): Role[] {
+  if (viewer === "superuser") return ["technician", "supervisor", "admin", "superuser"];
+  if (viewer === "admin") return ["technician", "supervisor", "admin"];
+  if (viewer === "supervisor") return ["technician", "supervisor"];
+  return ["technician"];
+}
+export const canSeeMember = (viewer: Role, target: Role) => visibleRoles(viewer).includes(target);
 export function canManageMember(actor: Role, actorId: string, target: { id: string; role: Role; platform_owner?: boolean }) {
   return actorId !== target.id && !target.platform_owner && (actor === "superuser" || (actor === "admin" && target.role !== "superuser"));
 }
