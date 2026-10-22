@@ -103,6 +103,18 @@
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
+  /* FieldBridge platform brand (fixed across themes; marketing site) */
+  --brand-navy: oklch(0.28 0.06 262);
+  --brand-navy-deep: oklch(0.2 0.05 262);
+  --brand-amber: oklch(0.76 0.16 75);
+  --brand-ink: oklch(0.98 0.01 85);
+}
+
+@theme inline {
+  --color-brand-navy: var(--brand-navy);
+  --color-brand-navy-deep: var(--brand-navy-deep);
+  --color-brand-amber: var(--brand-amber);
+  --color-brand-ink: var(--brand-ink);
 }
 
 .dark {
