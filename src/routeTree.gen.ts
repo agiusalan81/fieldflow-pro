@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedAsBuiltRouteImport } from './routes/_authenticated/as-built'
+import { Route as AuthenticatedAvailableJobsRouteImport } from './routes/_authenticated/available-jobs'
 import { Route as AuthenticatedCompanyRouteImport } from './routes/_authenticated/company'
 import { Route as AuthenticatedContractsRouteImport } from './routes/_authenticated/contracts'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -32,6 +33,7 @@ import { Route as AuthenticatedProposalsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedQrCodesRouteImport } from './routes/_authenticated/qr-codes'
 import { Route as AuthenticatedScheduleRouteImport } from './routes/_authenticated/schedule'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedSkillsRouteImport } from './routes/_authenticated/skills'
 import { Route as AuthenticatedStandbyRouteImport } from './routes/_authenticated/standby'
 import { Route as AuthenticatedSubscriptionRouteImport } from './routes/_authenticated/subscription'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
@@ -80,6 +82,12 @@ const AuthenticatedAsBuiltRoute = AuthenticatedAsBuiltRouteImport.update({
   path: '/as-built',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAvailableJobsRoute =
+  AuthenticatedAvailableJobsRouteImport.update({
+    id: '/available-jobs',
+    path: '/available-jobs',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCompanyRoute = AuthenticatedCompanyRouteImport.update({
   id: '/company',
   path: '/company',
@@ -169,6 +177,11 @@ const AuthenticatedScheduleRoute = AuthenticatedScheduleRouteImport.update({
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSkillsRoute = AuthenticatedSkillsRouteImport.update({
+  id: '/skills',
+  path: '/skills',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedStandbyRoute = AuthenticatedStandbyRouteImport.update({
@@ -306,6 +319,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/as-built': typeof AuthenticatedAsBuiltRoute
+  '/available-jobs': typeof AuthenticatedAvailableJobsRoute
   '/company': typeof AuthenticatedCompanyRoute
   '/contracts': typeof AuthenticatedContractsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -324,6 +338,7 @@ export interface FileRoutesByFullPath {
   '/qr-codes': typeof AuthenticatedQrCodesRoute
   '/schedule': typeof AuthenticatedScheduleRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/skills': typeof AuthenticatedSkillsRoute
   '/standby': typeof AuthenticatedStandbyRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/team': typeof AuthenticatedTeamRoute
@@ -353,6 +368,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/as-built': typeof AuthenticatedAsBuiltRoute
+  '/available-jobs': typeof AuthenticatedAvailableJobsRoute
   '/company': typeof AuthenticatedCompanyRoute
   '/contracts': typeof AuthenticatedContractsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -371,6 +387,7 @@ export interface FileRoutesByTo {
   '/qr-codes': typeof AuthenticatedQrCodesRoute
   '/schedule': typeof AuthenticatedScheduleRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/skills': typeof AuthenticatedSkillsRoute
   '/standby': typeof AuthenticatedStandbyRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/team': typeof AuthenticatedTeamRoute
@@ -402,6 +419,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/as-built': typeof AuthenticatedAsBuiltRoute
+  '/_authenticated/available-jobs': typeof AuthenticatedAvailableJobsRoute
   '/_authenticated/company': typeof AuthenticatedCompanyRoute
   '/_authenticated/contracts': typeof AuthenticatedContractsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -420,6 +438,7 @@ export interface FileRoutesById {
   '/_authenticated/qr-codes': typeof AuthenticatedQrCodesRoute
   '/_authenticated/schedule': typeof AuthenticatedScheduleRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/skills': typeof AuthenticatedSkillsRoute
   '/_authenticated/standby': typeof AuthenticatedStandbyRoute
   '/_authenticated/subscription': typeof AuthenticatedSubscriptionRoute
   '/_authenticated/team': typeof AuthenticatedTeamRoute
@@ -451,6 +470,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/as-built'
+    | '/available-jobs'
     | '/company'
     | '/contracts'
     | '/dashboard'
@@ -469,6 +489,7 @@ export interface FileRouteTypes {
     | '/qr-codes'
     | '/schedule'
     | '/settings'
+    | '/skills'
     | '/standby'
     | '/subscription'
     | '/team'
@@ -498,6 +519,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/as-built'
+    | '/available-jobs'
     | '/company'
     | '/contracts'
     | '/dashboard'
@@ -516,6 +538,7 @@ export interface FileRouteTypes {
     | '/qr-codes'
     | '/schedule'
     | '/settings'
+    | '/skills'
     | '/standby'
     | '/subscription'
     | '/team'
@@ -546,6 +569,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/_authenticated/as-built'
+    | '/_authenticated/available-jobs'
     | '/_authenticated/company'
     | '/_authenticated/contracts'
     | '/_authenticated/dashboard'
@@ -564,6 +588,7 @@ export interface FileRouteTypes {
     | '/_authenticated/qr-codes'
     | '/_authenticated/schedule'
     | '/_authenticated/settings'
+    | '/_authenticated/skills'
     | '/_authenticated/standby'
     | '/_authenticated/subscription'
     | '/_authenticated/team'
@@ -636,6 +661,13 @@ declare module '@tanstack/react-router' {
       path: '/as-built'
       fullPath: '/as-built'
       preLoaderRoute: typeof AuthenticatedAsBuiltRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/available-jobs': {
+      id: '/_authenticated/available-jobs'
+      path: '/available-jobs'
+      fullPath: '/available-jobs'
+      preLoaderRoute: typeof AuthenticatedAvailableJobsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/company': {
@@ -762,6 +794,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/skills': {
+      id: '/_authenticated/skills'
+      path: '/skills'
+      fullPath: '/skills'
+      preLoaderRoute: typeof AuthenticatedSkillsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/standby': {
@@ -945,6 +984,7 @@ const AuthenticatedPayrollRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAsBuiltRoute: typeof AuthenticatedAsBuiltRoute
+  AuthenticatedAvailableJobsRoute: typeof AuthenticatedAvailableJobsRoute
   AuthenticatedCompanyRoute: typeof AuthenticatedCompanyRoute
   AuthenticatedContractsRoute: typeof AuthenticatedContractsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
@@ -963,6 +1003,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedQrCodesRoute: typeof AuthenticatedQrCodesRoute
   AuthenticatedScheduleRoute: typeof AuthenticatedScheduleRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedSkillsRoute: typeof AuthenticatedSkillsRoute
   AuthenticatedStandbyRoute: typeof AuthenticatedStandbyRoute
   AuthenticatedSubscriptionRoute: typeof AuthenticatedSubscriptionRoute
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
@@ -982,6 +1023,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAsBuiltRoute: AuthenticatedAsBuiltRoute,
+  AuthenticatedAvailableJobsRoute: AuthenticatedAvailableJobsRoute,
   AuthenticatedCompanyRoute: AuthenticatedCompanyRoute,
   AuthenticatedContractsRoute: AuthenticatedContractsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
@@ -1000,6 +1042,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedQrCodesRoute: AuthenticatedQrCodesRoute,
   AuthenticatedScheduleRoute: AuthenticatedScheduleRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedSkillsRoute: AuthenticatedSkillsRoute,
   AuthenticatedStandbyRoute: AuthenticatedStandbyRoute,
   AuthenticatedSubscriptionRoute: AuthenticatedSubscriptionRoute,
   AuthenticatedTeamRoute: AuthenticatedTeamRoute,

@@ -193,3 +193,6 @@
 - [ ] Fleet menu shows only when company plan has Fleet Management switched on (check HQ plan)
 - [x] Company Settings: bottom Previous/Next navigation (Next beside profile Save), retained unsaved section edits, shared full-height mobile document/form preview. 19 focused tests passed; isolated 406×753 browser preview size/tab/close checks passed, no horizontal overflow; latest build OK.
 - [ ] Verify Previous/Next and retained edits end-to-end with office access (blocked: requesting account opens Company Settings as Technician and is correctly denied).
+- [x] Microsoft sign-in shown as disabled "Coming soon"; duplicate Profile Prev/Next removed; larger job-sheet Previous/Next with "Sheet X of Y".
+- [x] Skills & Smart Dispatch module (HQ key skills_dispatch): custom skills catalogue, supervisor/admin skill assignment, team size up to 30 with Add technician crew, required skills, open jobs with atomic first-come claim (clocked-in + mandatory skills).
+- [ ] Show extra crew members on their Today/Schedule and the shared sheet/DWR (crew currently recorded on the job only).

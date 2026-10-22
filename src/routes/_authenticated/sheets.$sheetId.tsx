@@ -59,10 +59,10 @@ function SheetStepper({ sheetId }: { sheetId: string }) {
   if (n.index < 0) return null;
   const go = (id: string | null) => { if (id) void navigate({ to: "/sheets/$sheetId", params: { sheetId: id } }); };
   return (
-    <div className="flex items-center gap-1">
-      <Button size="sm" variant="outline" disabled={!n.prev} onClick={() => go(n.prev)} aria-label="Previous job sheet"><ChevronLeft className="h-4 w-4" /><span className="hidden sm:inline">Previous</span></Button>
-      <span className="px-1 text-xs tabular-nums text-muted-foreground">{n.index + 1}/{n.total}</span>
-      <Button size="sm" variant="outline" disabled={!n.next} onClick={() => go(n.next)} aria-label="Next job sheet"><span className="hidden sm:inline">Next</span><ChevronRight className="h-4 w-4" /></Button>
+    <div className="flex w-full items-center justify-between gap-2">
+      <Button variant="outline" className="h-11 min-w-28" disabled={!n.prev} onClick={() => go(n.prev)} aria-label="Previous job sheet"><ChevronLeft className="h-4 w-4" />Previous</Button>
+      <span className="rounded-md border bg-muted px-3 py-2 text-sm font-medium tabular-nums text-foreground">Sheet {n.index + 1} of {n.total}</span>
+      <Button variant="outline" className="h-11 min-w-28" disabled={!n.next} onClick={() => go(n.next)} aria-label="Next job sheet">Next<ChevronRight className="h-4 w-4" /></Button>
     </div>
   );
 }

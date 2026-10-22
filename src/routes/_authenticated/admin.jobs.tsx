@@ -15,6 +15,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { EVENTS, parseIntegrations, renderTemplate } from "@/lib/integrations";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, useCompanyUsers, initialsOf } from "@/lib/profile";
+import { usePlanFeatures } from "@/lib/plan-features";
+import { clampTeamSize, skillMatchScore } from "@/lib/skills";
 import { matchesSheetFilter, matchesSheetDetails, validateCombinedSheets } from "@/lib/jobsheets";
 import { matchesSheetSearch } from "@/lib/dwr";
 import { AppShell, EmptyState } from "@/components/app-shell";
@@ -303,8 +305,15 @@ function NewJobDialog() {
   const navigate = useNavigate();
   const [open, setOpenRaw] = useState(!!search.new);
   const setOpen = (o: boolean) => { setOpenRaw(o); if (!o && search.new) navigate({ to: "/admin/jobs", search: {}, replace: true }); };
-  const empty = { client_id: "", site_id: "none", asset_id: "none", tech: "none", assistant: "none", scheduled_date: new Date().toISOString().slice(0, 10), window_start: "", window_end: "", priority: "normal", problem_summary: "" };
+  const empty = { client_id: "", site_id: "none", asset_id: "none", tech: "none", assistant: "none", scheduled_date: new Date().toISOString().slice(0, 10), window_start: "", window_end: "", priority: "normal", problem_summary: "", teamSize: 1, open: false, skills: [] as string[], crew: [] as string[] };
   const [f, setF] = useState(empty);
+  const feature = usePlanFeatures(!!profile);
+  const smart = feature("skills_dispatch");
+  const { data: skillList = [] } = useQuery({ queryKey: ["company-skills"], enabled: smart, queryFn: async () => (await supabase.from("company_skills").select("id,name,category,archived").order("name")).data ?? [] });
+  const { data: memberSkills = [] } = useQuery({ queryKey: ["member-skills"], enabled: smart, queryFn: async () => (await supabase.from("member_skills").select("user_id,skill_id")).data ?? [] });
+  const skillsOf = (u: string) => memberSkills.filter(m => m.user_id === u).map(m => m.skill_id);
+  const ranked = smart && f.skills.length ? [...users].sort((a, b) => skillMatchScore(skillsOf(b.id), f.skills) - skillMatchScore(skillsOf(a.id), f.skills)) : users;
+  const label = (u: { id: string; full_name: string }) => smart && f.skills.length ? `${u.full_name} · ${skillMatchScore(skillsOf(u.id), f.skills)}/${f.skills.length} skills` : u.full_name;
   const { data: clients = [] } = useQuery({ queryKey: ["clients"], queryFn: async () => (await supabase.from("clients").select("id, name").order("name")).data ?? [] });
   const { data: sites = [] } = useQuery({ queryKey: ["sites"], queryFn: async () => (await supabase.from("sites").select("id, client_id, name").order("name")).data ?? [] });
   const { data: assets = [] } = useQuery({ queryKey: ["assets-all"], queryFn: async () => (await supabase.from("assets").select("id, client_id, site_id, reference_number, asset_category")).data ?? [] });
@@ -312,13 +321,22 @@ function NewJobDialog() {
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile || !f.client_id) { toast.error("Pick a client"); return; }
+    const teamSize = clampTeamSize(f.teamSize, smart);
+    const named = [f.tech, f.assistant].filter(x => x !== "none").length + f.crew.length;
+    if (named > teamSize) { toast.error(`You picked ${named} people for a team of ${teamSize}`); return; }
+    if (!f.open && f.tech === "none" && f.crew.length) { toast.error("Choose a lead technician"); return; }
     const { data: job, error } = await supabase.from("jobs").insert({
       company_id: profile.company_id, client_id: f.client_id,
       site_id: f.site_id === "none" ? null : f.site_id, asset_id: f.asset_id === "none" ? null : f.asset_id,
       assigned_technician_id: f.tech === "none" ? null : f.tech, secondary_technician_id: f.assistant === "none" ? null : f.assistant, scheduled_date: f.scheduled_date,
       window_start: f.window_start || null, window_end: f.window_end || null, priority: f.priority, problem_summary: f.problem_summary || null,
-    }).select("job_number").single();
+      ...(smart ? { required_team_size: teamSize, open_to_claim: f.open && named < teamSize } : {}),
+    }).select("id, job_number").single();
     if (error) { toast.error(error.message); return; }
+    if (smart && job) {
+      if (f.skills.length) { const r = await supabase.from("job_skills").insert(f.skills.map(skill_id => ({ job_id: job.id, skill_id, company_id: profile.company_id, mandatory: true }))); if (r.error) toast.error(r.error.message); }
+      if (f.crew.length) { const r = await supabase.from("job_crew").insert(f.crew.map(user_id => ({ job_id: job.id, user_id, company_id: profile.company_id }))); if (r.error) toast.error(r.error.message); }
+    }
     if (f.priority === "urgent" && f.tech !== "none") {
       const { data: cs } = await supabase.from("company_settings").select("integrations").eq("company_id", profile.company_id).maybeSingle();
       const t = parseIntegrations(cs?.integrations).templates.emergency_dispatch;
@@ -355,20 +373,30 @@ function NewJobDialog() {
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent><SelectItem value="none">No lift</SelectItem>{assets.filter((a) => a.client_id === f.client_id).map((a) => <SelectItem key={a.id} value={a.id}>{a.reference_number} · {a.asset_category}</SelectItem>)}</SelectContent>
             </Select>
-            <div className="space-y-1"><Label>Lead technician</Label><Select value={f.tech} onValueChange={(v) => setF({ ...f, tech: v, assistant: v === f.assistant || v === "none" ? "none" : f.assistant })}>
+            <div className="space-y-1"><Label>Lead technician</Label><Select value={f.tech} onValueChange={(v) => setF({ ...f, tech: v, assistant: v === f.assistant || v === "none" ? "none" : f.assistant, crew: f.crew.filter(c => c !== v) })}>
               <SelectTrigger aria-label="Lead technician"><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="none">Unassigned</SelectItem>{users.map((u) => <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>)}</SelectContent>
+              <SelectContent><SelectItem value="none">{smart && f.open ? "First to claim" : "Unassigned"}</SelectItem>{ranked.map((u) => <SelectItem key={u.id} value={u.id}>{label(u)}</SelectItem>)}</SelectContent>
             </Select>
             </div>
-            <div className="space-y-1"><Label>Assisting technician</Label><Select value={f.assistant} disabled={f.tech === "none"} onValueChange={assistant => setF({ ...f, assistant })}>
+            <div className="space-y-1"><Label>Assisting technician</Label><Select value={f.assistant} disabled={f.tech === "none"} onValueChange={assistant => setF({ ...f, assistant, crew: f.crew.filter(c => c !== assistant) })}>
               <SelectTrigger aria-label="Assisting technician"><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="none">No assistant</SelectItem>{users.filter(u => u.id !== f.tech).map(u => <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>)}</SelectContent>
+              <SelectContent><SelectItem value="none">No assistant</SelectItem>{ranked.filter(u => u.id !== f.tech).map(u => <SelectItem key={u.id} value={u.id}>{label(u)}</SelectItem>)}</SelectContent>
             </Select></div>
             <Select value={f.priority} onValueChange={(v) => setF({ ...f, priority: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>{["low", "normal", "high", "urgent"].map((p) => <SelectItem key={p} value={p} className="capitalize">{p}</SelectItem>)}</SelectContent>
             </Select>
           </div>
+          {smart && <div className="space-y-3 rounded-lg border p-3">
+            <p className="text-sm font-medium">Smart dispatch</p>
+            <div className="space-y-1"><Label htmlFor="team-size">Required team size</Label><Input id="team-size" className="h-11 w-28" type="number" min={1} max={30} value={f.teamSize} onChange={e => setF({ ...f, teamSize: clampTeamSize(Number(e.target.value), true) })} /></div>
+            {!!skillList.filter(s => !s.archived).length && <div className="space-y-1"><Label>Required skills</Label><div className="flex flex-wrap gap-2">{skillList.filter(s => !s.archived).map(s => { const on = f.skills.includes(s.id); return <button key={s.id} type="button" aria-pressed={on} onClick={() => setF({ ...f, skills: on ? f.skills.filter(x => x !== s.id) : [...f.skills, s.id] })} className={`min-h-9 rounded-full border px-3 text-sm ${on ? "border-primary bg-primary text-primary-foreground" : "bg-background"}`}>{s.name}</button>; })}</div></div>}
+            {f.tech !== "none" && f.assistant !== "none" && f.teamSize > 2 && <div className="space-y-2"><Label>More crew</Label>
+              {f.crew.map((c, i) => <div key={i} className="flex gap-2"><select aria-label={`Crew member ${i + 3}`} className="h-11 flex-1 rounded-md border bg-background px-2 text-sm" value={c} onChange={e => setF({ ...f, crew: f.crew.map((x, j) => j === i ? e.target.value : x) })}>{ranked.filter(u => u.id === c || ![f.tech, f.assistant, ...f.crew].includes(u.id)).map(u => <option key={u.id} value={u.id}>{label(u)}</option>)}</select><Button type="button" variant="outline" className="h-11" onClick={() => setF({ ...f, crew: f.crew.filter((_, j) => j !== i) })} aria-label="Remove crew member"><X className="h-4 w-4" /></Button></div>)}
+              {2 + f.crew.length < f.teamSize && (() => { const next = ranked.find(u => ![f.tech, f.assistant, ...f.crew].includes(u.id)); return next ? <Button type="button" variant="outline" className="h-11" onClick={() => setF({ ...f, crew: [...f.crew, next.id] })}><Plus className="mr-1 h-4 w-4" />Add technician</Button> : null; })()}
+            </div>}
+            <label className="flex items-start gap-2 text-sm"><Checkbox checked={f.open} onCheckedChange={v => setF({ ...f, open: v === true })} /><span>Open to eligible technicians — clocked-in team members with the required skills can claim the remaining places ({Math.max(0, f.teamSize - ([f.tech, f.assistant].filter(x => x !== "none").length + f.crew.length))} left).</span></label>
+          </div>}
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1.5"><Label>Date</Label><Input type="date" required value={f.scheduled_date} onChange={(e) => setF({ ...f, scheduled_date: e.target.value })} /></div>
             <div className="space-y-1.5"><Label>From</Label><Input type="time" value={f.window_start} onChange={(e) => setF({ ...f, window_start: e.target.value })} /></div>

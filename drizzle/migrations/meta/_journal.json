@@ -505,6 +505,20 @@
       "when": 1792661107553,
       "tag": "0071_team_hierarchy_visibility",
       "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "7",
+      "when": 1792680022050,
+      "tag": "0072_skills_smart_dispatch",
+      "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1792680053078,
+      "tag": "0073_skills_dispatch_claim_fix",
+      "breakpoints": true
     }
   ]
 }
