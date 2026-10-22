@@ -25,6 +25,7 @@
 - Overtime uses captured DWR intervals/rules; old reports show associated sites only.: factual allocation.
 - Typography uses applyTypography/AppShell; locale uses locale.ts.: tenant presentation.
 - Branding shares theme/template JSON, private tenant files and PDF/font helpers; DB/HQ locks preserve saved values.: secure app/PDF consistency.
+- Company Settings retains visited sections while navigating; shared document-preview tabs power desktop and mobile previews.: preserve drafts without implicit saves and keep previews consistent.
 - Service sheets share a typed safe projection/renderers for preview, print and email.: client-safe consistency.
 - Pending works close via close_pending_on_followup trigger; sheet creation requires clock-in or standby.: enforce without UI.
 - Billing precedence in billing.ts; config in integrations.ts; job_sheets_guard_billing allows only office review; completed rows in the office Job sheets list open the shared BillingReview and saves refresh list/attention queries.: protected prices and reachable review without dashboard tables.

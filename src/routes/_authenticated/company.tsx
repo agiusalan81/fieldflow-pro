@@ -3,7 +3,8 @@ import { TechnicalStructure } from "@/components/technical-structure";
 import { EstimateSettings } from "@/components/estimate-settings";
 import { PriceListSettings } from "@/components/price-list-settings";
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -211,7 +212,7 @@ function LogoCard({ companyId, current }: { companyId: string; current: string }
   );
 }
 
-function ProfileTab({ companyId, part }: { companyId: string; part: "details" | "fonts" }) {
+function ProfileTab({ companyId, part, navigation }: { companyId: string; part: "details" | "fonts"; navigation?: React.ReactNode }) {
   const { data } = useCompanyRules();
   const { data: profile } = useProfile();
   const planOn = usePlanFeatures();
@@ -305,7 +306,7 @@ function ProfileTab({ companyId, part }: { companyId: string; part: "details" | 
         <div className="space-y-1.5"><Label htmlFor="company-pe-number">PE number (Principal Employer)</Label><Input id="company-pe-number" value={p.pe_number} onChange={e=>setP({...p,pe_number:e.target.value})}/></div>
         <div className="space-y-3"><h3 className="font-medium">Office address</h3><div className="grid gap-3 sm:grid-cols-2">{([['building','Building name / number'],['street','Street address'],['city','City / locality'],['postalCode','Postal code']] as const).map(([key,label])=><div key={key} className="space-y-1.5"><Label htmlFor={`office-${key}`}>{label}</Label><Input id={`office-${key}`} className="h-11" maxLength={200} value={p.office_address[key]} onChange={e=>setP({...p,office_address:{...p.office_address,[key]:e.target.value}})} /></div>)}</div><p className="text-sm text-muted-foreground">{formatOfficeAddress(p.office_address)}</p></div><div className="space-y-1.5"><Label htmlFor="company-vat">VAT / Tax number</Label><Input id="company-vat" className="h-11" maxLength={60} value={p.vat_number} onChange={e=>setP({...p,vat_number:e.target.value})}/></div>
       </section>
-      <Button className="h-11" onClick={save}>Save company details</Button>
+      <div className="flex flex-wrap items-center gap-2"><Button className="h-11" onClick={save}>Save company details</Button>{navigation}</div>
     </div>
   );
 }
@@ -393,9 +394,29 @@ function AccessTab({ companyId }: { companyId: string }) {
 type SectionItem = { key: string; label: string; render: () => React.ReactNode };
 function SettingsSections({ superuser, companyId, userId }: { superuser: boolean; companyId: string; userId: string }) {
   const libraryName = useCompanyTitle("document library");
+  const [active, setActive] = useState("profile");
+  const [visited, setVisited] = useState(["profile"]);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const shouldScroll = useRef(false);
+  const selectSection = (key: string) => {
+    if (key === active) return;
+    shouldScroll.current = true;
+    setVisited(previous => previous.includes(key) ? previous : [...previous, key]);
+    setActive(key);
+  };
+  useEffect(() => {
+    if (!shouldScroll.current) return;
+    shouldScroll.current = false;
+    heading.current?.scrollIntoView({ block: "start", behavior: "instant" });
+    heading.current?.focus({ preventScroll: true });
+  }, [active]);
+  const navigation = <>
+    <Button type="button" variant="outline" className="h-11" disabled={activeIndex <= 0} onClick={() => { const previous = all[activeIndex - 1]; if (previous) selectSection(previous.key); }}><ArrowLeft className="mr-2 h-4 w-4" />Previous</Button>
+    <Button type="button" variant="outline" className="h-11" disabled={activeIndex === all.length - 1} onClick={() => { const next = all[activeIndex + 1]; if (next) selectSection(next.key); }}>Next<ArrowRight className="ml-2 h-4 w-4" /></Button>
+  </>;
   const groups: { title: string; items: SectionItem[] }[] = [
     { title: "Company & brand", items: [
-      { key: "profile", label: "Profile & details", render: () => <ProfileTab companyId={companyId} part="details" /> },
+      { key: "profile", label: "Profile & details", render: () => <ProfileTab companyId={companyId} part="details" navigation={navigation} /> },
       { key: "industry", label: "Industry & trades", render: () => <IndustryTab companyId={companyId} /> },
       { key: "branding", label: "Branding & PDF styling", render: () => <div className="space-y-6"><AppearanceSettings companyId={companyId} /><ProfileTab companyId={companyId} part="fonts" /><DocumentSettings companyId={companyId} part="branding" /></div> },
       { key: "messaging", label: "Messages & emails", render: () => <IntegrationsSettings part="messaging" companyId={companyId} /> },
@@ -417,13 +438,14 @@ function SettingsSections({ superuser, companyId, userId }: { superuser: boolean
     ...(superuser ? [{ title: "Security & access", items: [{ key: "access", label: "Role access", render: () => <AccessTab companyId={companyId} /> }] }] : []),
   ];
   const all = groups.flatMap((g) => g.items);
-  const [active, setActive] = useState("profile");
-  const current = (all.find((i) => i.key === active) ?? all[0])!;
+  const activeIndex = Math.max(0, all.findIndex((i) => i.key === active));
+  const current = all[activeIndex];
+  if (!current) return null;
   return (
     <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-[220px_minmax(0,1fr)]">
       <div className="md:hidden">
         <Label className="mb-1.5 block">Section</Label>
-        <select aria-label="Settings section" className="h-11 w-full rounded-md border bg-background px-3 text-sm" value={current.key} onChange={(e) => setActive(e.target.value)}>
+        <select aria-label="Settings section" className="h-11 w-full rounded-md border bg-background px-3 text-sm" value={current.key} onChange={(e) => selectSection(e.target.value)}>
           {groups.map((g) => <optgroup key={g.title} label={g.title}>{g.items.map((i) => <option key={i.key} value={i.key}>{i.label}</option>)}</optgroup>)}
         </select>
       </div>
@@ -432,17 +454,18 @@ function SettingsSections({ superuser, companyId, userId }: { superuser: boolean
           <div key={g.title}>
             <p className="mb-1.5 px-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">{g.title}</p>
             {g.items.map((i) => (
-              <button key={i.key} type="button" onClick={() => setActive(i.key)} aria-current={i.key === current.key ? "page" : undefined}
-                className={`block w-full rounded-md px-2 py-1.5 text-left text-sm ${i.key === current.key ? "bg-primary/10 font-medium text-primary" : "text-foreground hover:bg-muted"}`}>
+              <Button key={i.key} type="button" variant="ghost" onClick={() => selectSection(i.key)} aria-current={i.key === current.key ? "page" : undefined}
+                className={`h-auto w-full justify-start whitespace-normal px-2 py-1.5 text-left text-sm ${i.key === current.key ? "bg-primary/10 font-medium text-primary" : "text-foreground hover:bg-muted"}`}>
                 {i.label}
-              </button>
+              </Button>
             ))}
           </div>
         ))}
       </nav>
       <section className="min-w-0">
-        <h2 className="mb-4 text-lg font-semibold text-foreground">{current.label}</h2>
-        {current.render()}
+        <h2 ref={heading} tabIndex={-1} className="mb-4 scroll-mt-24 text-lg font-semibold text-foreground outline-none">{current.label}</h2>
+        {all.filter(item => visited.includes(item.key)).map(item => <div key={item.key} hidden={item.key !== current.key}>{item.render()}</div>)}
+        {current.key !== "profile" && <nav aria-label="Previous and next settings section" className={`mt-6 flex flex-wrap justify-between gap-2 border-t pt-4 ${current.key === "branding" ? "pb-16 lg:pb-0" : ""}`}>{navigation}</nav>}
       </section>
     </div>
   );

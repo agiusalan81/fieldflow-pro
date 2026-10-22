@@ -12,6 +12,7 @@ import { usePlanFeatures } from "@/lib/plan-features";
 import { contrastRatio } from "@/lib/branding";
 import { resolveDocumentAssets } from "@/lib/branding-assets";
 import { DocumentPreview } from "@/components/document-preview";
+import { MobileDocumentPreview } from "@/components/document-preview-tabs";
 import { useCompanyTitle } from "@/lib/company-name";
 import { extractDocumentText } from "@/lib/document-library.functions";
 import { DOC_CATEGORIES, type DocCategory } from "@/components/document-library";
@@ -115,6 +116,7 @@ export function DocumentSettings({ companyId, part }: { companyId: string; part:
   return (
     <div className="space-y-4">
       {part === "branding" && <>
+      <MobileDocumentPreview template={resolved ? { ...t, fontData: resolved.fontData, backgroundData: resolved.backgroundData } : t} logo={data?.logo_data ?? ""} />
       <BrandControls companyId={companyId} template={resolved ? { ...t, fontData: resolved.fontData, backgroundData: resolved.backgroundData } : t} onChange={value => { const { fontData: _f, backgroundData: _b, ...stored } = value; setT(stored); }} logo={data?.logo_data ?? ""} />
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="space-y-4 rounded-xl border bg-card p-5">
@@ -136,7 +138,7 @@ export function DocumentSettings({ companyId, part }: { companyId: string; part:
           <div className="space-y-1.5"><Label>Footer text</Label><p className="text-xs text-muted-foreground">Multiple lines allowed. Email addresses and web links become clickable.</p><Textarea rows={4} maxLength={1000} placeholder={"e.g. Thank you for choosing us\noffice@yourcompany.com · www.yourcompany.com"} value={t.footer} onChange={(e) => setT({ ...t, footer: e.target.value })} /></div>
         </section>
 
-        <section className="rounded-xl border bg-card p-5">
+        <section className="hidden rounded-xl border bg-card p-5 lg:block">
           <div className="mb-3 flex items-center justify-between">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Live preview — what the client receives</p>
             <Button size="sm" variant="outline" onClick={downloadSample}><Download className="mr-1 h-3.5 w-3.5" />Sample PDF</Button>
@@ -200,7 +202,7 @@ export function DocumentSettings({ companyId, part }: { companyId: string; part:
 
       </>}
 
-      <Button className="h-11" disabled={saving} onClick={save}>{saving ? "Saving…" : part === "terms" ? "Save terms & notes" : "Save PDF styling"}</Button>
+      <div className={part === "branding" ? "pb-16 lg:pb-0" : undefined}><Button className="h-11" disabled={saving} onClick={save}>{saving ? "Saving…" : part === "terms" ? "Save terms & notes" : "Save PDF styling"}</Button>{part === "branding" && <Button variant="outline" className="ml-2 h-11 lg:hidden" onClick={downloadSample}><Download className="mr-1 h-4 w-4" />Sample PDF</Button>}</div>
     </div>
   );
 }
