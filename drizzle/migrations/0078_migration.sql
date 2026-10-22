@@ -1,0 +1,4 @@
+INSERT INTO public.platform_catalog (product_id, kind, name, included_seats, storage_gb, monthly_price, quarterly_price, yearly_price, modules, state, billing_basis, sort_order)
+SELECT p.id, 'pack', v.name, 0, v.gb, v.m, round(v.m*12*0.9/4,2), round(v.m*12*0.8,2), '{}', 'active', 'company', v.s
+FROM public.platform_products p, (VALUES ('Storage +25 GB',25,15::numeric,20),('Storage +100 GB',100,35,21),('Storage +500 GB',500,85,22),('Storage +1 TB',1000,140,23)) v(name,gb,m,s)
+WHERE p.slug='fieldbridge' AND NOT EXISTS (SELECT 1 FROM public.platform_catalog c WHERE c.product_id=p.id AND c.name=v.name);
