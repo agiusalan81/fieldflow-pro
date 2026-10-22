@@ -14,4 +14,9 @@ describe("configurable commercial controls", () => {
   it("promotional modules expire after the specified month", () => { const o = [{ module: "payroll", enabled: true, starts_at: "2026-10-01", ends_at: "2026-11-01" }]; expect(effectiveModules([], [], o, Date.parse("2026-10-18"))).toContain("payroll"); expect(effectiveModules([], [], o, Date.parse("2026-11-01"))).not.toContain("payroll"); });
   it("calculates expenses per paid seat, not per company", () => { expect(costPerUser(80, 8)).toBe(10); expect(costPerUser(80, 0)).toBeNull(); });
   it("models four photos per sheet", () => expect(estimatePhotoStorage(66)).toBeCloseTo(316.8));
+});import { packagePrice } from "./platform";
+describe("package billing basis", () => {
+  it("per-company items charge once", () => expect(packagePrice([{ price: 50, billing_basis: "company" }], 6)).toBe(50));
+  it("per-user items charge for every user", () => expect(packagePrice([{ price: 5, billing_basis: "per_user" }], 6)).toBe(30));
+  it("mixes tier and packs", () => expect(packagePrice([{ price: 100, billing_basis: "company" }, { price: 4, billing_basis: "per_user" }], 10)).toBe(140));
 });

@@ -1,0 +1,2 @@
+ALTER TABLE public.platform_catalog ADD COLUMN IF NOT EXISTS billing_basis text NOT NULL DEFAULT 'company';
+ALTER TABLE public.platform_catalog ADD CONSTRAINT platform_catalog_billing_basis_check CHECK (billing_basis IN ('company','per_user'));
