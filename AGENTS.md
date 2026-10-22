@@ -50,3 +50,4 @@
 - Blackouts/leave impact validated in DB; range swaps need recipient then manager approval before standby changes.: enforce for every caller.
 - Equipment QR: authenticated/RLS-scoped technical routes; public reports use hashed revocable capabilities, bounded payloads/throttling; no public reads.: private technical/client data.
 - Chat Web Push sends sender + short preview end-to-end encrypted (RFC 8291 aes128gcm in web-push.functions.ts, WEB_PUSH_SEED key, push-sw.js in app SW).: readable alerts; push service cannot read text.
+- FieldBridge subscription invoices live in platform_invoices (frozen once issued by trigger) with rules in tested saas-billing.ts; storage usage via company_storage_usage RPC.: immutable billing history.
