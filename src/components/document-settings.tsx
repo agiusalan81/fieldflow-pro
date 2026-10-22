@@ -12,6 +12,7 @@ import { usePlanFeatures } from "@/lib/plan-features";
 import { contrastRatio } from "@/lib/branding";
 import { resolveDocumentAssets } from "@/lib/branding-assets";
 import { DocumentPreview } from "@/components/document-preview";
+import { useCompanyTitle } from "@/lib/company-name";
 import { extractDocumentText } from "@/lib/document-library.functions";
 import { DOC_CATEGORIES, type DocCategory } from "@/components/document-library";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,7 @@ export function DocumentSettings({ companyId, part }: { companyId: string; part:
   const [presets, setPresets] = useState<NotePreset[]>([]);
   const [drag, setDrag] = useState<number | null>(null);
   const [importFor, setImportFor] = useState<"job_sheet" | "estimate" | "agreement" | null>(null);
+  const libraryName = useCompanyTitle("document library");
   const [importing, setImporting] = useState(false);
   const { data: libraryDocs = [] } = useQuery({
     queryKey: ["company-documents"],
@@ -155,7 +157,7 @@ export function DocumentSettings({ companyId, part }: { companyId: string; part:
               <>
                 <Textarea rows={4} placeholder="Write your own terms here…" value={terms[d.key].text} onChange={(e) => setTerms({ ...terms, [d.key]: { ...terms[d.key], text: e.target.value } })} />
                 <Button type="button" size="sm" variant="outline" onClick={() => setImportFor(d.key)}>
-                  <FileUp className="mr-1 h-4 w-4" />Import from document library
+                  <FileUp className="mr-1 h-4 w-4" />Import from {libraryName}
                 </Button>
               </>
             )}
@@ -166,10 +168,10 @@ export function DocumentSettings({ companyId, part }: { companyId: string; part:
 
       <Dialog open={!!importFor} onOpenChange={(o) => { if (!o && !importing) setImportFor(null); }}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Import terms from the document library</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Import terms from the {libraryName}</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">Pick a document — its text will be read and placed in the editor so you can review and adjust it before saving.</p>
           <div className="max-h-80 space-y-2 overflow-y-auto">
-            {libraryDocs.length === 0 && <p className="text-sm text-muted-foreground">No documents in the library yet. Upload one in the Document library tab first.</p>}
+            {libraryDocs.length === 0 && <p className="text-sm text-muted-foreground">No documents in the library yet. Upload one in the {libraryName} tab first.</p>}
             {libraryDocs.map((doc) => (
               <button key={doc.id} type="button" disabled={importing} onClick={() => void importDoc(doc.id)}
                 className="flex w-full items-center gap-3 rounded-lg border p-3 text-left hover:bg-accent disabled:opacity-50">
