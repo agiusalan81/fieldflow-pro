@@ -14,10 +14,14 @@ export function WelcomeGuide({ profile, allowed }: { profile: Profile; allowed: 
   const key = guideKey(profile.id,profile.company_id);
   const steps = guideSteps(profile.real_role).filter(s=>allowed.includes(s.to));
   useEffect(()=>{
-    try { setOpen(localStorage.getItem(key) !== "done" && path === "/dashboard"); } catch { setOpen(false); }
+    try {
+      const live = sessionStorage.getItem(`${key}:step`);
+      if (live !== null) { setIndex(Number(live) || 0); setOpen(true); return; }
+      setOpen(localStorage.getItem(key) !== "done" && path === "/dashboard");
+    } catch { setOpen(false); }
   },[key]);
-  const finish = () => { try { localStorage.setItem(key,"done"); } catch { /* guide works without storage */ } setOpen(false); };
-  const go = (next: number) => { const step = steps[next]; if (!step) return; setIndex(next); void navigate({to:step.to}); };
+  const finish = () => { try { localStorage.setItem(key,"done"); sessionStorage.removeItem(`${key}:step`); } catch { /* guide works without storage */ } setOpen(false); };
+  const go = (next: number) => { const step = steps[next]; if (!step) return; setIndex(next); try { sessionStorage.setItem(`${key}:step`, String(next)); } catch { /* ignore */ } void navigate({to:step.to}); };
   const step = steps[index];
   return <>
     <Button variant="ghost" size="icon" aria-label="Start welcome guide" title="Welcome guide" onClick={()=>{setIndex(0);setOpen(true);go(0);}}><GraduationCap className="h-5 w-5" /></Button>
