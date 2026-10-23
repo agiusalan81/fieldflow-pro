@@ -38,7 +38,7 @@ export const MODULE_DESCRIPTIONS: Record<string, string> = {
   skills_dispatch: "Custom skill catalogue, skill matching, crews larger than two, and open jobs technicians can claim.",
   receipts: "Photograph receipts on the job; they are saved as private PDFs on the sheet.",
   technical_library: "Private manuals and drawings by trade, maker and model, with AI search over approved pages.",
-  standby: "On-call rota, standby allowances and swap requests with manager approval.",
+  standby: "Independent technician and supervisor on-call rotas on one calendar, contact access and role-matched swaps with manager approval.",
   estimates: "Trade-specific estimates and lift requests for quotation sent to suppliers.",
   qs_pricing: "Company price lists, bills of quantities and as-built quantity surveying.",
   supplier_email: "Email suppliers from estimates and send automatic follow-up reminders.",
