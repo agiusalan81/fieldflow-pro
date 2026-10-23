@@ -7,6 +7,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { listPublicCatalog, type PublicCatalogItem } from "@/lib/public-catalog.functions";
 import { CADENCES, cadenceSuffix, formatEur, priceForCadence, type BillingCadence } from "@/lib/catalog-pricing";
 import { PLAN_FEATURES } from "@/lib/plan-features";
+import { DEFAULT_TRIAL_DAYS } from "@/lib/platform";
 import { supabase } from "@/integrations/supabase/client";
 import { TRUST_LINKS } from "@/lib/trust-pages";
 
@@ -93,8 +94,8 @@ function toViewPlan(p: PublicCatalogItem): ViewPlan {
   };
 }
 
-const faqs: [string, string][] = [
-  ["Do I need a card for the trial?", "No. Create your company, invite your team and use FieldBridge free for 60 days."],
+const faqs = (trialDays: number): [string, string][] => [
+  ["Do I need a card for the trial?", `No. Create your company, invite your team and use FieldBridge free for ${trialDays} days.`],
   ["Which trades does it suit?", "Any technical field service team. Rename fields, checklists and job types to match your trade."],
   ["Is our data kept separate?", "Yes. Every company has its own isolated workspace with role-based access."],
   ["What happens after the trial?", "Pick a plan monthly, quarterly (10% off) or yearly (20% off). Your records always stay viewable and exportable."],
@@ -114,6 +115,7 @@ function Landing() {
   const [sel, setSel] = useState("Pro");
   const [cadence, setCadence] = useState<BillingCadence>("monthly");
   const { data: catalog } = useSuspenseQuery(catalogQueryOptions);
+  const trialDays = catalog.trialDays > 0 ? catalog.trialDays : DEFAULT_TRIAL_DAYS;
 
   const live = catalog.plans.length > 0;
   const viewPlans = live ? catalog.plans.map(toViewPlan) : fallbackPlans;
@@ -163,7 +165,7 @@ function Landing() {
 
       <main id="top">
         <section className="mx-auto max-w-4xl px-5 py-20 text-center md:py-28">
-          <span className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground">60-day free trial · no card needed</span>
+          <span className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground">{trialDays}-day free trial · no card needed</span>
           <h1 className="mt-6 text-4xl font-semibold leading-tight tracking-tight md:text-6xl">Connect your field team and office — from first dispatch to paid invoice.</h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg text-muted-foreground">Job sheets, client sign-off, crew dispatch and billing in one simple app for technical contractors and maintenance teams.</p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
@@ -261,7 +263,7 @@ function Landing() {
         <section id="faq" className="mx-auto max-w-3xl scroll-mt-20 px-5 py-20">
           <h2 className="text-3xl font-semibold text-brand-navy">Questions</h2>
           <Accordion type="single" collapsible className="mt-6">
-            {faqs.map(([q, a]) => (
+            {faqs(trialDays).map(([q, a]) => (
               <AccordionItem key={q} value={q}>
                 <AccordionTrigger className="text-left">{q}</AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">{a}</AccordionContent>
