@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowRight, Check, ClipboardCheck, Mail, Menu, Users, Wallet, X } from "lucide-react";
 import fieldbridgeMark from "@/assets/fieldbridge-mark.png";
@@ -7,6 +7,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { listPublicCatalog, type PublicCatalogItem } from "@/lib/public-catalog.functions";
 import { CADENCES, cadenceSuffix, formatEur, priceForCadence, type BillingCadence } from "@/lib/catalog-pricing";
 import { PLAN_FEATURES } from "@/lib/plan-features";
+import { supabase } from "@/integrations/supabase/client";
 
 const catalogQueryOptions = queryOptions({
   queryKey: ["public-catalog"],
@@ -97,6 +98,13 @@ const faqs: [string, string][] = [
 const nav = [["#features", "Features"], ["#packages", "Packages"], ["#trades", "Trades"], ["#faq", "FAQ"]];
 
 function Landing() {
+  // Signed-in users skip the marketing site and land straight in the app.
+  const navigate = useNavigate();
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) navigate({ to: "/dashboard", replace: true });
+    });
+  }, [navigate]);
   const [open, setOpen] = useState(false);
   const [sel, setSel] = useState("Pro");
   const [cadence, setCadence] = useState<BillingCadence>("monthly");
@@ -133,7 +141,7 @@ function Landing() {
             <a href={SALES} className="hover:text-foreground">Contact</a>
           </nav>
           <div className="flex items-center gap-2">
-            <Link to="/auth" className="hidden px-3 py-2 text-sm font-medium sm:inline">Sign in</Link>
+            <Link to="/auth" className="rounded-md border border-border px-3 py-2 text-sm font-medium">Sign in</Link>
             <a href={SIGNUP} className="rounded-md bg-brand-navy px-4 py-2 text-sm font-semibold text-brand-ink">Start free</a>
             <button aria-label="Menu" onClick={() => setOpen(!open)} className="p-2 md:hidden">{open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</button>
           </div>
