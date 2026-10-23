@@ -54,7 +54,8 @@
 - HQ uses single-active fallback, app_url, PLAN_FEATURES and NativeSelect/Cancel; owner-only row-locked toggle RPCs refresh access.: isolated prices/seats.
 - Attention: guarded atomic pending RPCs/separate actions; never edit signed content.: immutable evidence; no duplicate dispatch.
 - Dual-track on-call uses separate supervisor config without changing technician payroll history; rota.ts scopes swaps, is_on_standby covers both, audited saves and role-matched swaps require independent approval; leave impact/blackouts remain DB-validated.
-- Equipment QR: authenticated/RLS-scoped technical routes; public reports use hashed revocable capabilities, bounded payloads/throttling; no public reads.: private technical/client data.
+- Equipment QR: private routes/RLS; hashed revocable public lookup exposes only reference/category; reports stay bounded/throttled.: private technical/client data.
+- Deletion shares record-deletion/DeleteVisit; office sheet and manager visit RLS apply; visit deletion keeps sheets, client-report FKs retain shared evidence.
 - QR dispatch closes only the matching equipment report after a successful visit insert, refreshes all attention queries and clears dispatch search parameters; a failed report close warns without inviting duplicate dispatch.
 - Chat files use private tenant/uploader keys and message-authorized downloads; validated attachments/contact cards stay internal. Web Push encrypts previews (RFC8291, WEB_PUSH_SEED, push-sw.js); attachment alerts reveal only type.
 - FieldBridge subscription invoices live in platform_invoices (frozen once issued by trigger) with rules in tested saas-billing.ts; storage usage via company_storage_usage RPC.: immutable billing history.

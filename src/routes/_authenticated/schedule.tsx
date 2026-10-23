@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { assignmentFilter, isAssisting } from "@/lib/jobsheets";
 import { JobTravelActions } from "@/components/job-travel-actions";
+import { DeleteVisit } from "@/components/delete-visit";
+import { canDeleteVisit } from "@/lib/record-deletion";
 
 export const Route = createFileRoute("/_authenticated/schedule")({
   head: () => ({
@@ -42,7 +44,7 @@ const SCHED: Record<string, [string, string]> = {
   in_progress: ["In progress", "bg-primary/15 text-primary"],
   completed: ["Closed", "bg-success/15 text-success"],
 };
-const schedStatus = (j: Job) => SCHED[j.sheet?.status ?? "open"] ?? SCHED["open"]!;
+const schedStatus = (j: Job) => SCHED[j.sheet?.status ?? "open"] ?? ["Open", "bg-muted text-muted-foreground"];
 
 function Schedule() {
   const { data: profile, isPreview } = usePreviewProfile();
@@ -81,6 +83,7 @@ function Schedule() {
 
   const Actions = ({ j }: { j: Job }) => (
     <div className="grid grid-cols-2 gap-2">
+      {!isPreview && canDeleteVisit(profile?.role) && <div className="col-span-2 flex justify-end"><DeleteVisit id={j.id} number={j.job_number} onDeleted={() => setDetail(null)} /></div>}
       <Button variant="outline" className="h-10" onClick={() => setDetail(j)}>Details</Button>
       {j.sheet && j.sheet.status !== "draft" ? <Button asChild className="h-10" variant={j.sheet.status === "completed" ? "outline" : "default"}><Link to="/sheets/$sheetId" params={{ sheetId: j.sheet.id }}><FileText className="mr-1 h-4 w-4" />Open sheet{j.sheet.jobsheet_number ? ` #${j.sheet.jobsheet_number}` : ""}</Link></Button> : profile?.role === "technician" || profile?.role === "supervisor" ? <JobTravelActions profile={profile} jobId={j.id} address={j.sites?.address} readOnly={isPreview} assisting={isAssisting(j, profile.id)} /> : isPreview ? <Button disabled className="h-10"><FileText className="mr-1 h-4 w-4" />Start job</Button> : <Button asChild className="h-10"><Link to="/sheets/new" search={{ jobId: j.id }} onClick={() => autoAck(j)}><FileText className="mr-1 h-4 w-4" />Start job</Link></Button>}
     </div>
