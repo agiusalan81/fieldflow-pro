@@ -227,7 +227,7 @@ function Messages() {
       <Dialog open={contactOpen} onOpenChange={setContactOpen}><DialogContent><DialogHeader><DialogTitle>Share contact</DialogTitle></DialogHeader>
         {(["name","phone","email","company"] as const).map(key => <div key={key} className="space-y-1.5"><Label htmlFor={`contact-${key}`}>{key === "name" ? "Name" : key === "phone" ? "Phone" : key === "email" ? "Email" : "Company"}</Label><Input id={`contact-${key}`} type={key === "email" ? "email" : key === "phone" ? "tel" : "text"} maxLength={key === "phone" ? 50 : key === "email" ? 150 : 100} value={contactDraft[key]} onChange={e => setContactDraft({ ...contactDraft, [key]: e.target.value })}/></div>)}
         <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setContactOpen(false)}>Cancel</Button><Button disabled={!validContactCard(contactDraft)} onClick={() => { setContact(contactDraft); setContactOpen(false); }}>Attach contact</Button></div>
-      </Dialog>
+      </DialogContent></Dialog>
     </AppShell>
   );
 }

@@ -16,7 +16,7 @@
 - Travel shares one component/startJobTravel; arrival saves the time log before on-site status.: consistent travel/arrival.
 - Invite server functions/Query loaders have timeouts, middleware included.: prevent hangs.
 - Tenant RLS uses company_id/current_company_id(); never UI company filters.: one access boundary.
-- Roles live in protected user_roles; users.role is display-only. View As and permissions.ts only hide UI.: safe privileges.
+- Roles live in protected user_roles; users.role is display-only; View As/permissions.ts hide UI only. Shared MemberSkills permits active technician/supervisor assignments with HQ skills_dispatch read/write guards.
 - user_roles helpers/restrictive tenant policies reject terminated actors; audit access changes.: session revocation.
 - Invites redeem names atomically via single-use signup triggers; social users need no password.: verified names; no client-assigned tenant/role.
 - Preview: real-superuser-only, actor-scoped, removable memory state; root blocks other screens/writes.: preserve identity.
@@ -52,9 +52,9 @@
 - Leave/profile/clock-out handover rules use tested field-rules.ts plus guard_leave_decision.: UI and DB agree.
 - HQ uses single-active fallback, app_url, PLAN_FEATURES and NativeSelect/Cancel; owner-only row-locked toggle RPCs refresh access.: isolated prices/seats.
 - Attention: guarded atomic pending RPCs/separate actions; never edit signed content.: immutable evidence; no duplicate dispatch.
-- Blackouts/leave impact validated in DB; range swaps need recipient then manager approval before standby changes.: enforce for every caller.
+- Dual-track on-call uses separate supervisor config without changing technician payroll history; rota.ts scopes swaps, is_on_standby covers both, audited saves and role-matched swaps require independent approval; leave impact/blackouts remain DB-validated.
 - Equipment QR: authenticated/RLS-scoped technical routes; public reports use hashed revocable capabilities, bounded payloads/throttling; no public reads.: private technical/client data.
-- Chat Web Push sends sender + short preview end-to-end encrypted (RFC 8291 aes128gcm in web-push.functions.ts, WEB_PUSH_SEED key, push-sw.js in app SW).: readable alerts; push service cannot read text.
+- Chat files use private tenant/uploader keys and message-authorized downloads; validated attachments/contact cards stay internal. Web Push encrypts previews (RFC8291, WEB_PUSH_SEED, push-sw.js); attachment alerts reveal only type.
 - FieldBridge subscription invoices live in platform_invoices (frozen once issued by trigger) with rules in tested saas-billing.ts; storage usage via company_storage_usage RPC.: immutable billing history.
 - FieldBridge payments: invoice checkout in payments.functions.ts (superuser via RLS), signed webhook at api/public/payments/webhook settles only exact-amount matches idempotently; daily cron api/public/jobs/billing-daily runs saas-billing.server.ts (renewals, overdue, saved-card charges, reminder emails); company_invoice_lapsed() drives read-only access.: server-verified payment state and one entitlement source.
 

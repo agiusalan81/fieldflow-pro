@@ -22,7 +22,7 @@ export function parseChatFiles(value: unknown): ChatFile[] {
 export function parseContactCard(value: unknown): ContactCard | null {
   if (!value || typeof value !== "object" || !("name" in value) || typeof value.name !== "string") return null;
   const v = value as Record<string, unknown>;
-  return { name: value.name, phone: typeof v.phone === "string" ? v.phone : "", email: typeof v.email === "string" ? v.email : "", company: typeof v.company === "string" ? v.company : "" };
+  return { name: value.name, phone: typeof v["phone"] === "string" ? v["phone"] : "", email: typeof v["email"] === "string" ? v["email"] : "", company: typeof v["company"] === "string" ? v["company"] : "" };
 }
 export function validContactCard(v: ContactCard) { return !!v.name.trim() && (!!v.phone.trim() || !!v.email.trim()) && (!v.email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email)); }
 const escapeVcard = (s: string) => s.replace(/\\/g, "\\\\").replace(/\r?\n/g, "\\n").replace(/;/g, "\\;").replace(/,/g, "\\,");
