@@ -288,7 +288,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   );
 
   const second = manager ? { to: "/team", label: "Team", icon: UserCheck } : { to: "/schedule", label: "Schedule", icon: CalendarClock };
-  const tab = "flex flex-col items-center gap-1 py-2.5 text-[11px] text-muted-foreground";
+  const tab = "flex min-w-0 flex-col items-center gap-1 rounded-md bg-card/95 py-2.5 text-[11px] text-muted-foreground";
 
   return (
     <div style={appearanceVariables(appearance)} data-icons={appearance.iconPreset} data-company-font={company?.theme.customFontData ? "on" : undefined} className="tenant-experience min-h-screen bg-background lg:grid lg:grid-cols-[240px_minmax(0,1fr)]">
@@ -300,11 +300,11 @@ export function AppShell({ title, actions, children }: { title: string; actions?
         {footer}
       </aside>
 
-      <div className="flex min-h-screen min-w-0 flex-col pb-20 lg:pb-0">
-        <header className="sticky top-0 z-20 flex flex-wrap items-center gap-3 border-b bg-background/90 px-4 py-3 backdrop-blur sm:px-6">
+      <div className="fieldbridge-content flex min-h-screen min-w-0 flex-col">
+        <header className="fieldbridge-header sticky top-0 z-20 flex flex-wrap items-center gap-3 border-b px-4 py-3 sm:px-6">
           <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open menu">
+              <Button variant="ghost" size="icon" className="bg-card text-card-foreground hover:bg-muted lg:hidden" aria-label="Open menu">
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
@@ -316,7 +316,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
             </SheetContent>
           </Sheet>
           <h1 className="min-w-0 flex-1 basis-[calc(100%-3.5rem)] break-words font-display sm:basis-auto sm:truncate text-xl text-foreground sm:text-2xl">{title}</h1>
-          <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:ml-auto sm:w-auto">
+          <div className="fieldbridge-header-tools flex w-full flex-wrap items-center justify-end gap-2 rounded-md px-2 py-1 sm:ml-auto sm:w-auto">
             {!preview.active && <ActionNotifications />}
             <HelpButton />
             {actor && !preview.active && actor.role === actor.real_role && <WelcomeGuide profile={actor} allowed={items.map(i=>i.to)} />}
@@ -349,12 +349,12 @@ export function AppShell({ title, actions, children }: { title: string; actions?
         </main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 items-end border-t bg-card lg:hidden">
+      <nav aria-label="Quick navigation" className="fieldbridge-bottom fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 items-end gap-1 border-t lg:hidden">
         <Link to="/dashboard" className={tab} activeProps={{ className: "text-primary font-medium" }} activeOptions={{ exact: true }}><LayoutDashboard className="h-5 w-5" />Home</Link>
         <Link to={manager ? "/admin/jobs" : "/sheets"} className={tab} activeProps={{ className: "text-primary font-medium" }}><ClipboardList className="h-5 w-5" />Job sheets</Link>
         {preview.active ? <Link to="/hours" className={tab}><Clock className="h-5 w-5" />Hours</Link> : <Link to="/sheets/new" search={{}} aria-label="Create new job sheet" className="mx-auto -mt-5 mb-1.5 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg"><Plus className="h-7 w-7" /></Link>}
         <Link to={second.to} className={tab} activeProps={{ className: "text-primary font-medium" }}><second.icon className="h-5 w-5" />{second.label}</Link>
-        <button type="button" className={tab} onClick={() => setMenuOpen(true)}><MoreHorizontal className="h-5 w-5" />More</button>
+        <Button type="button" variant="ghost" className={`${tab} h-auto hover:bg-card`} onClick={() => setMenuOpen(true)}><MoreHorizontal className="h-5 w-5" />More</Button>
       </nav>
     </div>
   );

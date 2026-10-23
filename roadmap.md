@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Launch Phase 1: navy-to-amber header, reversed mobile bottom bar, phone theme/safe areas, FieldBridge defaults for new companies; preserve saved tenant branding and existing offline/push behaviour.
 - [x] Brand studio: sticky preview; heading background (button look) in preview + PDFs.
 - [x] Technical data structure: guide + one-tap suggestions; same suggestions for Estimates & suppliers.
 - [x] "[Company] document library" / technical library naming.

@@ -77,8 +77,8 @@
   --card-foreground: oklch(0.129 0.042 264.695);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.62 0.16 55);
-  --primary-foreground: oklch(0.99 0.01 80);
+  --primary: var(--brand-navy);
+  --primary-foreground: var(--brand-ink);
   --secondary: oklch(0.968 0.007 247.896);
   --secondary-foreground: oklch(0.208 0.042 265.755);
   --muted: oklch(0.968 0.007 247.896);
@@ -108,6 +108,8 @@
   --brand-navy-deep: oklch(0.2 0.05 262);
   --brand-amber: oklch(0.76 0.16 75);
   --brand-ink: oklch(0.98 0.01 85);
+  --app-header-gradient: linear-gradient(to right, var(--brand-navy) 0%, var(--brand-navy) 45%, var(--brand-amber) 100%);
+  --app-footer-gradient: linear-gradient(to left, var(--brand-navy) 0%, var(--brand-navy) 45%, var(--brand-amber) 100%);
 }
 
 @theme inline {
@@ -232,6 +234,22 @@ main label {
 .map-pin-supervisor { background: var(--chart-2); }
 .map-pin-stale { opacity: 0.5; }
 html, body { overflow-x: hidden; }
+
+.fieldbridge-header {
+  background: var(--app-header-gradient);
+  color: var(--brand-ink);
+  padding-top: max(.75rem, env(safe-area-inset-top));
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+.fieldbridge-header h1 { color: var(--brand-ink); }
+.fieldbridge-header-tools { background: var(--background); color: var(--foreground); }
+.fieldbridge-bottom {
+  background: var(--app-footer-gradient);
+  padding: .375rem max(.375rem, env(safe-area-inset-right)) max(.375rem, env(safe-area-inset-bottom)) max(.375rem, env(safe-area-inset-left));
+}
+.fieldbridge-content { padding-bottom: calc(6rem + env(safe-area-inset-bottom)); }
+@media (min-width: 1024px) { .fieldbridge-content { padding-bottom: 0; } }
 
 .tenant-workspace { background-image: linear-gradient(var(--background-overlay), var(--background-overlay)), var(--tenant-background-image, none); background-size: cover; background-position: center; background-attachment: fixed; }
 .tenant-menu { background-image: linear-gradient(var(--menu-overlay), var(--menu-overlay)), var(--tenant-menu-image, none); background-size: cover; background-position: center; }
