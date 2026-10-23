@@ -1,5 +1,6 @@
 export const HQ_GROUPS = [
   { key: "overview", label: "Overview", sections: [{ key: "overview", label: "Portfolio overview" }] },
+  { key: "analytics", label: "Analytics & Radar", sections: [{ key: "analytics", label: "Analytics & Radar" }] },
   { key: "tenants", label: "Tenants & companies", sections: [{ key: "tenants", label: "Companies" }, { key: "billing", label: "Invoices & reminders" }, { key: "finance", label: "Revenue & expenses" }, { key: "referrals", label: "Referrals" }] },
   { key: "plans", label: "Plans, tiers & modules", sections: [{ key: "plans", label: "Tiers & packs" }, { key: "settings", label: "Product settings" }, { key: "campaigns", label: "Promotions" }] },
   { key: "legal", label: "Platform company & legal", sections: [{ key: "legal", label: "Company details" }, { key: "audit", label: "Audit history" }] },

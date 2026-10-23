@@ -10,6 +10,7 @@
 <!-- LOVABLE:END -->
 
 ## Rules
+- Analytics stores coarse subscription/day feature counts and lifetime usage totals; owner-only reporting and server-derived tenant identity prevent cross-company tracking, and actual work counts come from insert triggers rather than page visits. Outreach templates and feedback are product-scoped; no automated offers or emails are implied by a saved follow-up.
 - HQ uses product-scoped workspaces, owner-authorized narrow directory/effective-access RPCs, and separate platform legal profiles; audited test resets allow only unused/unsent records and retain operational, financial, identity, storage and offline evidence.
 - App chrome uses directional platform gradient tokens with neutral control surfaces for contrast; global FieldBridge defaults apply only where tenants have not saved overrides, and phone theme metadata uses a solid navy because browser chrome cannot render gradients.
 - Travel shares one component/startJobTravel; arrival saves the time log before on-site status.: consistent travel/arrival.

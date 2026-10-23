@@ -30,6 +30,8 @@ import { Input } from "@/components/ui/input";
 import { QUICK_DEFAULTS, MENU_ONLY, rankActions, readUsage, recordUsage, resetUsage } from "@/lib/quick-actions";
 import { useUserPreview, clearUserPreview } from "@/lib/impersonation";
 import { UserPreviewControl, UserPreviewBanner } from "@/components/user-preview";
+import { AnalyticsTracker } from "@/components/analytics-tracker";
+import { PlatformFeedback } from "@/components/platform-feedback";
 
 type NavItem = { to: string; label: string; icon: typeof Clock; module?: ModuleKey; office?: boolean; group: string; feature?: string };
 
@@ -319,6 +321,8 @@ export function AppShell({ title, actions, children }: { title: string; actions?
           <div className="fieldbridge-header-tools flex w-full flex-wrap items-center justify-end gap-2 rounded-md px-2 py-1 sm:ml-auto sm:w-auto">
             {!preview.active && <ActionNotifications />}
             <HelpButton />
+            <PlatformFeedback />
+            <AnalyticsTracker />
             {actor && !preview.active && actor.role === actor.real_role && <WelcomeGuide profile={actor} allowed={items.map(i=>i.to)} />}
             <UserPreviewControl />
             {canSwitch && (
