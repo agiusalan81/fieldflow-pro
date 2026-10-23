@@ -27,7 +27,8 @@
 - Dispatch: lead plus optional assistant both read one sheet; only lead starts/edits; daily logs seed both initials.: one journey/labour ledger.
 - Overtime uses captured DWR intervals/rules; old reports show associated sites only.: factual allocation.
 - Typography uses applyTypography/AppShell; locale uses locale.ts.: tenant presentation.
-- Branding shares theme/template JSON, private tenant files and PDF/font helpers; DB/HQ locks preserve saved values.: secure app/PDF consistency.
+- Branding shares private assets, theme/template JSON and PDF/font helpers; DB/HQ locks protect saved values.
+- Auth emails share auth-brand.tsx; the managed handler owns verification and dispatch for reliable account recovery.
 - Company Settings retains visited sections while navigating; shared document-preview tabs power desktop and mobile previews.: preserve drafts without implicit saves and keep previews consistent.
 - Independent settings editors use settingsSectionPatch to write only owned columns; JSON styling saves merge current stored keys.: prevent stale hidden editors overwriting other sections.
 - Controlled number inputs retain raw editing text until blur; optional previous-entry suggestions read bounded RLS-scoped history with account/company cache keys.: easy replacement without changing access boundaries.
@@ -59,4 +60,4 @@
 - FieldBridge subscription invoices live in platform_invoices (frozen once issued by trigger) with rules in tested saas-billing.ts; storage usage via company_storage_usage RPC.: immutable billing history.
 - FieldBridge payments: invoice checkout in payments.functions.ts (superuser via RLS), signed webhook at api/public/payments/webhook settles only exact-amount matches idempotently; daily cron api/public/jobs/billing-daily runs saas-billing.server.ts (renewals, overdue, saved-card charges, reminder emails); company_invoice_lapsed() drives read-only access.: server-verified payment state and one entitlement source.
 
-- Landing page reads pricing live: anon SELECT policy `catalog_public_read` (state=active only) on platform_catalog + listPublicCatalog server fn (publishable client); index.tsx falls back to static copy if the fetch fails.
+- Landing pricing uses active-only catalog_public_read and publishable listPublicCatalog; fetch failures fall back to static copy.

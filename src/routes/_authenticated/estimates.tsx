@@ -20,9 +20,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export const Route = createFileRoute("/_authenticated/estimates")({
   head: () => ({
     meta: [
-      { title: "Estimates — FieldFlow" },
+      { title: "Estimates — FieldBridge" },
       { name: "description", content: "Lift estimate requests on site: specs, sketch, photos, site contact and supplier follow-up." },
-      { property: "og:title", content: "Estimates — FieldFlow" },
+      { property: "og:title", content: "Estimates — FieldBridge" },
       { property: "og:description", content: "Site-to-supplier estimate requests with reminders." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
