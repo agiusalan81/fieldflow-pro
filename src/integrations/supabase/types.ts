@@ -4552,6 +4552,7 @@ export type Database = {
       }
       fleet_day: { Args: { _date: string; _user: string }; Returns: Json }
       fleet_vehicle_list: { Args: never; Returns: Json }
+      get_equipment_report_target: { Args: { _token: string }; Returns: Json }
       get_invite: {
         Args: { _token: string }
         Returns: {
