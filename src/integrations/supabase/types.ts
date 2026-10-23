@@ -2921,6 +2921,44 @@ export type Database = {
           },
         ]
       }
+      platform_company_controls: {
+        Row: {
+          company_id: string
+          id: string
+          internal_notes: string
+          is_test: boolean
+          location_city: string
+          location_country: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          id?: string
+          internal_notes?: string
+          is_test?: boolean
+          location_city?: string
+          location_country?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          id?: string
+          internal_notes?: string
+          is_test?: boolean
+          location_city?: string
+          location_country?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_company_controls_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_conversions: {
         Row: {
           created_at: string
@@ -3130,6 +3168,62 @@ export type Database = {
             foreignKeyName: "platform_ledger_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
+            referencedRelation: "platform_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_legal_profiles: {
+        Row: {
+          billing_email: string
+          country: string
+          founder_name: string
+          id: string
+          legal_name: string
+          privacy_email: string
+          product_id: string
+          registered_address: string
+          registration_number: string
+          sales_email: string
+          support_email: string
+          updated_at: string
+          vat_number: string
+        }
+        Insert: {
+          billing_email?: string
+          country?: string
+          founder_name?: string
+          id?: string
+          legal_name?: string
+          privacy_email?: string
+          product_id: string
+          registered_address?: string
+          registration_number?: string
+          sales_email?: string
+          support_email?: string
+          updated_at?: string
+          vat_number?: string
+        }
+        Update: {
+          billing_email?: string
+          country?: string
+          founder_name?: string
+          id?: string
+          legal_name?: string
+          privacy_email?: string
+          product_id?: string
+          registered_address?: string
+          registration_number?: string
+          sales_email?: string
+          support_email?: string
+          updated_at?: string
+          vat_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_legal_profiles_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
             referencedRelation: "platform_products"
             referencedColumns: ["id"]
           },
@@ -4264,6 +4358,46 @@ export type Database = {
           name: string
           user_count: number
         }[]
+      }
+      platform_hq_directory: {
+        Args: never
+        Returns: {
+          address: string
+          city: string
+          contact_email: string
+          country: string
+          id: string
+          internal_notes: string
+          is_test: boolean
+          name: string
+          user_count: number
+        }[]
+      }
+      platform_hq_module_status: {
+        Args: never
+        Returns: {
+          enabled: boolean
+          module: string
+          subscription_id: string
+        }[]
+      }
+      platform_save_company_controls: {
+        Args: {
+          _city: string
+          _company: string
+          _country: string
+          _notes: string
+          _test: boolean
+        }
+        Returns: undefined
+      }
+      platform_set_company_module: {
+        Args: { _mode: string; _module: string; _subscription: string }
+        Returns: undefined
+      }
+      platform_subscription_module_access: {
+        Args: { _module: string; _subscription: string }
+        Returns: boolean
       }
       read_client_report: { Args: { _hash: string }; Returns: Json }
       registered_members: {
