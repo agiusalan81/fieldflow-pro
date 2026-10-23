@@ -326,10 +326,12 @@ function NewJobDialog() {
 
   // QR problem report → pre-fill client, site, equipment and the reported problem.
   const prefilled = useRef<string | null>(null);
+  useEffect(() => { if (search.new) setOpenRaw(true); }, [search.new, search.assetId, search.problemId]);
   useEffect(() => {
     const a = search.assetId && assets.find((x) => x.id === search.assetId);
-    if (!open || !a || prefilled.current === search.assetId) return;
-    prefilled.current = search.assetId!;
+    const key = `${search.assetId}|${search.problemId ?? ""}`;
+    if (!open || !a || prefilled.current === key) return;
+    prefilled.current = key;
     void (async () => {
       let problem = "";
       if (search.problemId) { const r = await supabase.from("equipment_problem_reports").select("problem").eq("id", search.problemId).maybeSingle(); problem = r.data?.problem ?? ""; }
