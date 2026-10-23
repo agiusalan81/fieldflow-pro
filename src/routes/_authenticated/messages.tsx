@@ -16,7 +16,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ChatAttachments } from "@/components/chat-attachments";
 import { CHAT_BUCKET, CHAT_TYPES, chatFileError, compressChatImage, validContactCard, parseChatFiles, type ChatFile, type ContactCard } from "@/lib/chat-attachments";
-import { Switch } from "@/components/ui/switch";
 import { usePlanFeatures } from "@/lib/plan-features";
 
 export const Route = createFileRoute("/_authenticated/messages")({ staticData: { sitemap: false },
@@ -49,7 +48,6 @@ function Messages() {
   const [contactOpen, setContactOpen] = useState(false);
   const [contactDraft, setContactDraft] = useState<ContactCard>({ name: "", phone: "", email: "", company: "" });
   const [sending, setSending] = useState(false);
-  const [originalImages, setOriginalImages] = useState(false);
   const [sendStatus, setSendStatus] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const feature = usePlanFeatures(!!profile);
@@ -134,7 +132,7 @@ function Messages() {
     try {
       for (const [index, source] of files.entries()) {
         setSendStatus(`Preparing attachment ${index + 1} of ${files.length}…`);
-        const file = await compressChatImage(source, originalImages);
+        const file = await compressChatImage(source);
         setSendStatus(`Uploading attachment ${index + 1} of ${files.length}…`);
         const path = `${profile.company_id}/${profile.id}/${crypto.randomUUID()}.${CHAT_TYPES[file.type]}`;
         const r = await supabase.storage.from(CHAT_BUCKET).upload(path, file, { contentType: file.type, upsert: false });
@@ -223,7 +221,6 @@ function Messages() {
                   <Input className="h-11 min-w-0" disabled={sending} maxLength={4000} value={text} onChange={e => setText(e.target.value)} placeholder="Type a message" />
                   <Button type="submit" size="icon" disabled={sending || (!text.trim() && !files.length && !contact)} className="h-11 w-11 shrink-0" aria-label={sending ? "Sending" : "Send"}><Send className="h-4 w-4" /></Button>
                 </div>
-                {files.some(f => f.type.startsWith("image/")) && <label className="flex items-center gap-2 text-xs text-muted-foreground"><Switch checked={originalImages} onCheckedChange={setOriginalImages} disabled={sending} aria-label="Original image quality" />Original quality<span className="ml-auto">{(files.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024).toFixed(1)} MB before resizing</span></label>}
                 {sending && <p role="status" className="text-xs text-muted-foreground">{sendStatus}</p>}
               </form>
             </>

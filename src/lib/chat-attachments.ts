@@ -16,8 +16,8 @@ export function chatImageDimensions(width: number, height: number) {
   return { width: Math.max(1, Math.round(width * scale)), height: Math.max(1, Math.round(height * scale)) };
 }
 /** Browser-only, best effort: unsupported formats and larger encodings retain the original. */
-export async function compressChatImage(file: File, original = false): Promise<File> {
-  if (original || !file.type.startsWith("image/")) return file;
+export async function compressChatImage(file: File): Promise<File> {
+  if (!file.type.startsWith("image/")) return file;
   let bitmap: ImageBitmap | undefined;
   try {
     bitmap = await createImageBitmap(file);
