@@ -1,4 +1,6 @@
 import { JobReceipts } from "@/components/job-receipts";
+import { useEntrySuggestions } from "@/hooks/use-entry-suggestions";
+import { SuggestedTextarea } from "@/components/suggested-textarea";
 import { DiscardOfflineDraft } from "@/components/discard-offline-draft";
 import { pendingReceipts, syncReceipts } from "@/lib/receipt-queue";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
@@ -115,6 +117,7 @@ function SheetForm() {
   const { data: profile } = useProfile();
   const { data: company } = useCompanyRules();
   const { data: users = [] } = useCompanyUsers();
+  const { data: suggestions } = useEntrySuggestions();
   const revision = useRef<string | null>(null);
   const [localReady, setLocalReady] = useState(false);
   const [savedLocally, setSavedLocally] = useState<Date | null>(null);
@@ -506,7 +509,7 @@ function SheetForm() {
             <Label>{word("fault")}</Label>
             {faults.length > 0 && <SearchSelect value="" placeholder="Choose a saved fault / remedy" options={faults.map((f) => ({ value: f.id, label: f.fault, hint: f.trade }))} onChange={(id) => { const f = faults.find((x) => x.id === id); if (!f) return; set({ reported_fault: f.fault }); if (f.remedy && logs[0]) setLogs(logs.map((l, i) => i === 0 ? { ...l, daily_work_description: [l.daily_work_description, f.remedy].filter(Boolean).join("\n") } : l)); }} />}
             {sheet.job_id && <p className="text-xs text-muted-foreground">Filled in from the assigned job card.</p>}
-            <Textarea rows={2} value={(form.reported_fault as string) ?? ""} onChange={(e) => set({ reported_fault: e.target.value })} />
+            <SuggestedTextarea rows={2} aria-label="Reported fault" disabled={readOnly} value={(form.reported_fault as string) ?? ""} onValueChange={reported_fault => set({ reported_fault })} suggestions={suggestions?.faults} />
             <VoiceDictation label="reported fault" disabled={readOnly} value={(form.reported_fault as string) ?? ""} onApply={(t) => set({ reported_fault: t })} />
           </div>
           <div className="space-y-3">
@@ -554,16 +557,16 @@ function SheetForm() {
                   <TechnicianPicker count={l.technician_count} selected={l.technician_initials} users={users} disabled={readOnly} onChange={(count, initials) => setLog(i, { technician_count: count, technician_initials: initials })} />
                   <p className="mt-2 text-xs text-muted-foreground">{day.toFixed(2)} labour h · {l.technician_count} {l.technician_count === 1 ? "technician" : "technicians"}</p>
                   <div className="mt-3 space-y-1"><Label className="text-xs">Repairs done this day</Label>
-                    <Textarea rows={2} value={l.daily_work_description} onChange={(e) => setLog(i, { daily_work_description: e.target.value })} />
+                    <SuggestedTextarea rows={2} aria-label={`Repairs done day ${i + 1}`} disabled={readOnly} value={l.daily_work_description} onValueChange={daily_work_description => setLog(i, { daily_work_description })} suggestions={suggestions?.work} />
                     <VoiceDictation label="repairs done" disabled={readOnly} value={l.daily_work_description} onApply={(t) => setLog(i, { daily_work_description: t })} />
                   </div>
                   <div className="mt-3 space-y-2">
                     <Label className="text-xs">Parts used</Label>
                     {dayParts.map(({ p, j }) => (
                       <div key={j} className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 md:grid-cols-[minmax(0,1fr)_70px_70px_110px_auto]">
-                        <Input className="col-span-2 h-10 md:col-span-1" placeholder="Part description" value={p.part_description} onChange={(e) => setPart(j, { part_description: e.target.value })} />
+                        <Input className="col-span-2 h-10 md:col-span-1" list="previous-part-descriptions" placeholder="Part description" value={p.part_description} onChange={(e) => setPart(j, { part_description: e.target.value })} />
                         <div className="grid grid-cols-3 gap-2 md:contents">
-                          <Input className="h-10" placeholder="Unit" value={p.unit} onChange={(e) => setPart(j, { unit: e.target.value })} />
+                          <Input className="h-10" list="previous-part-units" placeholder="Unit" value={p.unit} onChange={(e) => setPart(j, { unit: e.target.value })} />
                           <NumInput className="h-10" min="0" aria-label="Part quantity" placeholder="Qty" value={p.quantity} onChange={(v) => setPart(j, { quantity: v })} />
                           <NumInput className="h-10" min="0" step="0.25" aria-label="Hours acquiring this part" placeholder="Acq. h" value={p.time_acquiring_parts_hours} onChange={(v) => setPart(j, { time_acquiring_parts_hours: v })} />
                         </div>
@@ -595,7 +598,7 @@ function SheetForm() {
             <div className="space-y-1.5">
               <Label>{word("pending")}</Label>
               <p className="text-xs text-muted-foreground">Goes to the admin pending queue.</p>
-              <Textarea rows={3} value={(form.pending_works_future_jobs as string) ?? ""} onChange={(e) => set({ pending_works_future_jobs: e.target.value })} />
+              <SuggestedTextarea rows={3} aria-label="Pending works" disabled={readOnly} value={(form.pending_works_future_jobs as string) ?? ""} onValueChange={pending_works_future_jobs => set({ pending_works_future_jobs })} suggestions={suggestions?.pending} />
               <VoiceDictation label="pending works" disabled={readOnly} value={(form.pending_works_future_jobs as string) ?? ""} onApply={(t) => set({ pending_works_future_jobs: t })} />
               <JobPhotos {...photoProps} scope="pending" day={null} />
             </div>
