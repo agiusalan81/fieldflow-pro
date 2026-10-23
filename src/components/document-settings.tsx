@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { settingsSectionPatch } from "@/lib/settings-sections";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ArrowDown, ArrowUp, Download, FileUp, GripVertical, Loader2, Plus, Trash2 } from "lucide-react";
@@ -67,7 +68,7 @@ export function DocumentSettings({ companyId, part }: { companyId: string; part:
   if (!t || !terms) return null;
 
   const save = async () => {
-    if (contrastRatio(t.fieldBackground ?? "#ffffff", t.fieldText ?? "#202020") < 4.5) { toast.error("Choose document field colours with stronger contrast"); return; }
+    if (part === "branding" && contrastRatio(t.fieldBackground ?? "#ffffff", t.fieldText ?? "#202020") < 4.5) { toast.error("Choose document field colours with stronger contrast"); return; }
     setSaving(true);
     const { data: latest, error: readError } = await supabase.from("company_settings").select("pdf_template").maybeSingle();
     if (readError) { toast.error(readError.message); setSaving(false); return; }
@@ -76,7 +77,8 @@ export function DocumentSettings({ companyId, part }: { companyId: string; part:
       ...(planOn("branding_documents") ? { order: t.order, hidden: t.hidden, stylePreset: t.stylePreset, accentColor: t.accentColor, frame: t.frame, backgroundPath: t.backgroundPath, fieldBackground: t.fieldBackground, fieldText: t.fieldText, textStyles: t.textStyles } : {}),
       ...(planOn("branding_fonts") ? { font: t.font, documentFont: t.documentFont } : {}),
       ...(planOn("branding_custom_fonts") ? { fontPath: t.fontPath, fontName: t.fontName } : {}) };
-    const { error } = await supabase.from("company_settings").upsert({ company_id: companyId, pdf_template: next as never, terms: terms as never, note_presets: presets.filter((p) => p.label.trim()) as never });
+    const patch = settingsSectionPatch(part, { pdf_template: next, terms, note_presets: presets.filter(p => p.label.trim()) });
+    const { error } = await supabase.from("company_settings").upsert({ company_id: companyId, ...patch } as never);
     setSaving(false); if (error) { toast.error(error.message); return; }
     toast.success("Document templates saved");
     qc.invalidateQueries({ queryKey: ["doc-settings"] });

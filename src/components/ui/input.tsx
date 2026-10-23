@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 
 const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
   ({ className, type, ...props }, ref) => {
+    const [numericDraft, setNumericDraft] = React.useState<string | null>(null);
+    const numeric = type === "number" && props.value !== undefined;
     return (
       <input
         type={type}
@@ -13,6 +15,22 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
         )}
         ref={ref}
         {...props}
+        value={numeric ? numericDraft ?? props.value : props.value}
+        onFocus={event => {
+          if (numeric) event.target.select();
+          props.onFocus?.(event);
+        }}
+        onChange={event => {
+          if (numeric) {
+            setNumericDraft(event.target.value);
+            if (event.target.value === "") return;
+          }
+          props.onChange?.(event);
+        }}
+        onBlur={event => {
+          setNumericDraft(null);
+          props.onBlur?.(event);
+        }}
       />
     );
   },

@@ -24,7 +24,8 @@ export function NumInput({ value, onChange, ...props }: {
         const next = raw.length > 1 && raw.startsWith("0") && !raw.startsWith("0.") && (draft === null || draft === "0") ? raw.replace(/^0+/, "") : raw;
         setDraft(next);
         const n = Number(next);
-        if (next === "" || Number.isFinite(n)) onChange(next === "" ? 0 : n);
+        // Clearing is an editing state, never a coerced zero/one in the parent.
+        if (next !== "" && Number.isFinite(n)) onChange(n);
       }}
     />
   );

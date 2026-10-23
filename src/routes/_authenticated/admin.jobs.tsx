@@ -16,7 +16,10 @@ import { EVENTS, parseIntegrations, renderTemplate } from "@/lib/integrations";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, useCompanyUsers, initialsOf } from "@/lib/profile";
 import { usePlanFeatures } from "@/lib/plan-features";
-import { clampTeamSize, skillMatchScore } from "@/lib/skills";
+import { dispatchTeamSize, skillMatchScore } from "@/lib/skills";
+import { NumInput } from "@/components/num-input";
+import { useEntrySuggestions } from "@/hooks/use-entry-suggestions";
+import { SuggestedTextarea } from "@/components/suggested-textarea";
 import { matchesSheetFilter, matchesSheetDetails, validateCombinedSheets } from "@/lib/jobsheets";
 import { matchesSheetSearch } from "@/lib/dwr";
 import { AppShell, EmptyState } from "@/components/app-shell";
@@ -299,6 +302,7 @@ function AdminJobs() {
 
 function NewJobDialog() {
   const { data: profile } = useProfile();
+  const { data: suggestions } = useEntrySuggestions();
   const { data: allUsers = [] } = useCompanyUsers();
   // Field crew are supervisors and technicians only; office staff dispatch but are not crew.
   const users = allUsers.filter(u => u.role === "technician" || u.role === "supervisor");
@@ -323,8 +327,8 @@ function NewJobDialog() {
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile || !f.client_id) { toast.error("Pick a client"); return; }
-    const teamSize = clampTeamSize(f.teamSize, smart);
     const named = [f.tech, f.assistant].filter(x => x !== "none").length + f.crew.length;
+    const teamSize = dispatchTeamSize(f.teamSize, smart, named);
     if (named > teamSize) { toast.error(`You picked ${named} people for a team of ${teamSize}`); return; }
     if (!f.open && f.tech === "none" && f.crew.length) { toast.error("Choose a lead technician"); return; }
     const { data: job, error } = await supabase.from("jobs").insert({
@@ -332,7 +336,8 @@ function NewJobDialog() {
       site_id: f.site_id === "none" ? null : f.site_id, asset_id: f.asset_id === "none" ? null : f.asset_id,
       assigned_technician_id: f.tech === "none" ? null : f.tech, secondary_technician_id: f.assistant === "none" ? null : f.assistant, scheduled_date: f.scheduled_date,
       window_start: f.window_start || null, window_end: f.window_end || null, priority: f.priority, problem_summary: f.problem_summary || null,
-      ...(smart ? { required_team_size: teamSize, open_to_claim: f.open && named < teamSize } : {}),
+      required_team_size: teamSize,
+      ...(smart ? { open_to_claim: f.open && named < teamSize } : {}),
     }).select("id, job_number").single();
     if (error) { toast.error(error.message); return; }
     if (smart && job) {
@@ -391,7 +396,7 @@ function NewJobDialog() {
           </div>
           {smart && <div className="space-y-3 rounded-lg border p-3">
             <p className="text-sm font-medium">Smart dispatch</p>
-            <div className="space-y-1"><Label htmlFor="team-size">Required team size</Label><Input id="team-size" className="h-11 w-28" type="number" min={1} max={30} value={f.teamSize} onChange={e => setF({ ...f, teamSize: clampTeamSize(Number(e.target.value), true) })} /></div>
+            <div className="space-y-1"><Label htmlFor="team-size">Required team size</Label><NumInput id="team-size" className="h-11 w-28" min={1} max={30} step={1} value={f.teamSize} onChange={teamSize => setF({ ...f, teamSize })} /></div>
             {!!skillList.filter(s => !s.archived).length && <div className="space-y-1"><Label>Required skills</Label><div className="flex flex-wrap gap-2">{skillList.filter(s => !s.archived).map(s => { const on = f.skills.includes(s.id); return <button key={s.id} type="button" aria-pressed={on} onClick={() => setF({ ...f, skills: on ? f.skills.filter(x => x !== s.id) : [...f.skills, s.id] })} className={`min-h-9 rounded-full border px-3 text-sm ${on ? "border-primary bg-primary text-primary-foreground" : "bg-background"}`}>{s.name}</button>; })}</div></div>}
             {f.tech !== "none" && f.assistant !== "none" && f.teamSize > 2 && <div className="space-y-2"><Label>More crew</Label>
               {f.crew.map((c, i) => <div key={i} className="flex gap-2"><select aria-label={`Crew member ${i + 3}`} className="h-11 flex-1 rounded-md border bg-background px-2 text-sm" value={c} onChange={e => setF({ ...f, crew: f.crew.map((x, j) => j === i ? e.target.value : x) })}>{ranked.filter(u => u.id === c || ![f.tech, f.assistant, ...f.crew].includes(u.id)).map(u => <option key={u.id} value={u.id}>{label(u)}</option>)}</select><Button type="button" variant="outline" className="h-11" onClick={() => setF({ ...f, crew: f.crew.filter((_, j) => j !== i) })} aria-label="Remove crew member"><X className="h-4 w-4" /></Button></div>)}
@@ -404,7 +409,7 @@ function NewJobDialog() {
             <div className="space-y-1.5"><Label>From</Label><Input type="time" value={f.window_start} onChange={(e) => setF({ ...f, window_start: e.target.value })} /></div>
             <div className="space-y-1.5"><Label>To</Label><Input type="time" value={f.window_end} onChange={(e) => setF({ ...f, window_end: e.target.value })} /></div>
           </div>
-          <div className="space-y-1.5"><Label>Problem summary</Label><Textarea value={f.problem_summary} onChange={(e) => setF({ ...f, problem_summary: e.target.value })} /></div>
+          <div className="space-y-1.5"><Label>Problem summary</Label><SuggestedTextarea aria-label="Problem summary" value={f.problem_summary} onValueChange={problem_summary => setF({ ...f, problem_summary })} suggestions={suggestions?.problems} /></div>
           <Button type="submit" className="w-full">Schedule</Button>
         </form>
       </DialogContent>

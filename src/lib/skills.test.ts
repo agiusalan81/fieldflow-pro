@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { clampTeamSize, hasMandatorySkills, placesLeft, skillMatchScore } from "./skills";
+import { clampTeamSize, dispatchTeamSize, hasMandatorySkills, placesLeft, skillMatchScore } from "./skills";
 
 describe("skills dispatch rules", () => {
+  it("allows lead plus assistant despite a hidden team-size default of 1", () => { expect(dispatchTeamSize(1, false, 2)).toBe(2); });
+  it("keeps a single-person standard visit at 1", () => { expect(dispatchTeamSize(1, false, 1)).toBe(1); });
+  it("does not allow three-person standard dispatch", () => { expect(dispatchTeamSize(3, false, 3)).toBe(2); });
+  it("keeps explicit Smart Dispatch capacity", () => { expect(dispatchTeamSize(6, true, 2)).toBe(6); });
   it("allows a 6-person installation crew with the module", () => { expect(clampTeamSize(6, true)).toBe(6); });
   it("keeps standard dispatch to lead plus one assistant without the module", () => { expect(clampTeamSize(6, false)).toBe(2); });
   it("never allows a team smaller than one", () => { expect(clampTeamSize(0, true)).toBe(1); });

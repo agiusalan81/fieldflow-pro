@@ -1,4 +1,5 @@
 import { TRADES } from "@/lib/price-list";
+import { settingsSectionPatch } from "@/lib/settings-sections";
 import { TechnicalStructure } from "@/components/technical-structure";
 import { EstimateSettings } from "@/components/estimate-settings";
 import { PriceListSettings } from "@/components/price-list-settings";
@@ -228,15 +229,16 @@ function ProfileTab({ companyId, part, navigation }: { companyId: string; part: 
   if (!p || !t || name === null || appTitle === null) return null;
   const save = async () => {
     const n = name.trim();
-    if (!n) { toast.error("Company name can't be empty"); return; }
-    if (n !== (profile?.companies?.name ?? "")) {
+    if (part === "details" && !n) { toast.error("Company name can't be empty"); return; }
+    if (part === "details" && n !== (profile?.companies?.name ?? "")) {
       const { error: ce } = await supabase.from("companies").update({ name: n.slice(0, 120) }).eq("id", companyId);
       if (ce) { toast.error(ce.message); return; }
     }
     const { data: currentTheme, error: themeReadError } = await supabase.from("company_settings").select("theme").maybeSingle();
     if (themeReadError) { toast.error(themeReadError.message); return; }
     const storedTheme = { ...((currentTheme?.theme ?? {}) as Record<string, unknown>), ...(planOn("branding_fonts") ? { headers: t.headers, fields: t.fields } : {}) };
-    const { error } = await supabase.from("company_settings").upsert({ company_id: companyId, ...p, company_address: formatOfficeAddress(p.office_address), office_address: p.office_address as never, theme: storedTheme as never, ...(titleAllowed ? { app_title: appTitle.trim().slice(0, 40) } : {}) });
+    const patch = settingsSectionPatch(part, { ...p, company_address: formatOfficeAddress(p.office_address), office_address: p.office_address, theme: storedTheme, ...(titleAllowed ? { app_title: appTitle.trim().slice(0, 40) } : {}) });
+    const { error } = await supabase.from("company_settings").upsert({ company_id: companyId, ...patch } as never);
     if (error) { toast.error(error.message); return; }
     toast.success("Saved");
     qc.invalidateQueries({ queryKey: ["company-settings"] });

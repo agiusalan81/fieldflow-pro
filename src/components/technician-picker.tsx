@@ -29,7 +29,7 @@ export function TechnicianPicker({ count, selected, users, disabled, onChange }:
   };
   return <div className="mt-3 space-y-2">
     <div className="grid gap-3 sm:grid-cols-[140px_minmax(0,1fr)]">
-      <div className="space-y-1"><Label>No. of technicians</Label><Input aria-label="No. of technicians" type="number" min={0} step={1} inputMode="numeric" disabled={disabled} value={text} onChange={(e) => typeCount(e.target.value)} onBlur={() => setText(String(count))} /></div>
+      <div className="space-y-1"><Label>No. of technicians</Label><Input aria-label="No. of technicians" type="number" min={0} step={1} inputMode="numeric" disabled={disabled} value={text} onFocus={e => e.target.select()} onChange={(e) => typeCount(e.target.value)} onBlur={() => setText(String(count))} /></div>
       <div className="space-y-1"><Label>Technicians</Label><SearchSelect value={null} disabled={disabled} placeholder="Search name or type initials…" freeText={manual} onFreeText={setManual} onAddFreeText={(text) => { add(text.split(/[,;\s]+/)); setManual(""); }} options={users.filter((u) => !selected.includes(initialsOf(u))).map((u) => ({ value: u.id, label: u.full_name, hint: initialsOf(u) }))} onChange={(id) => { const u = users.find((u) => u.id === id); if (u) add([initialsOf(u)]); }} /></div>
     </div>
     <div className="flex flex-wrap gap-2">{selected.map((initials) => <Button key={initials} type="button" size="sm" variant="secondary" disabled={disabled} aria-label={`Remove technician ${initials}`} onClick={() => { const next = selected.filter((s) => s !== initials); onChange(Math.max(1, count - 1, next.length), next); }}>{initials}<X className="ml-1 h-3 w-3" /></Button>)}</div>
