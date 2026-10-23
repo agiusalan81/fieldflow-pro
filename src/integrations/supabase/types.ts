@@ -3004,6 +3004,94 @@ export type Database = {
           },
         ]
       }
+      platform_engagement_actions: {
+        Row: {
+          action_key: string
+          body: string
+          created_at: string
+          created_by: string
+          id: string
+          status: string
+          subject: string
+          subscription_id: string
+          updated_at: string
+        }
+        Insert: {
+          action_key: string
+          body: string
+          created_at?: string
+          created_by: string
+          id?: string
+          status?: string
+          subject: string
+          subscription_id: string
+          updated_at?: string
+        }
+        Update: {
+          action_key?: string
+          body?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          status?: string
+          subject?: string
+          subscription_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_engagement_actions_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "platform_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_feedback: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          message: string
+          owner_notes: string
+          rating: number | null
+          status: string
+          submitted_by: string
+          subscription_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          message: string
+          owner_notes?: string
+          rating?: number | null
+          status?: string
+          submitted_by: string
+          subscription_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          message?: string
+          owner_notes?: string
+          rating?: number | null
+          status?: string
+          submitted_by?: string
+          subscription_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_feedback_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "platform_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_invoice_reminders: {
         Row: {
           created_at: string
@@ -3224,6 +3312,41 @@ export type Database = {
             foreignKeyName: "platform_legal_profiles_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: true
+            referencedRelation: "platform_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_outreach_templates: {
+        Row: {
+          body: string
+          id: string
+          product_id: string
+          subject: string
+          template_key: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          id?: string
+          product_id: string
+          subject: string
+          template_key: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          id?: string
+          product_id?: string
+          subject?: string
+          template_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_outreach_templates_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
             referencedRelation: "platform_products"
             referencedColumns: ["id"]
           },
@@ -3456,6 +3579,64 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "platform_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_usage_daily: {
+        Row: {
+          day: string
+          event_count: number
+          feature: string
+          subscription_id: string
+        }
+        Insert: {
+          day?: string
+          event_count?: number
+          feature: string
+          subscription_id: string
+        }
+        Update: {
+          day?: string
+          event_count?: number
+          feature?: string
+          subscription_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_usage_daily_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "platform_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_usage_totals: {
+        Row: {
+          first_sign_in: string | null
+          last_seen: string | null
+          subscription_id: string
+          work_count: number
+        }
+        Insert: {
+          first_sign_in?: string | null
+          last_seen?: string | null
+          subscription_id: string
+          work_count?: number
+        }
+        Update: {
+          first_sign_in?: string | null
+          last_seen?: string | null
+          subscription_id?: string
+          work_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_usage_totals_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: true
+            referencedRelation: "platform_subscriptions"
             referencedColumns: ["id"]
           },
         ]
@@ -4351,6 +4532,10 @@ export type Database = {
           window_start: string
         }[]
       }
+      platform_analytics_summary: {
+        Args: { _days?: number; _product: string }
+        Returns: Json
+      }
       platform_company_directory: {
         Args: never
         Returns: {
@@ -4409,6 +4594,7 @@ export type Database = {
         Returns: boolean
       }
       read_client_report: { Args: { _hash: string }; Returns: Json }
+      record_platform_usage: { Args: { _feature: string }; Returns: undefined }
       registered_members: {
         Args: never
         Returns: {
@@ -4554,6 +4740,10 @@ export type Database = {
           _token: string
         }
         Returns: undefined
+      }
+      submit_platform_feedback: {
+        Args: { _category: string; _message: string; _rating: number }
+        Returns: string
       }
       user_initials: {
         Args: { _full_name: string; _initials: string }
