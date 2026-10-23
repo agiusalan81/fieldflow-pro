@@ -10,7 +10,7 @@ import { canSeeMember } from "@/lib/member-registration";
 import type { Role } from "@/lib/profile";
 import { AppShell, EmptyState } from "@/components/app-shell";
 
-export const Route = createFileRoute("/_authenticated/team")({
+export const Route = createFileRoute("/_authenticated/team")({ staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Team availability — FieldBridge" },

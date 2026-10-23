@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-export const Route = createFileRoute("/_authenticated/admin/fields")({
+export const Route = createFileRoute("/_authenticated/admin/fields")({ staticData: { sitemap: false },
   head: () => ({
     meta: [
       { property: "og:type", content: "website" },

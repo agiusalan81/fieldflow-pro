@@ -13,7 +13,7 @@ import { dayLabourHours } from "@/lib/jobsheets";
 import { Button } from "@/components/ui/button";
 import { documentVariables } from "@/components/document-preview";
 
-export const Route = createFileRoute("/_authenticated/print/$sheetId")({
+export const Route = createFileRoute("/_authenticated/print/$sheetId")({ staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Client job sheet — FieldBridge" },
@@ -89,7 +89,7 @@ function PrintSheet() {
           </section>
         )}
         <footer className="grid grid-cols-2 gap-6 border-t pt-4">
-          <div><p className="text-xs uppercase text-muted-foreground">Technician</p><p>{s.technician_name}</p></div>
+          <div><p className="text-xs uppercase text-muted-foreground">Technician</p><p>{s.technician_name}</p>{data.technicianSignature && <img src={data.technicianSignature} alt="Technician signature" className="mt-1 h-20 max-w-full object-contain" />}</div>
           <div>
             <p className="text-xs uppercase text-muted-foreground">Client sign-off{s.signature_data ? " · Signed" : ""}</p>
             <p>{s.client_full_name} · ID {s.client_id_card_no}</p>

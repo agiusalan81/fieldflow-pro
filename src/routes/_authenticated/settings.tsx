@@ -1,4 +1,6 @@
 import { MemberSkills } from "@/components/member-skills";
+import { StaffSignatureEditor } from "@/components/staff-signature";
+import { staffSignatureEligible } from "@/lib/staff-signature";
 import { PushDeviceStatus } from "@/components/push-device-status";
 import { PhoneInput, splitPhone } from "@/components/client-manager";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -16,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
-export const Route = createFileRoute("/_authenticated/settings")({
+export const Route = createFileRoute("/_authenticated/settings")({ staticData: { sitemap: false },
   head: () => ({
     meta: [
       { property: "og:type", content: "website" },
@@ -119,6 +121,7 @@ function Settings() {
             </label>
           </section>
           <PushDeviceStatus />
+          {staffSignatureEligible(profile.real_role) && staffSignatureEligible(profile.role) && <section className="space-y-3 border-t pt-5"><h2 className="font-medium">Your staff signature</h2><StaffSignatureEditor /></section>}
           <div className="grid gap-2 sm:grid-cols-3">
             <Button className="h-11" onClick={save}>Update Profile</Button>
             <Dialog open={pwOpen} onOpenChange={setPwOpen}>
@@ -143,10 +146,10 @@ function Settings() {
             ))}
           </dl>
           <MemberSkills userId={profile.id} role={profile.role} name={profile.full_name}/>
-          <div>
+          {!staffSignatureEligible(profile.real_role) && <div>
             <p className="text-xs text-muted-foreground">Signature on file</p>
             {profile.signature_on_file ? <img src={profile.signature_on_file} alt="Signature on file" className="mt-1 h-20 rounded border bg-background" /> : <p className="text-sm text-foreground">None</p>}
-          </div>
+          </div>}
         </aside>
       </div>
     </AppShell>

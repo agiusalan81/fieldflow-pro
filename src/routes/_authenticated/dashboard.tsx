@@ -27,7 +27,7 @@ import { usePreviewProfile, useUserPreview } from "@/lib/impersonation";
 import { JobTravelActions } from "@/components/job-travel-actions";
 import { UnfinishedWorkDialog } from "@/components/unfinished-work";
 
-export const Route = createFileRoute("/_authenticated/dashboard")({
+export const Route = createFileRoute("/_authenticated/dashboard")({ staticData: { sitemap: false },
   head: () => ({
     meta: [
       { property: "og:type", content: "website" },

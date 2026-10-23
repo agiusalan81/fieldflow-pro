@@ -38,7 +38,7 @@ async function handle(event: { id: string; type: string; data: { object: any } }
   await supabaseAdmin.from("platform_payment_events").insert({ event_id: event.id, event_type: event.type });
 }
 
-export const Route = createFileRoute("/api/public/payments/webhook")({
+export const Route = createFileRoute("/api/public/payments/webhook")({ staticData: { sitemap: false },
   server: {
     handlers: {
       POST: async ({ request }) => {

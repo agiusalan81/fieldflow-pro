@@ -14,7 +14,7 @@ import { JobTravelActions } from "@/components/job-travel-actions";
 import { DeleteVisit } from "@/components/delete-visit";
 import { canDeleteVisit } from "@/lib/record-deletion";
 
-export const Route = createFileRoute("/_authenticated/schedule")({
+export const Route = createFileRoute("/_authenticated/schedule")({ staticData: { sitemap: false },
   head: () => ({
     meta: [
       { property: "og:type", content: "website" },

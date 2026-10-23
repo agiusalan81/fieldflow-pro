@@ -83,6 +83,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  staticData: { sitemap: false },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -94,12 +95,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "application-name", content: "FieldBridge" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "description", content: "Field service management" },
-      { name: "author", content: "Lovable" },
       { property: "og:title", content: "FieldBridge" },
       { property: "og:description", content: "Field service management" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {

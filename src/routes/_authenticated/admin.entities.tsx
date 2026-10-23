@@ -24,7 +24,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-export const Route = createFileRoute("/_authenticated/admin/entities")({
+export const Route = createFileRoute("/_authenticated/admin/entities")({ staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Clients, contacts & assets — FieldBridge" },

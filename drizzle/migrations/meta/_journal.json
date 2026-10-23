@@ -624,6 +624,13 @@
       "when": 1792768882502,
       "tag": "0088_equipment_target_and_office_sheet_deletion",
       "breakpoints": true
+    },
+    {
+      "idx": 89,
+      "version": "7",
+      "when": 1792778532614,
+      "tag": "0089_self_signatures_and_public_legal_projection",
+      "breakpoints": true
     }
   ]
 }

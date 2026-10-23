@@ -3,7 +3,7 @@ import { AppShell, EmptyState } from "@/components/app-shell";
 import { LiveLocations } from "@/components/live-locations";
 import { useProfile } from "@/lib/profile";
 
-export const Route = createFileRoute("/_authenticated/live-map")({
+export const Route = createFileRoute("/_authenticated/live-map")({ staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Live team map — FieldBridge" },

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
 
-export const Route = createFileRoute("/api/public/jobs/billing-daily")({
+export const Route = createFileRoute("/api/public/jobs/billing-daily")({ staticData: { sitemap: false },
   server: {
     handlers: {
       POST: async ({ request }) => {

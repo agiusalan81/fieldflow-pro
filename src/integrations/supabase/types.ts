@@ -4550,6 +4550,7 @@ export type Database = {
           travel: number
         }[]
       }
+      fieldbridge_public_legal: { Args: never; Returns: Json }
       fleet_day: { Args: { _date: string; _user: string }; Returns: Json }
       fleet_vehicle_list: { Args: never; Returns: Json }
       get_equipment_report_target: { Args: { _token: string }; Returns: Json }
@@ -4722,6 +4723,10 @@ export type Database = {
           _plate: string
           _price: number
         }
+        Returns: undefined
+      }
+      save_my_staff_signature: {
+        Args: { _signature: string }
         Returns: undefined
       }
       save_sheet_snapshot: {

@@ -40,7 +40,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-export const Route = createFileRoute("/_authenticated/sheets/$sheetId")({
+export const Route = createFileRoute("/_authenticated/sheets/$sheetId")({ staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Job sheet — FieldBridge" },

@@ -103,14 +103,18 @@ export async function buildPdf(d: PdfSheetData) {
     y -= 10; page.drawLine({ start: { x: M, y }, end: { x: W - M, y }, thickness: 0.5, color: grey }); y -= 18;
     text("TECHNICIAN", M, 8, bold, grey); text("CLIENT SIGN-OFF", W / 2, 8, bold, grey); y -= 14;
     text(d.technician || "-", M); text(`${d.signedBy || "-"}  -  ID ${d.idCard || "-"}`, W / 2); y -= 8;
-    if (d.signature?.startsWith("data:image/png")) {
+    let signatureHeight = 0;
+    for (const [signature, x] of [[d.technicianSignature, M], [d.signature, W / 2]] as const) {
+      if (!signature?.startsWith("data:image/png")) continue;
       try {
-        const img = await doc.embedPng(d.signature);
-        const h = 60, w = Math.min(200, (img.width / img.height) * h);
-        page.drawImage(img, { x: W / 2, y: y - h, width: w, height: h });
-        y -= h;
+        const img = await doc.embedPng(signature);
+        const scale = Math.min(200 / img.width, 60 / img.height);
+        const h = img.height * scale, w = img.width * scale;
+        page.drawImage(img, { x, y: y - h, width: w, height: h });
+        signatureHeight = Math.max(signatureHeight, h);
       } catch { /* ignore bad signature image */ }
     }
+    y -= signatureHeight;
     y -= 10;
   };
   for (const b of visibleBlocks(d.template)) {

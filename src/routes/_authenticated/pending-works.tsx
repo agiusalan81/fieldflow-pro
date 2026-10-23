@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-export const Route = createFileRoute("/_authenticated/pending-works")({
+export const Route = createFileRoute("/_authenticated/pending-works")({ staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Pending works — FieldBridge" },

@@ -1,0 +1,17 @@
+import { Link } from "@tanstack/react-router";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import mark from "@/assets/fieldbridge-mark.png";
+import { getPublicLegal } from "@/lib/public-legal.functions";
+import { TRUST_LINKS, TRUST_PAGES, type TrustPageKey } from "@/lib/trust-pages";
+export const publicLegalQuery = queryOptions({ queryKey: ["public-legal"], queryFn: () => getPublicLegal(), staleTime: 60000 });
+export function TrustPage({ pageKey }: { pageKey: TrustPageKey }) {
+  const { data } = useSuspenseQuery(publicLegalQuery); const page = TRUST_PAGES[pageKey]; const profile = data.profile;
+  return <div className="min-h-screen bg-background text-foreground">
+    <header className="border-b"><div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-4"><Link to="/" className="flex items-center gap-3 font-semibold text-brand-navy"><img src={mark} alt="" className="h-9 w-9" />FieldBridge</Link><Link to="/auth" className="text-sm underline underline-offset-4">Sign in</Link></div></header>
+    <main id="main" className="mx-auto max-w-5xl px-5 py-12 md:py-16"><p className="text-sm text-muted-foreground">FieldBridge / Trust</p><h1 className="mt-3 text-4xl font-semibold">{page.title}</h1><p className="mt-4 max-w-2xl text-muted-foreground">{page.description}</p>
+      <p className="mt-5 border-l-2 border-brand-amber pl-3 text-sm text-muted-foreground">Draft for legal review — not a substitute for your signed commercial agreement.</p>
+      <div className="mt-10 grid gap-10 md:grid-cols-[180px_minmax(0,1fr)]"><nav aria-label="Trust pages" className="flex flex-wrap content-start gap-4 text-sm md:flex-col">{TRUST_LINKS.map(([to,label]) => <Link key={to} to={to} className={to === `/${pageKey}` ? "font-semibold text-brand-navy underline underline-offset-4" : "text-muted-foreground hover:text-foreground"}>{label}</Link>)}</nav><article className="min-w-0 space-y-8">{page.sections.map(([title,body]) => <section key={title}><h2 className="text-xl font-semibold">{title}</h2><p className="mt-3 leading-relaxed text-muted-foreground">{body}</p></section>)}
+      <section className="border-t pt-6"><h2 className="text-xl font-semibold">Platform company & contact</h2>{profile?.legal_name ? <div className="mt-3 space-y-2 text-sm text-muted-foreground"><p className="font-medium text-foreground">{profile.legal_name}</p>{profile.registered_address && <p className="whitespace-pre-line">{profile.registered_address}</p>}{profile.country && <p>{profile.country}</p>}{profile.registration_number && <p>Registration: {profile.registration_number}</p>}{profile.vat_number && <p>VAT: {profile.vat_number}</p>}</div> : <p className="mt-3 text-sm text-muted-foreground">{data.unavailable ? "Company details are temporarily unavailable." : "Registered company details have not yet been supplied."}</p>}
+      {profile?.privacy_email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.privacy_email) ? <a className="mt-4 block break-all text-sm underline" href={`mailto:${encodeURIComponent(profile.privacy_email)}`}>{profile.privacy_email}</a> : <p className="mt-4 text-sm text-muted-foreground">A dedicated privacy contact has not yet been supplied. <a href="mailto:sales@fieldbridgeapp.com" className="underline">Contact FieldBridge</a></p>}</section>
+      </article></div></main><footer className="border-t px-5 py-6 text-center text-sm text-muted-foreground"><Link to="/" className="underline">Back to FieldBridge</Link></footer></div>;
+}

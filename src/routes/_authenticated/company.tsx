@@ -32,7 +32,7 @@ import { INDUSTRY_PRESETS, INDUSTRY_LABELS, type Appearance } from "@/lib/brandi
 import { BrandingLock } from "@/components/branding-lock";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-export const Route = createFileRoute("/_authenticated/company")({
+export const Route = createFileRoute("/_authenticated/company")({ staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Company settings — FieldBridge" },

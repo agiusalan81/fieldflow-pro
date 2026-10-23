@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-export const Route=createFileRoute('/problem/$token')({head:()=>({meta:[{title:'Report an equipment problem — FieldBridge'},{name:'description',content:'Submit an equipment fault securely to the responsible service team.'},{property:'og:title',content:'Report an equipment problem — FieldBridge'},{property:'og:description',content:'Send a problem report without accessing private equipment records.'},{property:'og:type',content:'website'},{name:'twitter:card',content:'summary'}]}),component:ProblemForm});
+export const Route=createFileRoute('/problem/$token')({ staticData: { sitemap: false },head:()=>({meta:[{title:'Report an equipment problem — FieldBridge'},{name:'description',content:'Submit an equipment fault securely to the responsible service team.'},{property:'og:title',content:'Report an equipment problem — FieldBridge'},{property:'og:description',content:'Send a problem report without accessing private equipment records.'},{property:'og:type',content:'website'},{name:'twitter:card',content:'summary'}]}),component:ProblemForm});
 function ProblemForm() {
  const { token } = Route.useParams();
  const [f, setF] = useState({ first: '', last: '', position: '', problem: '' });

@@ -6,7 +6,7 @@ import { AppShell, EmptyState } from "@/components/app-shell";
 import { OvertimeCard } from "@/components/work-extras";
 import { ShiftTracker } from "./dashboard";
 
-export const Route = createFileRoute("/_authenticated/hours")({
+export const Route = createFileRoute("/_authenticated/hours")({ staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "My hours — FieldBridge" },

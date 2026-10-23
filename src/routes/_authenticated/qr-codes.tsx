@@ -8,7 +8,7 @@ import { NativeSelect } from '@/components/ui/native-select';
 import { Input } from '@/components/ui/input';
 import { isManager, useProfile } from '@/lib/profile';
 
-export const Route = createFileRoute('/_authenticated/qr-codes')({
+export const Route = createFileRoute('/_authenticated/qr-codes')({ staticData: { sitemap: false },
   head: () => ({ meta: [
     { title: 'QR code generator — FieldBridgeApp' },
     { name: 'description', content: 'Create branded equipment QR stickers for technical data and fault reporting.' },
