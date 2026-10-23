@@ -151,7 +151,7 @@ function Messages() {
 
   return (
     <AppShell title="Team chat">
-      <div className="grid h-[calc(100dvh-10rem)] overflow-hidden rounded-xl border bg-card md:grid-cols-[300px_minmax(0,1fr)] lg:h-[calc(100dvh-8rem)]">
+      <div className="grid h-[calc(100dvh-18rem)] min-h-72 overflow-hidden rounded-lg border bg-card md:h-[calc(100dvh-8rem)] md:grid-cols-[300px_minmax(0,1fr)]">
         <aside className={`${active ? "hidden md:flex" : "flex"} min-h-0 flex-col border-r`}>
           {askAlerts && <div className="flex items-center gap-2 border-b bg-muted/50 p-2 text-xs text-foreground"><Bell className="h-4 w-4 shrink-0" /><span className="flex-1">Get alerts when the app is in the background</span><Button size="sm" variant="secondary" onClick={() => void allowAlerts()}>Allow</Button></div>}
           <div className="flex gap-1 border-b p-2">

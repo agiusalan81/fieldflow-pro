@@ -610,6 +610,13 @@
       "when": 1792743587860,
       "tag": "0086_phase5_private_chat_attachments",
       "breakpoints": true
+    },
+    {
+      "idx": 87,
+      "version": "7",
+      "when": 1792744649927,
+      "tag": "0087_phase5_rota_read_module_guard",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,1 @@
+CREATE POLICY standby_module_boundary ON public.standby_swaps AS RESTRICTIVE FOR ALL TO authenticated USING(public.member_is_active(auth.uid()) AND public.company_module_access(company_id,'standby')) WITH CHECK(public.member_is_active(auth.uid()) AND public.company_module_access(company_id,'standby'));
