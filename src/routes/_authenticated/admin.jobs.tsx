@@ -310,7 +310,7 @@ function NewJobDialog() {
   const search = Route.useSearch();
   const navigate = useNavigate();
   const [open, setOpenRaw] = useState(!!search.new);
-  const setOpen = (o: boolean) => { setOpenRaw(o); if (!o && search.new) navigate({ to: "/admin/jobs", search: {}, replace: true }); };
+  const setOpen = (o: boolean) => { setOpenRaw(o); if (!o) { prefilled.current = null; if (search.new) navigate({ to: "/admin/jobs", search: {}, replace: true }); } };
   const empty = { client_id: "", site_id: "none", asset_id: "none", tech: "none", assistant: "none", scheduled_date: new Date().toISOString().slice(0, 10), window_start: "", window_end: "", priority: "normal", problem_summary: "", teamSize: 1, open: false, skills: [] as string[], crew: [] as string[] };
   const [f, setF] = useState(empty);
   const feature = usePlanFeatures(!!profile);
@@ -326,10 +326,12 @@ function NewJobDialog() {
 
   // QR problem report → pre-fill client, site, equipment and the reported problem.
   const prefilled = useRef<string | null>(null);
+  useEffect(() => { if (search.new) setOpenRaw(true); }, [search.new, search.assetId, search.problemId]);
   useEffect(() => {
     const a = search.assetId && assets.find((x) => x.id === search.assetId);
-    if (!open || !a || prefilled.current === search.assetId) return;
-    prefilled.current = search.assetId!;
+    const key = `${search.assetId}|${search.problemId ?? ""}`;
+    if (!open || !a || prefilled.current === key) return;
+    prefilled.current = key;
     void (async () => {
       let problem = "";
       if (search.problemId) { const r = await supabase.from("equipment_problem_reports").select("problem").eq("id", search.problemId).maybeSingle(); problem = r.data?.problem ?? ""; }
