@@ -1,0 +1,25 @@
+import { describe, expect, it } from "vitest";
+import { canResetTestCompany, tenantLocation } from "./hq";
+import { featureOn } from "./plan-features";
+describe("HQ trial module control", () => {
+  it("disables Malta payroll during a UK company's trial without disabling gross payroll", () => {
+    const status = {state:"trial",modules:[{name:"payroll_statutory_mt",enabled:false},{name:"payroll",enabled:true}]};
+    expect(featureOn(status,"payroll_statutory_mt")).toBe(false);
+    expect(featureOn(status,"payroll")).toBe(true);
+  });
+  it("disables payroll during a trial independently of standby", () => {
+    const status = {state:"trial",modules:[{name:"payroll",enabled:false},{name:"standby",enabled:true}]};
+    expect(featureOn(status,"payroll")).toBe(false);
+    expect(featureOn(status,"standby")).toBe(true);
+  });
+});
+describe("HQ test reset eligibility", () => {
+  it("rejects a production company even with the exact name", () => expect(canResetTestCompany(false,"Minakel","Minakel",["qs_pricing"])).toBe(false));
+  it("requires an exact company-name confirmation", () => expect(canResetTestCompany(true,"Minakel","Other company",["qs_pricing"])).toBe(false));
+  it("rejects payroll clearing", () => expect(canResetTestCompany(true,"Minakel","Minakel",["payroll"])).toBe(false));
+  it("accepts only selected supported modules for designated test companies", () => expect(canResetTestCompany(true,"Minakel","Minakel",["qs_pricing","skills_dispatch"])).toBe(true));
+  it("does not permit an empty selection", () => expect(canResetTestCompany(true,"Minakel","Minakel",[])).toBe(false));
+});
+describe("HQ company location", () => {
+  it("keeps city and country distinct without inferring a country", () => {expect(tenantLocation("London", "United Kingdom")).toBe("London, United Kingdom");expect(tenantLocation("London", "")).toBe("London");});
+});
