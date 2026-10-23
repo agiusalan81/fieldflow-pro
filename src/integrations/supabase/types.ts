@@ -4381,6 +4381,15 @@ export type Database = {
           subscription_id: string
         }[]
       }
+      platform_reset_test_data: {
+        Args: {
+          _company: string
+          _confirmation: string
+          _modules: string[]
+          _preview?: boolean
+        }
+        Returns: Json
+      }
       platform_save_company_controls: {
         Args: {
           _city: string

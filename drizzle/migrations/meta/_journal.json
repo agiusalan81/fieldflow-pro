@@ -568,6 +568,13 @@
       "when": 1792740549485,
       "tag": "0080_hq_company_controls_and_trial_overrides",
       "breakpoints": true
+    },
+    {
+      "idx": 81,
+      "version": "7",
+      "when": 1792740593289,
+      "tag": "0081_hq_safe_test_reset",
+      "breakpoints": true
     }
   ]
 }
