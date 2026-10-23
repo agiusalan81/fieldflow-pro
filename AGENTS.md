@@ -10,6 +10,7 @@
 <!-- LOVABLE:END -->
 
 ## Rules
+- HQ uses product-scoped workspaces, owner-authorized narrow directory/effective-access RPCs, and separate platform legal profiles; audited test resets allow only unused/unsent records and retain operational, financial, identity, storage and offline evidence.
 - App chrome uses directional platform gradient tokens with neutral control surfaces for contrast; global FieldBridge defaults apply only where tenants have not saved overrides, and phone theme metadata uses a solid navy because browser chrome cannot render gradients.
 - Travel shares one component/startJobTravel; arrival saves the time log before on-site status.: consistent travel/arrival.
 - Invite server functions/Query loaders have timeouts, middleware included.: prevent hangs.
