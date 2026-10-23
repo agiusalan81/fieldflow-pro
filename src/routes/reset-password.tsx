@@ -15,6 +15,7 @@ export const Route = createFileRoute("/reset-password")({ staticData: { sitemap:
       { property: "og:description", content: "Choose a new password for your FieldBridge account." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "robots", content: "noindex,nofollow" },
     ],
   }),
   component: ResetPassword,

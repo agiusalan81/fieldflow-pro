@@ -8,6 +8,7 @@ import { listPublicCatalog, type PublicCatalogItem } from "@/lib/public-catalog.
 import { CADENCES, cadenceSuffix, formatEur, priceForCadence, type BillingCadence } from "@/lib/catalog-pricing";
 import { PLAN_FEATURES } from "@/lib/plan-features";
 import { supabase } from "@/integrations/supabase/client";
+import { TRUST_LINKS } from "@/lib/trust-pages";
 
 const catalogQueryOptions = queryOptions({
   queryKey: ["public-catalog"],
@@ -25,7 +26,11 @@ export const Route = createFileRoute("/")({ staticData: { sitemap: true },
       { property: "og:description", content: "From first dispatch to paid invoice: digital job sheets, smart dispatch and billing for field service teams. 60 days free." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:url", content: "https://fieldbridgeapp.com/" },
+      { property: "og:image", content: "https://fieldbridgeapp.com/fieldbridge-share.jpg" },
+      { name: "twitter:image", content: "https://fieldbridgeapp.com/fieldbridge-share.jpg" },
     ],
+    links: [{ rel: "canonical", href: "https://fieldbridgeapp.com/" }],
   }),
   component: Landing,
   errorComponent: ({ error }) => (
@@ -271,6 +276,8 @@ function Landing() {
       </main>
 
       <footer className="border-t border-border">
+        <div className="mx-auto flex max-w-6xl flex-wrap justify-center gap-x-5 gap-y-3 px-5 pt-6 text-sm text-muted-foreground">{TRUST_LINKS.map(([to, label]) => <Link key={to} to={to} className="hover:text-foreground">{label}</Link>)}<a href="/sitemap.xml" className="hover:text-foreground">Sitemap</a></div>
+        <img src="/fieldbridge-share.jpg" alt="FieldBridge — Field service team and office" width={1200} height={630} loading="lazy" className="mx-auto mt-6 w-64 max-w-full" />
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-5 py-8 text-sm text-muted-foreground sm:flex-row">
           <div className="flex items-center gap-2"><img src={fieldbridgeMark} alt="" width={20} height={20} className="h-5 w-5" /><span>© {new Date().getFullYear()} FieldBridge</span></div>
           <div className="flex gap-5"><a href={SALES} className="hover:text-foreground">Contact sales</a><Link to="/auth" className="hover:text-foreground">Sign in</Link></div>
