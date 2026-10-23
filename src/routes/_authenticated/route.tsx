@@ -22,7 +22,11 @@ function AuthedLayout() {
   useEffect(() => {
     // Keep this device's lock-screen alerts registered on every launch.
     void registerPush();
+    const refresh = () => { if (document.visibilityState === "visible") void registerPush(); };
+    document.addEventListener("visibilitychange", refresh);
+    window.addEventListener("online", refresh);
     if (sessionStorage.getItem(OFFER_INSTALL_KEY)) { sessionStorage.removeItem(OFFER_INSTALL_KEY); setOffer(true); }
+    return () => { document.removeEventListener("visibilitychange", refresh); window.removeEventListener("online", refresh); };
   }, []);
   return (
     <>
