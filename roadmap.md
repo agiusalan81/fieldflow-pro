@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Expand Brand Studio to at least 50 fonts and underline styling; diagnose and repair team-chat lock-screen alerts.
 - [x] Separate storage-only add-ons from HQ module packs and the Switchboard; editable storage cards show capacity, cadence prices and billing basis. Prices, assignments and frozen labels unchanged; 20 tests passed, build OK.
 - [ ] Verify storage cards in live HQ (blocked: requesting account is not a platform owner; access denial verified without runtime errors).
 - [x] Build 1: private chat resizing with original-quality choice and unchanged documents; actual image send/read-back/private download verified, temporary messages/photos removed.
