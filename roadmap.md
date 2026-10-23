@@ -224,3 +224,4 @@
 - [x] Editable per-product outreach templates, three conversion suggestions and tracked follow-ups; email opens in the owner's email app, offers/entitlement changes remain manually approved.
 - [x] Tenant feedback button, HQ feedback invitations and private inbox with status and notes.
 - [x] 26 regression tests passed, owner template save/reload and app feedback → HQ read-back checked; tenant analytics/feedback reads denied and signed-out HQ gated; desktop/390px layout checked, latest build OK. Test feedback retained as resolved verification evidence.
+- [x] HQ Switchboard and Tier Comparison: the Features/Module column now stays frozen while tier and pack columns scroll sideways; owner-session check confirmed the label and header stay pinned with a clean divider and no bleed-through; 17 HQ/plan tests passed, build OK.
