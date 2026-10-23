@@ -206,3 +206,10 @@
 
 - [x] Billing review: online invoice payments, saved cards, renewals, reminders, read-only lapse, upgrade/downgrade rules
 - [x] Signed-in users skip the marketing site (auto-redirect to /dashboard), Sign in always visible on the mobile landing header, PWA start_url now /dashboard (installed apps need reinstall to pick up the new start URL)
+
+## Phase 4 — Analytics & Radar
+- [ ] Product-scoped, privacy-preserving usage rollups and owner-only reporting
+- [ ] Dedicated Analytics menu with funnel, feature adoption and tenant health alerts
+- [ ] Editable multi-product outreach templates, conversion suggestions and tracked follow-ups
+- [ ] Tenant feedback prompt and HQ feedback inbox
+- [ ] Regression tests, access checks and signed-in save/read-back verification
