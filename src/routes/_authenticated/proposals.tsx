@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 
-export const Route = createFileRoute("/_authenticated/proposals")({
+export const Route = createFileRoute("/_authenticated/proposals")({ staticData: { sitemap: false },
   head: () => ({ meta: [
     { title: "Proposals — FieldBridge" },
     { name: "description", content: "Build client proposals from your price list with equipment specifications and payment terms." },

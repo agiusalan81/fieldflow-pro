@@ -13,7 +13,7 @@ import { dayLabourHours } from "@/lib/jobsheets";
 import { Button } from "@/components/ui/button";
 import { documentVariables } from "@/components/document-preview";
 
-export const Route = createFileRoute("/_authenticated/print/$sheetId")({
+export const Route = createFileRoute("/_authenticated/print/$sheetId")({ staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Client job sheet — FieldBridge" },

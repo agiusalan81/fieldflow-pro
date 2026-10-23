@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-export const Route = createFileRoute("/_authenticated/estimates")({
+export const Route = createFileRoute("/_authenticated/estimates")({ staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Estimates — FieldBridge" },

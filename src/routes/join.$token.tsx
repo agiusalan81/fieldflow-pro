@@ -37,7 +37,7 @@ function InviteError({ reset }: ErrorComponentProps) {
   }}>{retrying ? "Checking…" : "Retry"}</Button></InviteFrame>;
 }
 
-export const Route = createFileRoute("/join/$token")({
+export const Route = createFileRoute("/join/$token")({ staticData: { sitemap: false },
   loader: async ({ params, context }) => { await context.queryClient.ensureQueryData(invitationQuery(params.token)); },
   pendingMs: 0,
   pendingMinMs: 0,

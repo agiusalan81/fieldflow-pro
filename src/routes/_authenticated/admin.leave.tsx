@@ -12,7 +12,7 @@ import { canDecideLeave, type AppRole } from "@/lib/field-rules";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/_authenticated/admin/leave")({
+export const Route = createFileRoute("/_authenticated/admin/leave")({ staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Leave approvals — FieldBridge" },

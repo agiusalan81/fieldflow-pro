@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { usePlanFeatures } from "@/lib/plan-features";
 import { useProfile } from "@/lib/profile";
 
-export const Route = createFileRoute("/_authenticated/available-jobs")({
+export const Route = createFileRoute("/_authenticated/available-jobs")({ staticData: { sitemap: false },
   head: () => ({ meta: [
     { title: "Available jobs — FieldBridgeApp" },
     { name: "description", content: "Open jobs that match your skills. The first technician to claim gets the place." },

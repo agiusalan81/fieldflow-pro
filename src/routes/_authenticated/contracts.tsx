@@ -21,7 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-export const Route = createFileRoute("/_authenticated/contracts")({
+export const Route = createFileRoute("/_authenticated/contracts")({ staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Contracts & checklists — FieldBridge" },

@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-export const Route = createFileRoute("/_authenticated/dwr")({
+export const Route = createFileRoute("/_authenticated/dwr")({ staticData: { sitemap: false },
   head: () => ({
     meta: [
       { title: "Daily works reports — FieldBridge" },

@@ -15,7 +15,7 @@ const catalogQueryOptions = queryOptions({
   staleTime: 60_000,
 });
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/")({ staticData: { sitemap: true },
   loader: ({ context }) => context.queryClient.ensureQueryData(catalogQueryOptions),
   head: () => ({
     meta: [

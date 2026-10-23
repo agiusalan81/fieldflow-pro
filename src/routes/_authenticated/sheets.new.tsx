@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ShiftClockInDialog } from "@/components/shift-clock-in-dialog";
 import { clockInShift } from "@/lib/shift-clock-in";
 
-export const Route = createFileRoute("/_authenticated/sheets/new")({
+export const Route = createFileRoute("/_authenticated/sheets/new")({ staticData: { sitemap: false },
   validateSearch: (s: Record<string, unknown>): { jobId?: string | undefined } => ({ jobId: typeof s["jobId"] === "string" ? s["jobId"] : undefined }),
   head: () => ({
     meta: [

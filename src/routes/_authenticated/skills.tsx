@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { isManager, useProfile, useCompanyUsers } from "@/lib/profile";
 import { usePlanFeatures } from "@/lib/plan-features";
 
-export const Route = createFileRoute("/_authenticated/skills")({
+export const Route = createFileRoute("/_authenticated/skills")({ staticData: { sitemap: false },
   head: () => ({ meta: [
     { title: "Skills & specialties — FieldBridgeApp" },
     { name: "description", content: "Create your company's own skills and assign them to technicians and supervisors." },

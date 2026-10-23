@@ -19,7 +19,7 @@ import { CHAT_BUCKET, CHAT_TYPES, chatFileError, compressChatImage, validContact
 import { Switch } from "@/components/ui/switch";
 import { usePlanFeatures } from "@/lib/plan-features";
 
-export const Route = createFileRoute("/_authenticated/messages")({
+export const Route = createFileRoute("/_authenticated/messages")({ staticData: { sitemap: false },
   head: () => ({
     meta: [
       { property: "og:type", content: "website" },
