@@ -6,6 +6,7 @@ import { OFFER_INSTALL_KEY } from "@/lib/install-app";
 import { InstallAppCard } from "@/components/install-app";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { StaffSignatureOnboarding } from "@/components/staff-signature";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -26,6 +27,7 @@ function AuthedLayout() {
   return (
     <>
       <Outlet />
+      <StaffSignatureOnboarding />
       <Dialog open={offer} onOpenChange={setOffer}>
         <DialogContent>
           <DialogHeader><DialogTitle>You're in — welcome to FieldBridge</DialogTitle></DialogHeader>
