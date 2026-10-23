@@ -16,7 +16,7 @@ export type PublicCatalogItem = {
   modules: string[];
 };
 
-export type PublicCatalog = { plans: PublicCatalogItem[]; packs: PublicCatalogItem[]; error?: string };
+export type PublicCatalog = { plans: PublicCatalogItem[]; packs: PublicCatalogItem[]; trialDays: number; error?: string };
 
 /**
  * Public, unauthenticated read of the active pricing catalogue for the marketing site.
@@ -41,7 +41,15 @@ export const listPublicCatalog = createServerFn({ method: "GET" }).handler(async
     .select("id, name, kind, sort_order, monthly_price, quarterly_price, yearly_price, included_seats, storage_gb, billing_basis, modules")
     .eq("state", "active")
     .order("sort_order");
-  if (error) return { plans: [], packs: [], error: "Catalog unavailable" };
+  // Live product settings (trial length) so the marketing site always matches HQ.
+  const { data: product } = await supabasePublic
+    .from("platform_products")
+    .select("trial_days")
+    .eq("slug", "fieldbridge")
+    .eq("active", true)
+    .maybeSingle();
+  const trialDays = product?.trial_days ?? 60;
+  if (error) return { plans: [], packs: [], trialDays, error: "Catalog unavailable" };
   const items: PublicCatalogItem[] = (data ?? []).map((r) => ({
     id: r.id,
     name: r.name,
@@ -55,5 +63,5 @@ export const listPublicCatalog = createServerFn({ method: "GET" }).handler(async
     billing_basis: r.billing_basis ?? "company",
     modules: r.modules ?? [],
   }));
-  return { plans: items.filter((i) => i.kind === "plan"), packs: items.filter((i) => i.kind !== "plan") };
+  return { plans: items.filter((i) => i.kind === "plan"), packs: items.filter((i) => i.kind !== "plan"), trialDays };
 });
