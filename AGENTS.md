@@ -10,6 +10,7 @@
 <!-- LOVABLE:END -->
 
 ## Rules
+- App chrome uses directional platform gradient tokens with neutral control surfaces for contrast; global FieldBridge defaults apply only where tenants have not saved overrides, and phone theme metadata uses a solid navy because browser chrome cannot render gradients.
 - Travel shares one component/startJobTravel; arrival saves the time log before on-site status.: consistent travel/arrival.
 - Invite server functions/Query loaders have timeouts, middleware included.: prevent hangs.
 - Tenant RLS uses company_id/current_company_id(); never UI company filters.: one access boundary.
