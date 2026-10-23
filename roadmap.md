@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Launch Phase 1: navy-to-amber header, reversed mobile bottom bar, phone theme/safe areas, FieldBridge defaults for new companies; preserve saved tenant branding and existing offline/push behaviour.
+- [x] Launch Phase 1: navy-to-amber header, reversed mobile bottom bar, solid navy phone theme and safe areas, shared FieldBridge default action colours without overwriting stored tenant branding; offline/push unchanged. 15 focused tests passed; signed-in 407×753 and desktop checks passed without overflow or runtime errors; build OK. Native phone chrome/installed manifest refresh still requires published-device verification; no new account created during testing.
 - [x] Brand studio: sticky preview; heading background (button look) in preview + PDFs.
 - [x] Technical data structure: guide + one-tap suggestions; same suggestions for Estimates & suppliers.
 - [x] "[Company] document library" / technical library naming.
