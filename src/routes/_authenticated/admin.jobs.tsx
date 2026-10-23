@@ -33,7 +33,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/admin/jobs")({
-  validateSearch: (s: Record<string, unknown>): { new?: boolean | undefined } => ({ new: s["new"] === true || s["new"] === "true" ? true : undefined }),
+  validateSearch: (s: Record<string, unknown>): { new?: boolean | undefined; assetId?: string | undefined; problemId?: string | undefined } => ({ new: s["new"] === true || s["new"] === "true" ? true : undefined, assetId: typeof s["assetId"] === "string" ? s["assetId"] : undefined, problemId: typeof s["problemId"] === "string" ? s["problemId"] : undefined }),
   head: () => ({
     meta: [
       { title: "Job sheets — FieldBridge" },
@@ -324,6 +324,19 @@ function NewJobDialog() {
   const { data: sites = [] } = useQuery({ queryKey: ["sites"], queryFn: async () => (await supabase.from("sites").select("id, client_id, name").order("name")).data ?? [] });
   const { data: assets = [] } = useQuery({ queryKey: ["assets-all"], queryFn: async () => (await supabase.from("assets").select("id, client_id, site_id, reference_number, asset_category")).data ?? [] });
 
+  // QR problem report → pre-fill client, site, equipment and the reported problem.
+  const prefilled = useRef<string | null>(null);
+  useEffect(() => {
+    const a = search.assetId && assets.find((x) => x.id === search.assetId);
+    if (!open || !a || prefilled.current === search.assetId) return;
+    prefilled.current = search.assetId!;
+    void (async () => {
+      let problem = "";
+      if (search.problemId) { const r = await supabase.from("equipment_problem_reports").select("problem").eq("id", search.problemId).maybeSingle(); problem = r.data?.problem ?? ""; }
+      setF((cur) => ({ ...cur, client_id: a.client_id, site_id: a.site_id ?? "none", asset_id: a.id, problem_summary: problem || cur.problem_summary }));
+    })();
+  }, [open, search.assetId, search.problemId, assets]);
+
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile || !f.client_id) { toast.error("Pick a client"); return; }
@@ -406,8 +419,8 @@ function NewJobDialog() {
           </div>}
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1.5"><Label>Date</Label><Input type="date" required value={f.scheduled_date} onChange={(e) => setF({ ...f, scheduled_date: e.target.value })} /></div>
-            <div className="space-y-1.5"><Label>From</Label><Input type="time" value={f.window_start} onChange={(e) => setF({ ...f, window_start: e.target.value })} /></div>
-            <div className="space-y-1.5"><Label>To</Label><Input type="time" value={f.window_end} onChange={(e) => setF({ ...f, window_end: e.target.value })} /></div>
+            <div className="space-y-1.5"><Label>Arrive from (optional)</Label><Input type="time" value={f.window_start} onChange={(e) => setF({ ...f, window_start: e.target.value })} /></div>
+            <div className="space-y-1.5"><Label>Until (optional)</Label><Input type="time" value={f.window_end} onChange={(e) => setF({ ...f, window_end: e.target.value })} /></div>
           </div>
           <div className="space-y-1.5"><Label>Problem summary</Label><SuggestedTextarea aria-label="Problem summary" value={f.problem_summary} onValueChange={problem_summary => setF({ ...f, problem_summary })} suggestions={suggestions?.problems} /></div>
           <Button type="submit" className="w-full">Schedule</Button>

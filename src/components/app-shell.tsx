@@ -202,9 +202,10 @@ function GuideBody({ g }: { g: HelpGuide }) {
 
 function HelpButton() {
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const g = helpFor(path);
+  const planOn = usePlanFeatures();
+  const g = helpFor(path, planOn);
   const [q, setQ] = useState("");
-  const results = searchHelp(q);
+  const results = searchHelp(q, planOn);
   return (
     <Sheet onOpenChange={(o) => { if (!o) setQ(""); }}>
       <SheetTrigger asChild><Button variant="ghost" size="icon" aria-label="Help"><HelpCircle className="h-5 w-5" /></Button></SheetTrigger>
