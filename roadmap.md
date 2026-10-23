@@ -208,8 +208,8 @@
 - [x] Signed-in users skip the marketing site (auto-redirect to /dashboard), Sign in always visible on the mobile landing header, PWA start_url now /dashboard (installed apps need reinstall to pick up the new start URL)
 
 ## Phase 4 — Analytics & Radar
-- [ ] Product-scoped, privacy-preserving usage rollups and owner-only reporting
-- [ ] Dedicated Analytics menu with funnel, feature adoption and tenant health alerts
-- [ ] Editable multi-product outreach templates, conversion suggestions and tracked follow-ups
-- [ ] Tenant feedback prompt and HQ feedback inbox
-- [ ] Regression tests, access checks and signed-in save/read-back verification
+- [x] Product-scoped, privacy-preserving usage rollups and owner-only reporting; FieldBridge starts collecting now, other products require their own tracking integration.
+- [x] Dedicated Analytics menu with observed account funnel, feature adoption and tenant health alerts; three-day stalled usage, seven-day inactivity, expiring trials and engaged teams.
+- [x] Editable per-product outreach templates, three conversion suggestions and tracked follow-ups; email opens in the owner's email app, offers/entitlement changes remain manually approved.
+- [x] Tenant feedback button, HQ feedback invitations and private inbox with status and notes.
+- [x] 26 regression tests passed, owner template save/reload and app feedback → HQ read-back checked; tenant analytics/feedback reads denied and signed-out HQ gated; desktop/390px layout checked, latest build OK. Test feedback retained as resolved verification evidence.
