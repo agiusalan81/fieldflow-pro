@@ -310,7 +310,7 @@ function NewJobDialog() {
   const search = Route.useSearch();
   const navigate = useNavigate();
   const [open, setOpenRaw] = useState(!!search.new);
-  const setOpen = (o: boolean) => { setOpenRaw(o); if (!o && search.new) navigate({ to: "/admin/jobs", search: {}, replace: true }); };
+  const setOpen = (o: boolean) => { setOpenRaw(o); if (!o) { prefilled.current = null; if (search.new) navigate({ to: "/admin/jobs", search: {}, replace: true }); } };
   const empty = { client_id: "", site_id: "none", asset_id: "none", tech: "none", assistant: "none", scheduled_date: new Date().toISOString().slice(0, 10), window_start: "", window_end: "", priority: "normal", problem_summary: "", teamSize: 1, open: false, skills: [] as string[], crew: [] as string[] };
   const [f, setF] = useState(empty);
   const feature = usePlanFeatures(!!profile);
