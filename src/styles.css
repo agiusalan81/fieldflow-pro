@@ -236,16 +236,17 @@ main label {
 html, body { overflow-x: hidden; }
 
 .fieldbridge-header {
-  background: var(--app-header-gradient);
-  color: var(--brand-ink);
+  background: var(--card);
+  color: var(--foreground);
   padding-top: max(.75rem, env(safe-area-inset-top));
   padding-left: max(1rem, env(safe-area-inset-left));
   padding-right: max(1rem, env(safe-area-inset-right));
 }
-.fieldbridge-header h1 { color: var(--brand-ink); }
-.fieldbridge-header-tools { background: var(--background); color: var(--foreground); }
+.fieldbridge-header h1 { color: var(--foreground); }
+.fieldbridge-header-tools { background: transparent; color: var(--foreground); }
 .fieldbridge-bottom {
-  background: var(--app-footer-gradient);
+  background: var(--card);
+  color: var(--foreground);
   padding: .375rem max(.375rem, env(safe-area-inset-right)) max(.375rem, env(safe-area-inset-bottom)) max(.375rem, env(safe-area-inset-left));
 }
 .fieldbridge-content { padding-bottom: calc(6rem + env(safe-area-inset-bottom)); }
