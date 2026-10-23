@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Show safe equipment reference on public QR reporting forms; confirmed Office Admin/Superuser job-sheet deletion and manager dispatched-visit deletion with tenant safeguards and tests.
 - [x] FieldBridge rebranding: six branded auth emails, sender names/subjects and old visible page titles updated; account/offline storage identifiers preserved. All templates rendered, signup appearance checked, unsigned preview/webhook requests denied (401), PWA test and latest build passed. Publish required for live activation; inbox delivery not tested. Lovable workspace project name and staging address remain unchanged (manual project settings).
 - [x] Dispatch notification fix: successful visit saves close only the matching equipment report, refresh bell/attention queues and clear dispatch URL; 17 regression tests passed and preview build OK.
 - [ ] Dispatch notification live save/read-back (blocked: available signed-in account is Technician; needs authorised dispatcher verification). No real visit or report changed during testing.
