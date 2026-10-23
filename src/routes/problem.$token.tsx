@@ -18,8 +18,8 @@ function ProblemForm() {
    const result = await supabase.rpc('get_equipment_report_target', { _token: token });
    if (result.error) throw result.error;
    const value = result.data;
-   if (!value || typeof value !== 'object' || Array.isArray(value) || typeof value.reference !== 'string') return null;
-   return { reference: value.reference, category: typeof value.category === 'string' ? value.category : '' };
+   if (!value || typeof value !== 'object' || Array.isArray(value) || typeof value['reference'] !== 'string') return null;
+   return { reference: value['reference'], category: typeof value['category'] === 'string' ? value['category'] : '' };
  } });
  const send = async (e: React.FormEvent) => {
    e.preventDefault(); if (!target.data || busy) return;
