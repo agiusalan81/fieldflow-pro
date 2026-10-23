@@ -589,6 +589,13 @@
       "when": 1792743133810,
       "tag": "0083_analytics_feedback_privacy",
       "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "7",
+      "when": 1792743210096,
+      "tag": "0084_analytics_first_signin_capture",
+      "breakpoints": true
     }
   ]
 }
