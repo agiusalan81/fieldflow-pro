@@ -10,6 +10,11 @@ export function clampTeamSize(n: number, moduleOn: boolean) {
   return Math.min(maxTeamSize(moduleOn), Math.max(1, Math.round(n)));
 }
 
+/** Standard dispatch derives its size from the lead/assistant, not a hidden form default. */
+export function dispatchTeamSize(requested: number, moduleOn: boolean, named: number) {
+  return moduleOn ? clampTeamSize(requested, true) : clampTeamSize(named, false);
+}
+
 /** A member is eligible when they hold every mandatory skill. */
 export function hasMandatorySkills(memberSkills: string[], mandatory: string[]) {
   const have = new Set(memberSkills);
