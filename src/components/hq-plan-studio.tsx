@@ -30,11 +30,11 @@ export function HQTierComparison({ catalog, modules, money, onEdit }: {
       <table className="w-full border-collapse text-sm">
         <caption className="sr-only">Tier module comparison</caption>
         <thead><tr className="border-b bg-muted/40">
-          <th scope="col" className="min-w-52 p-3 text-left font-medium">Module</th>
+          <th scope="col" className="sticky left-0 z-20 min-w-52 bg-muted p-3 text-left font-medium shadow-[inset_-1px_0_0_0_var(--color-border)]">Module</th>
           {tiers.map((t) => <th key={t.id} scope="col" className="min-w-28 p-3 text-center font-medium">{t.name}</th>)}
         </tr></thead>
         <tbody>{modules.map((m) => <tr key={m} className="border-b last:border-b-0">
-          <th scope="row" className="p-3 text-left font-normal">{featureLabel(m)}</th>
+          <th scope="row" className="sticky left-0 z-10 bg-card p-3 text-left font-normal shadow-[inset_-1px_0_0_0_var(--color-border)]">{featureLabel(m)}</th>
           {tiers.map((t) => <td key={t.id} className="p-3 text-center">
             {t.modules.includes(m)
               ? <Check className="mx-auto h-4 w-4 text-brand-amber" aria-label={`${t.name} includes ${featureLabel(m)}`} />
