@@ -1,3 +1,4 @@
+import { MemberSkills } from "@/components/member-skills";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TeamManagement } from "@/components/team-management";
 import { RegisteredMembers } from "@/components/registered-members";
@@ -67,8 +68,8 @@ function LiveAvailability() {
         </div>
         <ul className="divide-y rounded-xl border bg-card">
           {rows.map(({ u, s, sub }) => (
-            <li key={u.id} className="flex items-center gap-3 px-4 py-3">
-              <div className="min-w-0 flex-1"><p className="truncate font-medium text-foreground">{u.full_name}</p><p className="text-xs capitalize text-muted-foreground">{u.role}{u.phone_number ? ` · ${u.phone_number}` : ""}</p></div>
+            <li key={u.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
+              <div className="min-w-0 flex-1"><p className="truncate font-medium text-foreground">{u.full_name}</p><p className="text-xs capitalize text-muted-foreground">{u.role}{u.phone_number ? ` · ${u.phone_number}` : ""}</p><MemberSkills userId={u.id} role={u.role} name={u.full_name} editable/></div>
               <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${CLS[s]}`}>{LABEL[s]}</span>
               <span className="w-24 text-right text-xs text-muted-foreground">{sub}</span>
             </li>

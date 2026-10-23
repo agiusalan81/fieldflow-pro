@@ -596,6 +596,20 @@
       "when": 1792743210096,
       "tag": "0084_analytics_first_signin_capture",
       "breakpoints": true
+    },
+    {
+      "idx": 85,
+      "version": "7",
+      "when": 1792743528445,
+      "tag": "0085_phase5_dual_rota_and_member_skills",
+      "breakpoints": true
+    },
+    {
+      "idx": 86,
+      "version": "7",
+      "when": 1792743587860,
+      "tag": "0086_phase5_private_chat_attachments",
+      "breakpoints": true
     }
   ]
 }

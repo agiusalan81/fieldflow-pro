@@ -38,7 +38,7 @@ export const sendChatPush = createServerFn({ method: "POST" })
   .inputValidator((i) => z.object({ messageIds: z.array(z.string().uuid()).min(1).max(20) }).parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: msgs } = await supabase.from("internal_messages").select("id,receiver_id,job_sheet_id,message_text").in("id", data.messageIds).eq("sender_id", userId);
+    const { data: msgs } = await supabase.from("internal_messages").select("id,receiver_id,job_sheet_id,message_text,attachments,contact_card").in("id", data.messageIds).eq("sender_id", userId);
     const { data: me } = await supabase.from("users").select("full_name").eq("id", userId).maybeSingle();
     const who = me?.full_name ?? "FieldBridge";
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -61,7 +61,7 @@ export const sendChatPush = createServerFn({ method: "POST" })
       const text = String(m.message_text ?? "").trim();
       const alert: Alert = {
         title: m.job_sheet_id && !m.receiver_id ? `${who} · job thread` : who,
-        body: text ? (text.length > 120 ? `${text.slice(0, 120)}…` : text) : "Sent an attachment",
+        body: m.contact_card ? "Sent a contact" : Array.isArray(m.attachments) && m.attachments.length ? "Sent an attachment" : text ? (text.length > 120 ? `${text.slice(0, 120)}…` : text) : "Sent an attachment",
         url: `/messages?thread=${encodeURIComponent(thread)}`, tag: thread,
       };
       const { data: subs } = await supabaseAdmin.from("push_subscriptions").select("endpoint,p256dh,auth").in("user_id", [...recipients]);
