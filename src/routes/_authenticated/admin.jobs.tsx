@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useProfile, useCompanyUsers, initialsOf } from "@/lib/profile";
 import { usePlanFeatures } from "@/lib/plan-features";
 import { dispatchTeamSize, skillMatchScore } from "@/lib/skills";
+import { closeDispatchedReport, DISPATCH_REFRESH_KEYS } from "@/lib/dispatch-report";
 import { NumInput } from "@/components/num-input";
 import { useEntrySuggestions } from "@/hooks/use-entry-suggestions";
 import { SuggestedTextarea } from "@/components/suggested-textarea";
@@ -310,7 +311,9 @@ function NewJobDialog() {
   const search = Route.useSearch();
   const navigate = useNavigate();
   const [open, setOpenRaw] = useState(!!search.new);
-  const setOpen = (o: boolean) => { setOpenRaw(o); if (!o) { prefilled.current = null; if (search.new) navigate({ to: "/admin/jobs", search: {}, replace: true }); } };
+  const setOpen = (o: boolean) => { setOpenRaw(o); if (!o) { prefilled.current = null; if (search.new || search.assetId || search.problemId) navigate({ to: "/admin/jobs", search: {}, replace: true }); } };
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
   const empty = { client_id: "", site_id: "none", asset_id: "none", tech: "none", assistant: "none", scheduled_date: new Date().toISOString().slice(0, 10), window_start: "", window_end: "", priority: "normal", problem_summary: "", teamSize: 1, open: false, skills: [] as string[], crew: [] as string[] };
   const [f, setF] = useState(empty);
   const feature = usePlanFeatures(!!profile);
@@ -342,11 +345,14 @@ function NewJobDialog() {
   const uuidOrNull = (v: string | null | undefined) => { const t = (v ?? "").trim(); return !t || t === "none" ? null : t; };
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (savingRef.current) return;
     if (!profile || !f.client_id) { toast.error("Pick a client"); return; }
     const named = [f.tech, f.assistant].filter(x => x !== "none").length + f.crew.length;
     const teamSize = dispatchTeamSize(f.teamSize, smart, named);
     if (named > teamSize) { toast.error(`You picked ${named} people for a team of ${teamSize}`); return; }
     if (!f.open && f.tech === "none" && f.crew.length) { toast.error("Choose a lead technician"); return; }
+    savingRef.current = true; setSaving(true);
+    try {
     const { data: job, error } = await supabase.from("jobs").insert({
       company_id: profile.company_id, client_id: f.client_id,
       site_id: uuidOrNull(f.site_id), asset_id: uuidOrNull(f.asset_id),
@@ -356,6 +362,7 @@ function NewJobDialog() {
       ...(smart ? { open_to_claim: f.open && named < teamSize } : {}),
     }).select("id, job_number").single();
     if (error) { toast.error(error.message); return; }
+    const reportWarning = await closeDispatchedReport(search.problemId, uuidOrNull(f.asset_id));
     if (smart && job) {
       if (f.skills.length) { const r = await supabase.from("job_skills").insert(f.skills.map(skill_id => ({ job_id: job.id, skill_id, company_id: profile.company_id, mandatory: true }))); if (r.error) toast.error(r.error.message); }
       if (f.crew.length) { const r = await supabase.from("job_crew").insert(f.crew.map(user_id => ({ job_id: job.id, user_id, company_id: profile.company_id }))); if (r.error) toast.error(r.error.message); }
@@ -371,10 +378,10 @@ function NewJobDialog() {
       }
     }
     toast.success("Visit scheduled");
+    if (reportWarning) toast.warning(reportWarning);
     setOpen(false); setF(empty);
-    qc.invalidateQueries({ queryKey: ["schedule"] });
-    qc.invalidateQueries({ queryKey: ["today-jobs"] });
-    qc.invalidateQueries({ queryKey: ["overview"] });
+    await Promise.all(DISPATCH_REFRESH_KEYS.map(key => qc.invalidateQueries({ queryKey: [key] })));
+    } finally { savingRef.current = false; setSaving(false); }
   };
 
   return (
@@ -426,7 +433,7 @@ function NewJobDialog() {
             <div className="space-y-1.5"><Label>Until (optional)</Label><Input type="time" value={f.window_end} onChange={(e) => setF({ ...f, window_end: e.target.value })} /></div>
           </div>
           <div className="space-y-1.5"><Label>Problem summary</Label><SuggestedTextarea aria-label="Problem summary" value={f.problem_summary} onValueChange={problem_summary => setF({ ...f, problem_summary })} suggestions={suggestions?.problems} /></div>
-          <Button type="submit" className="w-full">Schedule</Button>
+          <Button type="submit" className="w-full" disabled={saving}>{saving ? "Scheduling…" : "Schedule"}</Button>
         </form>
       </DialogContent>
     </Dialog>
