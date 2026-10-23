@@ -337,6 +337,7 @@ function NewJobDialog() {
     })();
   }, [open, search.assetId, search.problemId, assets]);
 
+  const uuidOrNull = (v: string | null | undefined) => { const t = (v ?? "").trim(); return !t || t === "none" ? null : t; };
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile || !f.client_id) { toast.error("Pick a client"); return; }
@@ -346,8 +347,8 @@ function NewJobDialog() {
     if (!f.open && f.tech === "none" && f.crew.length) { toast.error("Choose a lead technician"); return; }
     const { data: job, error } = await supabase.from("jobs").insert({
       company_id: profile.company_id, client_id: f.client_id,
-      site_id: f.site_id === "none" ? null : f.site_id, asset_id: f.asset_id === "none" ? null : f.asset_id,
-      assigned_technician_id: f.tech === "none" ? null : f.tech, secondary_technician_id: f.assistant === "none" ? null : f.assistant, scheduled_date: f.scheduled_date,
+      site_id: uuidOrNull(f.site_id), asset_id: uuidOrNull(f.asset_id),
+      assigned_technician_id: uuidOrNull(f.tech), secondary_technician_id: uuidOrNull(f.assistant), scheduled_date: f.scheduled_date,
       window_start: f.window_start || null, window_end: f.window_end || null, priority: f.priority, problem_summary: f.problem_summary || null,
       required_team_size: teamSize,
       ...(smart ? { open_to_claim: f.open && named < teamSize } : {}),
@@ -380,16 +381,16 @@ function NewJobDialog() {
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Schedule a visit</DialogTitle></DialogHeader>
         <form onSubmit={save} className="space-y-3">
-          <Select value={f.client_id} onValueChange={(v) => setF({ ...f, client_id: v, site_id: "none", asset_id: "none" })}>
+          <Select value={f.client_id} onValueChange={(v) => { if (v && v !== f.client_id) setF((cur) => ({ ...cur, client_id: v, site_id: "none", asset_id: "none" })); }}>
             <SelectTrigger><SelectValue placeholder={clients.length ? "Client" : "Add a client first"} /></SelectTrigger>
             <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
           </Select>
           <div className="grid gap-3 sm:grid-cols-2">
-            <Select value={f.site_id} onValueChange={(v) => setF({ ...f, site_id: v })}>
+            <Select value={f.site_id} onValueChange={(v) => { if (v) setF((cur) => ({ ...cur, site_id: v })); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent><SelectItem value="none">No site</SelectItem>{sites.filter((s) => s.client_id === f.client_id).map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
             </Select>
-            <Select value={f.asset_id} onValueChange={(v) => setF({ ...f, asset_id: v })}>
+            <Select value={f.asset_id} onValueChange={(v) => { if (v) setF((cur) => ({ ...cur, asset_id: v })); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent><SelectItem value="none">No lift</SelectItem>{assets.filter((a) => a.client_id === f.client_id).map((a) => <SelectItem key={a.id} value={a.id}>{a.reference_number} · {a.asset_category}</SelectItem>)}</SelectContent>
             </Select>
@@ -417,7 +418,7 @@ function NewJobDialog() {
             </div>}
             <label className="flex items-start gap-2 text-sm"><Checkbox checked={f.open} onCheckedChange={v => setF({ ...f, open: v === true })} /><span>Open to eligible technicians — clocked-in team members with the required skills can claim the remaining places ({Math.max(0, f.teamSize - ([f.tech, f.assistant].filter(x => x !== "none").length + f.crew.length))} left).</span></label>
           </div>}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 [&>*:first-child]:col-span-2 sm:[&>*:first-child]:col-span-1">
             <div className="space-y-1.5"><Label>Date</Label><Input type="date" required value={f.scheduled_date} onChange={(e) => setF({ ...f, scheduled_date: e.target.value })} /></div>
             <div className="space-y-1.5"><Label>Arrive from (optional)</Label><Input type="time" value={f.window_start} onChange={(e) => setF({ ...f, window_start: e.target.value })} /></div>
             <div className="space-y-1.5"><Label>Until (optional)</Label><Input type="time" value={f.window_end} onChange={(e) => setF({ ...f, window_end: e.target.value })} /></div>
