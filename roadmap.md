@@ -1,4 +1,8 @@
 # Roadmap
+- [ ] Build 1: private chat image compression with original-quality choice and unchanged documents.
+- [ ] Build 2: technician/supervisor-only first-login and editable profile signatures; verify automatic document use.
+- [ ] Build 3: public Privacy, Terms, Security and Accessibility pages using safe HQ legal details; legal review required before launch.
+- [ ] Build 4: router-derived sitemap, canonical/share metadata and FieldBridge social cover; verify public/private exclusions.
 - [x] Safe equipment reference/category on public QR forms; confirmed Office Admin/Superuser sheet deletion and manager dispatched-visit deletion; tenant/active-member/HQ guards preserved, shared client-report evidence retained. 21 tests passed; invalid QR hides form, signed-in Technician sees no visit-delete controls, build OK.
 - [ ] QR valid-reference/report and manager deletion save/read-back (blocked: current own-account session is Technician; authorised manager and disposable records needed). No real records deleted.
 - [x] FieldBridge rebranding: six branded auth emails, sender names/subjects and old visible page titles updated; account/offline storage identifiers preserved. All templates rendered, signup appearance checked, unsigned preview/webhook requests denied (401), PWA test and latest build passed. Publish required for live activation; inbox delivery not tested. Lovable workspace project name and staging address remain unchanged (manual project settings).
