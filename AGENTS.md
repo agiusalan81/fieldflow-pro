@@ -10,7 +10,7 @@
 <!-- LOVABLE:END -->
 
 ## Rules
-- Analytics stores coarse subscription/day feature counts and lifetime usage totals; owner-only reporting and server-derived tenant identity prevent cross-company tracking, and actual work counts come from insert triggers rather than page visits. Outreach templates and feedback are product-scoped; no automated offers or emails are implied by a saved follow-up.
+- Analytics uses coarse subscription/day counts and lifetime totals; owner-only reports and server-derived tenant identity isolate companies. Inserts count work, not visits. Outreach/feedback are product-scoped; saved follow-ups send nothing.
 - HQ uses product-scoped workspaces, owner-authorized narrow directory/effective-access RPCs, and separate platform legal profiles; audited test resets allow only unused/unsent records and retain operational, financial, identity, storage and offline evidence.
 - App chrome uses neutral card surfaces (no gradients) with token-coloured controls; phone theme metadata matches the neutral bar colour because browser chrome cannot render gradients.
 - Travel shares one component/startJobTravel; arrival saves the time log before on-site status.: consistent travel/arrival.
@@ -57,8 +57,9 @@
 - Equipment QR: private routes/RLS; hashed revocable public lookup exposes only reference/category; reports stay bounded/throttled.: private technical/client data.
 - Deletion shares record-deletion/DeleteVisit; office sheet and manager visit RLS apply; visit deletion keeps sheets, client-report FKs retain shared evidence.
 - QR dispatch closes only the matching equipment report after a successful visit insert, refreshes all attention queries and clears dispatch search parameters; a failed report close warns without inviting duplicate dispatch.
-- Chat files use private tenant/uploader keys and message-authorized downloads; validated attachments/contact cards stay internal. Web Push encrypts previews (RFC8291, WEB_PUSH_SEED, push-sw.js); attachment alerts reveal only type.
+- Chat files remain private; chat-attachments resizes photos with original choice and unchanged documents. Web Push encrypts previews; attachment alerts reveal only type.
 - FieldBridge subscription invoices live in platform_invoices (frozen once issued by trigger) with rules in tested saas-billing.ts; storage usage via company_storage_usage RPC.: immutable billing history.
 - FieldBridge payments: invoice checkout in payments.functions.ts (superuser via RLS), signed webhook at api/public/payments/webhook settles only exact-amount matches idempotently; daily cron api/public/jobs/billing-daily runs saas-billing.server.ts (renewals, overdue, saved-card charges, reminder emails); company_invoice_lapsed() drives read-only access.: server-verified payment state and one entitlement source.
 
-- Landing pricing uses active-only catalog_public_read and publishable listPublicCatalog; fetch failures fall back to static copy.
+- Public pricing/legal use narrow publishable reads; HQ profiles stay owner-only. Trust pages share trust-pages. Required route decisions drive sitemap.ts; no generated lastmod.
+- Staff signatures share staff-signature editors and own-user RPC; protected real roles govern eligibility and profile guards retain identity protection.
