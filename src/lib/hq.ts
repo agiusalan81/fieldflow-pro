@@ -7,6 +7,10 @@ export const HQ_GROUPS = [
 ] as const;
 export function hqGroup(section: string) { return HQ_GROUPS.find(g => g.sections.some(s => s.key === section)) ?? HQ_GROUPS[0]; }
 export function tenantLocation(city: string, country: string) { return [city.trim(), country.trim()].filter(Boolean).join(", ") || "Not provided"; }
+/** Presentation grouping only; mixed feature/storage bundles remain module packs. */
+export function isStorageAddon(item: { kind?: string; storage_gb?: number; modules?: string[] }) {
+  return item.kind === "pack" && (item.storage_gb ?? 0) > 0 && (item.modules?.length ?? 0) === 0;
+}
 export const SAFE_RESET_MODULES = [
   { key: "qs_pricing", label: "Pricing & QS", detail: "Unsent draft proposals without linked surveys" },
   { key: "skills_dispatch", label: "Skills & Smart Dispatch", detail: "Unused skills only; assignments and dispatch remain" },

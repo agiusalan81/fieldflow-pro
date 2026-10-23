@@ -1,7 +1,8 @@
-import { Check, Minus, Pencil, Plus } from "lucide-react";
+import { Check, HardDrive, Minus, Pencil, Plus } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { PLAN_FEATURES } from "@/lib/plan-features";
 import { Button } from "@/components/ui/button";
+import { isStorageAddon } from "@/lib/hq";
 
 type Catalog = Database["public"]["Tables"]["platform_catalog"]["Row"];
 
@@ -50,7 +51,7 @@ export function HQTierComparison({ catalog, modules, money, onEdit }: {
 export function HQPackBuilder({ catalog, money, onEdit, onNew }: {
   catalog: Catalog[]; money: (v: number) => string; onEdit: (item: Catalog) => void; onNew: () => void;
 }) {
-  const packs = catalog.filter((c) => c.kind === "pack").sort((a, b) => a.sort_order - b.sort_order);
+  const packs = catalog.filter((c) => c.kind === "pack" && !isStorageAddon(c)).sort((a, b) => a.sort_order - b.sort_order);
   return <section className="space-y-4">
     <div className="flex flex-wrap items-center justify-between gap-2">
       <div><h3 className="font-semibold">Module packs</h3><p className="text-xs text-muted-foreground">Bundles companies can add on top of their tier.</p></div>
@@ -69,6 +70,31 @@ export function HQPackBuilder({ catalog, money, onEdit, onNew }: {
           {p.modules.length === 0 && <span className="text-xs text-muted-foreground">Storage-only pack</span>}
           {p.modules.map((m) => <span key={m} className="rounded-full bg-muted px-2 py-0.5 text-xs">{featureLabel(m)}</span>)}
         </div>
+      </article>)}
+    </div>
+  </section>;
+}
+
+export function HQStorageAddons({ catalog, money, onEdit }: {
+  catalog: Catalog[]; money: (v: number) => string; onEdit: (item: Catalog) => void;
+}) {
+  const addons = catalog.filter(isStorageAddon).sort((a, b) => a.sort_order - b.sort_order);
+  if (!addons.length) return null;
+  return <section className="space-y-4" aria-label="Storage add-ons">
+    <h3 className="font-semibold">Storage add-ons</h3>
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {addons.map(item => <article key={item.id} className="rounded-lg border bg-card p-4">
+        <div className="flex items-start justify-between gap-2">
+          <HardDrive className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+          <Button size="icon" variant="ghost" aria-label={`Edit ${item.name}`} onClick={() => onEdit(item)}><Pencil className="h-4 w-4" /></Button>
+        </div>
+        <h4 className="mt-2 font-semibold">{item.name}</h4>
+        <p className="text-xs capitalize text-muted-foreground">{item.state}</p>
+        <p className="mt-3 text-lg font-semibold">+{item.storage_gb} GB</p>
+        <p className="mt-2 text-sm font-medium">{money(Number(item.monthly_price ?? 0))} / month</p>
+        <p className="mt-1 text-xs text-muted-foreground">{money(Number(item.quarterly_price ?? 0))} / quarter</p>
+        <p className="text-xs text-muted-foreground">{money(Number(item.yearly_price ?? 0))} / year</p>
+        <p className="mt-2 text-xs text-muted-foreground">{item.billing_basis === "per_user" ? "Per user" : "Per company"}</p>
       </article>)}
     </div>
   </section>;

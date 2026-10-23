@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canResetTestCompany, tenantLocation } from "./hq";
+import { canResetTestCompany, isStorageAddon, tenantLocation } from "./hq";
 import { featureOn } from "./plan-features";
 describe("HQ trial module control", () => {
   it("disables Malta payroll during a UK company's trial without disabling gross payroll", () => {
@@ -22,4 +22,16 @@ describe("HQ test reset eligibility", () => {
 });
 describe("HQ company location", () => {
   it("keeps city and country distinct without inferring a country", () => {expect(tenantLocation("London", "United Kingdom")).toBe("London, United Kingdom");expect(tenantLocation("London", "")).toBe("London");});
+});
+describe("HQ storage add-on grouping", () => {
+  it("separates storage-only packs from feature switches", () => {
+    expect(isStorageAddon({ kind: "pack", storage_gb: 25, modules: [] })).toBe(true);
+  });
+  it("keeps feature bundles with included storage in module packs", () => {
+    expect(isStorageAddon({ kind: "pack", storage_gb: 100, modules: ["fleet"] })).toBe(false);
+  });
+  it("keeps tiers and empty module-pack drafts out of storage add-ons", () => {
+    expect(isStorageAddon({ kind: "plan", storage_gb: 10, modules: [] })).toBe(false);
+    expect(isStorageAddon({ kind: "pack", storage_gb: 0, modules: [] })).toBe(false);
+  });
 });

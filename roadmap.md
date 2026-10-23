@@ -1,4 +1,6 @@
 # Roadmap
+- [x] Separate storage-only add-ons from HQ module packs and the Switchboard; editable storage cards show capacity, cadence prices and billing basis. Prices, assignments and frozen labels unchanged; 20 tests passed, build OK.
+- [ ] Verify storage cards in live HQ (blocked: requesting account is not a platform owner; access denial verified without runtime errors).
 - [x] Build 1: private chat resizing with original-quality choice and unchanged documents; actual image send/read-back/private download verified, temporary messages/photos removed.
 - [x] Build 2: technician/supervisor-only first-login prompt (Later until next launch) and editable profile signatures; own-account save/reload and invalid/oversize denial verified; five PDF styles tested, test signature removed. Supervisor-specific live save and cross-role SQL fixture suite remain unverified.
 - [x] Build 3: public Privacy, Terms, Security and Accessibility drafts with safe HQ legal projection and no private profile access; desktop/mobile pages verified.

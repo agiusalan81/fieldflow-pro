@@ -51,7 +51,7 @@
 - Receipt PDFs: separate account/sheet IndexedDB queue/private storage; exclude from client projections.: private offline receipts.
 - Technical library: private storage/RLS; publish checks real/displayed supervisor/superuser; AI reads approved pages as caller.: secure View As.
 - Leave/profile/clock-out handover rules use tested field-rules.ts plus guard_leave_decision.: UI and DB agree.
-- HQ uses single-active fallback, app_url, PLAN_FEATURES and NativeSelect/Cancel; owner-only row-locked toggle RPCs refresh access.: isolated prices/seats.
+- HQ uses app_url, PLAN_FEATURES and owner-only toggles; isStorageAddon separates storage-only packs, retaining mixed feature bundles.
 - Attention: guarded atomic pending RPCs/separate actions; never edit signed content.: immutable evidence; no duplicate dispatch.
 - Dual-track on-call uses separate supervisor config without changing technician payroll history; rota.ts scopes swaps, is_on_standby covers both, audited saves and role-matched swaps require independent approval; leave impact/blackouts remain DB-validated.
 - Equipment QR: private routes/RLS; hashed revocable public lookup exposes only reference/category; reports stay bounded/throttled.: private technical/client data.
