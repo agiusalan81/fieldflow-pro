@@ -29,9 +29,11 @@ import { parseTemplate as parseT, layerColor } from "./documents";
 describe("document text layers", () => {
   it("keeps separate company, heading and detail styles", () => {
     const t = parseT({ textStyles: { company: { font: "serif", color: "#112233", bold: true, italic: true }, detail: { italic: true } } });
-    expect(t.textStyles?.company).toEqual({ font: "serif", color: "#112233", bold: true, italic: true, background: "" });
+    expect(t.textStyles?.company).toEqual({ font: "serif", color: "#112233", bold: true, italic: true, underline: false, background: "" });
     expect(t.textStyles?.label.bold).toBe(true);
     expect(t.textStyles?.detail.italic).toBe(true);
   });
   it("headings default to the brand colour", () => { const t = parseT({ primaryColor: "#abcdef" }); expect(layerColor(t, "label")).toBe("#abcdef"); });
 });
+
+it("retains underline only when explicitly enabled", () => { expect(parseTemplate({textStyles:{company:{underline:true},detail:{underline:"yes"}}}).textStyles?.company.underline).toBe(true); expect(parseTemplate({textStyles:{detail:{underline:"yes"}}}).textStyles?.detail.underline).toBe(false); });

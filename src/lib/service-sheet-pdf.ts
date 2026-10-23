@@ -35,7 +35,11 @@ export async function buildServicePdf(d: PdfSheetData) {
   };
   const newPage = () => { page=doc.addPage([W,H]); decorate(page); y=H-M; };
   const need = (h: number) => { if (y-h<M) newPage(); };
-  const text = (value: string,x: number,atY: number,size=9,strong=false,layer?: { font: typeof font; color: typeof ink }) => page.drawText(safe(value),{x,y:atY,size,font:layer?.font ?? (strong?bold:font),color:layer?.color ?? ink});
+  const text = (value: string,x: number,atY: number,size=9,strong=false,layer?: { font: typeof font; color: typeof ink; underline?: boolean }) => {
+    const content = safe(value), face = layer?.font ?? (strong ? bold : font), color = layer?.color ?? ink;
+    page.drawText(content, { x, y: atY, size, font: face, color });
+    if (layer?.underline && content.trim()) page.drawLine({ start: { x, y: atY - size * .15 }, end: { x: x + face.widthOfTextAtSize(content, size), y: atY - size * .15 }, thickness: Math.max(.5, size / 16), color });
+  };
   const line = (x1: number,y1: number,x2: number,y2: number) => page.drawLine({start:{x:x1,y:y1},end:{x:x2,y:y2},thickness:0.5,color:brand});
   const fieldHex = d.template.fieldBackground ?? "#ffffff";
   const fieldColor = rgb(parseInt(fieldHex.slice(1,3),16)/255,parseInt(fieldHex.slice(3,5),16)/255,parseInt(fieldHex.slice(5,7),16)/255);
@@ -66,7 +70,7 @@ export async function buildServicePdf(d: PdfSheetData) {
         if(y-25<M) { newPage(); if(!head) drawRow(headers,true); }
         const count=Math.min(max-offset,Math.max(1,Math.floor((y-M-10)/11)));
         const h=count*11+10; let x=M; page.drawRectangle({x:M,y:y-h,width,height:h,color:fieldColor}); line(M,y,W-M,y);
-        wrapped.forEach((values,i)=>{line(x,y,x,y-h);values.slice(offset,offset+count).forEach((v,j)=>text(v,x+5,y-13-j*11,8,head));x+=widths[i] ?? 0;});
+        wrapped.forEach((values,i)=>{line(x,y,x,y-h);values.slice(offset,offset+count).forEach((v,j)=>text(v,x+5,y-13-j*11,8,head,head?layers.label:layers.detail));x+=widths[i] ?? 0;});
         line(W-M,y,W-M,y-h);line(M,y-h,W-M,y-h);y-=h;offset+=count;
       }
     };

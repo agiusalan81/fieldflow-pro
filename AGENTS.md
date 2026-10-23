@@ -27,7 +27,7 @@
 - Dispatch: lead plus optional assistant both read one sheet; only lead starts/edits; daily logs seed both initials.: one journey/labour ledger.
 - Overtime uses captured DWR intervals/rules; old reports show associated sites only.: factual allocation.
 - Typography uses applyTypography/AppShell; locale uses locale.ts.: tenant presentation.
-- Branding shares private assets, theme/template JSON and PDF/font helpers; DB/HQ locks protect saved values.
+- Branding shares asset-backed font IDs and preview/PDF decorations; DB/HQ locks protect saved values.
 - Auth emails share auth-brand.tsx; the managed handler owns verification and dispatch for reliable account recovery.
 - Company Settings retains visited sections while navigating; shared document-preview tabs power desktop and mobile previews.: preserve drafts without implicit saves and keep previews consistent.
 - Independent settings editors use settingsSectionPatch to write only owned columns; JSON styling saves merge current stored keys.: prevent stale hidden editors overwriting other sections.
@@ -57,7 +57,7 @@
 - Equipment QR: private routes/RLS; hashed revocable public lookup exposes only reference/category; reports stay bounded/throttled.: private technical/client data.
 - Deletion shares record-deletion/DeleteVisit; office sheet and manager visit RLS apply; visit deletion keeps sheets, client-report FKs retain shared evidence.
 - QR dispatch closes only the matching equipment report after a successful visit insert, refreshes all attention queries and clears dispatch search parameters; a failed report close warns without inviting duplicate dispatch.
-- Chat files remain private; chat-attachments resizes photos with original choice and unchanged documents. Web Push encrypts previews; attachment alerts reveal only type.
+- Chat photos compress; documents stay private/unchanged. Push encrypts previews, always displays received alerts, refreshes on foreground/reconnect and reports zero delivery honestly.
 - FieldBridge subscription invoices live in platform_invoices (frozen once issued by trigger) with rules in tested saas-billing.ts; storage usage via company_storage_usage RPC.: immutable billing history.
 - FieldBridge payments: invoice checkout in payments.functions.ts (superuser via RLS), signed webhook at api/public/payments/webhook settles only exact-amount matches idempotently; daily cron api/public/jobs/billing-daily runs saas-billing.server.ts (renewals, overdue, saved-card charges, reminder emails); company_invoice_lapsed() drives read-only access.: server-verified payment state and one entitlement source.
 

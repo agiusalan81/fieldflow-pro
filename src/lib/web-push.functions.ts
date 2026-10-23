@@ -84,7 +84,7 @@ async function encrypt(p256: any, sub: Sub, plain: Uint8Array) {
   const uaPub = unb64(sub.p256dh), authSecret = unb64(sub.auth);
   const asPriv = p256.utils.randomSecretKey() as Uint8Array;
   const asPub = p256.getPublicKey(asPriv, false) as Uint8Array;
-  const shared = (p256.getSharedSecret(asPriv, uaPub) as Uint8Array).slice(1);
+  const shared = (p256.getSharedSecret(asPriv, uaPub, false) as Uint8Array).slice(1, 33);
   const prkKey = await hmac(authSecret, shared);
   const ikm = await hmac(prkKey, cat(enc.encode("WebPush: info\0"), uaPub, asPub, new Uint8Array([1])));
   const salt = crypto.getRandomValues(new Uint8Array(16));
@@ -110,7 +110,7 @@ async function deliver(supabaseAdmin: any, subs: Sub[], alert: Alert) {
       const sig = b64url(raw instanceof Uint8Array ? raw : raw.toBytes("compact"));
       try {
         const bodyBytes = await encrypt(p256, s, payload);
-        const res = await fetch(endpoint, { method: "POST", headers: { Authorization: `vapid t=${head}.${body}.${sig}, k=${b64url(pub)}`, TTL: "86400", Urgency: "high", "Content-Encoding": "aes128gcm", "Content-Type": "application/octet-stream" }, body: bodyBytes as BodyInit });
+        const res = await fetch(endpoint, { method: "POST", signal: AbortSignal.timeout(15000), headers: { Authorization: `vapid t=${head}.${body}.${sig}, k=${b64url(pub)}`, TTL: "86400", Urgency: "high", "Content-Encoding": "aes128gcm", "Content-Type": "application/octet-stream" }, body: bodyBytes as BodyInit });
         if (res.status === 404 || res.status === 410) await supabaseAdmin.from("push_subscriptions").delete().eq("endpoint", endpoint);
         else if (res.ok) sent++;
         else console.error("push failed", res.status);

@@ -26,6 +26,7 @@ export function PushDeviceStatus() {
     try {
       const r = await sendTestPush();
       if (!r.devices) toast.error("No devices registered for your account yet.");
+      else if (!r.sent) { setS(await registerPush()); toast.error("No device accepted the test alert. Turn notifications on again on your phone, then retry."); }
       else toast.success(`Test sent to ${r.sent} of ${r.devices} device(s). Lock your phone to see it.`);
     } catch { toast.error("Couldn't send a test alert."); }
     setBusy(false);

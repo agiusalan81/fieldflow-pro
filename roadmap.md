@@ -1,4 +1,7 @@
 # Roadmap
+- [x] Brand Studio: 52 asset-backed font families, underline controls and preview/PDF decoration. 20 focused tests passed; isolated live controls loaded Montserrat and underlining, all 50 new fonts embedded into PDFs; build OK. Existing HQ font/styling gates retained.
+- [x] Push hardening: always display received pushes despite stale focused windows, explicit ECDH x-coordinate derivation, bounded delivery, foreground/reconnect subscription refresh and honest zero-delivery feedback; worker regression test passed.
+- [ ] Confirm lock-screen chat delivery on the user's installed phone after publishing: current signed-in test account has no registered devices; cannot verify its delivery. Company Brand Studio save/read-back remains blocked by Technician permissions; isolated preview verified.
 - [x] Separate storage-only add-ons from HQ module packs and the Switchboard; editable storage cards show capacity, cadence prices and billing basis. Prices, assignments and frozen labels unchanged; 20 tests passed, build OK.
 - [ ] Verify storage cards in live HQ (blocked: requesting account is not a platform owner; access denial verified without runtime errors).
 - [x] Build 1: private chat resizing with original-quality choice and unchanged documents; actual image send/read-back/private download verified, temporary messages/photos removed.

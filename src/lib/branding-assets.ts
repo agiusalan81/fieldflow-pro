@@ -1,10 +1,11 @@
+import { BRAND_FONTS, brandFont } from "./brand-fonts";
 import { layerColor, DEFAULT_TEXT_STYLES, type PdfTemplate, type TextLayerKey } from "./documents";
 import type { Appearance } from "./branding";
 import lato from "@/assets/branding-lato.ttf.asset.json";
 import abel from "@/assets/branding-abel.ttf.asset.json";
 
 type BrandClient = { storage: { from: (bucket: string) => { download: (path: string) => Promise<{ data: Blob | null; error: unknown }> } } };
-export const DOCUMENT_FONT_OPTIONS = [{ value: "standard", label: "Standard document font" }, { value: "lato", label: "Lato — clean" }, { value: "abel", label: "Abel — compact" }, { value: "custom", label: "Company font" }] as const;
+export const DOCUMENT_FONT_OPTIONS = [{ value: "standard", label: "Standard document font" }, { value: "lato", label: "Lato — clean" }, { value: "abel", label: "Abel — compact" }, ...BRAND_FONTS, { value: "custom", label: "Company font" }] as const;
 export function bytesData(bytes: Uint8Array, mime: string) { let bin = ""; for (let i = 0; i < bytes.length; i += 8192) bin += String.fromCharCode(...bytes.subarray(i, i + 8192)); return `data:${mime};base64,${btoa(bin)}`; }
 export async function brandDownload(client: BrandClient, path: string) {
   if (!path) return "";
@@ -20,7 +21,7 @@ export async function resolveAppearanceAssets(client: BrandClient, a: Appearance
   const [backgroundData, menuBackgroundData] = await Promise.all([brandDownload(client, a.backgroundPath), brandDownload(client, a.menuBackgroundPath)]);
   return { ...a, backgroundData, menuBackgroundData };
 }
-export function documentFontSource(t: PdfTemplate) { return t.documentFont === "custom" ? t.fontData ?? "" : t.documentFont === "lato" ? lato.url : t.documentFont === "abel" ? abel.url : ""; }
+export function documentFontSource(t: PdfTemplate) { return t.documentFont === "custom" ? t.fontData ?? "" : t.documentFont === "lato" ? lato.url : t.documentFont === "abel" ? abel.url : brandFont(t.documentFont)?.source ?? ""; }
 export function documentFontFamily(t: PdfTemplate) { return t.documentFont && t.documentFont !== "standard" ? `"FieldBridgeDocument-${t.documentFont}", sans-serif` : t.font === "serif" ? '"Lora", Georgia, serif' : t.font === "mono" ? '"IBM Plex Mono", monospace' : '"IBM Plex Sans", sans-serif'; }
 export async function loadDocumentFont(t: PdfTemplate) {
   const source = documentFontSource(t); if (!source || typeof document === "undefined") return;
@@ -55,7 +56,7 @@ const STANDARD_FAMILY = { sans: '"IBM Plex Sans", sans-serif', serif: '"Lora", G
 export function layerStyle(t: PdfTemplate, k: TextLayerKey): import("react").CSSProperties {
   const l = t.textStyles?.[k] ?? DEFAULT_TEXT_STYLES[k];
   const fill = l.background ? { backgroundColor: l.background, padding: "2px 8px", borderRadius: 6, display: "inline-block" } : {};
-  return { fontFamily: l.font === "document" ? documentFontFamily(t) : STANDARD_FAMILY[l.font], color: layerColor(t, k), fontWeight: l.bold ? 700 : 400, fontStyle: l.italic ? "italic" : "normal", ...fill };
+  return { fontFamily: l.font === "document" ? documentFontFamily(t) : STANDARD_FAMILY[l.font], color: layerColor(t, k), fontWeight: l.bold ? 700 : 400, fontStyle: l.italic ? "italic" : "normal", textDecoration: l.underline ? "underline" : "none", ...fill };
 }
 /** PDF font + colour for each text layer. Company fonts have no separate italic, so italic applies only to standard families. */
 export async function pdfLayerFonts(doc: import("pdf-lib").PDFDocument, t: PdfTemplate, base: { font: import("pdf-lib").PDFFont; bold: import("pdf-lib").PDFFont }) {
@@ -65,7 +66,7 @@ export async function pdfLayerFonts(doc: import("pdf-lib").PDFDocument, t: PdfTe
   const one = async (k: TextLayerKey) => {
     const l = t.textStyles?.[k] ?? DEFAULT_TEXT_STYLES[k];
     const font = l.font === "document" ? (l.bold ? base.bold : base.font) : await doc.embedFont(StandardFonts[names[l.font][(l.bold ? 1 : 0) + (l.italic ? 2 : 0)] as keyof typeof StandardFonts]);
-    return { font, color: hex(layerColor(t, k)) };
+    return { font, color: hex(layerColor(t, k)), underline: l.underline };
   };
   return { company: await one("company"), label: await one("label"), detail: await one("detail") };
 }
