@@ -18,6 +18,8 @@ import { useProfile, useCompanyUsers, initialsOf } from "@/lib/profile";
 import { usePlanFeatures } from "@/lib/plan-features";
 import { dispatchTeamSize, skillMatchScore } from "@/lib/skills";
 import { closeDispatchedReport, DISPATCH_REFRESH_KEYS } from "@/lib/dispatch-report";
+import { canDeleteSheet, canDeleteVisit, RECORD_DELETE_REFRESH_KEYS } from "@/lib/record-deletion";
+import { DispatchedVisits } from "@/components/dispatched-visits";
 import { NumInput } from "@/components/num-input";
 import { useEntrySuggestions } from "@/hooks/use-entry-suggestions";
 import { SuggestedTextarea } from "@/components/suggested-textarea";
@@ -89,15 +91,20 @@ function AdminJobs() {
     return true;
   };
   const [resend, setResend] = useState<{ id: string; client_id: string; site_id: string | null; jobsheet_number: string } | null>(null);
-  const superuser = me?.real_role === "superuser";
+  const mayDeleteSheet = canDeleteSheet(me?.role);
+  const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleting, setDeleting] = useState<{ id: string; jobsheet_number: string; status: string } | null>(null);
   const confirmDelete = async () => {
-    if (!deleting) return;
+    if (!deleting || !mayDeleteSheet || deleteBusy) return;
+    setDeleteBusy(true);
+    try {
     const { error, count } = await supabase.from("job_sheets").delete({ count: "exact" }).eq("id", deleting.id);
-    if (error || !count) { toast.error(error?.message ?? "Not allowed to delete this sheet"); return; }
+    if (error || !count) { toast.error(error?.code === "23503" ? "This sheet has a shared client report and must be retained." : error?.message ?? "Not allowed to delete this sheet"); return; }
     toast.success(`Job sheet- ${deleting.jobsheet_number} deleted`);
     setDeleting(null);
-    qc.invalidateQueries({ queryKey: ["admin-jobs"] });
+    await Promise.all(RECORD_DELETE_REFRESH_KEYS.map(key => qc.invalidateQueries({ queryKey: [key] })));
+    } catch { toast.error("Sheet could not be deleted. Please try again."); }
+    finally { setDeleteBusy(false); }
   };
   const open = (id: string) => { saveSheetOrder(listRef.current); return navigate({ to: "/sheets/$sheetId", params: { sheetId: id } }); };
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
@@ -147,6 +154,7 @@ function AdminJobs() {
 
   return (
     <AppShell title="Job sheets" actions={<NewJobDialog />}>
+      {canDeleteVisit(me?.role) && <DispatchedVisits />}
       <div className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_220px]">
         <Input placeholder="Search client, technician, asset or sheet no." value={q} onChange={(e) => setQ(e.target.value)} />
         <Select value={filter} onValueChange={setFilter}>
@@ -248,8 +256,8 @@ function AdminJobs() {
                           <Button asChild size="sm" variant="outline"><Link to="/print/$sheetId" params={{ sheetId: j.id }} target="_blank"><FileText className="mr-1 h-4 w-4" />Client PDF</Link></Button>
                           <Button size="sm" onClick={() => setResend(j)}><Mail className="mr-1 h-4 w-4" />Resend</Button>
                         </>}
-                        {superuser && <Button size="sm" variant="ghost" className="text-destructive" aria-label={`Delete job sheet ${j.jobsheet_number}`} onClick={() => setDeleting(j)}><Trash2 className="h-4 w-4" /></Button>}
-                        {j.status !== "completed" && !superuser && <span className="text-xs text-muted-foreground">—</span>}
+                        {mayDeleteSheet && <Button size="sm" variant="ghost" className="text-destructive" title="Delete job sheet" aria-label={`Delete job sheet ${j.jobsheet_number}`} onClick={() => setDeleting(j)}><Trash2 className="h-4 w-4" /></Button>}
+                        {j.status !== "completed" && !mayDeleteSheet && <span className="text-xs text-muted-foreground">—</span>}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -287,13 +295,13 @@ function AdminJobs() {
       {bulkEmail && selectedSheets[0] && <ResendDialog sheet={selectedSheets[0]} sheetIds={selected} onClose={() => setBulkEmail(false)} />}
       {resend && <ResendDialog sheet={resend} onClose={() => setResend(null)} />}
       {office && can("billing") && <BillingReview sheetId={review} onClose={() => setReview(null)} />}
-      <Dialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
+      <Dialog open={!!deleting} onOpenChange={(o) => !o && !deleteBusy && setDeleting(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>Delete Job sheet- {deleting?.jobsheet_number}?</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">This permanently removes the sheet, its time logs, parts and photos records. {deleting?.status === "completed" ? "It is completed and may already be signed by the client." : ""} This cannot be undone.</p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleting(null)}>Cancel</Button>
-            <Button variant="destructive" onClick={confirmDelete}>Delete permanently</Button>
+            <Button variant="outline" disabled={deleteBusy} onClick={() => setDeleting(null)}>Cancel</Button>
+            <Button variant="destructive" disabled={deleteBusy} onClick={confirmDelete}>{deleteBusy ? "Deleting…" : "Delete permanently"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
