@@ -1,0 +1,1 @@
+CREATE POLICY products_public_read ON public.platform_products FOR SELECT TO anon USING (active);

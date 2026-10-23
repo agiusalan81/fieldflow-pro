@@ -631,6 +631,13 @@
       "when": 1792778532614,
       "tag": "0089_self_signatures_and_public_legal_projection",
       "breakpoints": true
+    },
+    {
+      "idx": 90,
+      "version": "7",
+      "when": 1792782921628,
+      "tag": "0090_public_read_active_products",
+      "breakpoints": true
     }
   ]
 }
