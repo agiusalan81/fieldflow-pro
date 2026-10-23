@@ -123,6 +123,7 @@ function Landing() {
     ? Math.min(...storagePacks.map((p) => Number(p.monthly_price ?? Infinity)))
     : 15;
 
+  if (!plan) return <div role="alert" className="p-8 text-center">Packages are currently unavailable.</div>;
   const price = priceForCadence(plan, cadence);
   const cadenceNote =
     cadence === "quarterly" ? "per quarter · 10% off the monthly rate" :
