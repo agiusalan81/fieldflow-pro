@@ -7,6 +7,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { listPublicCatalog, type PublicCatalogItem } from "@/lib/public-catalog.functions";
 import { CADENCES, cadenceSuffix, formatEur, priceForCadence, type BillingCadence } from "@/lib/catalog-pricing";
 import { PLAN_FEATURES } from "@/lib/plan-features";
+import { DEFAULT_TRIAL_DAYS } from "@/lib/platform";
 import { supabase } from "@/integrations/supabase/client";
 import { TRUST_LINKS } from "@/lib/trust-pages";
 
@@ -93,8 +94,8 @@ function toViewPlan(p: PublicCatalogItem): ViewPlan {
   };
 }
 
-const faqs: [string, string][] = [
-  ["Do I need a card for the trial?", "No. Create your company, invite your team and use FieldBridge free for 60 days."],
+const faqs = (trialDays: number): [string, string][] => [
+  ["Do I need a card for the trial?", `No. Create your company, invite your team and use FieldBridge free for ${trialDays} days.`],
   ["Which trades does it suit?", "Any technical field service team. Rename fields, checklists and job types to match your trade."],
   ["Is our data kept separate?", "Yes. Every company has its own isolated workspace with role-based access."],
   ["What happens after the trial?", "Pick a plan monthly, quarterly (10% off) or yearly (20% off). Your records always stay viewable and exportable."],
