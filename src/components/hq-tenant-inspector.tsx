@@ -21,7 +21,7 @@ type Catalog = Database["public"]["Tables"]["platform_catalog"]["Row"];
 type Override = Database["public"]["Tables"]["platform_overrides"]["Row"];
 type Access = Database["public"]["Functions"]["platform_hq_module_status"]["Returns"];
 export function HQTenantInspector({ company, subscription, catalog, modules, overrides, access, money, onClose, onSaved, onManage, onBilling }: {
-  company?: Company; subscription?: Sub; catalog: Catalog[]; modules: string[]; overrides: Override[]; access: Access; money:(v:number)=>string; onClose:()=>void; onSaved:()=>void; onManage:()=>void; onBilling:()=>void;
+  company?: Company | undefined; subscription?: Sub | undefined; catalog: Catalog[]; modules: string[]; overrides: Override[]; access: Access; money:(v:number)=>string; onClose:()=>void; onSaved:()=>void; onManage:()=>void; onBilling:()=>void;
 }) {
   const [city,setCity]=useState(company?.city ?? ""); const [country,setCountry]=useState(company?.country ?? ""); const [notes,setNotes]=useState(company?.internal_notes ?? ""); const [test,setTest]=useState(company?.is_test ?? false); const [busy,setBusy]=useState(false);
   const [confirmation,setConfirmation]=useState(""); const [resetModules,setResetModules]=useState<string[]>([]); const [preview,setPreview]=useState<Record<string,number>|null>(null);
