@@ -4046,6 +4046,33 @@ export type Database = {
           },
         ]
       }
+      standby_roster_audit: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          company_id: string
+          config: Json
+          id: string
+          track: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          company_id: string
+          config: Json
+          id?: string
+          track: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          company_id?: string
+          config?: Json
+          id?: string
+          track?: string
+        }
+        Relationships: []
+      }
       standby_swaps: {
         Row: {
           approved_at: string | null
@@ -4061,6 +4088,7 @@ export type Database = {
           status: string
           swap_date: string
           target_id: string
+          track: string
         }
         Insert: {
           approved_at?: string | null
@@ -4076,6 +4104,7 @@ export type Database = {
           status?: string
           swap_date: string
           target_id: string
+          track?: string
         }
         Update: {
           approved_at?: string | null
@@ -4091,6 +4120,7 @@ export type Database = {
           status?: string
           swap_date?: string
           target_id?: string
+          track?: string
         }
         Relationships: [
           {
@@ -4112,6 +4142,44 @@ export type Database = {
             columns: ["target_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supervisor_rosters: {
+        Row: {
+          company_id: string
+          member_order: string[]
+          per_shift: number
+          rotation_days: number
+          start_date: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          company_id: string
+          member_order?: string[]
+          per_shift?: number
+          rotation_days?: number
+          start_date?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          company_id?: string
+          member_order?: string[]
+          per_shift?: number
+          rotation_days?: number
+          start_date?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supervisor_rosters_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -4676,6 +4744,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      save_standby_track: {
+        Args: {
+          _order: string[]
+          _per_shift: number
+          _rotation_days: number
+          _start: string
+          _track: string
+        }
+        Returns: undefined
+      }
       search_technical_documents: {
         Args: {
           _asset?: string
@@ -4730,6 +4808,10 @@ export type Database = {
           _signature: string
         }
         Returns: undefined
+      }
+      standby_track_ids: {
+        Args: { _company: string; _date: string; _track: string }
+        Returns: string[]
       }
       submit_equipment_problem: {
         Args: {
