@@ -406,6 +406,8 @@ function SheetForm() {
         </div>
       )}
       <fieldset disabled={readOnly || busy} className="mx-auto max-w-5xl space-y-4 pb-24">
+        <datalist id="previous-part-descriptions">{suggestions?.parts.map(text => <option key={text} value={text} />)}</datalist>
+        <datalist id="previous-part-units">{suggestions?.units.map(text => <option key={text} value={text} />)}</datalist>
         {safetyItems.length > 0 && <Section n={0} title="Pre-work safety assessment"><div className="space-y-2">{safetyItems.map((i) => <label key={i} className="flex items-start gap-3 border p-3 text-sm"><Checkbox checked={!!checks[`safety:${i}`]} onCheckedChange={(v) => setChecks({ ...checks, [`safety:${i}`]: !!v })} />{i}</label>)}</div></Section>}
         <div className="flex flex-wrap items-center gap-2">
           <StatusBadge status={sheet.status} />

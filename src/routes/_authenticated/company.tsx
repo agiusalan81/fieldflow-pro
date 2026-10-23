@@ -1,6 +1,5 @@
 import { TRADES } from "@/lib/price-list";
 import { settingsSectionPatch } from "@/lib/settings-sections";
-import { NumInput } from "@/components/num-input";
 import { TechnicalStructure } from "@/components/technical-structure";
 import { EstimateSettings } from "@/components/estimate-settings";
 import { PriceListSettings } from "@/components/price-list-settings";

@@ -18,6 +18,8 @@ import { useProfile, useCompanyUsers, initialsOf } from "@/lib/profile";
 import { usePlanFeatures } from "@/lib/plan-features";
 import { dispatchTeamSize, skillMatchScore } from "@/lib/skills";
 import { NumInput } from "@/components/num-input";
+import { useEntrySuggestions } from "@/hooks/use-entry-suggestions";
+import { SuggestedTextarea } from "@/components/suggested-textarea";
 import { matchesSheetFilter, matchesSheetDetails, validateCombinedSheets } from "@/lib/jobsheets";
 import { matchesSheetSearch } from "@/lib/dwr";
 import { AppShell, EmptyState } from "@/components/app-shell";
@@ -300,6 +302,7 @@ function AdminJobs() {
 
 function NewJobDialog() {
   const { data: profile } = useProfile();
+  const { data: suggestions } = useEntrySuggestions();
   const { data: allUsers = [] } = useCompanyUsers();
   // Field crew are supervisors and technicians only; office staff dispatch but are not crew.
   const users = allUsers.filter(u => u.role === "technician" || u.role === "supervisor");
@@ -406,7 +409,7 @@ function NewJobDialog() {
             <div className="space-y-1.5"><Label>From</Label><Input type="time" value={f.window_start} onChange={(e) => setF({ ...f, window_start: e.target.value })} /></div>
             <div className="space-y-1.5"><Label>To</Label><Input type="time" value={f.window_end} onChange={(e) => setF({ ...f, window_end: e.target.value })} /></div>
           </div>
-          <div className="space-y-1.5"><Label>Problem summary</Label><Textarea value={f.problem_summary} onChange={(e) => setF({ ...f, problem_summary: e.target.value })} /></div>
+          <div className="space-y-1.5"><Label>Problem summary</Label><SuggestedTextarea aria-label="Problem summary" value={f.problem_summary} onValueChange={problem_summary => setF({ ...f, problem_summary })} suggestions={suggestions?.problems} /></div>
           <Button type="submit" className="w-full">Schedule</Button>
         </form>
       </DialogContent>
