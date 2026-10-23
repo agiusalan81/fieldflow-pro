@@ -7,15 +7,33 @@ export const pushSupported = () => typeof window !== "undefined" && "serviceWork
 
 export type PushStatus = "unsupported" | "blocked" | "needs-permission" | "no-worker" | "registered" | "error";
 
-/** Waits for the app worker; mobile can take a while on first launch. */
+/** Messaging has its own registration; offline caching must not gate alerts. */
 async function workerReady(ms = 20000): Promise<ServiceWorkerRegistration | null> {
-  const existing = await navigator.serviceWorker.getRegistration();
-  if (existing?.active) return existing;
-  return Promise.race([navigator.serviceWorker.ready, new Promise<null>((r) => setTimeout(() => r(null), ms))]);
+  const reg = await navigator.serviceWorker.register("/push-sw.js", { scope: "/push/", updateViaCache: "none" });
+  if (reg.active) return reg;
+  const worker = reg.installing ?? reg.waiting;
+  if (!worker) return null;
+  return new Promise((resolve) => {
+    const finish = (value: ServiceWorkerRegistration | null) => {
+      clearTimeout(timer); worker.removeEventListener("statechange", changed); resolve(value);
+    };
+    const changed = () => {
+      if (worker.state === "activated") finish(reg);
+      else if (worker.state === "redundant") finish(null);
+    };
+    const timer = setTimeout(() => finish(null), ms);
+    worker.addEventListener("statechange", changed);
+    changed();
+  });
 }
 
 /** Registers this device for closed-app chat alerts and reports what happened. */
-export async function registerPush(): Promise<PushStatus> {
+let registering: Promise<PushStatus> | undefined;
+export function registerPush(): Promise<PushStatus> {
+  if (!registering) registering = registerDevice().finally(() => { registering = undefined; });
+  return registering;
+}
+async function registerDevice(): Promise<PushStatus> {
   if (!pushSupported()) return "unsupported";
   if (Notification.permission === "denied") return "blocked";
   if (Notification.permission !== "granted") return "needs-permission";
@@ -36,6 +54,12 @@ export async function registerPush(): Promise<PushStatus> {
   }
 }
 
+export async function currentPushEndpoint(): Promise<string | undefined> {
+  if (!pushSupported()) return undefined;
+  const reg = await navigator.serviceWorker.getRegistration("/push/");
+  return (await reg?.pushManager.getSubscription())?.endpoint;
+}
+
 /** Asks for permission (must be called from a tap), then registers. */
 export async function enablePush(): Promise<PushStatus> {
   if (!pushSupported()) return "unsupported";
@@ -49,5 +73,5 @@ export async function ensurePushSubscription(): Promise<boolean> {
 
 /** Best-effort: never blocks or fails the message send. */
 export function pushChatMessages(ids: string[]) {
-  if (ids.length) void sendChatPush({ data: { messageIds: ids } }).catch(() => undefined);
+  if (ids.length) void sendChatPush({ data: { messageIds: ids } }).catch(() => console.error("Chat saved, but its phone alert could not be sent."));
 }
