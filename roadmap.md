@@ -201,3 +201,4 @@
 - [ ] Online card payments — waiting for provider confirmation (Paddle recommended)
 
 - [x] Billing review: online invoice payments, saved cards, renewals, reminders, read-only lapse, upgrade/downgrade rules
+- [x] Signed-in users skip the marketing site (auto-redirect to /dashboard), Sign in always visible on the mobile landing header, PWA start_url now /dashboard (installed apps need reinstall to pick up the new start URL)
