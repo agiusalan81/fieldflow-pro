@@ -5,6 +5,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { PLAN_FEATURES, MODULE_DESCRIPTIONS } from "@/lib/plan-features";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import { isStorageAddon } from "@/lib/hq";
 
 type Catalog = Database["public"]["Tables"]["platform_catalog"]["Row"];
 type Subscription = Database["public"]["Tables"]["platform_subscriptions"]["Row"];
@@ -16,6 +17,7 @@ function useCommercialRefresh() {
   };
 }
 export function HQFeatureMatrix({ catalog, modules, onEdit }: { catalog: Catalog[]; modules: string[]; onEdit: (item: Catalog) => void }) {
+  catalog = catalog.filter(item => !isStorageAddon(item));
   const refresh = useCommercialRefresh();
   const mutation = useMutation({
     mutationFn: async (input: { id: string; module: string; enabled: boolean }) => {

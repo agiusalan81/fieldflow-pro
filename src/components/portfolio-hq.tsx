@@ -7,7 +7,7 @@ import { Building2, Plus, ArrowLeft, ShieldCheck, TrendingUp, Users, Receipt, Co
 import { supabase } from "@/integrations/supabase/client";
 import { platformOverview } from "@/lib/platform.functions";
 import { HQFeatureMatrix, HQCompanyPacks } from "@/components/hq-feature-controls";
-import { HQTierComparison, HQPackBuilder } from "@/components/hq-plan-studio";
+import { HQTierComparison, HQPackBuilder, HQStorageAddons } from "@/components/hq-plan-studio";
 import { HQSetupPackage } from "@/components/hq-setup-package";
 import { HQTenantInspector } from "@/components/hq-tenant-inspector";
 import { HQLegalProfile } from "@/components/hq-legal-profile";
