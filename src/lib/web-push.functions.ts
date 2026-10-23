@@ -122,10 +122,13 @@ async function deliver(supabaseAdmin: any, subs: Sub[], alert: Alert) {
 /** Sends a test alert to the caller's own devices. */
 export const sendTestPush = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((i) => z.object({ endpoint: z.string().url().max(1000), delaySeconds: z.number().int().min(0).max(10).default(0) }).parse(i))
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: subs } = await supabaseAdmin.from("push_subscriptions").select("endpoint,p256dh,auth").eq("user_id", context.userId);
+    const { data: subs, error } = await supabaseAdmin.from("push_subscriptions").select("endpoint,p256dh,auth").eq("user_id", context.userId).eq("endpoint", data.endpoint);
+    if (error) throw new Error("Could not check this device's notification registration");
     const devices = subs?.length ?? 0;
-    const sent = devices ? await deliver(supabaseAdmin, subs as Sub[], { title: "FieldBridge test", body: "Notifications are working on this device.", url: "/messages", tag: "fb-test" }) : 0;
+    if (devices && data.delaySeconds) await new Promise(resolve => setTimeout(resolve, data.delaySeconds * 1000));
+    const sent = devices ? await deliver(supabaseAdmin, subs as Sub[], { title: "FieldBridge test", body: "Your phone received the FieldBridge test alert.", url: "/messages", tag: "fb-test" }) : 0;
     return { devices, sent };
   });

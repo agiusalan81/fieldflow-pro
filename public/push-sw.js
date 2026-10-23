@@ -1,4 +1,5 @@
-// Loaded into the app service worker: shows chat alerts when the app is closed.
+// Dedicated messaging worker. Also supports existing offline-worker subscriptions.
+self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("push", (event) => {
   event.waitUntil((async () => {
     // Always display a received push: phones can retain a stale focused window
