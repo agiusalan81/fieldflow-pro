@@ -1338,7 +1338,9 @@ export type Database = {
       }
       internal_messages: {
         Row: {
+          attachments: Json
           company_id: string
+          contact_card: Json | null
           created_at: string
           id: string
           job_sheet_id: string | null
@@ -1347,7 +1349,9 @@ export type Database = {
           sender_id: string
         }
         Insert: {
+          attachments?: Json
           company_id: string
+          contact_card?: Json | null
           created_at?: string
           id?: string
           job_sheet_id?: string | null
@@ -1356,7 +1360,9 @@ export type Database = {
           sender_id: string
         }
         Update: {
+          attachments?: Json
           company_id?: string
+          contact_card?: Json | null
           created_at?: string
           id?: string
           job_sheet_id?: string | null
@@ -4512,6 +4518,8 @@ export type Database = {
         Returns: string
       }
       branding_offers: { Args: never; Returns: Json }
+      can_read_chat_object: { Args: { _name: string }; Returns: boolean }
+      chat_sheet_access: { Args: { _sheet: string }; Returns: boolean }
       claim_open_job: { Args: { _job: string }; Returns: string }
       company_app_product_id: { Args: never; Returns: string }
       company_invoice_lapsed: {
