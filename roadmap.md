@@ -1,7 +1,8 @@
 # Roadmap
-- [ ] Notification setup persists per device/account; gesture-unlocked chat sounds with regression tests
-- [ ] Newly registered HQ modules selectable in tiers without manual product-list drift
-- [ ] Plus-and-up staff sites/multiple contacts separate from optional portal; portal edits contacts/preferences only
+- [x] Notification setup dismissal persists per account; gesture-unlocked chat audio tested in-browser and with regression tests (real phone push delivery remains unverified)
+- [x] New HQ modules selectable in tiers; Plus save/read-back verified
+- [x] Plus-and-up staff sites/multiple contacts separated from optional portal; database guards keep portal site edits forbidden
+- [ ] Portal rollback regression execution (blocked: sandbox test connection cannot execute protected portal helpers; fixture retained)
 - [x] Internal client/site/contact management separated from portal access; invitations gated, routing guard corrected, 10 tests pass and client save/read-back verified
 - [x] Desktop permission setup never blocks PC users (touch check added)
 - [x] Distinct team statuses and active-only live availability ("Available" label, muted off-shift)
