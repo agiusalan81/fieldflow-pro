@@ -4,6 +4,7 @@
 - [x] Shared normal/pending dispatch with categorized multi-select skills, HQ-gated (already wired via NewJobDialog)
 - [x] Receipt thumbnails verified rendering on Expenses & receipts (office view)
 - [x] HQ Coming soon / hide-locked flags save on immediate apply
+- [x] Coming soon greys the menu item and gates the route even when the package enables the module (verified live; hover/click popover with Inquire)
 - [x] Welcome guide "Don't show again" checkbox
 - [x] Appearance panel labelled "Live preview"
 - [x] Up for grabs on technician dashboard: 5-min repeating alarm, dismiss, claim, push to clocked-in staff (verified live as Tech1)

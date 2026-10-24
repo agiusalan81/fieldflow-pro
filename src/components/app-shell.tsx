@@ -1,6 +1,6 @@
 import { QrCode } from "lucide-react";
 import { ActionNotifications, ChatBadge, OnCallBadge } from "@/components/action-notifications";
-import { usePlanFeatures, useLockedVisibility, resolveAppTitle } from "@/lib/plan-features";
+import { usePlanFeatures, useLockedVisibility, useNavLock, resolveAppTitle } from "@/lib/plan-features";
 import { DepartureAlerts } from "@/components/client-notices";
 import { LocationSharing } from "@/components/location-sharing";
 import { PayrollSetupAlert } from "@/components/payroll-setup-alert";
@@ -242,10 +242,12 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   const can = useCan(profile);
   const planOn = usePlanFeatures(!!actor);
   const lockVis = useLockedVisibility();
+  const navLock = useNavLock(!!actor);
   const office = isOffice(profile);
   const extraNav: NavItem[] = [];
-  const baseItems = [...(profile?.role === "supervisor" ? supervisorNav : manager ? adminNav : techNav), ...extraNav].filter((i) => (i.to !== "/subscription" || profile?.role === "superuser") && (i.to !== "/company" || office) && (!i.office || office) && (!i.module || can(i.module) || (i.to === "/company" && office))).map(i => { const feature = i.feature ?? MODULE_ROUTE[i.to] ?? (['/admin/jobs','/pending-works','/admin/inventory','/admin/entities','/qr-codes','/sheets','/schedule','/team','/team-invites','/dwr','/admin/leave','/leave'].includes(i.to) ? 'core' : undefined); return { ...i, feature, locked: !!feature && !planOn(feature), soon: !!feature && lockVis(feature).comingSoon }; }).filter(i => !i.locked || !lockVis(i.feature!).hidden);
+  const baseItems = [...(profile?.role === "supervisor" ? supervisorNav : manager ? adminNav : techNav), ...extraNav].filter((i) => (i.to !== "/subscription" || profile?.role === "superuser") && (i.to !== "/company" || office) && (!i.office || office) && (!i.module || can(i.module) || (i.to === "/company" && office))).map(i => { const feature = i.feature ?? MODULE_ROUTE[i.to] ?? (['/admin/jobs','/pending-works','/admin/inventory','/admin/entities','/qr-codes','/sheets','/schedule','/team','/team-invites','/dwr','/admin/leave','/leave'].includes(i.to) ? 'core' : undefined); const lock = feature ? navLock(feature) : { locked: false, soon: false, hidden: false }; return { ...i, feature, locked: lock.locked, soon: lock.soon, hidden: lock.hidden }; }).filter(i => !i.locked || !i.hidden);
   const lockedFeature = MODULE_ROUTE[path] ?? baseItems.find(i => i.to === path)?.feature;
+  const lockedSoon = lockedFeature ? navLock(lockedFeature).soon : false;
   const canSwitch = profile && canViewAsRoles(profile.real_role) && !preview.active;
 
   const { data: company } = useCompanyRules();
@@ -356,7 +358,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
           {profile && path === "/dashboard" && !preview.active && <QuickActions items={items.filter(i => !i.locked)} uid={profile.id} role={profile.role} manager={manager} />}
           {!preview.active && <LocationSharing />}
           
-          {lockedFeature && !planOn(lockedFeature) ? <ModulePreview feature={lockedFeature} title={title}/> : children}
+          {lockedFeature && (!planOn(lockedFeature) || lockedSoon) ? <ModulePreview feature={lockedFeature} title={title} comingSoon={lockedSoon}/> : children}
         </main>
       </div>
 
