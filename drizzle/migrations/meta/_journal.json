@@ -715,6 +715,13 @@
       "when": 1792837613894,
       "tag": "0101_shift_location_evidence_and_hq_setup_label",
       "breakpoints": true
+    },
+    {
+      "idx": 102,
+      "version": "7",
+      "when": 1792837732710,
+      "tag": "0102_maintenance_eligibility_and_contact_consistency",
+      "breakpoints": true
     }
   ]
 }
