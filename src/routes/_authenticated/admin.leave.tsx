@@ -1,7 +1,7 @@
 import { LeaveBlackouts } from "@/components/leave-blackouts";
 import { LeaveImpact } from "@/components/leave-impact";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -13,6 +13,7 @@ import { AppShell, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/admin/leave")({ staticData: { sitemap: false },
+  validateSearch: (search: Record<string, unknown>): { request?: string } => ({ request: typeof search.request === 'string' && /^[a-f0-9-]{36}$/i.test(search.request) ? search.request : undefined }),
   head: () => ({
     meta: [
       { title: "Leave approvals — FieldBridge" },
@@ -31,12 +32,14 @@ const STATUS_CLS: Record<string, string> = { pending: "bg-warning/25 text-warnin
 function LeaveApprovals() {
   const qc = useQueryClient();
   const { data: me } = useProfile();
+  const { request } = Route.useSearch();
   const [month, setMonth] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
   const { data: reqs = [] } = useQuery({
     queryKey: ["leave", "team"],
     queryFn: async () => { const { data, error } = await supabase.from("leave_requests").select("*, users(full_name, role)").order("start_date"); if (error) throw error; return data; },
   });
   const { data: bals = [] } = useQuery({ queryKey: ["leave-balances-team"], queryFn: async () => (await supabase.from("user_leave_balances").select("*")).data ?? [] });
+  useEffect(() => { if (request && reqs.length) document.getElementById(`leave-${request}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, [request, reqs]);
 
   const balanceOf = (uid: string) => {
     const b = bals.find((x) => x.user_id === uid);
@@ -60,7 +63,7 @@ function LeaveApprovals() {
     window.open(data.signedUrl, "_blank");
   };
 
-  const pending = reqs.filter((r) => r.status === "pending");
+  const pending = reqs.filter((r) => r.status === "pending" || r.id === request).sort((a,b) => Number(b.id === request) - Number(a.id === request));
   const days = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
   const offset = (month.getDay() + 6) % 7;
   const iso = (d: number) => `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
@@ -80,7 +83,7 @@ function LeaveApprovals() {
                 const isAnnual = r.leave_type === "Annual";
                 const bal = approvalBalance(balanceOf(r.user_id), isAnnual ? Number(r.total_hours) : 0);
                 return (
-                  <li key={r.id} className="space-y-2 rounded-lg border p-3">
+                  <li key={r.id} id={`leave-${r.id}`} className={`space-y-2 rounded-lg border p-3 ${r.id === request ? 'border-primary ring-2 ring-primary/20' : ''}`}>
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-foreground">{r.users?.full_name} <span className="text-xs capitalize text-muted-foreground">· {r.users?.role}</span> · {leaveLabel(r.leave_type)}</p>
                       <p className="text-xs text-muted-foreground">{r.start_date} → {r.end_date} · {Number(r.total_hours).toFixed(2)} h
