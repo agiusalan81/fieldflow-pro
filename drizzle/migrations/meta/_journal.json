@@ -729,6 +729,13 @@
       "when": 1792837868035,
       "tag": "0103_client_portal_scope_lifecycle",
       "breakpoints": true
+    },
+    {
+      "idx": 104,
+      "version": "7",
+      "when": 1792838692438,
+      "tag": "0104_tenant_billing_and_bespoke_requests",
+      "breakpoints": true
     }
   ]
 }
