@@ -1,4 +1,19 @@
 # Roadmap
+## Requested testing fixes — 24 October 2026
+- [ ] #1 Device-aware permission setup without desktop lockout.
+- [ ] #2 Signup password visibility and confirmation.
+- [ ] #3 Payroll-disabled setup-alert/action suppression.
+- [ ] #4 All-module alert suppression, locked menu previews and relevant upgrades.
+- [ ] #5 Operations menu order: Overview, Job sheets, Pending Works, Log expense, Inventory.
+- [ ] #6 Immediately editable vehicle registration plus historical GPS date/time/site audit after clock-out.
+- [ ] #7 Independent weekly/fortnightly rota handover weekdays.
+- [ ] #8 DWR Technician/Supervisor-only filter with role labels.
+- [ ] #9 Protected General Maintenance role and technician trade/skills filters.
+- [ ] #10 Supervisor General Maintenance invites and Field work menu order.
+- [ ] #11 Request-specific leave-consultation reply deep links.
+- [ ] #12 Site/client-wide document/channel routing and paid, password-protected client self-service portal with job-sheet links.
+- [ ] Run focused rule/security tests and authorised end-to-end checks; document any external blockers without marking unverified work complete.
+
 - [x] Chat composer clears navigation at 390/711/900/1280px; People / Job threads / All ordering, stable dirty-check autosave and stale-sync protection. 26 focused tests passed.
 - [x] Built all-role photo/PDF Expense Stash, adjustable border crop, attachment in both directions, approved categories and monthly per-person PDF export under the receipts HQ module. Real capture/crop/save/attachment verified; disposable records removed.
 - [x] Signed sheets accept private receipts and append-only notes without modifying signed fields; own-note UI read-back and unchanged signed record verified.
