@@ -108,3 +108,7 @@ export function navEntryLocked(status: Status | undefined, key: string) {
   const vis = lockedVisibility(status, key);
   return { locked: vis.comingSoon || !featureOn(status, key), soon: vis.comingSoon, hidden: vis.hidden && !vis.comingSoon };
 }
+export function useNavLock(enabled = true) {
+  const q = useQuery({ queryKey: ["plan-features"], enabled, staleTime: 60_000, queryFn: async () => { const { data, error } = await supabase.rpc("my_commercial_status"); if (error) throw error; return data as Status; } });
+  return (key: string) => navEntryLocked(q.data, key);
+}

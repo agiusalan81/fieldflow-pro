@@ -1,6 +1,6 @@
 import { QrCode } from "lucide-react";
 import { ActionNotifications, ChatBadge, OnCallBadge } from "@/components/action-notifications";
-import { usePlanFeatures, useLockedVisibility, resolveAppTitle } from "@/lib/plan-features";
+import { usePlanFeatures, useLockedVisibility, useNavLock, resolveAppTitle } from "@/lib/plan-features";
 import { DepartureAlerts } from "@/components/client-notices";
 import { LocationSharing } from "@/components/location-sharing";
 import { PayrollSetupAlert } from "@/components/payroll-setup-alert";
