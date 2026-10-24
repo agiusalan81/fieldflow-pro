@@ -792,6 +792,13 @@
       "when": 1792855874902,
       "tag": "0112_separate_staff_contacts_from_client_portal",
       "breakpoints": true
+    },
+    {
+      "idx": 113,
+      "version": "7",
+      "when": 1792861392457,
+      "tag": "0113_independent_client_management_and_portal_guards",
+      "breakpoints": true
     }
   ]
 }
