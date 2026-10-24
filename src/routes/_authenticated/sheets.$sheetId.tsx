@@ -1,3 +1,5 @@
+import { JobsheetInternalNotes } from "@/components/jobsheet-internal-notes";
+import { sheetFingerprint } from "@/lib/sheet-dirty";
 import { JobReceipts } from "@/components/job-receipts";
 import { useEntrySuggestions } from "@/hooks/use-entry-suggestions";
 import { SuggestedTextarea } from "@/components/suggested-textarea";
@@ -50,7 +52,7 @@ export const Route = createFileRoute("/_authenticated/sheets/$sheetId")({ static
       { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: SheetForm,
+  component: SheetRoute,
 });
 
 function SheetStepper({ sheetId }: { sheetId: string }) {
@@ -109,6 +111,8 @@ function Section({ n, title, children, priv }: { n: number; title: string; child
 );
 }
 
+function SheetRoute(){const {sheetId}=Route.useParams();return <SheetForm key={sheetId}/>;}
+
 function SheetForm() {
   const word = useTerminology();
   const { sheetId } = Route.useParams();
@@ -118,6 +122,8 @@ function SheetForm() {
   const { data: company } = useCompanyRules();
   const { data: users = [] } = useCompanyUsers();
   const { data: suggestions } = useEntrySuggestions();
+  const cleanState=useRef<string|null>(null);
+  const latestState=useRef<string>(" ");
   const revision = useRef<string | null>(null);
   const [localReady, setLocalReady] = useState(false);
   const [savedLocally, setSavedLocally] = useState<Date | null>(null);
@@ -194,6 +200,7 @@ function SheetForm() {
     }).catch(() => setLocalReady(true));
   }, [profile, data, localReady, sheetId]);
 
+  latestState.current=sheetFingerprint({form,logs,parts,photos,checks});
   useEffect(() => {
     const synced = (event: Event) => {
       const detail = (event as CustomEvent<{ sheetId: string; updatedAt: string }>).detail;
@@ -205,6 +212,9 @@ function SheetForm() {
 
   useEffect(() => {
     if (!profile || !data?.sheet || data.assignment?.secondary_technician_id === profile.id || !form || !localReady || data.sheet.status === "completed" || conflict) return;
+    const fingerprint=sheetFingerprint({form,logs,parts,photos,checks});
+    if(cleanState.current===null){cleanState.current=fingerprint;return;}
+    if(cleanState.current===fingerprint||busy)return;
     const expected = revision.current ?? data.sheet.updated_at;
     const timer = setTimeout(() => {
       const snapshot: DraftSnapshot = {
@@ -218,10 +228,10 @@ function SheetForm() {
         }),
         parts: parts.filter((p) => p.part_description.trim()).map((p, i) => ({ ...p, sort_order: i })), savedAt: new Date().toISOString(),
       };
-      void saveLocalDraft(snapshot).then(() => setSavedLocally(new Date())).catch(() => toast.error("This device could not save your draft. Free storage space and try again."));
+      void saveLocalDraft(snapshot).then(async () => {setSavedLocally(new Date());if(navigator.onLine){try{revision.current=await syncDraft(snapshot);cleanState.current=fingerprint;setSavedLocally(null);}catch(e){const message=e instanceof Error?e.message:"Could not sync";const current=await getLocalDraft(profile.id,sheetId);if(current?.savedAt===snapshot.savedAt)await saveLocalDraft({...current,error:message});if(message.includes("CONFLICT"))setConflict(true);}}}).catch(() => toast.error("This device could not save your draft. Free storage space and try again."));
     }, 750);
     return () => clearTimeout(timer);
-  }, [profile, data, form, logs, parts, photos, checks, localReady, conflict, sheetId]);
+  }, [profile, data, form, logs, parts, photos, checks, localReady, conflict, sheetId, busy]);
 
   if (data && !data.sheet) return <AppShell title="Job sheet"><div className="space-y-4"><p className="text-muted-foreground">This job sheet doesn't exist or isn't yours.</p>{profile && <DiscardOfflineDraft userId={profile.id} sheetId={sheetId} />}</div></AppShell>;
   if (!data?.sheet || !form || !profile) return <AppShell title="Job sheet"><p className="text-muted-foreground">Loading…</p></AppShell>;
@@ -280,7 +290,7 @@ function SheetForm() {
         toast.success("Draft saved on this device — will sync when connected");
         return !status || status === "draft";
       }
-      try { revision.current = await syncDraft(snapshot); }
+      try { revision.current = await syncDraft(snapshot); cleanState.current=latestState.current;setSavedLocally(null); }
       catch (e) {
         const message = (e as Error).message;
         await saveLocalDraft({ ...snapshot, error: message });
@@ -395,10 +405,11 @@ function SheetForm() {
     >
       {conflict && <div className="mx-auto mb-4 max-w-5xl border border-destructive p-3 text-sm"><p>This sheet changed on another device. Your local work has been kept. Compare it before saving.</p><Button variant="outline" className="mt-2" onClick={async () => {
         if (!confirm("Discard this device's saved changes and load the latest job sheet?")) return;
-        await removeLocalDraft(profile.id, sheetId); revision.current = sheet.updated_at; setConflict(false); setForm(null); setLocalReady(false); await qc.invalidateQueries({ queryKey: ["sheet", sheetId] });
+        cleanState.current=null; await removeLocalDraft(profile.id, sheetId); revision.current = sheet.updated_at; setConflict(false); setForm(null); setLocalReady(false); await qc.invalidateQueries({ queryKey: ["sheet", sheetId] });
       }}>Discard local changes &amp; reload</Button></div>}
       {readOnly && manager && <ReportSharing sheetId={sheetId} />}
-      <JobReceipts userId={profile.id} companyId={profile.company_id} sheetId={sheetId} readOnly={readOnly || busy} />
+      <JobReceipts userId={profile.id} companyId={profile.company_id} sheetId={sheetId} readOnly={busy} />
+      <JobsheetInternalNotes sheetId={sheetId} userId={profile.id} companyId={profile.company_id}/>
       {!form.signature_data && sheet.departure_status !== "none" && (
         <div className={`mx-auto mb-4 max-w-5xl rounded-xl border-2 p-4 text-sm ${sheet.departure_status === "approved" ? "border-success bg-success/10" : sheet.departure_status === "rejected" ? "border-destructive bg-destructive/10" : "border-warning bg-warning/15"}`}>
           <p className="font-medium text-foreground">{sheet.departure_status === "approved" ? "Approved — you may leave site. The client has been notified." : sheet.departure_status === "rejected" ? "Leaving was declined — please wait on site for the client." : "Waiting for approval to leave unsigned — please wait on site."}</p>

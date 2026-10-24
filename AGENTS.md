@@ -48,7 +48,7 @@
 - Client reports use immutable DB-built safe snapshots and hashed expiring/revocable links; photo paths stay server-only.: no internal disclosure.
 - Sheet safety/checklist snapshots are checked at completion; safety keys share checklist_values.: offline safety.
 - Clock-in shares plate/consent helpers. Fleet appends active-shift GPS with module/tenant guards; mileage excludes jitter/gaps.: honest isolated tracking.
-- Receipt PDFs: separate account/sheet IndexedDB queue/private storage; exclude from client projections.: private offline receipts.
+- Receipt PDFs use account-scoped offline queues and private storage; the receipts HQ module gates stash/category writes. Stash attachments reference immutable PDFs; monthly office exports copy original pages. Post-signature notes are append-only separate records, excluded from client projections.
 - Technical library: private storage/RLS; publish checks real/displayed supervisor/superuser; AI reads approved pages as caller.: secure View As.
 - Leave/profile/clock-out handover rules use tested field-rules.ts plus guard_leave_decision.: UI and DB agree.
 - HQ uses app_url, PLAN_FEATURES and owner-only toggles; isStorageAddon separates storage-only packs, retaining mixed feature bundles.
@@ -63,3 +63,5 @@
 
 - Public pricing/legal use narrow publishable reads; HQ profiles stay owner-only. Trust pages share trust-pages. Required route decisions drive sitemap.ts; no generated lastmod.
 - Staff signatures share staff-signature editors and own-user RPC; protected real roles govern eligibility and profile guards retain identity protection.
+
+- Sheet autosave compares stable editing-state fingerprints and syncs only changed work; failed background sync never resurrects a removed/newer draft. Chat viewport fits the measured header and navigation on every breakpoint.
