@@ -1,6 +1,8 @@
 import 'fake-indexeddb/auto';
 import {describe,it,expect,vi} from 'vitest';
 import {PDFDocument} from 'pdf-lib';
+import {Blob as NodeBlob} from 'node:buffer';
+vi.stubGlobal('Blob',NodeBlob);
 vi.mock('@/integrations/supabase/client',()=>({supabase:{}}));
 import {stashExpense,localExpenses,monthBounds,combineReceiptPdfs} from './expense-stash';
 import {sheetFingerprint} from './sheet-dirty';
