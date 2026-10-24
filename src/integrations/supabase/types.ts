@@ -5152,6 +5152,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      dispatch_pending_work: {
+        Args: { _dispatch: Json; _expected: string; _sheet: string }
+        Returns: string
+      }
       dwr_sheet_entries: {
         Args: { _date: string; _user: string }
         Returns: {
