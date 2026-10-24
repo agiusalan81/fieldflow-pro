@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { LiveLocations } from "@/components/live-locations";
-import { useProfile } from "@/lib/profile";
+import { useProfile, isManager } from "@/lib/profile";
+import { LocationAudit } from '@/components/location-audit';
 
 export const Route = createFileRoute("/_authenticated/live-map")({ staticData: { sitemap: false },
   head: () => ({
@@ -21,7 +22,7 @@ function LiveMapPage() {
   const { data: profile } = useProfile();
   return (
     <AppShell title="Live team map">
-      {profile?.role === "technician" ? <EmptyState>The live map is for supervisors and office staff.</EmptyState> : <LiveLocations tall />}
+      {!isManager(profile) ? <EmptyState>The live map is for supervisors and office staff.</EmptyState> : <div className="space-y-8"><LiveLocations tall /><LocationAudit/></div>}
     </AppShell>
   );
 }

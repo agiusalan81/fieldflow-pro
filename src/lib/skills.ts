@@ -2,7 +2,7 @@
 export const STANDARD_MAX_TEAM = 2;
 export const MAX_TEAM = 30;
 
-export function skillEligible(role: string) { return role === "technician" || role === "supervisor"; }
+export function skillEligible(role: string) { return role === "technician" || role === "supervisor" || role === 'maintenance'; }
 
 /** Without the module a job holds a lead plus one optional assistant. */
 export function maxTeamSize(moduleOn: boolean) { return moduleOn ? MAX_TEAM : STANDARD_MAX_TEAM; }

@@ -19,7 +19,7 @@ export const MODULES = [
 ] as const;
 export type ModuleKey = (typeof MODULES)[number]["key"];
 
-export const ROLES: Role[] = ["superuser", "admin", "supervisor", "technician"];
+export const ROLES: Role[] = ["superuser", "admin", "supervisor", "technician", "maintenance"];
 
 const ALL = MODULES.map((m) => m.key);
 export const DEFAULT_MODULES: Record<Role, ModuleKey[]> = {
@@ -27,6 +27,7 @@ export const DEFAULT_MODULES: Record<Role, ModuleKey[]> = {
   admin: ["live_status", "dispatch", "approvals", "pending_works", "contracts", "billing", "clients", "inventory", "leave_approvals", "team", "fields"],
   supervisor: ["live_status", "dispatch", "approvals", "pending_works", "estimates", "clients", "inventory", "leave_approvals", "team"],
   technician: [],
+  maintenance: [],
 };
 
 export type PermRow = { role: string; module: string; enabled: boolean };

@@ -35,7 +35,7 @@ export function sectionsFor(sections: DocSection[], view: Audience): DocSection[
 /** Office roles (superuser, admin, supervisor) always see; technicians only when the document targets them. */
 export function canViewDocument(role: string | undefined, audience: Audience[]): boolean {
   if (role === "superuser" || role === "admin" || role === "supervisor") return true;
-  return role === "technician" && audience.includes("technician");
+  return (role === "technician" || role === 'maintenance') && audience.includes("technician");
 }
 
 export const TECH_CHECK_OPTIONS = ["Pass", "Fail", "N/A"] as const;

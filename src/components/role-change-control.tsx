@@ -6,7 +6,7 @@ import { ROLE_LABEL, type Role } from '@/lib/profile';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-const ACCESS: Record<Role, string> = { technician: 'Personal field work and assigned jobs; no team management or payroll.', supervisor: 'Team dispatch, pending works, on-call rota and operational approvals; no payroll.', admin: 'Office management, team access, leave decisions and payroll where enabled.', superuser: 'Full company administration, role preview and subscription controls.' };
+const ACCESS: Record<Role, string> = { maintenance: 'Personal maintenance field work and assigned jobs; no manager authority, payroll or on-call track.', technician: 'Personal field work and assigned jobs; no team management or payroll.', supervisor: 'Team dispatch, pending works, on-call rota and operational approvals; no payroll.', admin: 'Office management, team access, leave decisions and payroll where enabled.', superuser: 'Full company administration, role preview and subscription controls.' };
 export function RoleChangeControl({ member, actorRole, meId }: { member: { id: string; full_name: string; role: Role; registration_status: string; platform_owner: boolean }; actorRole: Role; meId: string }) {
   const qc = useQueryClient(); const [next, setNext] = useState<Role | null>(null); const [busy, setBusy] = useState(false);
   const allowed = (actorRole === 'admin' || actorRole === 'superuser') && member.id !== meId && !member.platform_owner && member.registration_status === 'active' && (actorRole === 'superuser' || member.role !== 'superuser');
