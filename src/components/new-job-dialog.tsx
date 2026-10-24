@@ -108,6 +108,7 @@ export function NewJobDialog({pending,onClose}:{pending?:PendingDispatch;onClose
     if (smart && job && !pending) {
       if (f.skills.length) { const r = await supabase.from("job_skills").insert(f.skills.map(skill_id => ({ job_id: job.id, skill_id, company_id: profile.company_id, mandatory: true }))); if (r.error) toast.error(r.error.message); }
       if (f.crew.length) { const r = await supabase.from("job_crew").insert(f.crew.map(user_id => ({ job_id: job.id, user_id, company_id: profile.company_id }))); if (r.error) toast.error(r.error.message); }
+      if (f.open && named < teamSize) void notifyOpenJob({ data: { jobId: job.id } }).catch(() => undefined);
     }
     if (f.priority === "urgent" && f.tech !== "none") {
       const { data: cs } = await supabase.from("company_settings").select("integrations").eq("company_id", profile.company_id).maybeSingle();
