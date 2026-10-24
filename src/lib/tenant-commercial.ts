@@ -1,5 +1,5 @@
 import { z } from 'zod';
-export type CommercialStatus = { state?: string; subscription_status?: string; plan_id?: string | null; pack_ids?: string[]; cadence?: string; seats?: number; agreed_price?: number; trial_package_only?: boolean; trial_ends_at?: string; pending_change?: unknown; modules?: { name: string; enabled: boolean }[] };
+export type CommercialStatus = { state?: string; writable?: boolean; subscription_status?: string; plan_id?: string | null; pack_ids?: string[]; cadence?: string; seats?: number; agreed_price?: number; trial_package_only?: boolean; trial_ends_at?: string; pending_change?: Record<string, unknown> | null; modules?: { name: string; enabled: boolean }[] };
 export type CommercialItem = { id: string; kind: string; modules: string[] };
 export function itemAccess(item: CommercialItem, status: CommercialStatus): { label: string; assigned: boolean; available: boolean } {
   const assigned = item.kind === 'plan' ? item.id === status.plan_id : !!status.pack_ids?.includes(item.id);
