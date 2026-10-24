@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { clampTeamSize, dispatchTeamSize, hasMandatorySkills, placesLeft, skillMatchScore, skillEligible } from "./skills";
 
 describe("skills dispatch rules", () => {
+  it('allows General Maintenance field skills without office eligibility',()=>{expect(skillEligible('maintenance')).toBe(true);expect(skillEligible('admin')).toBe(false);});
   it("assigns skills to technicians and supervisors only", () => { expect(skillEligible("technician")).toBe(true); expect(skillEligible("supervisor")).toBe(true); expect(skillEligible("admin")).toBe(false); expect(skillEligible("superuser")).toBe(false); });
   it("allows lead plus assistant despite a hidden team-size default of 1", () => { expect(dispatchTeamSize(1, false, 2)).toBe(2); });
   it("keeps a single-person standard visit at 1", () => { expect(dispatchTeamSize(1, false, 1)).toBe(1); });
