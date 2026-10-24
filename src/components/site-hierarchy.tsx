@@ -40,9 +40,8 @@ export function SiteHierarchy({ clientId, companyId }: { clientId: string; compa
 
   return (
     <div className="space-y-4">
-      <section className="rounded-lg border p-3">
-        <p className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground"><Building2 className="h-4 w-4" />Head office</p>
-        <ContactsManager clientId={clientId} companyId={companyId} siteId={null} title="Head office contacts" />
+      <section>
+        <ContactsManager clientId={clientId} companyId={companyId} title="Contact persons" />
       </section>
 
       <div className="flex items-center justify-between">
@@ -74,7 +73,6 @@ export function SiteHierarchy({ clientId, companyId }: { clientId: string; compa
                   <Button size="sm" variant="ghost" onClick={() => setEdit({ id: s.id, name: s.name, address: s.address ?? "" })}><Pencil className="mr-1 h-3.5 w-3.5" />Edit site</Button>
                   <Button size="sm" variant="ghost" onClick={() => remove(s.id)}><Trash2 className="mr-1 h-3.5 w-3.5" />Delete</Button>
                 </div>}
-                <ContactsManager clientId={clientId} companyId={companyId} siteId={s.id} title="Site contacts" />
                 <EquipmentManager clientId={clientId} companyId={companyId} siteId={s.id} />
               </AccordionContent>
             </AccordionItem>

@@ -68,7 +68,7 @@
 
 - PDF.js uses v4/canvasContext; newer Map APIs break field devices.
 - PPM uses per-agreement asset plans and anchored, unique job occurrences generated transactionally by a manager RPC; existing jobs/sheets retain manual workflows and HQ module guards. SLA status is derived on read; component events are append-only private evidence.
-- Portal site writes are staff-only; new contacts inherit scope. client_management and client_portal are independent, preserving legacy access.
+- StaffContacts/contact-editor own contact writes; portal scope is staff-only. HQ setup options save atomically; staff/portal access stays independent.
 - Delivery uses client_message_recipients; preferences choose recipients, not unsupported channel delivery.
 - Own-shift RPC captures one-time GPS; failure never blocks clock-out; history distinguishes action fixes from breadcrumbs.
 - Tenant cards separate assignments/access; bespoke drafts freeze on submit, HQ reviews per product, samples stay private. Requests never charge/activate. Immediate setup is owner-only; ordinary setup retains timing/trial mode.
