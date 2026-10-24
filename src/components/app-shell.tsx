@@ -58,7 +58,7 @@ const adminNav: NavItem[] = [
   { group: "Operations", to: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { group: "Operations", to: "/admin/jobs", label: "Job sheets", icon: ClipboardList },
   { group: "Operations", to: "/pending-works", label: "Pending Works", icon: Hammer, module: "pending_works" },
-  { group: "Operations", to: "/expenses", label: "Log expense", icon: FileText, feature: "receipts" },
+  { group: "Operations", to: "/expenses", label: "Expenses & receipts", icon: FileText, feature: "receipts" },
   { group: "Operations", to: "/admin/inventory", label: "Inventory", icon: Package, module: "inventory" },
   { group: "Field work", to: "/technical-library", label: "Technical library", icon: FileText, feature: "technical_library" },
   { group: "Team & roster", to: "/team", label: "Team", icon: UserCheck },
