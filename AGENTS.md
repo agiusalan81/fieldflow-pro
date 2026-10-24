@@ -61,7 +61,9 @@
 - FieldBridge subscription invoices live in platform_invoices (frozen once issued by trigger) with rules in tested saas-billing.ts; storage usage via company_storage_usage RPC; 
 - FieldBridge payments: invoice checkout in payments.functions.ts (superuser via RLS), signed webhook at api/public/payments/webhook settles only exact-amount matches idempotently; daily cron api/public/jobs/billing-daily runs saas-billing.server.ts (renewals, overdue, saved-card charges, reminder emails); company_invoice_lapsed() drives read-only access; 
 
-- Public pricing/legal use narrow publishable reads; HQ profiles stay owner-only. Trust pages share trust-pages. Required route decisions drive sitemap.ts; no generated lastmod.
+- Public catalog/legal use narrow reads; HQ stays private. Trust pages share renderers; sitemap uses explicit route decisions, no generated lastmod.
 - Staff signatures share staff-signature editors and own-user RPC; protected real roles govern eligibility and profile guards retain identity protection.
 
 - Sheet autosave compares stable editing-state fingerprints and syncs only changed work; failed background sync never resurrects a removed/newer draft. Chat viewport fits the measured header and navigation on every breakpoint.
+
+- PDF.js stays on browser-compatible v4 with canvasContext rendering; newer Map APIs break field devices.
