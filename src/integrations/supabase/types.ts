@@ -2852,6 +2852,7 @@ export type Database = {
           actor_id: string
           company_id: string
           created_at: string
+          handover: Json | null
           id: string
           reason: string
           user_id: string
@@ -2861,6 +2862,7 @@ export type Database = {
           actor_id: string
           company_id: string
           created_at?: string
+          handover?: Json | null
           id?: string
           reason?: string
           user_id: string
@@ -2870,6 +2872,7 @@ export type Database = {
           actor_id?: string
           company_id?: string
           created_at?: string
+          handover?: Json | null
           id?: string
           reason?: string
           user_id?: string
@@ -5217,6 +5220,7 @@ export type Database = {
         Returns: boolean
       }
       is_platform_owner: { Args: never; Returns: boolean }
+      member_handover_preview: { Args: { _user: string }; Returns: Json }
       member_is_active: { Args: { _user: string }; Returns: boolean }
       my_commercial_status: { Args: never; Returns: Json }
       my_registration_status: { Args: never; Returns: string }
@@ -5491,6 +5495,10 @@ export type Database = {
       submit_platform_feedback: {
         Args: { _category: string; _message: string; _rating: number }
         Returns: string
+      }
+      terminate_member_handover: {
+        Args: { _choices: Json; _reason: string; _user: string }
+        Returns: undefined
       }
       user_initials: {
         Args: { _full_name: string; _initials: string }
