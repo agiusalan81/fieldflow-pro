@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useProfile, useCompanyUsers, initialsOf } from "@/lib/profile";
 import { usePlanFeatures } from "@/lib/plan-features";
 import { dispatchTeamSize, skillMatchScore, FIELD_TRADES, matchesTrade } from "@/lib/skills";
+import { clientRecipients } from '@/lib/client-recipients';
 import { closeDispatchedReport, DISPATCH_REFRESH_KEYS } from "@/lib/dispatch-report";
 import { canDeleteSheet, canDeleteVisit, RECORD_DELETE_REFRESH_KEYS } from "@/lib/record-deletion";
 import { DispatchedVisits } from "@/components/dispatched-visits";
@@ -453,6 +454,7 @@ function NewJobDialog() {
 
 /** Office admins and supervisors resend a completed (signed) job sheet to chosen contacts. */
 function ResendDialog({ sheet, sheetIds, onClose }: { sheet: { id: string; client_id: string; site_id: string | null; jobsheet_number: string }; sheetIds?: string[]; onClose: () => void }) {
+  const defaults=useQuery({queryKey:['resend-defaults',sheet.client_id,sheet.site_id],queryFn:()=>clientRecipients(supabase,sheet.client_id,sheet.site_id,'job_sheet','email')});
   const { data: contacts = [] } = useQuery({
     queryKey: ["resend-contacts", sheet.client_id],
     queryFn: async () => (await supabase.from("client_contacts").select("id, first_name, last_name, email, role_title, site_id, receives_job_sheets").eq("client_id", sheet.client_id).not("email", "is", null)).data ?? [],
@@ -462,7 +464,7 @@ function ResendDialog({ sheet, sheetIds, onClose }: { sheet: { id: string; clien
   const [picked, setPicked] = useState<string[] | null>(null);
   const [extra, setExtra] = useState("");
   const [busy, setBusy] = useState(false);
-  const sel = picked ?? contacts.filter((c) => c.receives_job_sheets && (!c.site_id || !sheet.site_id || c.site_id === sheet.site_id)).flatMap((c) => c.email ? [c.email] : []);
+  const sel = picked ?? (defaults.data??[]).flatMap(c=>c.email?[c.email]:[]);
   const toggle = (e: string, on: boolean) => setPicked(on ? [...sel, e] : sel.filter((x) => x !== e));
   const send = async () => {
     const all = [...sel, ...extra.split(/[,;\s]+/).filter(Boolean)];

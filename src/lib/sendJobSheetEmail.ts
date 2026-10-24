@@ -9,7 +9,7 @@ import { sheetTitle } from "@/lib/dwr";
 import { validateMonthlyQueue } from "@/lib/monthly-signing";
 import { pdfFonts, pdfLayerFonts, pdfPageDecoration, resolveDocumentAssets } from "@/lib/branding-assets";
 import { clientRecipients } from '@/lib/client-recipients';
-import { PORTAL_URL } from '@/lib/client-routing';
+import { PORTAL_URL, commonRecipients } from '@/lib/client-routing';
 
 const b64 = (s: string) =>
   btoa(Array.from(new TextEncoder().encode(s), (b) => String.fromCharCode(b)).join(""));
@@ -350,10 +350,10 @@ export const finishMonthlySigning = createServerFn({ method: "POST" }).middlewar
       if (rows.some((r) => !r.signature_data || r.created_at.slice(0, 7) !== batch.month || r.client_id !== batch.client_id)) throw new Error("Monthly selection is no longer valid");
       const { PDFDocument } = await import("pdf-lib");
       const doc = await PDFDocument.create();
-      const emails = new Set<string>(); let clientName = "customer";
+      const groups:string[][]=[]; let clientName = "customer";
       for (const row of rows) {
         const pack = await prepareSheet(sb, row.id);
-        pack.emails.forEach((email) => emails.add(email)); clientName = pack.clientName;
+        groups.push(pack.emails); clientName = pack.clientName;
         for (const attachment of pack.attachments) {
           if (attachment.mime === "application/pdf") {
             const source = await PDFDocument.load(attachment.data);
@@ -366,7 +366,7 @@ export const finishMonthlySigning = createServerFn({ method: "POST" }).middlewar
           }
         }
       }
-      const recipients = [...emails];
+      const recipients = commonRecipients(groups);
       validateRecipients(recipients);
       if (!recipients.length) throw new Error("No job-sheet email recipients selected for this client");
       await sendMail(recipients, `Monthly job sheets — ${batch.month} — ${clientName}`, `Dear ${clientName},\n\nYour ${rows.length} signed job sheets for ${batch.month} are attached as one continuous PDF.\n\nThank you.`, [{ filename: `Job sheets - ${batch.month}.pdf`, mime: "application/pdf", data: await doc.save() }]);
