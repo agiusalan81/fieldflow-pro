@@ -143,7 +143,7 @@ function StandbyPage() {
           </section>
         )}
 
-        {(isOffice(profile) || profile.role === "supervisor") && (usersLoading ? <p role="status">Loading registered members…</p> : usersError ? <p role="alert" className="text-destructive">Unable to load registered members.</p> : <div className="grid gap-6 lg:grid-cols-2">{ROTA_TRACKS.map(track => <RosterSettings key={track} cfg={configs[track]} techs={users.filter(u => u.role === track)} track={track} />)}</div>)}
+        {(isOffice(profile) || profile.role === "supervisor") && (usersLoading ? <p role="status">Loading registered members…</p> : usersError ? <p role="alert" className="text-destructive">Unable to load registered members.</p> : <div className="grid gap-6 lg:grid-cols-2">{ROTA_TRACKS.map(track => <RosterSettings key={track} cfg={configs[track]} techs={users} track={track} />)}</div>)}
       </div>
 
       <Dialog open={!!ask} onOpenChange={(o) => !o && setAsk(null)}>
