@@ -102,3 +102,9 @@ export function useLockedVisibility() {
   const q = useQuery({ queryKey: ["plan-features"], staleTime: 60_000, queryFn: async () => { const { data, error } = await supabase.rpc("my_commercial_status"); if (error) throw error; return data as Status; } });
   return (key: string) => lockedVisibility(q.data, key);
 }
+
+/** A menu/route entry is locked when the plan switches it off OR HQ marked it Coming soon — Coming soon greys the item even when the package includes it. */
+export function navEntryLocked(status: Status | undefined, key: string) {
+  const vis = lockedVisibility(status, key);
+  return { locked: vis.comingSoon || !featureOn(status, key), soon: vis.comingSoon, hidden: vis.hidden && !vis.comingSoon };
+}
