@@ -3,7 +3,7 @@ BEGIN;
 DO $$
 DECLARE actor uuid; tenant uuid; person uuid; replacement uuid; client uuid; job uuid; old_sheet_count int; summary jsonb; cycle int;
 BEGIN
- SELECT user_id,company_id INTO actor,tenant FROM public.user_roles WHERE role='superuser' AND registration_status='active' AND NOT platform_owner AND public.company_module_access(company_id,'core') LIMIT 1;
+ SELECT user_id,company_id INTO actor,tenant FROM public.user_roles WHERE role='superuser' AND registration_status='active' AND public.company_module_access(company_id,'core') LIMIT 1;
  SELECT user_id INTO person FROM public.user_roles WHERE company_id=tenant AND role='technician' AND registration_status='active' AND NOT platform_owner ORDER BY user_id LIMIT 1;
  SELECT user_id INTO replacement FROM public.user_roles WHERE company_id=tenant AND role IN('technician','supervisor') AND registration_status='active' AND user_id<>person ORDER BY user_id LIMIT 1;
  SELECT id INTO client FROM public.clients WHERE company_id=tenant LIMIT 1;
