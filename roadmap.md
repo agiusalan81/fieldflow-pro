@@ -1,4 +1,8 @@
 # Roadmap
+## Tenant billing and bespoke requests
+- [ ] Compare tiers and add-on cards with accurate paid/trial/restricted access; storage selection retains existing assignments.
+- [ ] Private custom requests with notes/sample uploads, tenant progress and product-scoped HQ review; contextual settings shortcut.
+- [ ] Run focused access/status tests and verify available live flows.
 ## Requested testing fixes — 24 October 2026
 - [x] HQ Setup Package: owner-only immediate-entitlement toggle, including full-trial → Basic; existing invoices/trial dates retained; ordinary full-trial mode restored when immediate mode is removed. Applied schema and owner/anonymous guards inspected; live owner save awaits authorised access.
 - [x] #1 Device-aware desktop permission dismissal and browser-specific guidance implemented; phone behavior retained.
