@@ -9,15 +9,17 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { ModulePreview } from '@/components/module-preview';
 const Map=lazy(()=>import('@/components/fleet-route-map'));
+type Fix={latitude:number;longitude:number;accuracy:number;recorded_at:string};
+type AuditShift={id:string;started_at:string;ended_at:string|null;vehicle_reg:string|null;clock_in_location:Fix|null;clock_out_location:Fix|null};
 export function LocationAudit() {
   const {data:p}=useProfile(); const on=usePlanFeatures(!!p); const {data:users=[]}=useCompanyUsers();
   const [user,setUser]=useState(''),[date,setDate]=useState(new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Malta'}).format(new Date())),[from,setFrom]=useState('00:00'),[to,setTo]=useState('23:59'),[site,setSite]=useState('');
-  const enabled=!!p&&isManager(p)&&on('fleet_management');
-  const points=useQuery({queryKey:['location-audit',user,date],enabled:enabled&&!!user,queryFn:async()=>{const r=await supabase.rpc('fleet_day',{_user:user,_date:date});if(r.error)throw r.error;return r.data as unknown as FleetPoint[];}});
-  const shifts=useQuery({queryKey:['audit-shifts',user,date],enabled:enabled&&!!user,queryFn:async()=>{const r=await supabase.from('shifts').select('id,started_at,ended_at,vehicle_reg').eq('user_id',user).eq('shift_type','shift').gte('started_at',`${date}T00:00:00+02:00`).lt('started_at',`${date}T23:59:59+02:00`).order('started_at');if(r.error)throw r.error;return r.data;}});
+  const enabled=!!p&&isManager(p)&&on('tracking');
+  const points=useQuery({queryKey:['location-audit',user,date,on('fleet_management')],enabled:enabled&&on('fleet_management')&&!!user,queryFn:async()=>{const r=await supabase.rpc('fleet_day',{_user:user,_date:date});if(r.error)throw r.error;return r.data as unknown as FleetPoint[];}});
+  const shifts=useQuery({queryKey:['audit-shifts',user,date],enabled:enabled&&!!user,queryFn:async()=>{const r=await supabase.rpc('shift_location_day',{_user:user,_date:date});if(r.error)throw r.error;return r.data as unknown as AuditShift[];}});
   const entries=useQuery({queryKey:['audit-sheet-entries',user,date],enabled:enabled&&!!user,queryFn:async()=>{const r=await supabase.rpc('dwr_sheet_entries',{_user:user,_date:date});if(r.error)throw r.error;return r.data;}});
   if(!isManager(p))return null;
-  if(!on('fleet_management'))return <ModulePreview feature="fleet_management" title="Historical location audit"/>;
+  if(!on('tracking'))return <ModulePreview feature="tracking" title="Historical shift location audit"/>;
   const filtered=pointsInRange(points.data??[],from,to),summary=fleetSummary(filtered,[]);
   const sites=[...new Set((entries.data??[]).map(e=>e.site).filter(Boolean))];
   return <section className="space-y-4 border-t pt-6"><h2 className="text-xl font-semibold">Historical location audit</h2><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5"><div><Label htmlFor="audit-staff">Field staff</Label><select id="audit-staff" className="h-11 w-full rounded-md border bg-background px-2" value={user} onChange={e=>{setUser(e.target.value);setSite('');}}><option value="">Select staff</option>{users.filter(u=>['technician','supervisor','maintenance'].includes(u.role)).map(u=><option key={u.id} value={u.id}>{u.full_name} · {ROLE_LABEL[u.role]}</option>)}</select></div><div><Label htmlFor="audit-date">Date (Malta)</Label><Input id="audit-date" type="date" value={date} onChange={e=>{setDate(e.target.value);setSite('');}}/></div><div><Label htmlFor="audit-from">From</Label><Input id="audit-from" type="time" value={from} onChange={e=>setFrom(e.target.value)}/></div><div><Label htmlFor="audit-to">To</Label><Input id="audit-to" type="time" value={to} onChange={e=>setTo(e.target.value)}/></div><div><Label htmlFor="audit-site">Reported site</Label><select id="audit-site" className="h-11 w-full rounded-md border bg-background px-2" value={site} onChange={e=>setSite(e.target.value)}><option value="">All reported sites</option>{sites.map(s=><option key={s} value={s??''}>{s}</option>)}</select></div></div>
