@@ -562,7 +562,7 @@ function SheetForm() {
                       );
                     })}
                     {client?.waive_transport
-                      ? <div className="space-y-1"><Label className="text-xs">Travel h</Label><p className="flex h-11 items-center rounded-md border border-dashed px-3 text-xs text-muted-foreground">Waived for this client</p></div>
+                      ? <div className="space-y-1"><Label className="text-xs">Travel</Label><p className="flex h-11 items-center rounded-md border border-dashed px-3 text-xs text-muted-foreground">Waived for this client</p></div>
                       : <div className="space-y-1"><Label className="text-xs">Travel</Label><TravelPicker hours={l.traveling_time_hours} onChange={(v) => setLog(i, { traveling_time_hours: v })} /></div>}
                   </div>
                   <p className="mt-2 text-[11px] text-muted-foreground">
