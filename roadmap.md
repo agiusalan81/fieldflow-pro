@@ -1,6 +1,6 @@
 # Roadmap
-- [ ] Replace internal contact cards with a contact-person table, dropdown selections and full delivery checkboxes; verify save/read-back
-- [ ] Check tier/package/tenant toggle consistency and refresh behavior with regression tests and signed-in checks
+- [x] Internal contact-person table, position/site dropdowns and full delivery checkboxes; signed-in save/read-back and temporary-data cleanup verified
+- [x] Tier switch off/on survives reload; atomic immediate setup saves tier/pack/visibility and rejects invalid core changes; 23 regression tests pass
 - [x] Notification setup dismissal persists per account; gesture-unlocked chat audio tested in-browser and with regression tests (real phone push delivery remains unverified)
 - [x] New HQ modules selectable in tiers; Plus save/read-back verified
 - [x] Plus-and-up staff sites/multiple contacts separated from optional portal; database guards keep portal site edits forbidden

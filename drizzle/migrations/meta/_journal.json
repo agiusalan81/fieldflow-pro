@@ -806,6 +806,13 @@
       "when": 1792871238104,
       "tag": "0114_atomic_hq_package_access_options",
       "breakpoints": true
+    },
+    {
+      "idx": 115,
+      "version": "7",
+      "when": 1792872144059,
+      "tag": "0115_validate_hq_setup_product_selections",
+      "breakpoints": true
     }
   ]
 }
