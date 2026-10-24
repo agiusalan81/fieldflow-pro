@@ -13,7 +13,7 @@ describe("travel ETA", () => {
 });
 
 describe("team visibility", () => {
-  it("supervisor sees supervisors and technicians only", () => expect(visibleRoles("supervisor")).toEqual(["technician", "supervisor"]));
+  it("supervisor sees field staff only", () => expect(visibleRoles("supervisor")).toEqual(["technician", "maintenance", "supervisor"]));
   it("office admin sees admins but not superusers", () => { expect(canSeeMember("admin", "admin")).toBe(true); expect(canSeeMember("admin", "superuser")).toBe(false); });
   it("superuser sees everyone", () => expect(canSeeMember("superuser", "superuser")).toBe(true));
 });
