@@ -84,6 +84,9 @@ function Entities() {
   );
 }
 
+const DELIVERY_DOCS = [["job_sheet", "Job sheets"], ["estimate", "Estimates"], ["proposal", "Proposals"], ["contract", "Contracts"], ["invoice", "Invoices"]] as const;
+const ROLE_PRESETS: Record<string, string[]> = { "Owner": ["estimate", "proposal", "contract", "invoice"], "Operations manager": ["job_sheet", "estimate", "proposal", "contract"], "Site manager": ["job_sheet"], "Site supervisor": ["job_sheet"] };
+
 const match = (q: string, ...s: (string | null | undefined)[]) => s.join(" ").toLowerCase().includes(q.toLowerCase());
 
 function ClientsTab({ q, onOpen }: TabProps) {
@@ -93,21 +96,21 @@ function ClientsTab({ q, onOpen }: TabProps) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
   const [clientId, setClientId] = useState<string | null>(null);
-  const emptyF = { name: "", property_name: "", street_name: "", location: "", first_name: "", last_name: "", email: "", code: tenantLocale().countryCode, number: "", whatsapp: false };
+  const emptyF = { name: "", property_name: "", street_name: "", location: "", first_name: "", last_name: "", email: "", code: tenantLocale().countryCode, number: "", whatsapp: false, role_title: "", docs: ["job_sheet"] as string[], wa: [] as string[], invite: true };
   const [f, setF] = useState(emptyF);
   const refresh = () => { qc.invalidateQueries({ queryKey: ["clients-full"] }); qc.invalidateQueries({ queryKey: ["clients"] }); qc.invalidateQueries({ queryKey: ["contacts"] }); qc.invalidateQueries({ queryKey: ["sites-full"] }); qc.invalidateQueries({ queryKey: ["sheet-refs"] }); qc.invalidateQueries({ queryKey: ["entities-unified"] }); };
   const reset = (o: boolean) => { setOpen(o); if (!o) { setStep(1); setClientId(null); setF(emptyF); } };
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
-    const company_id = profile!.company_id;
-    const billing_address = [f.property_name, f.street_name, f.location].filter(Boolean).join(", ");
-    const { data: c, error } = await supabase.from("clients").insert({ name: f.name, property_name: f.property_name, street_name: f.street_name, location: f.location, billing_address, company_id }).select("id").single();
-    if (error || !c) { toast.error(error?.message ?? "Could not save"); return; }
-    const { error: ce } = await supabase.from("client_contacts").insert({ client_id: c.id, company_id, first_name: f.first_name, last_name: f.last_name, email: f.email, phone: `${f.code} ${f.number}`, is_primary_contact: true, receives_job_sheets: true, has_whatsapp: f.whatsapp });
-    if (ce) { toast.error(ce.message); return; }
-    if (billing_address) {
-      const { error: se } = await supabase.from("sites").insert({ client_id: c.id, company_id, name: f.property_name || "Main site", address: billing_address });
-      if (se) toast.error(se.message);
+    const pref = Object.fromEntries(DELIVERY_DOCS.map(([k]) => [k, { email: f.docs.includes(k), whatsapp: f.whatsapp && f.wa.includes(k) }]));
+    const { data: made, error } = await supabase.rpc("create_client_setup", { _details: { name: f.name, property_name: f.property_name, street_name: f.street_name, location: f.location, first_name: f.first_name, last_name: f.last_name, email: f.email, phone: `${f.code} ${f.number}`, role_title: f.role_title, has_whatsapp: f.whatsapp, delivery_preferences: pref } as never });
+    const r = made as { client_id: string; contact_id: string } | null;
+    if (error || !r) { toast.error(error?.message ?? "Could not save"); return; }
+    const c = { id: r.client_id };
+    if (f.invite) {
+      const { data: token, error: ie } = await supabase.rpc("invite_client_contact", { _client: r.client_id, _contact: r.contact_id, _admin: true });
+      if (ie || !token) toast.error(ie?.message ?? "Portal invitation could not be created");
+      else { const link = `${window.location.origin}/client-portal?invite=${token}`; try { await navigator.clipboard.writeText(link); toast.success("Portal invitation link copied"); } catch { toast.message("Portal invitation link", { description: link }); } }
     }
     refresh(); setClientId(c.id); setStep(2); toast.success("Client saved — now add sites, contacts and equipment");
   };
@@ -133,6 +136,9 @@ function ClientsTab({ q, onOpen }: TabProps) {
                 <Input required type="email" placeholder="Contact email *" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
                 <PhoneInput required code={f.code} number={f.number} onChange={(code, number) => setF({ ...f, code, number })} />
                 <label className="flex items-center gap-2 text-sm"><Checkbox checked={f.whatsapp} onCheckedChange={(c) => setF({ ...f, whatsapp: !!c })} />This number is on WhatsApp</label>
+                <div className="space-y-1.5"><Label>Contact role</Label><div className="flex flex-wrap gap-2">{["Owner", "Operations manager", "Site manager", "Site supervisor"].map(p => <Button key={p} type="button" size="sm" variant={f.role_title === p ? "default" : "outline"} onClick={() => setF({ ...f, role_title: p, docs: ROLE_PRESETS[p] ?? f.docs })}>{p}</Button>)}</div></div>
+                <div className="space-y-1.5"><Label>Sends to this contact</Label><div className="divide-y rounded-md border">{DELIVERY_DOCS.map(([k, label]) => <div key={k} className="flex items-center justify-between gap-3 px-3 py-2 text-sm"><span>{label}</span><span className="flex gap-4"><label className="flex items-center gap-1.5"><Checkbox checked={f.docs.includes(k)} onCheckedChange={v => setF({ ...f, docs: v ? [...f.docs, k] : f.docs.filter(x => x !== k) })} />Email</label><label className={`flex items-center gap-1.5 ${f.whatsapp ? "" : "opacity-50"}`}><Checkbox disabled={!f.whatsapp} checked={f.whatsapp && f.wa.includes(k)} onCheckedChange={v => setF({ ...f, wa: v ? [...f.wa, k] : f.wa.filter(x => x !== k) })} />WhatsApp</label></span></div>)}</div></div>
+                <label className="flex items-center gap-2 text-sm"><Checkbox checked={f.invite} onCheckedChange={(c) => setF({ ...f, invite: !!c })} />Invite this contact to the client portal and copy the link</label>
                 <Button type="submit" className="w-full">Save & continue</Button>
               </form>
             ) : clientId && profile ? (
