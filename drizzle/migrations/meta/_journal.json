@@ -645,6 +645,13 @@
       "when": 1792816399035,
       "tag": "0091_push_subscriptions_user_fk_updated_at",
       "breakpoints": true
+    },
+    {
+      "idx": 92,
+      "version": "7",
+      "when": 1792821478867,
+      "tag": "0092_expense_stash_and_private_sheet_notes",
+      "breakpoints": true
     }
   ]
 }
