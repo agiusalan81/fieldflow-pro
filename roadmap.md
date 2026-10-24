@@ -1,4 +1,7 @@
 # Roadmap
+- [ ] Fix chat composer clearance, default People / Job threads / All ordering, and prevent unchanged sheet drafts.
+- [ ] Build photo/PDF Expense Stash, sheet attachment in both directions, office category review and monthly per-person export.
+- [ ] Allow private receipts and append-only internal notes after signing without changing client evidence.
 - [ ] Repair and test account-specific lock-screen chat registration, encrypted delivery and current-device diagnostics; user tests Android installed app as agiusalan@gmail.com.
 - [x] Brand Studio: 52 asset-backed font families, underline controls and preview/PDF decoration. 20 focused tests passed; isolated live controls loaded Montserrat and underlining, all 50 new fonts embedded into PDFs; build OK. Existing HQ font/styling gates retained.
 - [x] Push hardening: always display received pushes despite stale focused windows, explicit ECDH x-coordinate derivation, bounded delivery, foreground/reconnect subscription refresh and honest zero-delivery feedback; worker regression test passed.
