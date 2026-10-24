@@ -71,7 +71,7 @@ export function resolveAppTitle(custom: string | undefined | null, allowed: bool
   return allowed && t ? t : DEFAULT_APP_TITLE;
 }
 
-type Status = { state?: string; modules?: { name: string; enabled: boolean }[] | null };
+type Status = { state?: string; modules?: { name: string; enabled: boolean }[] | null; hide_locked_modules?: boolean | null; hidden_modules?: string[] | null; coming_soon_modules?: string[] | null };
 
 /** Feature is on unless the company's plan lists it and it is switched off. Companies without a plan keep everything. */
 export function featureOn(status: Status | undefined, key: string) {
@@ -90,4 +90,15 @@ export function usePlanFeatures(enabled = true) {
     queryFn: async () => { const { data, error } = await supabase.rpc("my_commercial_status"); if (error) throw error; return data as Status; },
   });
   return (key: string) => featureOn(q.data, key);
+}
+
+/** HQ display choices for locked modules: hide entirely (e.g. grandfathered tenants) or mark as Coming soon. */
+export function lockedVisibility(status: Status | undefined, key: string) {
+  const comingSoon = !!status?.coming_soon_modules?.includes(key);
+  const hidden = !comingSoon && (!!status?.hide_locked_modules || !!status?.hidden_modules?.includes(key));
+  return { hidden, comingSoon };
+}
+export function useLockedVisibility() {
+  const q = useQuery({ queryKey: ["plan-features"], staleTime: 60_000, queryFn: async () => { const { data, error } = await supabase.rpc("my_commercial_status"); if (error) throw error; return data as Status; } });
+  return (key: string) => lockedVisibility(q.data, key);
 }

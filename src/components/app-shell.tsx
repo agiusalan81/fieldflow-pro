@@ -34,7 +34,7 @@ import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { PlatformFeedback } from "@/components/platform-feedback";
 import { LockedModule, ModulePreview, MODULE_ROUTE } from '@/components/module-preview';
 
-type NavItem = { to: string; label: string; icon: typeof Clock; module?: ModuleKey; office?: boolean; group: string; feature?: string | undefined; locked?: boolean };
+type NavItem = { to: string; label: string; icon: typeof Clock; module?: ModuleKey; office?: boolean; group: string; feature?: string | undefined; locked?: boolean; soon?: boolean };
 
 const techNav: NavItem[] = [
   { group: "Field work", to: "/dashboard", label: "Today & team", icon: LayoutDashboard },
@@ -143,7 +143,7 @@ function NavLinks({ items, onNavigate, uid }: { items: NavItem[]; onNavigate?: (
             </button>
             {open && (
               <div className="mb-1 flex flex-col gap-0.5 pl-1">
-                {items.filter((i) => i.group === g).map((i) => i.locked ? <LockedModule key={i.to} feature={i.feature ?? 'core'} label={i.label}><i.icon className="h-4 w-4 shrink-0"/></LockedModule> : (
+                {items.filter((i) => i.group === g).map((i) => i.locked ? <LockedModule key={i.to} feature={i.feature ?? 'core'} label={i.label} comingSoon={i.soon}><i.icon className="h-4 w-4 shrink-0"/></LockedModule> : (
                   <Link key={i.to} to={i.to}
                     onClick={() => { if (uid) recordUsage(uid, i.to); onNavigate?.(); }}
                     className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
@@ -184,7 +184,7 @@ function QuickActions({ items, uid, role, manager }: { items: NavItem[]; uid: st
         {Object.keys(usage).length > 0 && <button type="button" className="flex items-center gap-1 text-xs text-muted-foreground" onClick={() => { resetUsage(uid); setUsage({}); }}><RotateCcw className="h-3 w-3" />Reset</button>}
       </div>
       <div className="grid grid-cols-3 gap-2">
-        {list.map((to) => { const m = meta(to); if (!m) return null; const locked=items.find(i=>i.to===to);if(locked?.locked)return <LockedModule key={to} feature={locked.feature??'core'} label={m.label}><m.icon className="h-5 w-5"/></LockedModule>;return (
+        {list.map((to) => { const m = meta(to); if (!m) return null; const locked=items.find(i=>i.to===to);if(locked?.locked)return <LockedModule key={to} feature={locked.feature??'core'} label={m.label} comingSoon={locked.soon}><m.icon className="h-5 w-5"/></LockedModule>;return (
           <QuickLink key={to} to={to} uid={uid} className="flex min-h-20 flex-col items-center justify-center gap-1.5 rounded-xl border bg-card p-2 text-center text-xs font-medium text-foreground active:bg-accent">
             <m.icon className="h-6 w-6 text-primary" />{m.label}
           </QuickLink>
@@ -243,7 +243,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   const planOn = usePlanFeatures(!!actor);
   const office = isOffice(profile);
   const extraNav: NavItem[] = [];
-  const baseItems = [...(profile?.role === "supervisor" ? supervisorNav : manager ? adminNav : techNav), ...extraNav].filter((i) => (i.to !== "/subscription" || profile?.role === "superuser") && (i.to !== "/company" || office) && (!i.office || office) && (!i.module || can(i.module) || (i.to === "/company" && office))).map(i => { const feature = i.feature ?? MODULE_ROUTE[i.to] ?? (['/admin/jobs','/pending-works','/admin/inventory','/admin/entities','/qr-codes','/sheets','/schedule','/team','/team-invites','/dwr','/admin/leave','/leave'].includes(i.to) ? 'core' : undefined); return { ...i, feature, locked: !!feature && !planOn(feature) }; });
+  const baseItems = [...(profile?.role === "supervisor" ? supervisorNav : manager ? adminNav : techNav), ...extraNav].filter((i) => (i.to !== "/subscription" || profile?.role === "superuser") && (i.to !== "/company" || office) && (!i.office || office) && (!i.module || can(i.module) || (i.to === "/company" && office))).map(i => { const feature = i.feature ?? MODULE_ROUTE[i.to] ?? (['/admin/jobs','/pending-works','/admin/inventory','/admin/entities','/qr-codes','/sheets','/schedule','/team','/team-invites','/dwr','/admin/leave','/leave'].includes(i.to) ? 'core' : undefined); return { ...i, feature, locked: !!feature && !planOn(feature), soon: !!feature && lockVis(feature).comingSoon }; }).filter(i => !i.locked || !lockVis(i.feature!).hidden);
   const lockedFeature = MODULE_ROUTE[path] ?? baseItems.find(i => i.to === path)?.feature;
   const canSwitch = profile && canViewAsRoles(profile.real_role) && !preview.active;
 
