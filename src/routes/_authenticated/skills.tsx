@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { isManager, useProfile, useCompanyUsers } from "@/lib/profile";
 import { usePlanFeatures } from "@/lib/plan-features";
+import { FIELD_TRADES, matchesTrade } from '@/lib/skills';
 
 export const Route = createFileRoute("/_authenticated/skills")({ staticData: { sitemap: false },
   head: () => ({ meta: [
@@ -33,6 +34,7 @@ function SkillsPage() {
   const skills = useQuery({ queryKey: ["company-skills"], enabled:feature("skills_dispatch"), queryFn: async () => { const r = await supabase.from("company_skills").select("id,name,category,archived").order("category").order("name"); if (r.error) throw r.error; return r.data as Skill[]; } });
   const links = useQuery({ queryKey: ["member-skills"], enabled:feature("skills_dispatch"), queryFn: async () => { const r = await supabase.from("member_skills").select("user_id,skill_id"); if (r.error) throw r.error; return r.data; } });
   const [name, setName] = useState(""); const [category, setCategory] = useState(""); const [showArchived, setShowArchived] = useState(false);
+  const [trade,setTrade]=useState('');
   const refresh = () => { qc.invalidateQueries({ queryKey: ["company-skills"] }); qc.invalidateQueries({ queryKey: ["member-skills"] }); };
 
   if (!feature("skills_dispatch")) return <AppShell title="Skills & specialties"><EmptyState>Skills & Smart Dispatch is not in your plan. Ask your company owner to add this module from Billing & Plan.</EmptyState></AppShell>;
@@ -62,7 +64,7 @@ function SkillsPage() {
     </div></AppShell>;
   }
 
-  const members = users.filter(u => ["technician","supervisor","maintenance"].includes(u.role));
+  const members = users.filter(u => ["technician","supervisor","maintenance"].includes(u.role)&&matchesTrade(active.filter(s=>has(u.id,s.id)).map(s=>s.name),trade));
   return (
     <AppShell title="Skills & specialties">
       <div className="space-y-6">
@@ -82,6 +84,7 @@ function SkillsPage() {
         </section>
         <section className="space-y-3">
           <h2 className="font-medium">Team skills</h2>
+          <div><Label htmlFor="team-trade">Field staff trade</Label><select id="team-trade" className="h-11 w-full rounded-md border bg-background px-2" value={trade} onChange={e=>setTrade(e.target.value)}><option value="">All trades</option>{FIELD_TRADES.map(t=><option key={t}>{t}</option>)}</select></div>
           {!active.length ? <EmptyState>Add a skill first. Then tap skills under each person to assign them.</EmptyState> : members.map(u => (
             <div key={u.id} className="rounded-xl border bg-card p-4">
               <p className="font-medium">{u.full_name} <span className="text-xs capitalize text-muted-foreground">· {u.role}</span></p>

@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { CommercialRecipients } from '@/components/commercial-recipients';
 
 export const Route = createFileRoute("/_authenticated/proposals")({ staticData: { sitemap: false },
   head: () => ({ meta: [
@@ -211,6 +212,7 @@ function Editor({ id, onBack }: { id: string; onBack: () => void }) {
     <div className="sticky bottom-0 flex flex-wrap gap-2 border-t bg-background py-3">
       <Button disabled={busy} onClick={save}>Save</Button>
       <Button variant="outline" disabled={busy} onClick={pdf}><FileDown className="mr-1 h-4 w-4" />Download A4 PDF</Button>
+      <CommercialRecipients clientId={p.client_id} siteId={p.site_id} purpose="proposal" title={p.title} body={`Please find our proposal ${q.data.reference}: ${p.title}.`}/>
       {on("client_portal") && p.status !== "accepted" && p.status !== "declined" && <Button variant="outline" disabled={busy} onClick={approvalLink}><Link2 className="mr-1 h-4 w-4" />Copy online approval link</Button>}
       {p.status === "draft" && <Button variant="ghost" className="ml-auto" onClick={remove}><Trash2 className="mr-1 h-4 w-4" />Delete draft</Button>}
     </div>

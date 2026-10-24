@@ -1,0 +1,15 @@
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Mail, MessageSquare, Users } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { clientRecipients } from '@/lib/client-recipients';
+import type { DeliveryPurpose } from '@/lib/client-routing';
+import { usePlanFeatures } from '@/lib/plan-features';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ModulePreview } from '@/components/module-preview';
+export function CommercialRecipients({clientId,siteId,purpose,title,body}:{clientId:string|null;siteId:string|null;purpose:DeliveryPurpose;title:string;body:string}) {
+  const [open,setOpen]=useState(false);const on=usePlanFeatures();
+  const recipients=useQuery({queryKey:['commercial-recipients',clientId,siteId,purpose],enabled:open&&!!clientId&&on('client_portal'),queryFn:async()=>{if(!clientId)return {email:[],whatsapp:[]};const [email,whatsapp]=await Promise.all([clientRecipients(supabase,clientId,siteId,purpose,'email'),clientRecipients(supabase,clientId,siteId,purpose,'whatsapp')]);return {email,whatsapp};}});
+  return <><Button type="button" size="sm" variant="outline" disabled={!clientId} onClick={()=>setOpen(true)}><Users className="mr-1 h-4 w-4"/>Client recipients</Button><Dialog open={open} onOpenChange={setOpen}><DialogContent><DialogHeader><DialogTitle>Client recipients · {title}</DialogTitle></DialogHeader>{!on('client_portal')?<ModulePreview feature="client_portal"/>:recipients.isPending?<p role="status">Loading recipients…</p>:recipients.error?<p role="alert" className="text-destructive">Could not load recipients.</p>:<><h3 className="font-medium">Email</h3><p className="break-words text-sm">{recipients.data?.email.map(c=>`${c.first_name} · ${c.email}`).join(', ')||'No email recipients selected'}</p><Button variant="outline" disabled={!recipients.data?.email.length} onClick={()=>{const emails=recipients.data?.email.flatMap(c=>c.email?[c.email]:[])??[];location.href=`mailto:${emails.join(',')}?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;}}><Mail className="mr-2 h-4 w-4"/>Open email draft</Button><h3 className="font-medium">WhatsApp</h3>{recipients.data?.whatsapp.length?recipients.data.whatsapp.map(c=><Button key={c.id} asChild variant="outline"><a target="_blank" rel="noopener noreferrer" href={`https://wa.me/${c.phone?.replace(/\D/g,'')}?text=${encodeURIComponent(body)}`}><MessageSquare className="mr-2 h-4 w-4"/>{c.first_name}</a></Button>):<p className="text-sm">No WhatsApp recipients selected</p>}<p className="text-xs text-muted-foreground">Drafts are not sent automatically. Attach the downloaded document before sending.</p></>}</DialogContent></Dialog></>;
+}

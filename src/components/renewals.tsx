@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SignaturePad } from "@/components/signature-pad";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CommercialRecipients } from '@/components/commercial-recipients';
 
 export function useAgreements() {
   return useQuery({
@@ -57,6 +58,7 @@ export function RenewalList({ office, limit }: { office: boolean; limit?: number
                 {!a.price_confirmed_at && <Button size="sm" onClick={() => act(a.id, { price_confirmed_at: new Date().toISOString() }, "Price confirmed")}>Confirm price</Button>}
                 {a.price_confirmed_at && !a.renewal_sent_at && <Button size="sm" onClick={() => act(a.id, { renewal_sent_at: new Date().toISOString() }, "Marked as sent to client")}>Mark renewal sent</Button>}
                 <Button size="sm" variant="outline" onClick={() => setPack(a)}>Renewal pack & signature</Button>
+                <CommercialRecipients clientId={a.client_id} siteId={a.site_id} purpose="contract" title={`Contract renewal · ${a.clients?.name??''}`} body={`Contract renewal for ${a.clients?.name??''}${a.sites?.name?` · ${a.sites.name}`:''}. Current agreement ends ${a.end_date}. Annual price €${Number(a.annual_price).toFixed(2)}.`}/>
               </div>
             )}
           </li>
