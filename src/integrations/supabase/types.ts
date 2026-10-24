@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      asset_component_events: {
+        Row: {
+          asset_id: string
+          company_id: string
+          component: string
+          created_at: string
+          created_by: string
+          details: string
+          event_date: string
+          event_type: string
+          id: string
+          warranty_until: string | null
+        }
+        Insert: {
+          asset_id: string
+          company_id?: string
+          component: string
+          created_at?: string
+          created_by?: string
+          details?: string
+          event_date?: string
+          event_type: string
+          id?: string
+          warranty_until?: string | null
+        }
+        Update: {
+          asset_id?: string
+          company_id?: string
+          component?: string
+          created_at?: string
+          created_by?: string
+          details?: string
+          event_date?: string
+          event_type?: string
+          id?: string
+          warranty_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_component_events_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_component_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assets: {
         Row: {
           asset_category: string
@@ -1935,6 +1989,9 @@ export type Database = {
           id: string
           job_number: number
           open_to_claim: boolean
+          ppm_deadline: string | null
+          ppm_due_date: string | null
+          ppm_plan_id: string | null
           priority: string
           problem_summary: string | null
           required_team_size: number
@@ -1957,6 +2014,9 @@ export type Database = {
           id?: string
           job_number?: number
           open_to_claim?: boolean
+          ppm_deadline?: string | null
+          ppm_due_date?: string | null
+          ppm_plan_id?: string | null
           priority?: string
           problem_summary?: string | null
           required_team_size?: number
@@ -1979,6 +2039,9 @@ export type Database = {
           id?: string
           job_number?: number
           open_to_claim?: boolean
+          ppm_deadline?: string | null
+          ppm_due_date?: string | null
+          ppm_plan_id?: string | null
           priority?: string
           problem_summary?: string | null
           required_team_size?: number
@@ -2015,6 +2078,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_ppm_plan_id_fkey"
+            columns: ["ppm_plan_id"]
+            isOneToOne: false
+            referencedRelation: "ppm_plans"
             referencedColumns: ["id"]
           },
           {
@@ -3779,6 +3849,74 @@ export type Database = {
           },
         ]
       }
+      ppm_plans: {
+        Row: {
+          active: boolean
+          agreement_id: string
+          asset_id: string
+          assigned_technician_id: string | null
+          company_id: string
+          created_at: string
+          first_due_date: string
+          grace_days: number
+          id: string
+          interval_months: number
+        }
+        Insert: {
+          active?: boolean
+          agreement_id: string
+          asset_id: string
+          assigned_technician_id?: string | null
+          company_id?: string
+          created_at?: string
+          first_due_date: string
+          grace_days?: number
+          id?: string
+          interval_months?: number
+        }
+        Update: {
+          active?: boolean
+          agreement_id?: string
+          asset_id?: string
+          assigned_technician_id?: string | null
+          company_id?: string
+          created_at?: string
+          first_due_date?: string
+          grace_days?: number
+          id?: string
+          interval_months?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ppm_plans_agreement_id_fkey"
+            columns: ["agreement_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_agreements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ppm_plans_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ppm_plans_assigned_technician_id_fkey"
+            columns: ["assigned_technician_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ppm_plans_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proposal_approvals: {
         Row: {
           company_id: string
@@ -4764,6 +4902,7 @@ export type Database = {
       fieldbridge_public_legal: { Args: never; Returns: Json }
       fleet_day: { Args: { _date: string; _user: string }; Returns: Json }
       fleet_vehicle_list: { Args: never; Returns: Json }
+      generate_ppm_visits: { Args: { _plan: string }; Returns: number }
       get_equipment_logbook: { Args: { _token: string }; Returns: Json }
       get_equipment_report_target: { Args: { _token: string }; Returns: Json }
       get_invite: {
