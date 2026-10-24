@@ -18,7 +18,7 @@ export function DevicePermissions() {
   const { data: profile } = useProfile();
   const on = usePlanFeatures(!!profile);
   const [mobile, setMobile] = useState(true);
-  const field = on('tracking') && (profile?.real_role === "technician" || profile?.real_role === "supervisor");
+  const field = on('tracking') && !!profile && ['technician','supervisor','maintenance'].includes(profile.real_role);
   const [push, setPush] = useState<PushStatus | null>(null);
   const [geo, setGeo] = useState<Geo | null>(null);
   const [busy, setBusy] = useState(false);

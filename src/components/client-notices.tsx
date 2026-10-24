@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { usePlanFeatures } from '@/lib/plan-features';
 
 type Result = { channel: string; to: string; ok: boolean; error?: string }[];
 function report(r: Result) {
@@ -37,10 +38,12 @@ export function useNoticeEnabled(event: EventKey) {
 const seen = new Set<string>();
 /** App-wide live alert for the technician when a manager replies to or decides on a request to leave an unsigned site. Tapping opens the job sheet. */
 export function DepartureAlerts({ userId }: { userId: string }) {
+  const on=usePlanFeatures();const core=on('core');
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [msg, setMsg] = useState<{ text: string; ok: boolean; sheetId: string } | null>(null);
   useEffect(() => {
+    if(!core)return;
     const notify = (title: string, body: string, sheetId: string) => {
       if (typeof Notification !== "undefined" && Notification.permission === "granted") {
         const n = new Notification(title, { body, tag: `departure-${sheetId}` });
@@ -71,8 +74,8 @@ export function DepartureAlerts({ userId }: { userId: string }) {
       notify(ok ? "Departure approved" : "Departure declined", text, n.id);
     }).subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [userId, navigate, qc]);
-  if (!msg) return null;
+  }, [userId, navigate, qc,core]);
+  if (!msg||!core) return null;
   return (
     <div className={`mb-4 rounded-xl border p-4 ${msg.ok ? "border-success bg-success/10" : "border-destructive bg-destructive/10"}`}>
       <p className="text-sm font-medium text-foreground">{msg.text}</p>
@@ -210,11 +213,12 @@ export function DepartureRequest({ sheet, manager, onChange, preapproved = false
 /** Manager dashboard list of technicians waiting to leave an unsigned site — urgent, with approve/decline and a quick reply to the technician. */
 export function DepartureRequests() {
   const qc = useQueryClient();
+  const on=usePlanFeatures();
   const [reply, setReply] = useState<Record<string, string>>({});
   const [waive, setWaive] = useState<Record<string, boolean>>({});
   const [sending, setSending] = useState<string | null>(null);
   const { data = [] } = useQuery({
-    queryKey: ["departure-requests"], refetchInterval: 20000,
+    queryKey: ["departure-requests",on('core')], enabled:on('core'), refetchInterval: 20000,
     queryFn: async () => (await supabase.from("job_sheets").select("id, jobsheet_number, departure_note, departure_requested_at, departure_reply, clients(name), users!job_sheets_assigned_technician_id_fkey(full_name)").eq("departure_status", "requested").order("departure_requested_at")).data ?? [],
   });
   const busyRun = async (id: string, f: () => Promise<void>) => {
@@ -243,7 +247,7 @@ export function DepartureRequests() {
     if (error) throw error;
     toast.success("Request declined — technician will wait for the client");
   });
-  if (!data.length) return null;
+  if (!data.length||!on('core')) return null;
   return (
     <section className="rounded-xl border-2 border-destructive bg-destructive/10 p-4">
       <h2 className="mb-2 flex items-center gap-2 font-medium text-foreground">

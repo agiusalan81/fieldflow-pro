@@ -1,18 +1,20 @@
 # Roadmap
 ## Requested testing fixes — 24 October 2026
-- [ ] #1 Device-aware permission setup without desktop lockout.
-- [ ] #2 Signup password visibility and confirmation.
-- [ ] #3 Payroll-disabled setup-alert/action suppression.
-- [ ] #4 All-module alert suppression, locked menu previews and relevant upgrades.
-- [ ] #5 Operations menu order: Overview, Job sheets, Pending Works, Log expense, Inventory.
-- [ ] #6 Immediately editable vehicle registration plus historical GPS date/time/site audit after clock-out.
-- [ ] #7 Independent weekly/fortnightly rota handover weekdays.
-- [ ] #8 DWR Technician/Supervisor-only filter with role labels.
-- [ ] #9 Protected General Maintenance role and technician trade/skills filters.
-- [ ] #10 Supervisor General Maintenance invites and Field work menu order.
-- [ ] #11 Request-specific leave-consultation reply deep links.
-- [ ] #12 Site/client-wide document/channel routing and paid, password-protected client self-service portal with job-sheet links.
-- [ ] Run focused rule/security tests and authorised end-to-end checks; document any external blockers without marking unverified work complete.
+- [x] HQ Setup Package: owner-only immediate-entitlement toggle, including full-trial → Basic; existing invoices/trial dates retained; ordinary full-trial mode restored when immediate mode is removed. Applied schema and owner/anonymous guards inspected; live owner save awaits authorised access.
+- [x] #1 Device-aware desktop permission dismissal and browser-specific guidance implemented; phone behavior retained.
+- [x] #2 Signup password visibility/confirmation implemented; desktop mismatch/show-password and mobile client signup checked without runtime errors.
+- [x] #3 Payroll-disabled setup-alert/action/query suppression implemented.
+- [x] #4 Module alert/query suppression, muted locked menu/quick-action previews and direct-route previews implemented; paid writes retain existing DB guards.
+- [x] #5 Operations menu order implemented: Overview, Job sheets, Pending Works, Log expense, Inventory.
+- [x] #6 Editable plate verified by component tests; historical GPS date/time/reported-site lookup and one-time clock-action fixes implemented; unavailable historical fixes explicitly distinguished from breadcrumbs.
+- [x] #7 Independent weekly/fortnightly handover weekdays implemented and anchor rules tested.
+- [x] #8 DWR Technician/Supervisor-only filter with role labels implemented and predicate tested.
+- [x] #9 Protected General Maintenance role and Mechanical/Electrical/IT skill filters implemented in Skills and Dispatch; deployed upload/PPM eligibility inspected.
+- [x] #10 Supervisor General Maintenance invites and Field work menu order implemented; no manager powers granted to Maintenance.
+- [x] #11 Leave-consultation reply links target, prioritize and highlight the matching approval request.
+- [x] #12 Site/client-wide routing, password client portal, scoped contact administration, invitations/revocation and job-sheet PDF/email links implemented. Job notices/sheets use shared resolver; commercial controls open recipient-aware email/WhatsApp drafts, not automatic document sends. Monthly combined recipients must qualify for every included site.
+- [x] Focused tests: 75 rule/component checks plus 10 GPS/routing/PDF checks passed (routing suite overlaps); latest build OK. Public signup/portal desktop/mobile checked; no persistent customer test records changed.
+- [ ] Authorised end-to-end HQ package save, supervisor/office workflows, clock-in/out evidence and client invitation acceptance/read-back: available requesting account is terminated; do not alter access. Needs an authorised active account. Rollback SQL security suite retained but execution blocked by sandbox function grants; fixture cleanup confirmed.
 
 - [x] Chat composer clears navigation at 390/711/900/1280px; People / Job threads / All ordering, stable dirty-check autosave and stale-sync protection. 26 focused tests passed.
 - [x] Built all-role photo/PDF Expense Stash, adjustable border crop, attachment in both directions, approved categories and monthly per-person PDF export under the receipts HQ module. Real capture/crop/save/attachment verified; disposable records removed.

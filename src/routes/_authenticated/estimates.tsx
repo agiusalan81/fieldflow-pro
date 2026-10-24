@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CommercialRecipients } from '@/components/commercial-recipients';
 
 export const Route = createFileRoute("/_authenticated/estimates")({ staticData: { sitemap: false },
   head: () => ({
@@ -108,6 +109,7 @@ function Estimates() {
               </ol>
               <div className="flex flex-wrap gap-2">
                 <Button size="sm" variant="outline" onClick={() => openEdit(e)}>Edit</Button>
+                {e.status==='client_ready'&&<CommercialRecipients clientId={e.client_id} siteId={e.site_id} purpose="estimate" title={e.title} body={`Estimate: ${e.title}${e.client_price?`\nClient price: €${Number(e.client_price).toFixed(2)}`:''}`}/>}
                 {(e.status === "draft" || e.status === "sent") && <Button size="sm" onClick={() => sendToSupplier(e)}><Mail className="mr-1 h-4 w-4" />{e.status === "draft" ? "Send to supplier" : "Resend request"}</Button>}
                 {due === "due" && <Button size="sm" onClick={() => sendReminder(e)}>Send reminder</Button>}
                 {due === "call" && e.supplier_name && <Button size="sm" variant="outline" disabled><Phone className="mr-1 h-4 w-4" />Call {e.supplier_name}</Button>}

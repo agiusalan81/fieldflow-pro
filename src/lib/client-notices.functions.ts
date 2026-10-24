@@ -6,6 +6,7 @@ import { parseIntegrations, renderTemplate } from "@/lib/integrations";
 import { canSendNotice, waNumber } from "@/lib/client-notices";
 import { rawEmail } from "@/lib/sendJobSheetEmail";
 import { etaText } from "@/lib/travel-eta";
+import { clientRecipients } from '@/lib/client-recipients';
 
 /** Sends the "on the way", "no one to open" or "client left unsigned" message to the client's contacts by email and/or WhatsApp. */
 export const sendClientNotice = createServerFn({ method: "POST" })
@@ -31,6 +32,7 @@ export const sendClientNotice = createServerFn({ method: "POST" })
     const tpl = parseIntegrations(settings?.integrations).templates[data.event];
     if (!tpl.enabled) throw new Error("This message is switched off in Company settings → Messages & emails.");
     const people = (contacts ?? []).filter((c) => !sheet.site_id || !c.site_id || c.site_id === sheet.site_id);
+    const purpose=data.event==='on_my_way'?'eta':data.event;
     const first = people.find((c) => c.is_primary_contact) ?? people[0];
     const tz = "Europe/Malta";
     const values = {
@@ -45,7 +47,8 @@ export const sendClientNotice = createServerFn({ method: "POST" })
     const result: { channel: string; to: string; ok: boolean; error?: string }[] = [];
 
     if (tpl.channels.includes("email")) {
-      const emails = [...new Set(people.filter((c) => c.email && (c.receives_job_sheets || c.is_primary_contact)).map((c) => c.email!))];
+      const recipients=await clientRecipients(sb,sheet.client_id,sheet.site_id,purpose,'email');
+      const emails=recipients.map(c=>c.email).filter((email):email is string=>!!email);
       const a = process.env["LOVABLE_API_KEY"], g = process.env["GOOGLE_MAIL_API_KEY"];
       if (emails.length && a && g) {
         const subject = data.event === "no_access" ? `Visit attempted — ${values.site_name}` : data.event === "on_my_way" ? `Technician on the way — ${values.site_name}` : `Signature needed — Job sheet- ${sheet.jobsheet_number}`;
@@ -58,7 +61,8 @@ export const sendClientNotice = createServerFn({ method: "POST" })
       } else result.push({ channel: "email", to: "", ok: false, error: emails.length ? "Email not connected" : "No client email on file" });
     }
     if (tpl.channels.includes("whatsapp")) {
-      const nums = [...new Set(people.filter((c) => c.has_whatsapp && c.phone).map((c) => waNumber(c.phone)))].filter(Boolean);
+      const recipients=await clientRecipients(sb,sheet.client_id,sheet.site_id,purpose,'whatsapp');
+      const nums=recipients.map(c=>waNumber(c.phone)).filter(Boolean);
       const a = process.env["LOVABLE_API_KEY"], w = process.env["WHATSAPP_API_KEY"];
       if (!nums.length) result.push({ channel: "whatsapp", to: "", ok: false, error: "No WhatsApp contact on file" });
       else if (!a || !w) result.push({ channel: "whatsapp", to: nums.join(", "), ok: false, error: "WhatsApp not connected" });

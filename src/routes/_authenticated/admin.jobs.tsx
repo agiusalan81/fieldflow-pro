@@ -16,7 +16,8 @@ import { EVENTS, parseIntegrations, renderTemplate } from "@/lib/integrations";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, useCompanyUsers, initialsOf } from "@/lib/profile";
 import { usePlanFeatures } from "@/lib/plan-features";
-import { dispatchTeamSize, skillMatchScore } from "@/lib/skills";
+import { dispatchTeamSize, skillMatchScore, FIELD_TRADES, matchesTrade } from "@/lib/skills";
+import { clientRecipients } from '@/lib/client-recipients';
 import { closeDispatchedReport, DISPATCH_REFRESH_KEYS } from "@/lib/dispatch-report";
 import { canDeleteSheet, canDeleteVisit, RECORD_DELETE_REFRESH_KEYS } from "@/lib/record-deletion";
 import { DispatchedVisits } from "@/components/dispatched-visits";
@@ -314,7 +315,7 @@ function NewJobDialog() {
   const { data: suggestions } = useEntrySuggestions();
   const { data: allUsers = [] } = useCompanyUsers();
   // Field crew are supervisors and technicians only; office staff dispatch but are not crew.
-  const users = allUsers.filter(u => u.role === "technician" || u.role === "supervisor");
+  const users = allUsers.filter(u => ['technician','supervisor','maintenance'].includes(u.role));
   const qc = useQueryClient();
   const search = Route.useSearch();
   const navigate = useNavigate();
@@ -326,10 +327,12 @@ function NewJobDialog() {
   const [f, setF] = useState(empty);
   const feature = usePlanFeatures(!!profile);
   const smart = feature("skills_dispatch");
+  const [trade,setTrade]=useState('');
   const { data: skillList = [] } = useQuery({ queryKey: ["company-skills"], enabled: smart, queryFn: async () => (await supabase.from("company_skills").select("id,name,category,archived").order("name")).data ?? [] });
   const { data: memberSkills = [] } = useQuery({ queryKey: ["member-skills"], enabled: smart, queryFn: async () => (await supabase.from("member_skills").select("user_id,skill_id")).data ?? [] });
   const skillsOf = (u: string) => memberSkills.filter(m => m.user_id === u).map(m => m.skill_id);
-  const ranked = smart && f.skills.length ? [...users].sort((a, b) => skillMatchScore(skillsOf(b.id), f.skills) - skillMatchScore(skillsOf(a.id), f.skills)) : users;
+  const eligible=users.filter(u=>!smart||matchesTrade(skillsOf(u.id).map(id=>skillList.find(s=>s.id===id)?.name??''),trade));
+  const ranked = smart && f.skills.length ? [...eligible].sort((a, b) => skillMatchScore(skillsOf(b.id), f.skills) - skillMatchScore(skillsOf(a.id), f.skills)) : eligible;
   const label = (u: { id: string; full_name: string }) => smart && f.skills.length ? `${u.full_name} · ${skillMatchScore(skillsOf(u.id), f.skills)}/${f.skills.length} skills` : u.full_name;
   const { data: clients = [] } = useQuery({ queryKey: ["clients"], queryFn: async () => (await supabase.from("clients").select("id, name").order("name")).data ?? [] });
   const { data: sites = [] } = useQuery({ queryKey: ["sites"], queryFn: async () => (await supabase.from("sites").select("id, client_id, name").order("name")).data ?? [] });
@@ -427,6 +430,7 @@ function NewJobDialog() {
           </div>
           {smart && <div className="space-y-3 rounded-lg border p-3">
             <p className="text-sm font-medium">Smart dispatch</p>
+            <div><Label htmlFor="dispatch-trade">Field staff trade</Label><select id="dispatch-trade" className="h-11 w-full rounded-md border bg-background px-2" value={trade} onChange={e=>setTrade(e.target.value)}><option value="">All trades</option>{FIELD_TRADES.map(t=><option key={t}>{t}</option>)}</select></div>
             <div className="space-y-1"><Label htmlFor="team-size">Required team size</Label><NumInput id="team-size" className="h-11 w-28" min={1} max={30} step={1} value={f.teamSize} onChange={teamSize => setF({ ...f, teamSize })} /></div>
             {!!skillList.filter(s => !s.archived).length && <div className="space-y-1"><Label>Required skills</Label><div className="flex flex-wrap gap-2">{skillList.filter(s => !s.archived).map(s => { const on = f.skills.includes(s.id); return <button key={s.id} type="button" aria-pressed={on} onClick={() => setF({ ...f, skills: on ? f.skills.filter(x => x !== s.id) : [...f.skills, s.id] })} className={`min-h-9 rounded-full border px-3 text-sm ${on ? "border-primary bg-primary text-primary-foreground" : "bg-background"}`}>{s.name}</button>; })}</div></div>}
             {f.tech !== "none" && f.assistant !== "none" && f.teamSize > 2 && <div className="space-y-2"><Label>More crew</Label>
@@ -450,6 +454,7 @@ function NewJobDialog() {
 
 /** Office admins and supervisors resend a completed (signed) job sheet to chosen contacts. */
 function ResendDialog({ sheet, sheetIds, onClose }: { sheet: { id: string; client_id: string; site_id: string | null; jobsheet_number: string }; sheetIds?: string[]; onClose: () => void }) {
+  const defaults=useQuery({queryKey:['resend-defaults',sheet.client_id,sheet.site_id],queryFn:()=>clientRecipients(supabase,sheet.client_id,sheet.site_id,'job_sheet','email')});
   const { data: contacts = [] } = useQuery({
     queryKey: ["resend-contacts", sheet.client_id],
     queryFn: async () => (await supabase.from("client_contacts").select("id, first_name, last_name, email, role_title, site_id, receives_job_sheets").eq("client_id", sheet.client_id).not("email", "is", null)).data ?? [],
@@ -459,7 +464,7 @@ function ResendDialog({ sheet, sheetIds, onClose }: { sheet: { id: string; clien
   const [picked, setPicked] = useState<string[] | null>(null);
   const [extra, setExtra] = useState("");
   const [busy, setBusy] = useState(false);
-  const sel = picked ?? contacts.filter((c) => c.receives_job_sheets && (!c.site_id || !sheet.site_id || c.site_id === sheet.site_id)).flatMap((c) => c.email ? [c.email] : []);
+  const sel = picked ?? (defaults.data??[]).flatMap(c=>c.email?[c.email]:[]);
   const toggle = (e: string, on: boolean) => setPicked(on ? [...sel, e] : sel.filter((x) => x !== e));
   const send = async () => {
     const all = [...sel, ...extra.split(/[,;\s]+/).filter(Boolean)];

@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { usePlanFeatures } from '@/lib/plan-features';
 
 const GRACE_MS = 7 * 86_400_000;
 /** Amber reminder with a 7-day countdown; the details form only blocks the app once the grace period ends. */
@@ -77,7 +78,9 @@ const heard = new Set<string>();
 /** Plays a chime for new chat messages, leave decisions and (for managers) urgent unsigned-departure requests. */
 export function NotificationSounds({ profile }: { profile: Profile }) {
   const qc = useQueryClient();
+  const on=usePlanFeatures(!!profile);const core=on('core');
   useEffect(() => {
+    if(!core)return;
     const uid = profile.id;
     const ch = supabase.channel(`sounds-${uid}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "internal_messages" }, (p) => {
@@ -93,17 +96,17 @@ export function NotificationSounds({ profile }: { profile: Profile }) {
         if (n.status !== o.status && n.status !== "pending") { playChime("approval", uid); toast.info(n.status === "approved" ? "Your leave was approved" : "Your leave was declined"); qc.invalidateQueries({ queryKey: ["leave"] }); }
       })
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "leave_requests" }, (p) => {
-        if (profile.real_role === "technician" || (p.new as { user_id: string }).user_id === uid) return;
+        if (['technician','maintenance'].includes(profile.real_role) || (p.new as { user_id: string }).user_id === uid) return;
         playChime("message", uid); qc.invalidateQueries({ queryKey: ["leave"] });
       })
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "job_sheets" }, (p) => {
-        if (profile.real_role === "technician") return;
+        if (['technician','maintenance'].includes(profile.real_role)) return;
         const n = p.new as { id: string; departure_status: string; departure_requested_at: string | null };
         const k = `${n.id}:${n.departure_requested_at}`;
         if (n.departure_status === "requested" && !heard.has(k)) { heard.add(k); playChime("urgent", uid); qc.invalidateQueries({ queryKey: ["departure-requests"] }); }
       })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [profile.id, profile.real_role, qc]);
+  }, [profile.id, profile.real_role, qc,core]);
   return null;
 }

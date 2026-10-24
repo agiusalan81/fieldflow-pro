@@ -33,10 +33,12 @@ export function HQSetupPackage({ subscription, catalog, modules, overrides, comp
   const [price, setPrice] = useState(Number(subscription.agreed_price));
   const [modes, setModes] = useState<Record<string, Mode>>({});
   const [saving, setSaving] = useState(false);
+  const [immediate, setImmediate] = useState(false);
   const tiers = catalog.filter((c) => c.kind === "plan"); const packList = catalog.filter((c) => c.kind === "pack");
   const setup = overrides.filter((o) => o.subscription_id === subscription.id && o.reason === SETUP_REASON);
 
   const start = () => {
+    setImmediate(subscription.trial_package_only);
     setPlan(subscription.plan_id); setPacks(subscription.pack_ids ?? []); setUsers(subscription.seats); setCadence(subscription.cadence); setPrice(Number(subscription.agreed_price));
     setModes(Object.fromEntries(modules.map((m) => { const o = setup.find((x) => x.module === m); return [m, o ? (o.enabled ? "on" : "off") : "package"]; })));
     setOpen(true);
@@ -48,6 +50,12 @@ export function HQSetupPackage({ subscription, catalog, modules, overrides, comp
   const save = async () => {
     setSaving(true);
     try {
+      if (immediate) {
+        const r = await supabase.rpc('hq_apply_setup_now',{_subscription:subscription.id,_plan:plan as unknown as string,_packs:packs,_seats:users,_cadence:cadence,_price:price,_modes:modes as Json});
+        if (r.error) throw r.error;
+        toast.success(`Setup package applied immediately for ${companyName}; trial dates and invoices retained.`);
+        setOpen(false); onSaved(); return;
+      }
       const oldItems = catalog.filter((c) => c.id === subscription.plan_id || (subscription.pack_ids ?? []).includes(c.id));
       const oldPrice = Number(subscription.agreed_price) > 0 ? Number(subscription.agreed_price) : packagePrice(oldItems.map((c) => ({ price: priceFor(c, subscription.cadence), billing_basis: c.billing_basis })), subscription.seats);
       const newPrice = price > 0 ? price : suggested;
@@ -63,7 +71,7 @@ export function HQSetupPackage({ subscription, catalog, modules, overrides, comp
         if (r.error) throw r.error;
         note = ` Lower package starts at renewal on ${cur.data.period_end}.`;
       } else {
-        const r = await supabase.from("platform_subscriptions").update({ ...change, pending_change: null }).eq("id", subscription.id);
+        const r = await supabase.from("platform_subscriptions").update({ ...change, pending_change: null, trial_package_only: false }).eq("id", subscription.id);
         if (r.error) throw r.error;
         if (kind === "upgrade" && cur.data) {
           const pr = upgradeProration(oldPrice, newPrice, cur.data.period_start, cur.data.period_end, today);
@@ -95,7 +103,8 @@ export function HQSetupPackage({ subscription, catalog, modules, overrides, comp
       <div className="space-y-2">{modules.filter((m) => m !== "core").map((m) => <div key={m} className="flex items-center justify-between gap-2 text-sm"><span>{PLAN_FEATURES.find((f) => f.key === m)?.label ?? m}<span className="ml-2 text-xs text-muted-foreground">{included.has(m) ? "in package" : "not in package"}</span></span><NativeSelect aria-label={`${m} access`} value={modes[m] ?? "package"} onValueChange={(v) => setModes({ ...modes, [m]: v as Mode })}><option value="package">From package</option><option value="on">Always on</option><option value="off">Always off</option></NativeSelect></div>)}</div>
       <div className="grid grid-cols-2 gap-2"><div><Label>Users</Label><Input type="number" min={0} value={users} onChange={(e) => setUsers(Number(e.target.value))} /></div><div><Label>Billing period</Label><NativeSelect aria-label="Billing period" value={cadence} onValueChange={setCadence}>{["monthly", "quarterly", "yearly"].map((x) => <option key={x} value={x}>{x}</option>)}</NativeSelect></div></div>
       <div className="flex flex-wrap items-end gap-2"><div className="flex-1"><Label>Agreed price / period</Label><Input type="number" min={0} value={price} onChange={(e) => setPrice(Number(e.target.value))} /></div><Button type="button" variant="outline" onClick={() => setPrice(suggested)}>Use suggested {money(suggested)}</Button></div>
-      <p className="text-xs text-muted-foreground">Upgrades apply now and create an invoice for the rest of the current period. Downgrades and billing-period changes start at the next renewal.</p>
+      <label className="flex items-start gap-3 border-y py-3 text-sm"><Checkbox checked={immediate} onCheckedChange={v=>setImmediate(!!v)}/><span><span className="font-medium">Apply package access immediately</span><span className="block text-xs text-muted-foreground">Trial → Basic and other tier changes take effect now, without full-trial features overriding the package. Existing invoices and trial dates stay unchanged; no automatic refund or upgrade invoice.</span></span></label>
+      <p className="text-xs text-muted-foreground">Otherwise upgrades apply now with a remaining-period invoice; downgrades and billing-period changes start at renewal.</p>
       <Button disabled={saving} onClick={save}>{saving ? "Saving…" : "Save setup package"}</Button>
       <DialogFooter><DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose></DialogFooter>
     </DialogContent></Dialog>

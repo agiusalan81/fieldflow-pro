@@ -184,7 +184,7 @@ function QuickActions({ items, uid, role, manager }: { items: NavItem[]; uid: st
         {Object.keys(usage).length > 0 && <button type="button" className="flex items-center gap-1 text-xs text-muted-foreground" onClick={() => { resetUsage(uid); setUsage({}); }}><RotateCcw className="h-3 w-3" />Reset</button>}
       </div>
       <div className="grid grid-cols-3 gap-2">
-        {list.map((to) => { const m = meta(to); if (!m) return null; return (
+        {list.map((to) => { const m = meta(to); if (!m) return null; const locked=items.find(i=>i.to===to);if(locked?.locked)return <LockedModule key={to} feature={locked.feature??'core'} label={m.label}><m.icon className="h-5 w-5"/></LockedModule>;return (
           <QuickLink key={to} to={to} uid={uid} className="flex min-h-20 flex-col items-center justify-center gap-1.5 rounded-xl border bg-card p-2 text-center text-xs font-medium text-foreground active:bg-accent">
             <m.icon className="h-6 w-6 text-primary" />{m.label}
           </QuickLink>

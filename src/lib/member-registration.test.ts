@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { canManageMember, memberFullName, registrationDuration, splitMemberName } from "./member-registration";
+import { canManageMember, canSeeMember, memberFullName, registrationDuration, splitMemberName } from "./member-registration";
 describe("member registration", () => {
+  it('supervisors see Maintenance without giving Maintenance manager control',()=>{expect(canSeeMember('supervisor','maintenance')).toBe(true);expect(canManageMember('maintenance','a',{id:'b',role:'technician'})).toBe(false);});
   it("requires both names for social and email signup", () => {
     expect(memberFullName(" Alan ", " Agius ")).toBe("Alan Agius");
     expect(() => memberFullName("Alan", "")).toThrow();

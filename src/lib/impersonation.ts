@@ -51,7 +51,7 @@ export function useUserPreview(actor: Profile | null | undefined) {
       ]);
       if (users.error) throw users.error;
       if (roles.error) throw roles.error;
-      const rank: Role[] = ["superuser", "admin", "supervisor", "technician"];
+      const rank: Role[] = ["superuser", "admin", "supervisor", "technician", "maintenance"];
       return (users.data ?? []).flatMap((user) => {
         const role = rank.find((r) => roles.data?.some((row) => row.user_id === user.id && row.role === r));
         return role ? [{ ...user, role }] : [];

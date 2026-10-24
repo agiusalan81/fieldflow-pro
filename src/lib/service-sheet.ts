@@ -1,6 +1,7 @@
 import type { PdfTemplate } from "./documents";
 
 export type PdfSheetData = {
+  portalUrl?: string;
   company: string; logo?: string; officeAddress?: string; vatNumber?: string; contact?: string; workType?: string;
   number: string | number; date: string; client: string; address: string; asset: string;
   fault: string; repairs: string; technician: string; technicianSignature?: string | null | undefined;

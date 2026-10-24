@@ -22,6 +22,7 @@ import { linkPushToUser } from "@/lib/web-push";
 import { UserPreviewBoundary } from "@/components/user-preview";
 import { clearUserPreview } from "@/lib/impersonation";
 import { MemberAccessBoundary } from "@/components/member-access-boundary";
+import { ModuleAccessBoundary } from '@/components/module-access-boundary';
 
 function NotFoundComponent() {
   return (
@@ -173,7 +174,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <OfflineStatus />
-      <TooltipProvider><MemberAccessBoundary><UserPreviewBoundary><Outlet /></UserPreviewBoundary></MemberAccessBoundary></TooltipProvider>
+      <TooltipProvider><MemberAccessBoundary><UserPreviewBoundary><ModuleAccessBoundary><Outlet /></ModuleAccessBoundary></UserPreviewBoundary></MemberAccessBoundary></TooltipProvider>
       <Toaster richColors position="top-center" />
     </QueryClientProvider>
   );

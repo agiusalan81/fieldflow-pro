@@ -8,6 +8,8 @@ import { companySignature, formatOfficeAddress, parseOfficeAddress } from "@/lib
 import { sheetTitle } from "@/lib/dwr";
 import { validateMonthlyQueue } from "@/lib/monthly-signing";
 import { pdfFonts, pdfLayerFonts, pdfPageDecoration, resolveDocumentAssets } from "@/lib/branding-assets";
+import { clientRecipients } from '@/lib/client-recipients';
+import { PORTAL_URL, commonRecipients } from '@/lib/client-routing';
 
 const b64 = (s: string) =>
   btoa(Array.from(new TextEncoder().encode(s), (b) => String.fromCharCode(b)).join(""));
@@ -152,6 +154,7 @@ export async function buildPdf(d: PdfSheetData) {
   }
   if (d.terms) { label("Terms & conditions"); for (const l of wrap(d.terms, 8, W - 2 * M)) { need(11); text(l, M, 8, font, grey); y -= 11; } }
   if (d.template.footer) { y -= 8; for (const l of d.template.footer.split("\n").flatMap((p) => wrap(p, 9, W - 2 * M))) { need(12); text(l, M, 9, font, grey); y -= 12; } }
+  if (d.portalUrl) { label('Client portal'); para(d.portalUrl); }
   return doc.save();
 }
 
@@ -166,11 +169,11 @@ async function prepareSheet(supabase: AuthClient, sheetId: string, recipients?: 
     if (error || !sheet) throw new Error("Job sheet not found");
     if (sheet.status !== "completed") throw new Error("Job sheet must be completed before emailing");
 
-    const { data: contacts } = await supabase
-      .from("client_contacts").select("email, site_id").eq("client_id", sheet.client_id).eq("receives_job_sheets", true);
+    const contacts = await clientRecipients(supabase,sheet.client_id,sheet.site_id,'job_sheet','email');
+    const { data: portalOn } = await supabase.rpc('company_module_access',{_company:sheet.company_id,_module:'client_portal'});
     const { data: settings } = await supabase.from("company_settings").select("pdf_template, terms, logo_data, office_address, company_address, vat_number, office_phone, company_email, website").eq("company_id", sheet.company_id).maybeSingle();
     const notes = sheet.special_notes?.trim() || null;
-    const emails = recipients?.length ? [...new Set(recipients.map((e) => e.trim()))] : (contacts ?? []).filter((c) => !c.site_id || !sheet.site_id || c.site_id === sheet.site_id).map((c) => c.email).filter((e): e is string => !!e);
+    const emails = recipients?.length ? [...new Set(recipients.map((e) => e.trim().toLowerCase()))] : contacts.map(c=>c.email).filter((e):e is string=>!!e);
 
 
     const client = sheet.clients as { name: string; billing_address: string | null } | null;
@@ -191,7 +194,7 @@ async function prepareSheet(supabase: AuthClient, sheetId: string, recipients?: 
       officeAddress: formatOfficeAddress(parseOfficeAddress(settings?.office_address,settings?.company_address ?? "")), vatNumber: settings?.vat_number ?? "", contact: [settings?.office_phone, settings?.company_email].filter(Boolean).join("\n"),
       workType: [sheet.is_tech_assistance && "Technical assistance",sheet.is_maintenance && "Maintenance",sheet.is_installation && "Installation",sheet.job_type_other].filter(Boolean).join(", "), technicianSignature: technicianProfile?.signature_on_file,
 
-      company, logo: settings?.logo_data ?? "", number: sheet.jobsheet_number, date, client: client?.name ?? "-", address: address || "-",
+      ...(portalOn ? {portalUrl:PORTAL_URL} : {}), company, logo: settings?.logo_data ?? "", number: sheet.jobsheet_number, date, client: client?.name ?? "-", address: address || "-",
       asset: serviceEquipment(assetType, asset?.reference_number, sheet.lift_model, sheet.serial_number),
       fault: sheet.reported_fault ?? "", repairs: sheet.repairs_performed ?? "", technician: sheet.technician_name ?? "",
       signedBy: sheet.client_full_name ?? "", idCard: sheet.client_id_card_no ?? "", signature: sheet.signature_data,
@@ -224,6 +227,7 @@ async function prepareSheet(supabase: AuthClient, sheetId: string, recipients?: 
       photoCount ? `${photoCount} photo${photoCount > 1 ? "s" : ""} of the work are also attached.` : null,
       "",
       "Thank you for your business.",
+      portalOn ? `Client portal: ${PORTAL_URL}\nSign in with your invited account to manage contacts and delivery preferences.` : null,
       "",
       companySignature({ name: company, address: formatOfficeAddress(parseOfficeAddress(settings?.office_address, settings?.company_address ?? "")), phone: settings?.office_phone, email: settings?.company_email, website: settings?.website, vat: settings?.vat_number }),
     ].filter((l): l is string => l != null).join("\n");
@@ -346,10 +350,10 @@ export const finishMonthlySigning = createServerFn({ method: "POST" }).middlewar
       if (rows.some((r) => !r.signature_data || r.created_at.slice(0, 7) !== batch.month || r.client_id !== batch.client_id)) throw new Error("Monthly selection is no longer valid");
       const { PDFDocument } = await import("pdf-lib");
       const doc = await PDFDocument.create();
-      const emails = new Set<string>(); let clientName = "customer";
+      const groups:string[][]=[]; let clientName = "customer";
       for (const row of rows) {
         const pack = await prepareSheet(sb, row.id);
-        pack.emails.forEach((email) => emails.add(email)); clientName = pack.clientName;
+        groups.push(pack.emails); clientName = pack.clientName;
         for (const attachment of pack.attachments) {
           if (attachment.mime === "application/pdf") {
             const source = await PDFDocument.load(attachment.data);
@@ -362,7 +366,7 @@ export const finishMonthlySigning = createServerFn({ method: "POST" }).middlewar
           }
         }
       }
-      const recipients = [...emails];
+      const recipients = commonRecipients(groups);
       validateRecipients(recipients);
       if (!recipients.length) throw new Error("No job-sheet email recipients selected for this client");
       await sendMail(recipients, `Monthly job sheets — ${batch.month} — ${clientName}`, `Dear ${clientName},\n\nYour ${rows.length} signed job sheets for ${batch.month} are attached as one continuous PDF.\n\nThank you.`, [{ filename: `Job sheets - ${batch.month}.pdf`, mime: "application/pdf", data: await doc.save() }]);

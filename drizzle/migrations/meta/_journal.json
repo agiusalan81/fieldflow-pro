@@ -694,6 +694,41 @@
       "when": 1792836861931,
       "tag": "0098_maintenance_field_access",
       "breakpoints": true
+    },
+    {
+      "idx": 99,
+      "version": "7",
+      "when": 1792837110580,
+      "tag": "0099_client_recipient_matrix_and_portal",
+      "breakpoints": true
+    },
+    {
+      "idx": 100,
+      "version": "7",
+      "when": 1792837560841,
+      "tag": "0100_hq_immediate_trial_package",
+      "breakpoints": true
+    },
+    {
+      "idx": 101,
+      "version": "7",
+      "when": 1792837613894,
+      "tag": "0101_shift_location_evidence_and_hq_setup_label",
+      "breakpoints": true
+    },
+    {
+      "idx": 102,
+      "version": "7",
+      "when": 1792837732710,
+      "tag": "0102_maintenance_eligibility_and_contact_consistency",
+      "breakpoints": true
+    },
+    {
+      "idx": 103,
+      "version": "7",
+      "when": 1792837868035,
+      "tag": "0103_client_portal_scope_lifecycle",
+      "breakpoints": true
     }
   ]
 }

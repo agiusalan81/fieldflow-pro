@@ -126,7 +126,7 @@ export function PpmVisits({
                       <SelectContent>
                         <SelectItem value="none">Unassigned</SelectItem>
                         {users.data
-                          ?.filter((u) => u.role === "technician" || u.role === "supervisor")
+                          ?.filter((u) => ['technician','supervisor','maintenance'].includes(u.role))
                           .map((u) => (
                             <SelectItem value={u.id} key={u.id}>
                               {u.full_name}

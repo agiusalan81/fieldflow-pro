@@ -7,6 +7,7 @@ export const HQ_GROUPS = [
 ] as const;
 export function hqGroup(section: string) { return HQ_GROUPS.find(g => g.sections.some(s => s.key === section)) ?? HQ_GROUPS[0]; }
 export function tenantLocation(city: string, country: string) { return [city.trim(), country.trim()].filter(Boolean).join(", ") || "Not provided"; }
+export const trialUsesFullFeatures = (status: string, packageOnly: boolean) => status === 'trial' && !packageOnly;
 /** Presentation grouping only; mixed feature/storage bundles remain module packs. */
 export function isStorageAddon(item: { kind?: string; storage_gb?: number; modules?: string[] }) {
   return item.kind === "pack" && (item.storage_gb ?? 0) > 0 && (item.modules?.length ?? 0) === 0;

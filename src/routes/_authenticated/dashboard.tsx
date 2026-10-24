@@ -26,6 +26,7 @@ import { NoAccessButton, DepartureRequests } from "@/components/client-notices";
 import { usePreviewProfile, useUserPreview } from "@/lib/impersonation";
 import { JobTravelActions } from "@/components/job-travel-actions";
 import { UnfinishedWorkDialog } from "@/components/unfinished-work";
+import { captureShiftLocation } from '@/lib/shift-location';
 
 export const Route = createFileRoute("/_authenticated/dashboard")({ staticData: { sitemap: false },
   head: () => ({
@@ -90,6 +91,7 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
   const [closeOpen, setCloseOpen] = useState(false);
   const toggle = async (type: "shift" | "travel", current?: { id: string; started_at: string }, vehicle?: string) => {
     if (readOnly) return;
+    if(type==='shift'&&current)await captureShiftLocation(profile,current.id,'clock_out');
     const endedAt = new Date().toISOString();
     const res = current
       ? await supabase.from("shifts").update({ ended_at: endedAt }).eq("id", current.id)
