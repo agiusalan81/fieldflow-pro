@@ -1,0 +1,8 @@
+import { expect, it } from 'vitest';
+import { contactScopeMatches, contactWrite } from './contact-editor';
+import type { RoutingContact } from './client-routing';
+const contact: RoutingContact = { id: 'one', first_name: 'Bob', last_name: 'Smith', email: 'BOB@example.test', phone: '123', role_title: 'Operations manager', site_id: 'A', site_ids: ['A', 'B'], all_sites: false, has_whatsapp: true, receives_job_sheets: false, delivery_preferences: { job_sheet: { email: true, whatsapp: false }, estimate: { email: true, whatsapp: true } } };
+it('one contact can belong to site A and B without duplication', () => { expect(contactScopeMatches(contact, 'A')).toBe(true); expect(contactScopeMatches(contact, 'B')).toBe(true); expect(contactScopeMatches(contact, 'C')).toBe(false); expect(contactWrite(contact).site_ids).toEqual(['A', 'B']); });
+it('client-wide operations contacts appear for each site', () => { expect(contactScopeMatches({ ...contact, all_sites: true }, 'C')).toBe(true); expect(contactWrite({ ...contact, all_sites: true }).site_id).toBeNull(); });
+it('job-sheet email and estimate WhatsApp remain independent', () => { const row = contactWrite(contact); expect(row.delivery_preferences.job_sheet).toEqual({ email: true, whatsapp: false }); expect(row.delivery_preferences.estimate).toEqual({ email: true, whatsapp: true }); expect(row.receives_job_sheets).toBe(true); });
+it('removing WhatsApp consent clears every WhatsApp destination', () => { expect(contactWrite({ ...contact, has_whatsapp: false }).delivery_preferences.estimate.whatsapp).toBe(false); });

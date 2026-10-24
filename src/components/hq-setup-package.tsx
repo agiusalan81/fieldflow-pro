@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { buildInvoice, classifyChange, upgradeProration } from "@/lib/saas-billing";
 import { PLAN_FEATURES } from "@/lib/plan-features";
-import { packagePrice, PERMANENT_UNTIL, SETUP_REASON } from "@/lib/platform";
+import { packagePrice, SETUP_REASON } from "@/lib/platform";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,12 +53,12 @@ export function HQSetupPackage({ subscription, catalog, modules, overrides, comp
   const save = async () => {
     setSaving(true);
     try {
-      if (immediate) {
-        const r = await supabase.rpc('hq_apply_setup_now',{_subscription:subscription.id,_plan:plan as unknown as string,_packs:packs,_seats:users,_cadence:cadence,_price:price,_modes:modes as Json});
+      const saveOptions = async () => {
+        const r = await supabase.rpc('hq_save_setup_options', { _subscription: subscription.id, _options: { immediate, plan, packs, seats: users, cadence, price, modes, hide_locked: hideLocked, coming_soon: soon } as Json });
         if (r.error) throw r.error;
-        // Visibility flags live outside the immediate-access RPC, so save them before returning.
-        const v = await supabase.from("platform_subscriptions").update({ hide_locked_modules: hideLocked, coming_soon_modules: soon }).eq("id", subscription.id);
-        if (v.error) throw v.error;
+      };
+      if (immediate) {
+        await saveOptions();
         toast.success(`Setup package applied immediately for ${companyName}; trial dates and invoices retained.`);
         setOpen(false); onSaved(); return;
       }
@@ -90,10 +90,7 @@ export function HQSetupPackage({ subscription, catalog, modules, overrides, comp
           }
         }
       }
-      { const v = await supabase.from("platform_subscriptions").update({ hide_locked_modules: hideLocked, coming_soon_modules: soon }).eq("id", subscription.id); if (v.error) throw v.error; }
-      if (setup.length) { const d = await supabase.from("platform_overrides").delete().in("id", setup.map((o) => o.id)); if (d.error) throw d.error; }
-      const rows = Object.entries(modes).filter(([m, v]) => v !== "package" && m !== "core").map(([module, v]) => ({ subscription_id: subscription.id, module, enabled: v === "on", starts_at: new Date().toISOString(), ends_at: PERMANENT_UNTIL, reason: SETUP_REASON }));
-      if (rows.length) { const i = await supabase.from("platform_overrides").insert(rows); if (i.error) throw i.error; }
+      await saveOptions();
       toast.success(`Setup package saved for ${companyName}.${note}`); setOpen(false); onSaved();
     } catch (e) { toast.error(e instanceof Error ? e.message : "Could not save the setup package"); } finally { setSaving(false); }
   };
