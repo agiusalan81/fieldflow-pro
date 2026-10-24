@@ -1,4 +1,6 @@
 # Roadmap
+- [x] Categorized per-member skills dialog, obsolete skill removal and technician skill hiding (22 tests pass)
+- [ ] Live skills assignment verification (blocked: requesting account's company access is revoked)
 - [x] Receipt autocrop works on real photos
 - [x] Internal comments: one thread (pre + post signature) with voice dictation, shown in Pending Works
 - [x] Alarms deep-link to the exact object (expense categories)

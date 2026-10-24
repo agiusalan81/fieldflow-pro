@@ -16,7 +16,7 @@
 - Travel shares one component/startJobTravel; arrival saves the time log before on-site status; 
 - Invite server functions/Query loaders have timeouts, middleware included; 
 - Tenant RLS uses company_id/current_company_id(); never UI company filters; 
-- Roles: protected user_roles; users.role is display-only; preview/permissions hide UI only. MemberSkills allows active tech/supervisor/maintenance under skills_dispatch guards.
+- Roles: protected user_roles; users.role is display-only. Manager-only MemberSkills uses module guards; additions never assign; removal archives for history.
 - Role helpers/tenant policies reject terminated actors and audit access changes.
 - Invites redeem names atomically via single-use signup triggers; social users need no password; verified names; no client-assigned tenant/role.
 - Preview: real-superuser-only, actor-scoped, removable memory state; root blocks other screens/writes; 

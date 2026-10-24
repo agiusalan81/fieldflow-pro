@@ -1,7 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { clampTeamSize, dispatchTeamSize, hasMandatorySkills, placesLeft, skillMatchScore, skillEligible, matchesTrade } from "./skills";
+import { activeSkillMember, assignedSkills, canManageSkills, groupSkills, clampTeamSize, dispatchTeamSize, hasMandatorySkills, placesLeft, skillMatchScore, skillEligible, matchesTrade } from "./skills";
 
 describe("skills dispatch rules", () => {
+  it("hides skill management from technicians and maintenance staff", () => { expect(canManageSkills("technician")).toBe(false); expect(canManageSkills("maintenance")).toBe(false); expect(canManageSkills("supervisor")).toBe(true); expect(canManageSkills("admin")).toBe(true); expect(canManageSkills("superuser")).toBe(true); });
+  it("excludes terminated members from skill assignment", () => { expect(activeSkillMember("technician", "terminated")).toBe(false); expect(activeSkillMember("supervisor", "active")).toBe(true); expect(activeSkillMember("maintenance", "active")).toBe(true); expect(activeSkillMember("admin", "active")).toBe(false); });
+  it("shows Bob's welding and electrical only, never auto-assigning newly created skills", () => {
+    const skills = [{ id: "w", archived: false }, { id: "e", archived: false }, { id: "new", archived: false }, { id: "old", archived: true }];
+    const links = [{ user_id: "bob", skill_id: "w" }, { user_id: "bob", skill_id: "e" }, { user_id: "bob", skill_id: "old" }, { user_id: "other", skill_id: "new" }];
+    expect(assignedSkills(skills, links, "bob").map(s => s.id)).toEqual(["w", "e"]);
+  });
+  it("groups dynamically added skills by optional category", () => { expect(groupSkills([{ category: "Trades" }, { category: "" }, { category: "Trades" }]).map(([name, rows]) => [name, rows.length])).toEqual([["Trades", 2], ["Other skills", 1]]); });
   it('filters Mechanical Electrical and IT using skills rather than new roles',()=>{expect(matchesTrade(['Mechanical'],'Electrical')).toBe(false);expect(matchesTrade(['Electrical'],'Electrical')).toBe(true);expect(matchesTrade(['IT / Electronics'],'IT')).toBe(true);expect(matchesTrade(['Mechanical'],'Mechanical')).toBe(true);});
   it('allows General Maintenance field skills without office eligibility',()=>{expect(skillEligible('maintenance')).toBe(true);expect(skillEligible('admin')).toBe(false);});
   it("assigns skills to technicians and supervisors only", () => { expect(skillEligible("technician")).toBe(true); expect(skillEligible("supervisor")).toBe(true); expect(skillEligible("admin")).toBe(false); expect(skillEligible("superuser")).toBe(false); });
