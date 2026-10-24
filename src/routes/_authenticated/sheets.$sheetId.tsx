@@ -216,8 +216,9 @@ function SheetForm() {
     const fingerprint=sheetFingerprint({form,logs,parts,photos,checks});
     if(cleanState.current===null){cleanState.current=fingerprint;return;}
     if(cleanState.current===fingerprint||busy)return;
-    const expected = revision.current ?? data.sheet.updated_at;
+    const serverRevision = data.sheet.updated_at;
     const timer = setTimeout(() => {
+      const expected = revision.current ?? serverRevision;
       const snapshot: DraftSnapshot = {
         key: draftKey(profile.id, sheetId), userId: profile.id, sheetId, expected,
         form: { ...form, checklist_values: checks, photo_paths: photos, repairs_performed: logs.map((l) => l.daily_work_description.trim()).filter(Boolean).join("\n") || form.repairs_performed },
@@ -291,10 +292,13 @@ function SheetForm() {
         toast.success("Draft saved on this device — will sync when connected");
         return !status || status === "draft";
       }
-      try { revision.current = await syncDraft(snapshot); cleanState.current=latestState.current;setSavedLocally(null); }
+      const fingerprint = latestState.current;
+      await saveLocalDraft(snapshot);
+      try { revision.current = await syncDraft(snapshot); cleanState.current=fingerprint;setSavedLocally(null); }
       catch (e) {
         const message = (e as Error).message;
-        await saveLocalDraft({ ...snapshot, error: message });
+        const current = await getLocalDraft(profile.id, sheetId);
+        if (current?.savedAt === snapshot.savedAt) await saveLocalDraft({ ...current, error: message });
         if (message.includes("CONFLICT")) setConflict(true);
         throw e;
       }
