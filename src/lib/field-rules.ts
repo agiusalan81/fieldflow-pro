@@ -1,6 +1,6 @@
 import type { Kin } from "@/lib/profile";
 
-export type AppRole = "superuser" | "admin" | "supervisor" | "technician";
+export type AppRole = "superuser" | "admin" | "supervisor" | "technician" | "maintenance";
 
 /** Supervisors decide technician leave only; supervisor/admin leave goes to an Office Admin or Superuser. Nobody but a superuser decides their own. */
 export function canDecideLeave(approver: AppRole, applicant: AppRole, own: boolean) {

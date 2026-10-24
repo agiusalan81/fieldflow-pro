@@ -2,14 +2,17 @@ import { Link } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { Bell, MessageSquare, CalendarClock, CalendarDays, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useProfile, isManager } from '@/lib/profile';
+import { useProfile, isManager, isOffice } from '@/lib/profile';
+import { usePlanFeatures } from '@/lib/plan-features';
+import { useCan } from '@/lib/permissions';
 import { useUnreadChatTotal, useChatReads, unreadByThread, type ChatMsg } from '@/lib/chat-unread';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 export function OnCallBadge({ userId }: { userId?: string | undefined }) {
- const q=useQuery({queryKey:['on-call-menu-badge',userId],enabled:!!userId,refetchInterval:15000,queryFn:async()=>{if(!userId)return 0;const r=await supabase.from('standby_swaps').select('id',{count:'exact',head:true}).eq('target_id',userId).eq('status','pending');if(r.error)throw r.error;return r.count??0;}});
- return q.data ? <span aria-label={`${q.data} incoming swap requests`} className="ml-auto rounded-full bg-destructive px-1.5 text-xs text-destructive-foreground">{q.data}</span> : null;
+ const on=usePlanFeatures(!!userId);
+ const q=useQuery({queryKey:['on-call-menu-badge',userId,on('standby')],enabled:!!userId&&on('standby'),refetchInterval:15000,queryFn:async()=>{if(!userId)return 0;const r=await supabase.from('standby_swaps').select('id',{count:'exact',head:true}).eq('target_id',userId).eq('status','pending');if(r.error)throw r.error;return r.count??0;}});
+ return on('standby')&&q.data ? <span aria-label={`${q.data} incoming swap requests`} className="ml-auto rounded-full bg-destructive px-1.5 text-xs text-destructive-foreground">{q.data}</span> : null;
 }
 export function ChatBadge({ userId }: { userId?: string | undefined }) {
  const n=useUnreadChatTotal(userId);
@@ -20,8 +23,9 @@ export function ChatBadge({ userId }: { userId?: string | undefined }) {
 function useUnreadThreads(uid?: string) {
   const reads = useChatReads(uid);
   const q = useQuery({ queryKey: ['bell-threads', uid], enabled: !!uid, refetchInterval: 30000, queryFn: async () => {
+    if (!uid) return { msgs: [] as ChatMsg[], names: {} as Record<string,string> };
     const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
-    const m = await supabase.from('internal_messages').select('sender_id,receiver_id,job_sheet_id,created_at').neq('sender_id', uid!).gte('created_at', since);
+    const m = await supabase.from('internal_messages').select('sender_id,receiver_id,job_sheet_id,created_at').neq('sender_id', uid).gte('created_at', since);
     if (m.error) throw m.error;
     const msgs = m.data as ChatMsg[];
     const ids = [...new Set(msgs.map(x => x.sender_id))];
@@ -43,20 +47,26 @@ const Row = ({ icon: Icon, children }: { icon: typeof Bell; children: React.Reac
 
 export function ActionNotifications() {
   const { data:p }=useProfile();
-  const threads=useUnreadThreads(p?.id);
+  const on=usePlanFeatures(!!p),can=useCan(p);
+  const core=on('core'),standby=on('standby');
+  const threads=useUnreadThreads(core?p?.id:undefined);
   const manager=!!p&&isManager(p);
-  const {data}=useQuery({queryKey:['action-notifications',p?.id],enabled:!!p,refetchInterval:15000,queryFn:async()=>{
-    if(!p)return {incoming:0,approval:0,leave:0,problems:[] as {id:string;asset_id:string;problem:string}[]};
-    const [incoming,approval,leave,problems]=await Promise.all([
-      supabase.from('standby_swaps').select('id',{count:'exact',head:true}).eq('target_id',p.id).eq('status','pending'),
-      manager?supabase.from('standby_swaps').select('id',{count:'exact',head:true}).eq('status','accepted').eq('manager_approved',false):Promise.resolve({count:0,error:null}),
-      supabase.from('leave_requests').select('id',{count:'exact',head:true}).eq('consulted_supervisor_id',p.id).eq('status','pending').is('supervisor_response',null),
-      manager?supabase.from('equipment_problem_reports').select('id,asset_id,problem').eq('status','open').order('created_at',{ascending:false}).limit(10):Promise.resolve({data:[],error:null}),
-    ]);if(incoming.error||approval.error||leave.error)throw incoming.error||approval.error||leave.error;return {incoming:incoming.count??0,approval:approval.count??0,leave:leave.count??0,problems:problems.data??[]};
+  const leaveOn=core&&can('leave_approvals'),problemsOn=core&&manager&&can('pending_works');
+  const {data}=useQuery({queryKey:['action-notifications',p?.id,core,standby,leaveOn,problemsOn],enabled:!!p,refetchInterval:15000,queryFn:async()=>{
+    if(!p)return {incoming:0,approval:0,leave:[] as {id:string}[],responses:[] as {id:string}[],problems:[] as {id:string;asset_id:string;problem:string}[]};
+    const zero=Promise.resolve({count:0,error:null});
+    const empty=Promise.resolve({data:[] as {id:string}[],error:null});
+    const [incoming,approval,leave,problems,responses]=await Promise.all([
+      standby?supabase.from('standby_swaps').select('id',{count:'exact',head:true}).eq('target_id',p.id).eq('status','pending'):zero,
+      standby&&manager?supabase.from('standby_swaps').select('id',{count:'exact',head:true}).eq('status','accepted').eq('manager_approved',false):zero,
+      leaveOn?supabase.from('leave_requests').select('id').eq('consulted_supervisor_id',p.id).eq('status','pending').is('supervisor_response',null):empty,
+      problemsOn?supabase.from('equipment_problem_reports').select('id,asset_id,problem').eq('status','open').order('created_at',{ascending:false}).limit(10):Promise.resolve({data:[],error:null}),
+      leaveOn&&isOffice(p)?supabase.from('leave_requests').select('id').eq('status','pending').not('supervisor_response','is',null):empty,
+    ]);if(incoming.error||approval.error||leave.error||responses.error)throw incoming.error||approval.error||leave.error||responses.error;return {incoming:incoming.count??0,approval:approval.count??0,leave:leave.data??[],responses:responses.data??[],problems:problems.data??[]};
   }});
   const chat=threads.reduce((a,t)=>a+t.n,0);
   const problems=data?.problems??[];
-  const count=chat+(data?.incoming??0)+(data?.approval??0)+(data?.leave??0)+problems.length;
+  const count=chat+(data?.incoming??0)+(data?.approval??0)+(data?.leave.length??0)+(data?.responses.length??0)+problems.length;
   const [open,setOpen]=useState(false);
   const item="h-auto w-full justify-start py-2";
   return <Popover open={open} onOpenChange={setOpen}><PopoverTrigger asChild><Button variant="ghost" size="icon" className="relative" aria-label={`Pending actions: ${count}`}><Bell className="h-5 w-5"/>{count>0&&<span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] text-destructive-foreground">{count}</span>}</Button></PopoverTrigger><PopoverContent align="end" className="max-h-[70vh] w-80 space-y-2 overflow-y-auto" onClick={(e)=>{if((e.target as HTMLElement).closest('a'))setOpen(false);}}><h2 className="font-medium">Pending actions</h2>{!count?<p className="text-sm text-muted-foreground">Nothing awaiting your attention.</p>:<>
@@ -64,6 +74,7 @@ export function ActionNotifications() {
     {problems.map(r=><Button key={r.id} asChild variant="outline" className={item}><Link to="/admin/jobs" search={{new:true,assetId:r.asset_id,problemId:r.id}}><Row icon={AlertTriangle}>Equipment problem: {r.problem}</Row></Link></Button>)}
     {!!data?.incoming&&<Button asChild variant="outline" className={item}><Link to="/standby"><Row icon={CalendarClock}>{data.incoming} on-call swap request(s)</Row></Link></Button>}
     {!!data?.approval&&<Button asChild variant="outline" className={item}><Link to="/standby"><Row icon={CalendarClock}>{data.approval} swap approval(s)</Row></Link></Button>}
-    {!!data?.leave&&<Button asChild variant="outline" className={item}><Link to="/admin/leave"><Row icon={CalendarDays}>{data.leave} leave consultation(s)</Row></Link></Button>}
+    {data?.leave.map(r=><Button key={r.id} asChild variant="outline" className={item}><Link to="/admin/leave" search={{request:r.id}}><Row icon={CalendarDays}>Leave consultation — respond</Row></Link></Button>)}
+    {data?.responses.map(r=><Button key={r.id} asChild variant="outline" className={item}><Link to="/admin/leave" search={{request:r.id}}><Row icon={CalendarDays}>Supervisor replied — review leave</Row></Link></Button>)}
   </>}</PopoverContent></Popover>;
 }

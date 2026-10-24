@@ -5199,7 +5199,12 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "superuser" | "admin" | "supervisor" | "technician"
+      app_role:
+        | "superuser"
+        | "admin"
+        | "supervisor"
+        | "technician"
+        | "maintenance"
       custom_field_target: "asset" | "job_sheet" | "client"
       custom_field_type: "text" | "number" | "dropdown" | "date" | "checkbox"
       job_status:
@@ -5337,7 +5342,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["superuser", "admin", "supervisor", "technician"],
+      app_role: [
+        "superuser",
+        "admin",
+        "supervisor",
+        "technician",
+        "maintenance",
+      ],
       custom_field_target: ["asset", "job_sheet", "client"],
       custom_field_type: ["text", "number", "dropdown", "date", "checkbox"],
       job_status: [

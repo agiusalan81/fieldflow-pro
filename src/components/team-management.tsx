@@ -14,7 +14,7 @@ import { EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-const invitable = (r: Role): Role[] => r === "superuser" ? ["technician", "supervisor", "admin", "superuser"] : r === "admin" ? ["technician", "supervisor", "admin"] : ["technician", "supervisor"];
+const invitable = (r: Role): Role[] => r === "superuser" ? ["technician", "maintenance", "supervisor", "admin", "superuser"] : r === "admin" ? ["technician", "maintenance", "supervisor", "admin"] : r === 'supervisor' ? ["technician", "maintenance", "supervisor"] : [];
 
 export function TeamManagement({ role, companyId, meId, tab }: { role: Role; companyId: string; meId: string; tab: "roster" | "invites" }) {
   const qc = useQueryClient();

@@ -3,7 +3,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useCompanyUsers, isManager } from "@/lib/profile";
+import { useCompanyUsers, isManager, ROLE_LABEL } from "@/lib/profile";
+import { dwrEligible } from '@/lib/testing-rules';
 import { usePreviewProfile } from "@/lib/impersonation";
 import { downloadDwr } from "@/lib/dwr-report";
 import type { DwrRow } from "@/lib/dwr";
@@ -63,10 +64,10 @@ function DwrPage() {
           <div className="space-y-1"><Label className="text-xs">From</Label><Input type="date" className="h-10" value={from} onChange={(e) => setFrom(e.target.value)} /></div>
           <div className="space-y-1"><Label className="text-xs">To</Label><Input type="date" className="h-10" value={to} onChange={(e) => setTo(e.target.value)} /></div>
           {manager && (
-            <div className="space-y-1"><Label className="text-xs">Technician</Label>
+            <div className="space-y-1"><Label className="text-xs">Field staff</Label>
               <Select value={tech} onValueChange={setTech}>
                 <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="all">All technicians</SelectItem>{users.map((u) => <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>)}</SelectContent>
+                <SelectContent><SelectItem value="all">All technicians & supervisors</SelectItem>{users.filter(u => dwrEligible(u.role)).map((u) => <SelectItem key={u.id} value={u.id}>{u.full_name} · {ROLE_LABEL[u.role]}</SelectItem>)}</SelectContent>
               </Select>
             </div>
           )}

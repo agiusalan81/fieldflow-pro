@@ -2,11 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useSyncExternalStore } from "react";
 
 /** UI-only "View As" mode. Data access is still enforced by the real role on the server. */
-export type Role = "superuser" | "admin" | "supervisor" | "technician";
+export type Role = "superuser" | "admin" | "supervisor" | "technician" | "maintenance";
 export type ViewAs = Role;
 export const canViewAsRoles = (realRole?: Role) => realRole === "superuser";
 export const resolveDisplayedRole = (realRole: Role, viewAs: ViewAs | null): Role => canViewAsRoles(realRole) && viewAs ? viewAs : realRole;
-export const ROLE_LABEL: Record<Role, string> = { superuser: "Company Superuser", admin: "Office Admin", supervisor: "Supervisor", technician: "Technician" };
+export const ROLE_LABEL: Record<Role, string> = { superuser: "Company Superuser", admin: "Office Admin", supervisor: "Supervisor", technician: "Technician", maintenance: 'General Maintenance' };
 const VIEW_KEY = "fieldops:view-as";
 const listeners = new Set<() => void>();
 export function setViewAs(v: ViewAs | null) {
@@ -71,7 +71,7 @@ function useRealProfile() {
   });
 }
 
-export const isManager = (p?: Profile | null) => !!p && p.role !== "technician";
+export const isManager = (p?: Profile | null) => !!p && ['superuser','admin','supervisor'].includes(p.role);
 /** Superuser or Office Admin (the commercial side). */
 export const isOffice = (p?: Profile | null) => p?.role === "admin" || p?.role === "superuser";
 
@@ -81,7 +81,9 @@ export function useCompanyUsers() {
     queryFn: async () => {
       const { data, error } = await supabase.from("users").select("id, full_name, role, technician_initials").order("full_name");
       if (error) throw error;
-      return data;
+      const roles = await supabase.from('user_roles').select('user_id,role');
+      if (roles.error) throw roles.error;
+      return data.map(u => ({ ...u, role: (roles.data.find(r => r.user_id === u.id)?.role ?? u.role) as Role }));
     },
   });
 }

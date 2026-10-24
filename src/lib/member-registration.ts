@@ -10,9 +10,10 @@ export function memberFullName(firstName: string, surname: string) {
 }
 /** Team lists show the viewer's level and below: supervisor → supervisors + technicians; office admin → + admins; superuser → everyone. */
 export function visibleRoles(viewer: Role): Role[] {
-  if (viewer === "superuser") return ["technician", "supervisor", "admin", "superuser"];
-  if (viewer === "admin") return ["technician", "supervisor", "admin"];
-  if (viewer === "supervisor") return ["technician", "supervisor"];
+  if (viewer === "superuser") return ["technician", "maintenance", "supervisor", "admin", "superuser"];
+  if (viewer === "admin") return ["technician", "maintenance", "supervisor", "admin"];
+  if (viewer === "supervisor") return ["technician", "maintenance", "supervisor"];
+  if (viewer === 'maintenance') return ['maintenance','technician'];
   return ["technician"];
 }
 export const canSeeMember = (viewer: Role, target: Role) => visibleRoles(viewer).includes(target);

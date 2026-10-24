@@ -11,6 +11,8 @@ import { ROLE_LABEL } from "@/lib/profile";
 import { getInvitation } from "@/lib/invites.functions";
 import { withInviteTimeout } from "@/lib/invite-loading";
 import { memberFullName, splitMemberName } from "@/lib/member-registration";
+import { PasswordInput } from '@/components/password-input';
+import { passwordsMatch } from '@/lib/testing-rules';
 
 const invitationQuery = (token: string) => queryOptions({
   queryKey: ["invitation", token],
@@ -63,7 +65,7 @@ function JoinPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const initialName = splitMemberName(invite?.full_name ?? "");
-  const [f, setF] = useState({ ...initialName, email: invite?.email ?? "", password: "" });
+  const [f, setF] = useState({ ...initialName, email: invite?.email ?? "", password: "", confirmation: "" });
   const [signedIn, setSignedIn] = useState(false);
   const [checkingAccount, setCheckingAccount] = useState(true);
   const [emailMode, setEmailMode] = useState(false);
@@ -104,6 +106,7 @@ function JoinPage() {
   const submit = async (e: FormEvent) => {
     e.preventDefault(); setBusy(true); setError(null);
     try {
+      if (!passwordsMatch(f.password, f.confirmation)) throw new Error('Passwords must match and contain at least 8 characters.');
       const fullName = memberFullName(f.firstName, f.surname);
       sessionStorage.setItem("fieldflow:pending-invite", token);
       const { data, error } = await withInviteTimeout(() => supabase.auth.signUp({
@@ -123,6 +126,6 @@ function JoinPage() {
       : signedIn ? <form onSubmit={accept} className="space-y-4"><h1 className="text-2xl font-semibold">Confirm your name</h1><p className="text-sm text-muted-foreground">Join {invite.company_name} as {ROLE_LABEL[invite.role]}.</p><p className="break-all text-sm">Signed in as <b>{f.email}</b></p>{invite.email && invite.email.toLowerCase() !== f.email.toLowerCase() && <div role="alert" className="space-y-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm"><p>This invitation is for <b className="break-all">{invite.email}</b>. You are signed in with a different account.</p><Button type="button" variant="destructive" className="w-full" onClick={async () => { qc.clear(); await supabase.auth.signOut(); setSignedIn(false); setF((c) => ({ ...c, email: invite.email ?? "" })); }}>Sign out & continue registration</Button></div>}{names}{error && <p role="alert" className="text-sm text-destructive">{error}</p>}<Button type="submit" className="h-11 w-full" disabled={busy}>{busy ? "Joining…" : "Confirm & enter"}</Button><Button type="button" variant="ghost" className="w-full" onClick={async () => { qc.clear(); await supabase.auth.signOut(); setSignedIn(false); }}>Use a different account</Button></form>
       : !invite.valid ? <p>This invite link is invalid, already used or expired. Ask your manager for a new one.</p>
       : sent ? <div className="space-y-3"><h1 className="text-xl font-semibold">Check your email</h1><p>Confirm your account using the email link, then return here to continue.</p></div>
-      : <div className="space-y-4"><h1 className="text-2xl font-semibold">Join {invite.company_name}</h1><p className="text-sm text-muted-foreground">You’re invited as {ROLE_LABEL[invite.role]}.</p>{!emailMode ? <><SocialSignin inviteToken={token} onError={setError} onSuccess={detect}/><Button variant="secondary" className="h-11 w-full" onClick={() => setEmailMode(true)}>Join with email</Button>{error && <p role="alert" className="text-sm text-destructive">{error}</p>}</> : <form onSubmit={submit} className="space-y-4">{names}<div className="space-y-1.5"><Label htmlFor="invite-email">Email</Label><Input id="invite-email" required type="email" autoComplete="email" className="h-11" readOnly={!!invite.email} value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })}/></div><div className="space-y-1.5"><Label htmlFor="invite-password">Password</Label><Input id="invite-password" required minLength={8} type="password" autoComplete="new-password" className="h-11" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })}/></div>{error && <p role="alert" className="text-sm text-destructive">{error}</p>}<Button type="submit" className="h-11 w-full" disabled={busy}>{busy ? "Joining…" : "Join team"}</Button><Button type="button" variant="ghost" className="w-full" onClick={() => setEmailMode(false)}>Other sign-in options</Button></form>}</div>}
+      : <div className="space-y-4"><h1 className="text-2xl font-semibold">Join {invite.company_name}</h1><p className="text-sm text-muted-foreground">You’re invited as {ROLE_LABEL[invite.role]}.</p>{!emailMode ? <><SocialSignin inviteToken={token} onError={setError} onSuccess={detect}/><Button variant="secondary" className="h-11 w-full" onClick={() => setEmailMode(true)}>Join with email</Button>{error && <p role="alert" className="text-sm text-destructive">{error}</p>}</> : <form onSubmit={submit} className="space-y-4">{names}<div className="space-y-1.5"><Label htmlFor="invite-email">Email</Label><Input id="invite-email" required type="email" autoComplete="email" className="h-11" readOnly={!!invite.email} value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })}/></div><div className="space-y-1.5"><Label htmlFor="invite-password">Password</Label><PasswordInput id="invite-password" value={f.password} onChange={password => setF({ ...f, password })}/></div><div className="space-y-1.5"><Label htmlFor="invite-confirm-password">Confirm password</Label><PasswordInput id="invite-confirm-password" value={f.confirmation} onChange={confirmation => setF({ ...f, confirmation })}/>{f.confirmation && f.password !== f.confirmation && <p role="alert" className="text-sm text-destructive">Passwords do not match.</p>}</div>{error && <p role="alert" className="text-sm text-destructive">{error}</p>}<Button type="submit" className="h-11 w-full" disabled={busy}>{busy ? "Joining…" : "Join team"}</Button><Button type="button" variant="ghost" className="w-full" onClick={() => setEmailMode(false)}>Other sign-in options</Button></form>}</div>}
   </InviteFrame>;
 }

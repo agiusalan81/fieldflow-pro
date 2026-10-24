@@ -32,17 +32,18 @@ import { useUserPreview, clearUserPreview } from "@/lib/impersonation";
 import { UserPreviewControl, UserPreviewBanner } from "@/components/user-preview";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { PlatformFeedback } from "@/components/platform-feedback";
+import { LockedModule, ModulePreview, MODULE_ROUTE } from '@/components/module-preview';
 
-type NavItem = { to: string; label: string; icon: typeof Clock; module?: ModuleKey; office?: boolean; group: string; feature?: string };
+type NavItem = { to: string; label: string; icon: typeof Clock; module?: ModuleKey; office?: boolean; group: string; feature?: string | undefined; locked?: boolean };
 
 const techNav: NavItem[] = [
-  { group: "Field work", to: "/dashboard", label: "Today", icon: LayoutDashboard },
+  { group: "Field work", to: "/dashboard", label: "Today & team", icon: LayoutDashboard },
+  { group: "Field work", to: "/sheets", label: "My job sheets", icon: ClipboardList },
+  { group: "Field work", to: "/schedule", label: "My schedule", icon: CalendarClock },
   { group: "Field work", to: "/expenses", label: "Log expense", icon: FileText, feature: "receipts" },
-  { group: "Field work", to: "/sheets", label: "Job sheets", icon: ClipboardList },
-  { group: "Field work", to: "/schedule", label: "Schedule", icon: CalendarClock },
+  { group: "Field work", to: "/technical-library", label: "Technical library", icon: FileText, feature: "technical_library" },
   { group: "Field work", to: "/available-jobs", label: "Available jobs", icon: Hammer, feature: "skills_dispatch" },
   { group: "Field work", to: "/skills", label: "My skills", icon: UserCheck, feature: "skills_dispatch" },
-  { group: "Field work", to: "/technical-library", label: "Technical library", icon: FileText, feature: "technical_library" },
   { group: "Field work", to: "/messages", label: "Team chat", icon: MessageSquare },
   { group: "Field work", to: "/as-built", label: "Site survey", icon: Calculator, feature: "qs_pricing" },
   { group: "Time & roster", to: "/dwr", label: "My daily reports", icon: FileText },
@@ -54,12 +55,12 @@ const techNav: NavItem[] = [
 ];
 
 const adminNav: NavItem[] = [
-  { group: "Operations", to: "/expenses", label: "Log expense", icon: FileText, feature: "receipts" },
   { group: "Operations", to: "/dashboard", label: "Overview", icon: LayoutDashboard },
-  { group: "Operations", to: "/technical-library", label: "Technical library", icon: FileText, feature: "technical_library" },
   { group: "Operations", to: "/admin/jobs", label: "Job sheets", icon: ClipboardList },
-  { group: "Operations", to: "/pending-works", label: "Pending works", icon: Hammer, module: "pending_works" },
+  { group: "Operations", to: "/pending-works", label: "Pending Works", icon: Hammer, module: "pending_works" },
+  { group: "Operations", to: "/expenses", label: "Log expense", icon: FileText, feature: "receipts" },
   { group: "Operations", to: "/admin/inventory", label: "Inventory", icon: Package, module: "inventory" },
+  { group: "Field work", to: "/technical-library", label: "Technical library", icon: FileText, feature: "technical_library" },
   { group: "Team & roster", to: "/team", label: "Team", icon: UserCheck },
   { group: "Team & roster", to: "/skills", label: "Skills & specialties", icon: UserCheck, feature: "skills_dispatch" },
   { group: "Team & roster", to: "/messages", label: "Team chat", icon: MessageSquare },
@@ -88,10 +89,10 @@ const adminNav: NavItem[] = [
 
 /** Supervisors follow the technician menu for their own day, plus a team section. */
 const supervisorNav: NavItem[] = [
-  { group: "Field work", to: "/expenses", label: "Log expense", icon: FileText, feature: "receipts" },
   { group: "Field work", to: "/dashboard", label: "Today & team", icon: LayoutDashboard },
   { group: "Field work", to: "/sheets", label: "My job sheets", icon: ClipboardList },
   { group: "Field work", to: "/schedule", label: "My schedule", icon: CalendarClock },
+  { group: "Field work", to: "/expenses", label: "Log expense", icon: FileText, feature: "receipts" },
   { group: "Field work", to: "/technical-library", label: "Technical library", icon: FileText, feature: "technical_library" },
   { group: "Team", to: "/admin/jobs", label: "Team job sheets & dispatch", icon: Send },
   { group: "Team", to: "/live-map", label: "Live team map", icon: MapPin },
@@ -142,7 +143,7 @@ function NavLinks({ items, onNavigate, uid }: { items: NavItem[]; onNavigate?: (
             </button>
             {open && (
               <div className="mb-1 flex flex-col gap-0.5 pl-1">
-                {items.filter((i) => i.group === g).map((i) => (
+                {items.filter((i) => i.group === g).map((i) => i.locked ? <LockedModule key={i.to} feature={i.feature ?? 'core'} label={i.label}><i.icon className="h-4 w-4 shrink-0"/></LockedModule> : (
                   <Link key={i.to} to={i.to}
                     onClick={() => { if (uid) recordUsage(uid, i.to); onNavigate?.(); }}
                     className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
@@ -242,7 +243,8 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   const planOn = usePlanFeatures(!!actor);
   const office = isOffice(profile);
   const extraNav: NavItem[] = [];
-  const baseItems = [...(profile?.role === "supervisor" ? supervisorNav : manager ? adminNav : techNav), ...extraNav].filter((i) => (i.to !== "/subscription" || profile?.role === "superuser") && (i.to !== "/company" || office) && (!i.office || office) && (!i.module || can(i.module) || (i.to === "/company" && office)) && (!i.feature || planOn(i.feature)));
+  const baseItems = [...(profile?.role === "supervisor" ? supervisorNav : manager ? adminNav : techNav), ...extraNav].filter((i) => (i.to !== "/subscription" || profile?.role === "superuser") && (i.to !== "/company" || office) && (!i.office || office) && (!i.module || can(i.module) || (i.to === "/company" && office))).map(i => { const feature = i.feature ?? MODULE_ROUTE[i.to] ?? (['/admin/jobs','/pending-works','/admin/inventory','/admin/entities','/qr-codes','/sheets','/schedule','/team','/team-invites','/dwr','/admin/leave','/leave'].includes(i.to) ? 'core' : undefined); return { ...i, feature, locked: !!feature && !planOn(feature) }; });
+  const lockedFeature = MODULE_ROUTE[path] ?? baseItems.find(i => i.to === path)?.feature;
   const canSwitch = profile && canViewAsRoles(profile.real_role) && !preview.active;
 
   const { data: company } = useCompanyRules();
@@ -350,10 +352,10 @@ export function AppShell({ title, actions, children }: { title: string; actions?
         {actor && !preview.active && <ProfileCompletionGate profile={actor} />}
         <main className="tenant-workspace flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
           {actor && !preview.active && <DepartureAlerts userId={actor.id} />}
-          {profile && path === "/dashboard" && !preview.active && <QuickActions items={items} uid={profile.id} role={profile.role} manager={manager} />}
+          {profile && path === "/dashboard" && !preview.active && <QuickActions items={items.filter(i => !i.locked)} uid={profile.id} role={profile.role} manager={manager} />}
           {!preview.active && <LocationSharing />}
           
-          {children}
+          {lockedFeature && !planOn(lockedFeature) ? <ModulePreview feature={lockedFeature} title={title}/> : children}
         </main>
       </div>
 
