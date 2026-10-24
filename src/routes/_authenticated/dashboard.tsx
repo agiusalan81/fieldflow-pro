@@ -139,6 +139,77 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
   );
 }
 
+type OpenJob = { id: string; job_number: number; client_name: string | null; site_name: string | null; scheduled_date: string; window_start: string | null; window_end: string | null; priority: string; problem_summary: string | null; places_left: number; required_team_size: number; skills: string[] | null };
+
+/** Open-to-claim jobs for clocked-in field staff, with a repeating 5-minute alarm until claimed or dismissed. */
+function UpForGrabs({ profile }: { profile: Profile }) {
+  const qc = useQueryClient();
+  const feature = usePlanFeatures(true);
+  const smart = feature("skills_dispatch");
+  const [dismissed, setDismissed] = useState<ReadonlySet<string>>(new Set());
+  const [busy, setBusy] = useState<string | null>(null);
+  const clocked = useQuery({
+    queryKey: ["my-open-shift", profile.id],
+    refetchInterval: 30_000,
+    queryFn: async () => {
+      const { data } = await supabase.from("shifts").select("id").eq("user_id", profile.id).is("ended_at", null).in("shift_type", ["shift", "standby"]).limit(1);
+      return (data ?? []).length > 0;
+    },
+  });
+  const jobs = useQuery({
+    queryKey: ["open-jobs"],
+    enabled: smart,
+    refetchInterval: 30_000,
+    queryFn: async () => { const r = await supabase.rpc("open_jobs_for_me"); if (r.error) throw r.error; return (r.data ?? []) as OpenJob[]; },
+  });
+  const alerting = alarmJobs(jobs.data ?? [], dismissed);
+  const ringing = smart && clocked.data === true && alerting.length > 0;
+  useEffect(() => {
+    if (!ringing) return;
+    chime();
+    const t = setInterval(chime, OPEN_JOB_ALARM_MS);
+    return () => clearInterval(t);
+  }, [ringing, alerting.map((j) => j.id).join(",")]);
+  if (!smart || !(jobs.data ?? []).length) return null;
+  const claim = async (id: string) => {
+    setBusy(id);
+    const r = await supabase.rpc("claim_open_job", { _job: id });
+    setBusy(null);
+    if (r.error) toast.error(r.error.message);
+    else { toast.success(r.data === "lead" ? "Job claimed — you are the lead" : "You joined the crew"); setDismissed((s) => new Set([...s, id])); }
+    qc.invalidateQueries({ queryKey: ["open-jobs"] }); qc.invalidateQueries({ queryKey: ["today-jobs"] }); qc.invalidateQueries({ queryKey: ["schedule"] });
+  };
+  return (
+    <section className="space-y-3 rounded-xl border-2 border-warning bg-warning/10 p-4" aria-label="Jobs up for grabs">
+      <div className="flex items-center gap-2">
+        <Megaphone className={`h-5 w-5 text-warning ${ringing ? "animate-pulse" : ""}`} />
+        <h2 className="font-medium text-foreground">Up for grabs ({alerting.length || (jobs.data ?? []).length})</h2>
+        {ringing && <span className="rounded-full bg-warning px-2 py-0.5 text-xs font-medium text-warning-foreground">Alarm every 5 min until claimed</span>}
+      </div>
+      {!clocked.data && <p className="text-sm text-muted-foreground">Clock in to claim these jobs.</p>}
+      <ul className="grid gap-3 md:grid-cols-2">
+        {(jobs.data ?? []).map((j) => (
+          <li key={j.id} className="space-y-2 rounded-lg border bg-card p-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="truncate font-medium text-foreground">#{j.job_number} · {j.client_name ?? "Client"}{j.site_name ? ` · ${j.site_name}` : ""}</p>
+                <p className="text-xs text-muted-foreground">{j.scheduled_date}{j.window_start ? ` · ${timeWindow(j.window_start, j.window_end)}` : ""} · <span className="capitalize">{j.priority}</span></p>
+              </div>
+              <span className="shrink-0 rounded-md border bg-muted px-2 py-1 text-xs">{j.places_left} of {j.required_team_size} left</span>
+            </div>
+            {j.problem_summary && <p className="line-clamp-2 text-sm text-foreground">{j.problem_summary}</p>}
+            {!!j.skills?.length && <div className="flex flex-wrap gap-1">{j.skills.map((s) => <span key={s} className="rounded-full border px-2 py-0.5 text-xs">{s}</span>)}</div>}
+            <div className="flex gap-2">
+              <Button size="sm" className="flex-1" disabled={busy !== null || !clocked.data} onClick={() => claim(j.id)}>{busy === j.id ? "Claiming…" : "Claim job"}</Button>
+              <Button size="sm" variant="ghost" onClick={() => setDismissed((s) => new Set([...s, j.id]))}>Dismiss</Button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function TechToday({ profile, readOnly, switcher }: { profile: Profile; readOnly: boolean; switcher?: ReactNode }) {
   const navigate = useNavigate();
   const today = new Date().toISOString().slice(0, 10);
