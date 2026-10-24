@@ -9,6 +9,7 @@ import { useProfile, isManager, ROLE_LABEL } from "@/lib/profile";
 import { canSeeMember } from "@/lib/member-registration";
 import type { Role } from "@/lib/profile";
 import { AppShell, EmptyState } from "@/components/app-shell";
+import {AVAILABILITY_ORDER, activeAvailabilityMember, availabilityStatus, type Availability} from '@/lib/team-availability';
 
 export const Route = createFileRoute("/_authenticated/team")({ staticData: { sitemap: false },
   head: () => ({
@@ -24,18 +25,18 @@ export const Route = createFileRoute("/_authenticated/team")({ staticData: { sit
   component: TeamPage,
 });
 
-type Status = "clocked_in" | "travelling" | "sick" | "leave" | "available";
-const LABEL: Record<Status, string> = { clocked_in: "Clocked in", travelling: "Travelling", sick: "Sick", leave: "On leave", available: "Available / off shift" };
+type Status = Availability;
+const LABEL: Record<Status, string> = { clocked_in: "Clocked in", travelling: "Travelling", standby: "On standby", sick: "Sick", leave: "On leave", off_shift: "Off shift" };
 const CLS: Record<Status, string> = {
-  clocked_in: "bg-success/15 text-success", travelling: "bg-warning/25 text-foreground", sick: "bg-destructive/10 text-destructive",
-  leave: "bg-primary/10 text-primary", available: "bg-muted text-muted-foreground",
+  clocked_in: "bg-success text-success-foreground", travelling: "bg-warning text-warning-foreground", standby: "bg-primary text-primary-foreground", sick: "bg-destructive/10 text-destructive",
+  leave: "bg-primary/10 text-primary", off_shift: "border border-destructive/40 bg-destructive/10 text-destructive",
 };
 
 function LiveAvailability() {
   const { data: profile } = useProfile();
   const today = new Date().toISOString().slice(0, 10);
   const { data } = useQuery({
-    queryKey: ["team-availability", today],
+    queryKey: ["team-availability", profile?.id, today],
     enabled: isManager(profile),
     refetchInterval: 30_000,
     queryFn: async () => {
@@ -45,27 +46,25 @@ function LiveAvailability() {
         supabase.from("leave_requests").select("user_id, leave_type, end_date").eq("status", "approved").lte("start_date", today).gte("end_date", today),
       ]);
       if (u.error) throw u.error; if (s.error) throw s.error; if (l.error) throw l.error;
-      return { users: (u.data ?? []).filter(u => u.registration_status === "active"), shifts: s.data ?? [], leave: l.data ?? [] };
+      return { users: (u.data ?? []).filter(u => activeAvailabilityMember(u.registration_status)), shifts: s.data ?? [], leave: l.data ?? [] };
     },
   });
   if (!isManager(profile)) return <AppShell title="Team availability"><EmptyState>Only supervisors and office staff can see team availability.</EmptyState></AppShell>;
   const statusOf = (id: string): { s: Status; sub: string } => {
     const lv = data?.leave.find((x) => x.user_id === id);
-    if (lv) return { s: lv.leave_type === "Sick" && (profile?.role === "admin" || profile?.role === "superuser") ? "sick" : "leave", sub: `until ${new Date(lv.end_date + "T00:00").toLocaleDateString()}` };
     const sh = data?.shifts.filter((x) => x.user_id === id) ?? [];
-    const tr = sh.find((x) => x.shift_type === "travel");
-    const on = sh.find((x) => x.shift_type === "shift");
-    if (tr) return { s: "travelling", sub: `since ${new Date(tr.started_at).toTimeString().slice(0, 5)}` };
-    if (on) return { s: "clocked_in", sub: `since ${new Date(on.started_at).toTimeString().slice(0, 5)}` };
-    return { s: "available", sub: "" };
+    const s = availabilityStatus(sh, lv?.leave_type, profile?.role === 'admin' || profile?.role === 'superuser');
+    if (lv) return {s, sub: `until ${new Date(lv.end_date + "T00:00").toLocaleDateString()}`};
+    const current = sh.find(x => x.shift_type === (s === 'travelling' ? 'travel' : s === 'standby' ? 'standby' : 'shift'));
+    return {s, sub: current ? `since ${new Date(current.started_at).toTimeString().slice(0, 5)}` : ''};
   };
-  const rows = (data?.users ?? []).filter((u) => !!profile && canSeeMember(profile.role, u.role as Role)).map((u) => ({ u, ...statusOf(u.id) }));
+  const rows = (data?.users ?? []).filter((u) => activeAvailabilityMember(u.registration_status) && !!profile && canSeeMember(profile.role, u.role as Role)).map((u) => ({ u, ...statusOf(u.id) })).sort((a,b)=>AVAILABILITY_ORDER.indexOf(a.s)-AVAILABILITY_ORDER.indexOf(b.s)||a.u.full_name.localeCompare(b.u.full_name));
   const counts = (Object.keys(LABEL) as Status[]).map((k) => [k, rows.filter((r) => r.s === k).length] as const);
   return (
     <>
       <div className="mx-auto max-w-4xl space-y-4">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-          {counts.map(([k, n]) => <div key={k} className="rounded-xl border bg-card p-3"><p className="font-display text-2xl text-foreground">{n}</p><p className="text-xs text-muted-foreground">{LABEL[k]}</p></div>)}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {counts.map(([k, n]) => <div key={k} className={`rounded-lg p-3 ${CLS[k]}`}><p className="font-display text-2xl">{n}</p><p className="text-xs">{LABEL[k]}</p></div>)}
         </div>
         <ul className="divide-y rounded-xl border bg-card">
           {rows.map(({ u, s, sub }) => (

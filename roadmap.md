@@ -1,4 +1,9 @@
 # Roadmap
+- [ ] Desktop permission setup never blocks PC users
+- [ ] Distinct team statuses and active-only live availability
+- [ ] Shared normal/pending dispatch with categorized multi-select skills, HQ-gated
+- [ ] Receipt autocrop improvements and receipt thumbnails
+- [ ] Verify the approved operational flows
 - [x] Swap notifications open the exact request with Accept, Decline and Snooze actions
 - [x] Company Superuser Team dispatch entry and clearly reachable new-job creation
 - [x] Custom on-call rotation days and active-only roster/swap choices with terminated placement flags

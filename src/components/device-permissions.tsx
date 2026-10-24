@@ -17,15 +17,15 @@ async function geoState(): Promise<Geo> {
 export function DevicePermissions() {
   const { data: profile } = useProfile();
   const on = usePlanFeatures(!!profile);
-  const [mobile, setMobile] = useState(true);
+  const [mobile, setMobile] = useState(false);
   const field = on('tracking') && !!profile && ['technician','supervisor','maintenance'].includes(profile.real_role);
   const [push, setPush] = useState<PushStatus | null>(null);
   const [geo, setGeo] = useState<Geo | null>(null);
   const [busy, setBusy] = useState(false);
   const [later, setLater] = useState(false);
   const check = async () => { setPush(await registerPush()); setGeo(await geoState()); };
-  useEffect(() => { setMobile(isMobileDevice(navigator.userAgent)); if (profile) { setLater(localStorage.getItem(`fieldbridge:device-setup:${profile.id}`) === 'dismissed'); void check(); } }, [profile?.id]);
-  if (!profile || push === null || geo === null) return null;
+  useEffect(() => { const phone = isMobileDevice(navigator.userAgent); setMobile(phone); if (phone && profile) { setLater(localStorage.getItem(`fieldbridge:device-setup:${profile.id}`) === 'dismissed'); void check(); } }, [profile?.id]);
+  if (!mobile || !profile || push === null || geo === null) return null;
   const pushOk = push === "registered" || push === "unsupported";
   const geoOk = !field || geo === "granted" || geo === "unsupported";
   const blocked = push === "blocked" || (field && geo === "denied");
