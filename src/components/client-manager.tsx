@@ -1,6 +1,7 @@
 import { EquipmentQr } from "@/components/equipment-qr";
 import { ClientPortalInvitationGate } from '@/components/client-portal-invitation-gate';
 import { useClientPortalAccess } from '@/lib/client-portal-access';
+import { usePlanFeatures } from '@/lib/plan-features';
 import { PORTAL_URL } from '@/lib/client-routing';
 import { labelKey, uniqueLabels } from "@/lib/attention-rules";
 import { parsePhone } from "@/lib/contact-details";
@@ -74,6 +75,7 @@ const emptyContact = (): ContactDraft => ({ first_name: "", last_name: "", email
 /** siteId: undefined = every contact of the client, null = head-office contacts, string = that site's contacts. */
 export function ContactsManager({ clientId, companyId, siteId, title = "Contacts" }: { clientId: string; companyId: string; siteId?: string | null; title?: string }) {
   const portalAccess = useClientPortalAccess();
+  const management = usePlanFeatures()('client_management');
   const qc = useQueryClient();
   const { data: profile } = useProfile();
   const key = ["client-contacts", clientId];
@@ -86,10 +88,11 @@ export function ContactsManager({ clientId, companyId, siteId, title = "Contacts
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!editing) return;
     const row = { first_name: f.first_name, last_name: f.last_name, email: f.email, phone: `${f.code} ${f.number}`.trim(), role_title: f.role_title.trim() || null, is_primary_contact: f.is_primary_contact, receives_job_sheets: f.receives_job_sheets, has_whatsapp: f.has_whatsapp };
     const { error } = editing === "new"
       ? await supabase.from("client_contacts").insert({ ...row, client_id: clientId, company_id: companyId, site_id: siteId ?? null })
-      : await supabase.from("client_contacts").update(row).eq("id", editing!);
+      : await supabase.from("client_contacts").update(row).eq("id", editing);
     if (error) { toast.error(error.message); return; }
     if (profile && row.role_title) await learnContactRole(row.role_title, companyId, profile.id);
     setEditing(null); refresh();
@@ -143,13 +146,13 @@ export function ContactsManager({ clientId, companyId, siteId, title = "Contacts
         <h3 className="font-medium">{title}</h3>
         {editing === null && (
           <div className="flex gap-2">
-            {siteId !== undefined && others.length > 0 && (
+            {management && siteId !== undefined && others.length > 0 && (
               <Select value="" onValueChange={clone}>
                 <SelectTrigger className="h-9 w-40"><Copy className="mr-1 h-3.5 w-3.5" /><SelectValue placeholder="Copy contact" /></SelectTrigger>
                 <SelectContent>{others.map((c) => <SelectItem key={c.id} value={c.id}>{c.first_name} {c.last_name}{c.role_title ? ` · ${c.role_title}` : ""}</SelectItem>)}</SelectContent>
               </Select>
             )}
-            <Button size="sm" variant="outline" onClick={() => { setF(emptyContact()); setEditing("new"); }}><Plus className="mr-1 h-4 w-4" />Add contact</Button>
+            {(management || allContacts.length === 0) && <Button size="sm" variant="outline" onClick={() => { setF(emptyContact()); setEditing("new"); }}><Plus className="mr-1 h-4 w-4" />Add contact</Button>}
           </div>
         )}
       </div>

@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Kin, Profile } from "@/lib/profile";
 import { missingProfileFields } from "@/lib/field-rules";
-import { playChime } from "@/lib/chime";
+import { listenForChimeUnlock, playChime } from "@/lib/chime";
 import { notifyChatMessage } from "@/lib/chat-notify";
 import { PhoneInput, splitPhone } from "@/components/client-manager";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -79,6 +79,7 @@ const heard = new Set<string>();
 export function NotificationSounds({ profile }: { profile: Profile }) {
   const qc = useQueryClient();
   const on=usePlanFeatures(!!profile);const core=on('core');
+  useEffect(() => core ? listenForChimeUnlock() : undefined, [core]);
   useEffect(() => {
     if(!core)return;
     const uid = profile.id;

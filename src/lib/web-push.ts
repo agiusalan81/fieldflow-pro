@@ -87,8 +87,10 @@ export async function currentPushEndpoint(): Promise<string | undefined> {
 /** Asks for permission (must be called from a tap), then registers. */
 export async function enablePush(): Promise<PushStatus> {
   if (!pushSupported()) return "unsupported";
-  if (Notification.permission === "default") await Notification.requestPermission();
-  return registerPush();
+  try {
+    if (Notification.permission === "default") await Notification.requestPermission();
+    return await registerPush();
+  } catch { return "error"; }
 }
 
 export async function ensurePushSubscription(): Promise<boolean> {

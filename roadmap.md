@@ -1,4 +1,7 @@
 # Roadmap
+- [ ] Notification setup persists per device/account; gesture-unlocked chat sounds with regression tests
+- [ ] Newly registered HQ modules selectable in tiers without manual product-list drift
+- [ ] Plus-and-up staff sites/multiple contacts separate from optional portal; portal edits contacts/preferences only
 - [x] Internal client/site/contact management separated from portal access; invitations gated, routing guard corrected, 10 tests pass and client save/read-back verified
 - [x] Desktop permission setup never blocks PC users (touch check added)
 - [x] Distinct team statuses and active-only live availability ("Available" label, muted off-shift)

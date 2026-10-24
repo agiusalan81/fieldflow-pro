@@ -18,5 +18,5 @@ it('mounts staff contact management without querying a paid portal workspace', (
   render(<QueryClientProvider client={new QueryClient()}><SiteHierarchy clientId="client-a" companyId="tenant-a" /></QueryClientProvider>);
   expect(screen.getByText('Core contacts')).toBeInTheDocument();
   expect(calls.contacts).toHaveBeenCalledWith(expect.objectContaining({ clientId: 'client-a', companyId: 'tenant-a', siteId: null }));
-  expect(calls.rpc).not.toHaveBeenCalled();
+  expect(calls.rpc).not.toHaveBeenCalledWith('client_workspace', expect.anything());
 });

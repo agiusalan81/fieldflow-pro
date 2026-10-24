@@ -26,7 +26,7 @@
 - DWR: one canonical report/shift; retain corrected/superseded originals; filing clears held flags; 
 - Dispatch: lead plus optional assistant both read one sheet; only lead starts/edits; daily logs seed both initials; 
 - Overtime uses captured DWR intervals/rules; old reports show associated sites only; factual allocation.
-- Typography uses applyTypography/AppShell; locale uses locale.ts; 
+- Typography: applyTypography/AppShell; locale: locale.ts.
 - Branding shares asset-backed font IDs and preview/PDF decorations; DB/HQ locks protect saved values.
 - Auth emails share auth-brand.tsx; the managed handler owns verification and dispatch for reliable account recovery.
 - Company Settings retains visited sections while navigating; shared document-preview tabs power desktop and mobile previews; preserve drafts without implicit saves and keep previews consistent.
@@ -51,13 +51,13 @@
 - Receipts: account-scoped offline queues/private storage, HQ-gated writes, immutable attachments and original-page exports. Post-signature notes append privately, excluded from client projections.
 - Technical library: private storage/RLS; publish checks real/displayed supervisor/superuser; AI reads approved pages as caller; 
 - Leave/profile/clock-out handover rules use tested field-rules.ts plus guard_leave_decision; UI and DB agree.
-- HQ uses app_url, PLAN_FEATURES and owner-only toggles; isStorageAddon separates storage-only packs, retaining mixed feature bundles.
+- HQ merges registry/product/catalog module keys; catalog writes register keys atomically. Owner-only toggles; isStorageAddon separates storage packs.
 - Attention: guarded atomic pending RPCs/separate actions; never edit signed content; 
 - Dual-track rota keeps supervisor config separate from technician payroll; swaps need role-matched independent approval; leave impact/blackouts remain DB-validated.
 - Equipment QR: private routes/RLS; hashed revocable public lookup exposes only reference/category; reports stay bounded/throttled; private technical/client data.
 - Deletion shares record-deletion/DeleteVisit; office sheet and manager visit RLS apply; visit deletion keeps sheets, client-report FKs retain shared evidence.
 - QR dispatch closes only its matching report after visit insert, refreshes attention and clears URL state; failures warn against duplicate dispatch.
-- Chat compresses photos, not documents. Push uses a dedicated /push/ worker, retains legacy handlers, encrypts previews and tests only the caller's current device; provider acceptance is not delivery proof.
+- Chat compresses photos, not documents. Push: dedicated /push/ worker, legacy handlers, encrypted previews, caller-device tests; acceptance is not delivery proof. Audio unlocks on gestures; setup dismissal is account-scoped.
 - FieldBridge subscription invoices live in platform_invoices (frozen once issued by trigger) with rules in tested saas-billing.ts; storage usage via company_storage_usage RPC; 
 - Payments: superuser RLS checkout; signed webhook settles exact amounts idempotently; billing-daily runs renewals/charges/reminders; company_invoice_lapsed drives read-only.
 
@@ -68,7 +68,7 @@
 
 - PDF.js uses v4/canvasContext; newer Map APIs break field devices.
 - PPM uses per-agreement asset plans and anchored, unique job occurrences generated transactionally by a manager RPC; existing jobs/sheets retain manual workflows and HQ module guards. SLA status is derived on read; component events are append-only private evidence.
-- Portal RPCs guard sites/invites/modules; no employee roles. Staff use core ContactsManager; fail-closed invite gates keep contact edits pack-independent.
+- Portal site writes are staff-only; new contacts inherit scope. client_management and client_portal are independent, preserving legacy access.
 - Delivery uses client_message_recipients; preferences choose recipients, not unsupported channel delivery.
 - Own-shift RPC captures one-time GPS; failure never blocks clock-out; history distinguishes action fixes from breadcrumbs.
 - Tenant cards separate assignments/access; bespoke drafts freeze on submit, HQ reviews per product, samples stay private. Requests never charge/activate. Immediate setup is owner-only; ordinary setup retains timing/trial mode.

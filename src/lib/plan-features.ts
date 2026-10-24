@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 /** Features Platform HQ can include in plans/packs or switch on/off per company. */
 export const PLAN_FEATURES = [
   { key: "core", label: "Core: job sheets, schedule, clients, team" },
+  { key: "client_management", label: "Client management: sites & multiple contacts" },
   { key: "tracking", label: "Shift location & live map" },
   { key: "fleet_management", label: "Fleet Management: routes, mileage & fuel" },
   { key: "skills_dispatch", label: "Skills & Smart Dispatch: custom skills, crews, open jobs" },
@@ -36,6 +37,7 @@ export type PlanFeature = (typeof PLAN_FEATURES)[number]["key"];
 /** Plain-language overview of what each module unlocks, shown in HQ. */
 export const MODULE_DESCRIPTIONS: Record<string, string> = {
   core: "Job sheets, schedule, dispatch, clients, sites, equipment and team. Always included.",
+  client_management: "Staff-managed sites, multiple contacts and document delivery preferences. Included from Plus upwards; the customer portal is a separate optional pack.",
   tracking: "Technicians share location only while clocked in; managers see them on a live map.",
   fleet_management: "Vehicle list, daily routes and replay, mileage and fuel cost estimates.",
   skills_dispatch: "Custom skill catalogue, skill matching, crews larger than two, and open jobs technicians can claim.",

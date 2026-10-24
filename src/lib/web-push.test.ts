@@ -2,7 +2,7 @@ import { afterEach, expect, it, vi } from "vitest";
 
 const rpc = vi.hoisted(() => ({ getPushPublicKey: vi.fn(), savePushSubscription: vi.fn(), sendChatPush: vi.fn() }));
 vi.mock("@/lib/web-push.functions", () => rpc);
-import { currentPushEndpoint, registerPush } from "./web-push";
+import { currentPushEndpoint, enablePush, registerPush } from "./web-push";
 
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); vi.clearAllMocks(); });
 
@@ -43,6 +43,11 @@ it("does not subscribe a device with denied permission", async () => {
   const { register } = device("denied");
   expect(await registerPush()).toBe("blocked");
   expect(register).not.toHaveBeenCalled();
+});
+it('returns an honest error when the browser permission request rejects', async () => {
+  device('default');
+  vi.stubGlobal('Notification', { permission: 'default', requestPermission: vi.fn().mockRejectedValue(new Error('Browser refused')) });
+  expect(await enablePush()).toBe('error');
 });
 
 it("re-syncs an existing subscription without subscribing again", async () => {
