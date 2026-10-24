@@ -54,7 +54,7 @@ export function ActionNotifications() {
   const catsOn=!!p&&on('receipts')&&['admin','superuser','supervisor'].includes(p.role),leaveOn=core&&can('leave_approvals'),problemsOn=core&&manager&&can('pending_works');
   const {data}=useQuery({queryKey:['action-notifications',p?.id,core,standby,leaveOn,problemsOn,catsOn],enabled:!!p,refetchInterval:15000,queryFn:async()=>{
     if(!p)return {categories:[] as {id:string;name:string}[],incoming:0,approval:0,leave:[] as {id:string}[],responses:[] as {id:string}[],problems:[] as {id:string;asset_id:string;problem:string}[]};
-    const zero=Promise.resolve({count:0,error:null});
+    const zero=Promise.resolve({count:0,data:[],error:null});
     const empty=Promise.resolve({data:[] as {id:string}[],error:null});
     const [incoming,approval,leave,problems,responses,cats]=await Promise.all([
       standby?supabase.from('standby_swaps').select('id',{count:'exact',head:true}).eq('target_id',p.id).eq('status','pending'):zero,
