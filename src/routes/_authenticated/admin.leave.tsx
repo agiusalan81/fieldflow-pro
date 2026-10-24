@@ -13,7 +13,7 @@ import { AppShell, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/admin/leave")({ staticData: { sitemap: false },
-  validateSearch: (search: Record<string, unknown>): { request?: string } => ({ request: typeof search.request === 'string' && /^[a-f0-9-]{36}$/i.test(search.request) ? search.request : undefined }),
+  validateSearch: (search: Record<string, unknown>): { request?: string } => ({ ...(typeof search['request'] === 'string' && /^[a-f0-9-]{36}$/i.test(search['request']) ? {request:search['request']} : {}) }),
   head: () => ({
     meta: [
       { title: "Leave approvals — FieldBridge" },

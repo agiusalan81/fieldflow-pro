@@ -34,7 +34,7 @@ import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { PlatformFeedback } from "@/components/platform-feedback";
 import { LockedModule, ModulePreview, MODULE_ROUTE } from '@/components/module-preview';
 
-type NavItem = { to: string; label: string; icon: typeof Clock; module?: ModuleKey; office?: boolean; group: string; feature?: string; locked?: boolean };
+type NavItem = { to: string; label: string; icon: typeof Clock; module?: ModuleKey; office?: boolean; group: string; feature?: string | undefined; locked?: boolean };
 
 const techNav: NavItem[] = [
   { group: "Field work", to: "/dashboard", label: "Today & team", icon: LayoutDashboard },
