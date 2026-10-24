@@ -71,7 +71,7 @@ export function HQSetupPackage({ subscription, catalog, modules, overrides, comp
         if (r.error) throw r.error;
         note = ` Lower package starts at renewal on ${cur.data.period_end}.`;
       } else {
-        const r = await supabase.from("platform_subscriptions").update({ ...change, pending_change: null }).eq("id", subscription.id);
+        const r = await supabase.from("platform_subscriptions").update({ ...change, pending_change: null, trial_package_only: false }).eq("id", subscription.id);
         if (r.error) throw r.error;
         if (kind === "upgrade" && cur.data) {
           const pr = upgradeProration(oldPrice, newPrice, cur.data.period_start, cur.data.period_end, today);

@@ -9,6 +9,8 @@ export async function clockInShift(profile: Profile, plate: string) {
   const { error } = await supabase.from('shifts').insert({ shift_type: 'shift', company_id: profile.company_id, user_id: profile.id, vehicle_reg: normalizePlate(plate) });
   if (error) throw error;
   if (['technician','supervisor','maintenance'].includes(profile.real_role) && navigator.geolocation) {
+    const access=await supabase.rpc('company_module_access',{_company:profile.company_id,_module:'tracking'}).catch(()=>null);
+    if(!access?.data||access.error)return;
     navigator.geolocation.getCurrentPosition(() => {
       localStorage.setItem(`location-consent:${profile.id}`, 'yes');
       window.dispatchEvent(new Event('location-consent'));
