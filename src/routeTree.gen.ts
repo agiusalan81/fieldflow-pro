@@ -45,6 +45,7 @@ import { Route as AuthenticatedSubscriptionRouteImport } from './routes/_authent
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
 import { Route as AuthenticatedTeamInvitesRouteImport } from './routes/_authenticated/team-invites'
 import { Route as AuthenticatedTechnicalLibraryRouteImport } from './routes/_authenticated/technical-library'
+import { Route as ApproveTokenRouteImport } from './routes/approve.$token'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as ProblemTokenRouteImport } from './routes/problem.$token'
 import { Route as ReferralCodeRouteImport } from './routes/referral.$code'
@@ -252,6 +253,11 @@ const AuthenticatedTechnicalLibraryRoute =
     path: '/technical-library',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApproveTokenRoute = ApproveTokenRouteImport.update({
+  id: '/approve/$token',
+  path: '/approve/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const JoinTokenRoute = JoinTokenRouteImport.update({
   id: '/join/$token',
   path: '/join/$token',
@@ -412,6 +418,7 @@ export interface FileRoutesByFullPath {
   '/team': typeof AuthenticatedTeamRoute
   '/team-invites': typeof AuthenticatedTeamInvitesRoute
   '/technical-library': typeof AuthenticatedTechnicalLibraryRoute
+  '/approve/$token': typeof ApproveTokenRoute
   '/join/$token': typeof JoinTokenRoute
   '/problem/$token': typeof ProblemTokenRoute
   '/referral/$code': typeof ReferralCodeRoute
@@ -471,6 +478,7 @@ export interface FileRoutesByTo {
   '/team': typeof AuthenticatedTeamRoute
   '/team-invites': typeof AuthenticatedTeamInvitesRoute
   '/technical-library': typeof AuthenticatedTechnicalLibraryRoute
+  '/approve/$token': typeof ApproveTokenRoute
   '/join/$token': typeof JoinTokenRoute
   '/problem/$token': typeof ProblemTokenRoute
   '/referral/$code': typeof ReferralCodeRoute
@@ -532,6 +540,7 @@ export interface FileRoutesById {
   '/_authenticated/team': typeof AuthenticatedTeamRoute
   '/_authenticated/team-invites': typeof AuthenticatedTeamInvitesRoute
   '/_authenticated/technical-library': typeof AuthenticatedTechnicalLibraryRoute
+  '/approve/$token': typeof ApproveTokenRoute
   '/join/$token': typeof JoinTokenRoute
   '/problem/$token': typeof ProblemTokenRoute
   '/referral/$code': typeof ReferralCodeRoute
@@ -593,6 +602,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/team-invites'
     | '/technical-library'
+    | '/approve/$token'
     | '/join/$token'
     | '/problem/$token'
     | '/referral/$code'
@@ -652,6 +662,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/team-invites'
     | '/technical-library'
+    | '/approve/$token'
     | '/join/$token'
     | '/problem/$token'
     | '/referral/$code'
@@ -712,6 +723,7 @@ export interface FileRouteTypes {
     | '/_authenticated/team'
     | '/_authenticated/team-invites'
     | '/_authenticated/technical-library'
+    | '/approve/$token'
     | '/join/$token'
     | '/problem/$token'
     | '/referral/$code'
@@ -746,6 +758,7 @@ export interface RootRouteChildren {
   SecurityRoute: typeof SecurityRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
+  ApproveTokenRoute: typeof ApproveTokenRoute
   JoinTokenRoute: typeof JoinTokenRoute
   ProblemTokenRoute: typeof ProblemTokenRoute
   ReferralCodeRoute: typeof ReferralCodeRoute
@@ -1010,6 +1023,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/technical-library'
       preLoaderRoute: typeof AuthenticatedTechnicalLibraryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/approve/$token': {
+      id: '/approve/$token'
+      path: '/approve/$token'
+      fullPath: '/approve/$token'
+      preLoaderRoute: typeof ApproveTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/join/$token': {
       id: '/join/$token'
@@ -1276,6 +1296,7 @@ const rootRouteChildren: RootRouteChildren = {
   SecurityRoute: SecurityRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
+  ApproveTokenRoute: ApproveTokenRoute,
   JoinTokenRoute: JoinTokenRoute,
   ProblemTokenRoute: ProblemTokenRoute,
   ReferralCodeRoute: ReferralCodeRoute,

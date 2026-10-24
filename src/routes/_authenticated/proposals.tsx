@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { FileDown, Plus, Trash2, ArrowLeft } from "lucide-react";
+import { FileDown, Plus, Trash2, ArrowLeft, Link2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { useProfile, isManager } from "@/lib/profile";
@@ -72,6 +72,7 @@ function ListEditor({ label, items, onChange }: { label: string; items: string[]
 
 function Editor({ id, onBack }: { id: string; onBack: () => void }) {
   const qc = useQueryClient();
+  const on = usePlanFeatures();
   const { data: company } = useCompanyRules();
   const currency = company?.locale.currency ?? "EUR";
   const q = useQuery({ queryKey: ["proposal", id], queryFn: async () => { const r = await supabase.from("proposals").select("*, clients(name)").eq("id", id).single(); if (r.error) throw r.error; return r.data as unknown as Row; } });
@@ -91,6 +92,20 @@ function Editor({ id, onBack }: { id: string; onBack: () => void }) {
   const totals = proposalTotals(p.lines, p.terms);
   const money = (n: number) => n.toLocaleString(undefined, { style: "currency", currency });
   const subtypes = EQUIPMENT_TYPES[p.spec.equipment_type ?? ""] ?? [];
+  const approvalLink = async () => {
+    setBusy(true);
+    try {
+      const s = await supabase.from("proposals").update({ title: p.title, client_id: p.client_id, site_id: p.site_id, spec: p.spec as Json, lines: p.lines as unknown as Json, terms: p.terms as unknown as Json }).eq("id", id);
+      if (s.error) throw s.error;
+      const r = await supabase.rpc("create_proposal_approval_link", { _proposal: id });
+      if (r.error) throw r.error;
+      const url = `${window.location.origin}/approve/${r.data}`;
+      await navigator.clipboard.writeText(url).catch(() => undefined);
+      set({ status: "sent" });
+      qc.invalidateQueries({ queryKey: ["proposals"] });
+      toast.success("Approval link copied — valid for 30 days. Any earlier link was cancelled.");
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Could not create link"); } finally { setBusy(false); }
+  };
 
   const save = async () => {
     setBusy(true);
@@ -196,6 +211,7 @@ function Editor({ id, onBack }: { id: string; onBack: () => void }) {
     <div className="sticky bottom-0 flex flex-wrap gap-2 border-t bg-background py-3">
       <Button disabled={busy} onClick={save}>Save</Button>
       <Button variant="outline" disabled={busy} onClick={pdf}><FileDown className="mr-1 h-4 w-4" />Download A4 PDF</Button>
+      {on("client_portal") && p.status !== "accepted" && p.status !== "declined" && <Button variant="outline" disabled={busy} onClick={approvalLink}><Link2 className="mr-1 h-4 w-4" />Copy online approval link</Button>}
       {p.status === "draft" && <Button variant="ghost" className="ml-auto" onClick={remove}><Trash2 className="mr-1 h-4 w-4" />Delete draft</Button>}
     </div>
   </div>;
