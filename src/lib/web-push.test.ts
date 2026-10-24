@@ -44,3 +44,19 @@ it("does not subscribe a device with denied permission", async () => {
   expect(await registerPush()).toBe("blocked");
   expect(register).not.toHaveBeenCalled();
 });
+
+it("re-syncs an existing subscription without subscribing again", async () => {
+  const { reg, sub } = device();
+  expect(await registerPush()).toBe("registered");
+  expect(reg.pushManager.subscribe).not.toHaveBeenCalled();
+  expect(rpc.savePushSubscription).toHaveBeenCalledWith({ data: { endpoint: sub.endpoint, p256dh: "AQID", auth: "AQID" } });
+});
+
+it("subscribes with userVisibleOnly when no subscription exists", async () => {
+  const { reg, sub } = device();
+  reg.pushManager.getSubscription.mockResolvedValue(null);
+  reg.pushManager.subscribe.mockResolvedValue(sub);
+  expect(await registerPush()).toBe("registered");
+  expect(reg.pushManager.subscribe).toHaveBeenCalledWith({ userVisibleOnly: true, applicationServerKey: new Uint8Array([4, 1, 2]) });
+  expect(rpc.savePushSubscription).toHaveBeenCalledTimes(1);
+});

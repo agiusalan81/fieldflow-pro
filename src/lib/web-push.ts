@@ -1,6 +1,11 @@
 import { getPushPublicKey, savePushSubscription, sendChatPush } from "@/lib/web-push.functions";
 
-const toKey = (s: string) => { const b = atob(s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4)); return Uint8Array.from(b, (c) => c.charCodeAt(0)); };
+/** Converts a URL-safe base64 VAPID public key into the bytes pushManager.subscribe expects. */
+export function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const raw = atob((base64String + padding).replace(/-/g, "+").replace(/_/g, "/"));
+  return Uint8Array.from(raw, (c) => c.charCodeAt(0));
+}
 const b64 = (buf: ArrayBuffer | null) => (buf ? btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "") : "");
 
 export const pushSupported = () => typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
@@ -40,12 +45,16 @@ async function registerDevice(): Promise<PushStatus> {
   try {
     const reg = await workerReady();
     if (!reg) return "no-worker";
+    const { key: VAPID_PUBLIC_KEY } = await getPushPublicKey();
+    const want = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+    // Reuse an existing subscription when it was made with the current key; just re-sync it.
     let sub = await reg.pushManager.getSubscription();
-    const { key } = await getPushPublicKey();
-    const want = toKey(key);
     const cur = sub?.options.applicationServerKey ? new Uint8Array(sub.options.applicationServerKey) : null;
     if (sub && cur && (cur.length !== want.length || cur.some((v, i) => v !== want[i]))) { await sub.unsubscribe(); sub = null; }
-    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: want });
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource });
+    }
+    // Server binds the row to the verified signed-in user_id.
     await savePushSubscription({ data: { endpoint: sub.endpoint, p256dh: b64(sub.getKey("p256dh")), auth: b64(sub.getKey("auth")) } });
     return "registered";
   } catch (e) {
