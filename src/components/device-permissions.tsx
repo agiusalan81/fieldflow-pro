@@ -24,7 +24,7 @@ export function DevicePermissions() {
   const [busy, setBusy] = useState(false);
   const [later, setLater] = useState(false);
   const check = async () => { setPush(await registerPush()); setGeo(await geoState()); };
-  useEffect(() => { const phone = isMobileDevice(navigator.userAgent); setMobile(phone); if (phone && profile) { setLater(localStorage.getItem(`fieldbridge:device-setup:${profile.id}`) === 'dismissed'); void check(); } }, [profile?.id]);
+  useEffect(() => { const phone = isMobileDevice(navigator.userAgent) && (navigator.maxTouchPoints ?? 0) > 0; setMobile(phone); if (phone && profile) { setLater(localStorage.getItem(`fieldbridge:device-setup:${profile.id}`) === 'dismissed'); void check(); } }, [profile?.id]);
   if (!mobile || !profile || push === null || geo === null) return null;
   const pushOk = push === "registered" || push === "unsupported";
   const geoOk = !field || geo === "granted" || geo === "unsupported";

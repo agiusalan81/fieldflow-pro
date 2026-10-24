@@ -26,10 +26,10 @@ export const Route = createFileRoute("/_authenticated/team")({ staticData: { sit
 });
 
 type Status = Availability;
-const LABEL: Record<Status, string> = { clocked_in: "Clocked in", travelling: "Travelling", standby: "On standby", sick: "Sick", leave: "On leave", off_shift: "Off shift" };
+const LABEL: Record<Status, string> = { clocked_in: "Available", travelling: "Travelling", standby: "On standby", sick: "Sick", leave: "On leave", off_shift: "Off shift" };
 const CLS: Record<Status, string> = {
   clocked_in: "bg-success text-success-foreground", travelling: "bg-warning text-warning-foreground", standby: "bg-primary text-primary-foreground", sick: "bg-destructive/10 text-destructive",
-  leave: "bg-primary/10 text-primary", off_shift: "border border-destructive/40 bg-destructive/10 text-destructive",
+  leave: "bg-primary/10 text-primary", off_shift: "bg-muted text-muted-foreground",
 };
 
 function LiveAvailability() {

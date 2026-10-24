@@ -56,6 +56,9 @@ export function HQSetupPackage({ subscription, catalog, modules, overrides, comp
       if (immediate) {
         const r = await supabase.rpc('hq_apply_setup_now',{_subscription:subscription.id,_plan:plan as unknown as string,_packs:packs,_seats:users,_cadence:cadence,_price:price,_modes:modes as Json});
         if (r.error) throw r.error;
+        // Visibility flags live outside the immediate-access RPC, so save them before returning.
+        const v = await supabase.from("platform_subscriptions").update({ hide_locked_modules: hideLocked, coming_soon_modules: soon }).eq("id", subscription.id);
+        if (v.error) throw v.error;
         toast.success(`Setup package applied immediately for ${companyName}; trial dates and invoices retained.`);
         setOpen(false); onSaved(); return;
       }
