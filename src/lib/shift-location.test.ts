@@ -1,0 +1,10 @@
+import { beforeEach, expect, it, vi } from 'vitest';
+import type { Profile } from './profile';
+const {rpc}=vi.hoisted(()=>({rpc:vi.fn()}));
+vi.mock('@/integrations/supabase/client',()=>({supabase:{rpc}}));
+import { captureShiftLocation } from './shift-location';
+const profile={id:'tech',company_id:'tenant',real_role:'technician'} as Profile;
+beforeEach(()=>{rpc.mockReset();localStorage.clear();Object.defineProperty(navigator,'geolocation',{configurable:true,value:{getCurrentPosition:vi.fn((_ok,fail)=>fail())}});});
+it('GPS refusal never throws or prevents clock-out',async()=>{localStorage.setItem('location-consent:tech','yes');rpc.mockResolvedValue({data:true,error:null});expect(await captureShiftLocation(profile,'shift','clock_out')).toBe(false);});
+it('network rejection never prevents clock-out',async()=>{localStorage.setItem('location-consent:tech','yes');rpc.mockRejectedValue(new Error('Offline'));expect(await captureShiftLocation(profile,'shift','clock_out')).toBe(false);});
+it('tracking off does not request GPS',async()=>{rpc.mockResolvedValue({data:false,error:null});expect(await captureShiftLocation(profile,'shift','clock_in')).toBe(false);expect(navigator.geolocation.getCurrentPosition).not.toHaveBeenCalled();});
