@@ -3,6 +3,21 @@ export const STANDARD_MAX_TEAM = 2;
 export const MAX_TEAM = 30;
 
 export function skillEligible(role: string) { return role === "technician" || role === "supervisor" || role === 'maintenance'; }
+/** Management visibility only; database policies remain the authority for writes. */
+export function canManageSkills(role: string) { return ["superuser", "admin", "supervisor"].includes(role); }
+export function activeSkillMember(role: string, status: string) { return skillEligible(role) && status === "active"; }
+export function assignedSkills<T extends { id: string; archived: boolean }>(skills: T[], links: { user_id: string; skill_id: string }[], userId: string) {
+  const ids = new Set(links.filter(link => link.user_id === userId).map(link => link.skill_id));
+  return skills.filter(skill => !skill.archived && ids.has(skill.id));
+}
+export function groupSkills<T extends { category: string }>(skills: T[]) {
+  const groups = new Map<string, T[]>();
+  for (const skill of skills) {
+    const category = skill.category.trim() || "Other skills";
+    groups.set(category, [...(groups.get(category) ?? []), skill]);
+  }
+  return [...groups.entries()];
+}
 export const FIELD_TRADES = ['Mechanical','Electrical','IT'] as const;
 export function matchesTrade(names:string[],trade:string) { return !trade||names.some(name=>name.toLowerCase().includes(trade.toLowerCase())); }
 

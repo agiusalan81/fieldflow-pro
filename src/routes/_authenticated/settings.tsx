@@ -1,4 +1,3 @@
-import { MemberSkills } from "@/components/member-skills";
 import { StaffSignatureEditor } from "@/components/staff-signature";
 import { staffSignatureEligible } from "@/lib/staff-signature";
 import { PushDeviceStatus } from "@/components/push-device-status";
@@ -145,7 +144,6 @@ function Settings() {
               <div key={k}><dt className="text-xs text-muted-foreground">{k}</dt><dd className="truncate text-foreground">{v}</dd></div>
             ))}
           </dl>
-          <MemberSkills userId={profile.id} role={profile.role} name={profile.full_name}/>
           {!staffSignatureEligible(profile.real_role) && <div>
             <p className="text-xs text-muted-foreground">Signature on file</p>
             {profile.signature_on_file ? <img src={profile.signature_on_file} alt="Signature on file" className="mt-1 h-20 rounded border bg-background" /> : <p className="text-sm text-foreground">None</p>}
