@@ -10,12 +10,13 @@ self.addEventListener("push", (event) => {
     }
     if (!d || typeof d !== "object") d = {};
     const title = (typeof d.title === "string" && d.title.trim()) || "FieldBridge";
-    const body = (typeof d.body === "string" && d.body.trim()) || "You have a new team chat message";
     const data = d.data && typeof d.data === "object" ? d.data : {};
     if (!data.url) data.url = d.url || "/messages";
+    const chatId = data.chatId || d.chatId;
     await self.registration.showNotification(title, {
-      body, icon: d.icon || "/icon-192x192.png", badge: d.badge || "/badge-72x72.png", data,
-      tag: d.tag || (data.chatId ? `chat:${data.chatId}` : "fb-chat"), renotify: true,
+      body: String((typeof d.body === "string" && d.body.trim()) || "New message"),
+      icon: d.icon || "/icon-192x192.png", badge: d.badge || "/badge-72x72.png", data,
+      tag: String(chatId || "message"), renotify: true,
       vibrate: [200, 100, 200], timestamp: Date.now(), requireInteraction: false,
     });
   })());
