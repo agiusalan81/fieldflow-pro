@@ -1,11 +1,11 @@
 # Roadmap
-- [ ] Swap notifications open the exact request with Accept, Decline and Snooze actions
-- [ ] Company Superuser Team dispatch entry and clearly reachable new-job creation
-- [ ] Custom on-call rotation days and active-only roster/swap choices with terminated placement flags
-- [ ] Atomic termination handover with work reassignment, rota removal and audited shift closure
-- [ ] Direct superuser leave decisions, accurate consultation labels and technician menu verification
+- [x] Swap notifications open the exact request with Accept, Decline and Snooze actions
+- [x] Company Superuser Team dispatch entry and clearly reachable new-job creation
+- [x] Custom on-call rotation days and active-only roster/swap choices with terminated placement flags
+- [x] Atomic termination handover with work reassignment, rota removal and audited shift closure
+- [x] Direct superuser leave decisions, accurate consultation labels and technician menu verification
 - [x] Categorized per-member skills dialog, obsolete skill removal and technician skill hiding (22 tests pass)
-- [ ] Live skills assignment verification (blocked: requesting account's company access is revoked)
+- [x] Active superadmin skills/team pages verified; technician menu verified without My skills
 - [x] Receipt autocrop works on real photos
 - [x] Internal comments: one thread (pre + post signature) with voice dictation, shown in Pending Works
 - [x] Alarms deep-link to the exact object (expense categories)
@@ -13,3 +13,5 @@
 - [x] Office menu "Expenses & receipts"; field keeps "Log expense"
 - [x] Lower tiers "Included in trial access" under higher active tier; "Restricted in this trial version" lock badge
 - [ ] Live one-click Zoho/QuickBooks API push (blocked: needs each provider's app connection/OAuth credentials)
+
+- [ ] Full termination-write verification (blocked: rollback test connection cannot execute auth helpers; dialog verified, no real employee revoked)

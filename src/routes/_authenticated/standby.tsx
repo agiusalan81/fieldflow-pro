@@ -54,6 +54,7 @@ function StandbyPage() {
   const [note, setNote] = useState("");
   const { data: swaps = [] } = useQuery({
     queryKey: ["standby-swaps", profile?.company_id],
+    refetchInterval: 15000,
     enabled: !!profile && feature("standby"),
     queryFn: async () => (await supabase.from("standby_swaps").select("*").order("created_at", { ascending: false }).limit(200)).data ?? [],
   });
