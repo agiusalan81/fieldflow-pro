@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 export function MemberAccessBoundary({ children }: { children: React.ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const qc = useQueryClient();
-  const publicPage = pathname === "/auth" || pathname === "/" || pathname === "/reset-password" || /^(\/join\/|\/report\/|\/referral\/|\/problem\/)/.test(pathname);
+  const publicPage = pathname === "/client-portal" || pathname === "/auth" || pathname === "/" || pathname === "/reset-password" || /^(\/join\/|\/report\/|\/referral\/|\/problem\/)/.test(pathname);
   const status = useQuery({
     queryKey: ["my-registration-status"], enabled: !publicPage, refetchInterval: 15_000,
     queryFn: async () => {

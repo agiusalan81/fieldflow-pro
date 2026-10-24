@@ -7,6 +7,7 @@ import { ContactsManager, EquipmentManager } from "@/components/client-manager";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ClientRouting } from '@/components/client-routing';
 
 /** Client → head-office contacts, then each site with its own contacts and equipment. */
 export function SiteHierarchy({ clientId, companyId }: { clientId: string; companyId: string }) {
@@ -37,6 +38,7 @@ export function SiteHierarchy({ clientId, companyId }: { clientId: string; compa
 
   return (
     <div className="space-y-4">
+      <ClientRouting clientId={clientId}/>
       <section className="rounded-lg border p-3">
         <p className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground"><Building2 className="h-4 w-4" />Head office</p>
         <ContactsManager clientId={clientId} companyId={companyId} siteId={null} title="Head office contacts" />
