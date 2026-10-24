@@ -30,8 +30,8 @@ function SkillsPage() {
   const qc = useQueryClient();
   const manager = isManager(p);
   const { data: users = [] } = useCompanyUsers();
-  const skills = useQuery({ queryKey: ["company-skills"], queryFn: async () => { const r = await supabase.from("company_skills").select("id,name,category,archived").order("category").order("name"); if (r.error) throw r.error; return r.data as Skill[]; } });
-  const links = useQuery({ queryKey: ["member-skills"], queryFn: async () => { const r = await supabase.from("member_skills").select("user_id,skill_id"); if (r.error) throw r.error; return r.data; } });
+  const skills = useQuery({ queryKey: ["company-skills"], enabled:feature("skills_dispatch"), queryFn: async () => { const r = await supabase.from("company_skills").select("id,name,category,archived").order("category").order("name"); if (r.error) throw r.error; return r.data as Skill[]; } });
+  const links = useQuery({ queryKey: ["member-skills"], enabled:feature("skills_dispatch"), queryFn: async () => { const r = await supabase.from("member_skills").select("user_id,skill_id"); if (r.error) throw r.error; return r.data; } });
   const [name, setName] = useState(""); const [category, setCategory] = useState(""); const [showArchived, setShowArchived] = useState(false);
   const refresh = () => { qc.invalidateQueries({ queryKey: ["company-skills"] }); qc.invalidateQueries({ queryKey: ["member-skills"] }); };
 
@@ -62,7 +62,7 @@ function SkillsPage() {
     </div></AppShell>;
   }
 
-  const members = users.filter(u => u.role === "technician" || u.role === "supervisor");
+  const members = users.filter(u => ["technician","supervisor","maintenance"].includes(u.role));
   return (
     <AppShell title="Skills & specialties">
       <div className="space-y-6">
