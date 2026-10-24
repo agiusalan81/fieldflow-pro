@@ -3,7 +3,7 @@ import ReactCrop, {type PercentCrop} from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import {Button} from '@/components/ui/button';
 import {Crop,RotateCcw,Wand2} from 'lucide-react';
-import {autoCropImage} from '@/lib/auto-crop';
+import {autoCropImage,FULL_CROP} from '@/lib/auto-crop';
 import {toast} from 'sonner';
 export function ReceiptCrop({file,onSave,onCancel}:{file:File;onSave:(file:File)=>void;onCancel:()=>void}){
  const [url,setUrl]=useState(''),[crop,setCrop]=useState<PercentCrop>({unit:'%',x:0,y:0,width:100,height:100}),[busy,setBusy]=useState(false);
@@ -16,5 +16,5 @@ export function ReceiptCrop({file,onSave,onCancel}:{file:File;onSave:(file:File)
  const blob=await new Promise<Blob>((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('Could not crop receipt')),'image/jpeg',0.95));
  onSave(new File([blob],file.name,{type:'image/jpeg'}));
  }catch(e){toast.error(e instanceof Error?e.message:'Could not crop receipt');}finally{setBusy(false);}};
- return <div className="space-y-3"><ReactCrop crop={crop} onChange={(_,percent)=>setCrop(percent)} minWidth={10} minHeight={10}><img ref={image} src={url} alt="Receipt crop" className="max-h-[55dvh] w-auto object-contain" onLoad={e=>setCrop({unit:'%',...autoCropImage(e.currentTarget)})}/></ReactCrop><div className="flex flex-wrap gap-2"><Button disabled={busy||crop.width===0||crop.height===0} onClick={save}><Crop className="mr-2 h-4 w-4"/>Save crop</Button><Button variant="outline" onClick={()=>image.current&&setCrop({unit:'%',...autoCropImage(image.current)})}><Wand2 className="mr-2 h-4 w-4"/>Auto crop</Button><Button variant="outline" onClick={()=>setCrop({unit:'%',x:0,y:0,width:100,height:100})} title="Reset crop"><RotateCcw className="h-4 w-4"/></Button><Button variant="ghost" onClick={onCancel}>Cancel</Button></div></div>;
+ return <div className="space-y-3"><ReactCrop crop={crop} onChange={(_,percent)=>setCrop(percent)} minWidth={10} minHeight={10}><img ref={image} src={url} alt="Receipt crop" className="max-h-[55dvh] w-auto object-contain" onLoad={e=>setCrop({unit:'%',...autoCropImage(e.currentTarget)})}/></ReactCrop><div className="flex flex-wrap gap-2"><Button disabled={busy||crop.width===0||crop.height===0} onClick={save}><Crop className="mr-2 h-4 w-4"/>Save crop</Button><Button variant="outline" onClick={()=>{if(!image.current)return;const b=autoCropImage(image.current);setCrop({unit:'%',...b});if(b.width===FULL_CROP.width&&b.height===FULL_CROP.height)toast.info('Could not find the receipt edges — drag the corners to crop.');else toast.success('Receipt edges found');}}><Wand2 className="mr-2 h-4 w-4"/>Auto crop</Button><Button variant="outline" onClick={()=>setCrop({unit:'%',x:0,y:0,width:100,height:100})} title="Reset crop"><RotateCcw className="h-4 w-4"/></Button><Button variant="ghost" onClick={onCancel}>Cancel</Button></div></div>;
 }

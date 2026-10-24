@@ -1,8 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { z } from "zod";
+import { parseIntegrations, ACCOUNTING } from "@/lib/integrations";
+import { parsePhotos } from "@/lib/jobsheets";
+import { estimateExportCsv } from "@/lib/estimate-export";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Camera, Copy, ImagePlus, Mail, PencilRuler, Phone, Pause, Play, X } from "lucide-react";
+import { Camera, Copy, FileOutput, ImagePlus, Mail, PencilRuler, Phone, Pause, Play, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { useProfile } from "@/lib/profile";
@@ -19,6 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CommercialRecipients } from '@/components/commercial-recipients';
 
 export const Route = createFileRoute("/_authenticated/estimates")({ staticData: { sitemap: false },
+  validateSearch: z.object({ fromSheet: z.string().uuid().optional() }),
   head: () => ({
     meta: [
       { title: "Estimates — FieldBridge" },
@@ -42,8 +47,9 @@ const STEPS = [
 ];
 type Ev = { at: string; status: string; by: string };
 type Contact = { name?: string; role?: string; phone?: string; email?: string; access?: string };
-type Rfq = { values?: Record<string, string>; contact?: Contact; notes?: string };
-type Form = { id: string; isNew: boolean; title: string; client_id: string; site_id: string; supplier_name: string; supplier_email: string; values: Record<string, string>; contact: Contact; notes: string; sketch: string | null; photos: string[] };
+type Accounting = { provider: string; ref: string; exported_at: string };
+type Rfq = { values?: Record<string, string>; contact?: Contact; notes?: string; source_sheet?: string | null; accounting?: Accounting | null };
+type Form = { id: string; isNew: boolean; title: string; client_id: string; site_id: string; supplier_name: string; supplier_email: string; values: Record<string, string>; contact: Contact; notes: string; sketch: string | null; photos: string[]; source_sheet: string | null; accounting: Accounting | null };
 const ROLES = ["Site agent / contractor", "Architect", "Building administrator / owner", "Facility manager", "Electrical / civil subcontractor"];
 
 function Estimates() {
@@ -55,6 +61,33 @@ function Estimates() {
     queryFn: async () => { const { data, error } = await supabase.from("lift_estimates").select("*, clients(name), sites(name)").order("updated_at", { ascending: false }); if (error) throw error; return data; },
   });
   const [form, setForm] = useState<Form | null>(null);
+  const { fromSheet } = Route.useSearch();
+  const navigate = useNavigate();
+  const { data: integ } = useQuery({ queryKey: ["integrations-accounting", profile?.company_id], enabled: !!profile, queryFn: async () => parseIntegrations((await supabase.from("company_settings").select("integrations").maybeSingle()).data?.integrations).accounting });
+  const provider = ACCOUNTING.find((a) => a.key === integ?.provider);
+  // Pending Works hands over one job sheet: prefill a new estimate from it, then clear the link so a refresh never duplicates it.
+  useEffect(() => {
+    if (!fromSheet || !cfg) return;
+    let active = true;
+    void (async () => {
+      const { data: sh, error } = await supabase.from("job_sheets").select("id, jobsheet_number, client_id, site_id, pending_works_future_jobs, reported_fault, photo_paths, assets(reference_number)").eq("id", fromSheet).maybeSingle();
+      if (!active) return;
+      void navigate({ to: "/estimates", search: {}, replace: true });
+      if (error || !sh) { toast.error("Could not load that job sheet for the estimate"); return; }
+      const pending = (sh.pending_works_future_jobs ?? "").trim();
+      const ref = sh.assets?.reference_number;
+      setForm({ id: crypto.randomUUID(), isNew: true, title: `${pending.split("\n")[0]!.slice(0, 120) || "Follow-up repair"}${ref ? ` — ${ref}` : ""}`, client_id: sh.client_id ?? "none", site_id: sh.site_id ?? "none", supplier_name: "", supplier_email: "", values: { ...(cfg.defaults ?? {}), ...(ref ? { lift_ref: ref } : {}) }, contact: {}, notes: [pending, sh.reported_fault ? `Reported fault: ${sh.reported_fault}` : "", `From job sheet #${sh.jobsheet_number}`].filter(Boolean).join("\n\n"), sketch: null, photos: parsePhotos(sh.photo_paths).filter((p) => p.scope === "pending").map((p) => p.path), source_sheet: sh.id, accounting: null });
+    })();
+    return () => { active = false; };
+  }, [fromSheet, cfg, navigate]);
+  const exportToAccounts = async (e: (typeof data)[number]) => {
+    if (!provider) return;
+    const csv = estimateExportCsv({ title: e.title, client: e.clients?.name ?? "", site: e.sites?.name ?? "", notes: rfqOf(e).notes ?? e.specs ?? "", price: e.client_price == null ? null : Number(e.client_price), fixedLabour: e.fixed_labor, taxRate: integ?.tax_rate ?? "", incomeAccount: integ?.income_account ?? "" });
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); const a = document.createElement("a"); a.href = url; a.download = `Estimate-${e.title.replace(/\W+/g, "_").slice(0, 40)}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+    const ref = window.prompt(`Estimate file prepared for ${provider.label}. Import it there, then enter the ${provider.label} estimate number to link it (optional):`, rfqOf(e).accounting?.ref ?? "");
+    if (ref === null) return;
+    if (await update(e, { rfq: { ...rfqOf(e), accounting: { provider: provider.key, ref: ref.trim(), exported_at: new Date().toISOString() } } as unknown as Json, events: log(e, `exported to ${provider.label}`) })) toast.success(ref.trim() ? `Linked to ${provider.label} estimate ${ref.trim()}` : `Marked as exported to ${provider.label}`);
+  };
   const company = profile?.companies?.name ?? "";
   const sender = profile?.full_name ?? "";
   type E = (typeof data)[number];
@@ -81,8 +114,8 @@ function Estimates() {
     await update(e, { reminders_sent: e.reminders_sent + 1, last_reminder_at: new Date().toISOString(), events: log(e, `reminder ${e.reminders_sent + 1}`) });
   };
 
-  const openNew = () => setForm({ id: crypto.randomUUID(), isNew: true, title: "", client_id: "none", site_id: "none", supplier_name: "", supplier_email: "", values: { ...(cfg?.defaults ?? {}) }, contact: {}, notes: "", sketch: null, photos: [] });
-  const openEdit = (e: E) => { const r = rfqOf(e); setForm({ id: e.id, isNew: false, title: e.title, client_id: e.client_id ?? "none", site_id: e.site_id ?? "none", supplier_name: e.supplier_name ?? "", supplier_email: e.supplier_email ?? "", values: r.values ?? {}, contact: r.contact ?? {}, notes: r.notes ?? e.specs ?? "", sketch: e.sketch, photos: e.photos ?? [] }); };
+  const openNew = () => setForm({ id: crypto.randomUUID(), isNew: true, title: "", client_id: "none", site_id: "none", supplier_name: "", supplier_email: "", values: { ...(cfg?.defaults ?? {}) }, contact: {}, notes: "", sketch: null, photos: [], source_sheet: null, accounting: null });
+  const openEdit = (e: E) => { const r = rfqOf(e); setForm({ id: e.id, isNew: false, title: e.title, client_id: e.client_id ?? "none", site_id: e.site_id ?? "none", supplier_name: e.supplier_name ?? "", supplier_email: e.supplier_email ?? "", values: r.values ?? {}, contact: r.contact ?? {}, notes: r.notes ?? e.specs ?? "", sketch: e.sketch, photos: e.photos ?? [], source_sheet: r.source_sheet ?? null, accounting: r.accounting ?? null }); };
 
   const now = Date.now();
   return (
@@ -109,6 +142,7 @@ function Estimates() {
               </ol>
               <div className="flex flex-wrap gap-2">
                 <Button size="sm" variant="outline" onClick={() => openEdit(e)}>Edit</Button>
+                {provider && e.client_price != null && <Button size="sm" variant="outline" onClick={() => exportToAccounts(e)}><FileOutput className="mr-1 h-4 w-4" />{rfqOf(e).accounting ? `${provider.label} · ${rfqOf(e).accounting?.ref || "exported"}` : `Send to ${provider.label}`}</Button>}
                 {e.status==='client_ready'&&<CommercialRecipients clientId={e.client_id} siteId={e.site_id} purpose="estimate" title={e.title} body={`Estimate: ${e.title}${e.client_price?`\nClient price: €${Number(e.client_price).toFixed(2)}`:''}`}/>}
                 {(e.status === "draft" || e.status === "sent") && <Button size="sm" onClick={() => sendToSupplier(e)}><Mail className="mr-1 h-4 w-4" />{e.status === "draft" ? "Send to supplier" : "Resend request"}</Button>}
                 {due === "due" && <Button size="sm" onClick={() => sendReminder(e)}>Send reminder</Button>}
@@ -165,7 +199,7 @@ function EstimateForm({ form, setForm, cfg, companyId, sender, onSaved }: { form
   const save = async () => {
     if (!f.title.trim()) { toast.error("Give the estimate a title"); return; }
     setBusy(true);
-    const row = { title: f.title.trim(), client_id: f.client_id === "none" ? null : f.client_id, site_id: f.site_id === "none" ? null : f.site_id, supplier_name: f.supplier_name || null, supplier_email: f.supplier_email || null, rfq: { values: f.values, contact: f.contact, notes: f.notes } as unknown as Json, specs: f.notes, sketch: f.sketch, photos: f.photos };
+    const row = { title: f.title.trim(), client_id: f.client_id === "none" ? null : f.client_id, site_id: f.site_id === "none" ? null : f.site_id, supplier_name: f.supplier_name || null, supplier_email: f.supplier_email || null, rfq: { values: f.values, contact: f.contact, notes: f.notes, source_sheet: f.source_sheet, accounting: f.accounting } as unknown as Json, specs: f.notes, sketch: f.sketch, photos: f.photos };
     const { error } = f.isNew
       ? await supabase.from("lift_estimates").insert({ ...row, id: f.id, company_id: companyId, events: [{ at: new Date().toISOString(), status: "draft", by: sender }] })
       : await supabase.from("lift_estimates").update(row).eq("id", f.id);
@@ -190,6 +224,9 @@ function EstimateForm({ form, setForm, cfg, companyId, sender, onSaved }: { form
           </div>
           {supplier?.package && <p className="text-xs text-muted-foreground">Door, machine, controller and fixture choices are limited to what {supplier.name} offers.</p>}
 
+          <details className="rounded-lg border p-3" open={Object.values(f.values).some(Boolean) && !f.source_sheet}>
+          <summary className="cursor-pointer text-sm font-medium">Equipment specifications (optional — internal, not shown to the client)</summary>
+          <div className="mt-3 space-y-3">
           {RFQ_SECTIONS.map((s) => (
             <fieldset key={s.title} className="space-y-2 rounded-lg border p-3">
               <legend className="px-1 text-sm font-medium">{s.title}</legend>
@@ -205,6 +242,8 @@ function EstimateForm({ form, setForm, cfg, companyId, sender, onSaved }: { form
               </div>
             </fieldset>
           ))}
+          </div>
+          </details>
 
           <fieldset className="space-y-2 rounded-lg border p-3">
             <legend className="px-1 text-sm font-medium">Site contact</legend>
@@ -217,7 +256,7 @@ function EstimateForm({ form, setForm, cfg, companyId, sender, onSaved }: { form
             <Input className="h-10" placeholder="Site access (key safe, machine room key…)" value={f.contact.access ?? ""} onChange={(e) => set({ contact: { ...f.contact, access: e.target.value } })} />
           </fieldset>
 
-          <div className="space-y-1.5"><Label>Notes & parts to replace</Label><Textarea rows={3} value={f.notes} onChange={(e) => set({ notes: e.target.value })} /></div>
+          <div className="space-y-1.5"><Label>Description, notes & parts to replace</Label><Textarea rows={3} value={f.notes} onChange={(e) => set({ notes: e.target.value })} /></div>
 
           <div className="space-y-2">
             <div className="flex flex-wrap gap-2">

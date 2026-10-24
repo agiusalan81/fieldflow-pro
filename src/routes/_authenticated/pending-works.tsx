@@ -1,5 +1,6 @@
 import { PendingPhotoStrip } from "@/components/pending-photo-strip";
 import { EquipmentProblemQueue } from "@/components/equipment-problem-queue";
+import { InternalThread } from "@/components/jobsheet-internal-notes";
 import { Textarea } from "@/components/ui/textarea";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
@@ -116,7 +117,8 @@ function PendingWorks() {
           {review && <ReviewBody r={review} />}
           <div className="grid gap-2 sm:grid-cols-2">
             <Button variant="outline" className="h-11" onClick={() => review && navigate({ to: "/sheets/$sheetId", params: { sheetId: review.id } })}>Open full job sheet</Button>
-            <Button className="h-11" onClick={async () => { if (review) { if(await setStatus(review.id, "quote")) setReview(null); } }}><Receipt className="mr-1 h-4 w-4" />Needs estimate</Button>
+            <Button variant="outline" className="h-11" onClick={async () => { if (review) { if(await setStatus(review.id, "quote")) setReview(null); } }}><Receipt className="mr-1 h-4 w-4" />Mark needs estimate</Button>
+            <Button className="h-11 sm:col-span-2" onClick={async () => { if (!review) return; const id = review.id; if (review.pending_status === "quote" || await setStatus(id, "quote")) { setReview(null); void navigate({ to: "/estimates", search: { fromSheet: id } }); } }}><Receipt className="mr-1 h-4 w-4" />Make estimate</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -154,7 +156,7 @@ function ReviewBody({ r }: { r: NonNullable<ReturnType<typeof usePendingWorks>["
       {row("Reported fault", r.reported_fault)}
       {row("Work done on this visit", r.repairs_performed)}
       <div className="rounded-lg border bg-muted/40 p-3">{row("Pending works (from technician)", r.pending_works_future_jobs)}</div>
-      {row("Internal comments", r.internal_comments_admin_only)}
+      <div><p className="text-xs text-muted-foreground">Internal comments</p><InternalThread sheetId={r.id} initial={r.internal_comments_admin_only} /></div>
       <div>
         <p className="mb-1 text-xs text-muted-foreground">Pending works photos ({photos.length})</p>
         {urls === null ? <p className="text-sm text-muted-foreground">Loading…</p> : urls.length ? (

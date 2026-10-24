@@ -1,5 +1,5 @@
 import { TravelPicker } from "@/components/travel-picker";
-import { JobsheetInternalNotes } from "@/components/jobsheet-internal-notes";
+import { JobsheetInternalNotes, InternalThread } from "@/components/jobsheet-internal-notes";
 import { sheetFingerprint } from "@/lib/sheet-dirty";
 import { JobReceipts } from "@/components/job-receipts";
 import { useEntrySuggestions } from "@/hooks/use-entry-suggestions";
@@ -410,7 +410,6 @@ function SheetForm() {
       }}>Discard local changes &amp; reload</Button></div>}
       {readOnly && manager && <ReportSharing sheetId={sheetId} />}
       <JobReceipts userId={profile.id} companyId={profile.company_id} sheetId={sheetId} readOnly={busy} />
-      <JobsheetInternalNotes sheetId={sheetId} userId={profile.id} companyId={profile.company_id}/>
       {!form.signature_data && sheet.departure_status !== "none" && (
         <div className={`mx-auto mb-4 max-w-5xl rounded-xl border-2 p-4 text-sm ${sheet.departure_status === "approved" ? "border-success bg-success/10" : sheet.departure_status === "rejected" ? "border-destructive bg-destructive/10" : "border-warning bg-warning/15"}`}>
           <p className="font-medium text-foreground">{sheet.departure_status === "approved" ? "Approved — you may leave site. The client has been notified." : sheet.departure_status === "rejected" ? "Leaving was declined — please wait on site for the client." : "Waiting for approval to leave unsigned — please wait on site."}</p>
@@ -617,10 +616,13 @@ function SheetForm() {
               <JobPhotos {...photoProps} scope="pending" day={null} />
             </div>
             <div className="space-y-1.5">
+              {readOnly || form.signature_data ? <JobsheetInternalNotes sheetId={sheetId} userId={profile.id} companyId={profile.company_id} initial={form.internal_comments_admin_only as string | null} initialAt={sheet.updated_at} /> : <>
               <Label>{word("internal")} (admin only)</Label>
-              <p className="text-xs text-muted-foreground">For the office team.</p>
+              <p className="text-xs text-muted-foreground">For the office team. After signing, more comments are added to this same thread.</p>
               <Textarea rows={3} value={(form.internal_comments_admin_only as string) ?? ""} onChange={(e) => set({ internal_comments_admin_only: e.target.value })} />
               <VoiceDictation label="internal comments" disabled={readOnly} value={(form.internal_comments_admin_only as string) ?? ""} onApply={(t) => set({ internal_comments_admin_only: t })} />
+              <InternalThread sheetId={sheetId} />
+              </>}
             </div>
           </div>
         </Section>

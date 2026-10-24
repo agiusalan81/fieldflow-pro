@@ -10,4 +10,4 @@ describe('Tenant commercial access', () => {
   it('preserves paid assignment while access is paused', () => { expect(itemAccess(pack,{state:'read_only',pack_ids:['portal']}).label).toBe('Assigned · access paused'); });
   it('shows legacy access without asserting payment', () => { expect(itemAccess(pack,{state:'legacy'}).label).toBe('Legacy access'); });
   it('accepts sample PDFs and rejects executable uploads', () => { expect(validSample({name:'sample.pdf',size:100})).toBe(true); expect(validSample({name:'sample.exe',size:100})).toBe(false); });
-});
+});it('lower tiers under an active trial tier read as included in trial access', () => { expect(itemAccess({id:'basic',kind:'plan',modules:['core']},{state:'trial',plan_id:'enterprise',modules:[]},true).label).toBe('Included in trial access'); });
