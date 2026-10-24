@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useProfile, useCompanyUsers, isManager, isOffice } from "@/lib/profile";
 import { useCompanyRules } from "@/lib/company";
 import { type StandbyConfig } from "@/lib/dwr";
-import { rotaFor, freeForRange, validRota, ROTA_TRACKS, trackLabel, type RotaTrack } from "@/lib/rota";
+import { rotaFor, freeForRange, validRota, weeklyRota, activeRotaMember, ROTA_TRACKS, trackLabel, type RotaTrack } from "@/lib/rota";
 import { usePlanFeatures } from "@/lib/plan-features";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -61,7 +61,7 @@ function StandbyPage() {
   const cfg = configs[askTrack];
   const name = (id: string) => users.find((u) => u.id === id)?.full_name ?? "—";
   const days = Array.from({ length: 7 }, (_, i) => iso(new Date(week.getFullYear(), week.getMonth(), week.getDate() + i)));
-  const techs = users.filter((u) => u.role === askTrack);
+  const techs = users.filter((u) => activeRotaMember(u, askTrack));
   const phone = (id: string) => contacts.find(u => u.id === id)?.phone_number;
   const refresh = () => qc.invalidateQueries({ queryKey: ["standby-swaps"] });
 
@@ -176,30 +176,31 @@ function SwapList({ swaps, name, onCancel, meId, manager }: { swaps: { id: strin
   );
 }
 
-function RosterSettings({ cfg, techs, track }: { cfg: StandbyConfig; techs: { id: string; full_name: string }[]; track: RotaTrack }) {
-  const qc = useQueryClient(); const [f, setF] = useState(cfg); const [staff, setStaff] = useState(String(cfg.perShift)); const [busy, setBusy] = useState(false);
-  useEffect(() => { setF(cfg); setStaff(String(cfg.perShift)); }, [cfg.start, cfg.rotationDays, cfg.perShift, cfg.order.join(",")]);
+function RosterSettings({ cfg, techs, track }: { cfg: StandbyConfig; techs: { id: string; full_name: string; registration_status: string; role: string }[]; track: RotaTrack }) {
+  const qc = useQueryClient(); const [f, setF] = useState(cfg); const [rotation, setRotation] = useState(String(cfg.rotationDays)); const [staff, setStaff] = useState(String(cfg.perShift)); const [busy, setBusy] = useState(false);
+  useEffect(() => { setF(cfg); setRotation(String(cfg.rotationDays)); setStaff(String(cfg.perShift)); }, [cfg.start, cfg.rotationDays, cfg.perShift, cfg.order.join(",")]);
   const name = (id: string) => techs.find(u => u.id === id)?.full_name ?? "Unavailable member";
   const move = (i: number, delta: number) => { const o = [...f.order]; const a = o[i]; const b = o[i + delta]; if (!a || !b) return; o[i] = b; o[i + delta] = a; setF({ ...f, order: o }); };
-  const draft = { ...f, perShift: Number(staff) }; const valid = validRota(draft, techs.map(u => u.id));
+  const active = techs.filter(u => activeRotaMember(u, track));
+  const draft = { ...f, rotationDays: Number(rotation), perShift: Number(staff) }; const valid = validRota(draft, active.map(u => u.id));
   const save = async () => {
     if (!valid || busy) return; setBusy(true);
     if (f.start !== cfg.start && !window.confirm(`Change ${track} handover anchor to ${f.start}? Future assignments will be recalculated; saved swaps remain.`)) { setBusy(false); return; }
-    const r = await supabase.rpc("save_standby_track", { _track: track, _start: f.start, _rotation_days: f.rotationDays, _per_shift: Number(staff), _order: f.order });
+    const r = await supabase.rpc("save_standby_track", { _track: track, _start: f.start, _rotation_days: draft.rotationDays, _per_shift: Number(staff), _order: f.order });
     setBusy(false); if (r.error) { toast.error(r.error.message); return; } toast.success(`${trackLabel(track)} roster saved`);
     await Promise.all([qc.invalidateQueries({ queryKey: ["company-settings"] }), qc.invalidateQueries({ queryKey: ["supervisor-roster"] }), qc.invalidateQueries({ queryKey: ["standby-swaps"] })]);
   };
   return <section className="space-y-4 border-t pt-4">
     <h2 className="font-medium">{track === "technician" ? "Technician" : "Supervisor"} roster settings</h2>
     <div className="grid gap-3 sm:grid-cols-2">
-      <div className="space-y-1.5"><Label>Rotate every</Label><Select value={String(f.rotationDays)} onValueChange={v => setF({ ...f, rotationDays: Number(v) })}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{[[1,"Day"],[2,"2 days"],[3,"3 days"],[7,"Week"],[14,"2 weeks"]].map(([v,l]) => <SelectItem key={v} value={String(v)}>{l}</SelectItem>)}</SelectContent></Select></div>
+      <div className="space-y-1.5"><Label htmlFor={`${track}-rotation`}>Rotate every (days)</Label><Input id={`${track}-rotation`} type="number" inputMode="numeric" min="1" max="365" step="1" value={rotation} onFocus={e => e.currentTarget.select()} onChange={e => setRotation(e.target.value)}/></div>
       <div className="space-y-1.5"><Label htmlFor={`${track}-staffing`}>{track === "technician" ? "Technicians" : "Supervisors"} per shift</Label><Input id={`${track}-staffing`} type="number" min="1" max={Math.max(1,f.order.length)} step="1" value={staff} onFocus={e => e.currentTarget.select()} onChange={e => setStaff(e.target.value)} onBlur={() => { if (!staff.trim()) setStaff("1"); }}/></div>
       <div className="space-y-1.5 sm:col-span-2"><Label>Rotation starts on</Label><Input type="date" value={f.start} onChange={e => setF({ ...f, start: e.target.value })}/></div>
-      {[7,14].includes(f.rotationDays) && <div className="space-y-1.5"><Label>Handover weekday</Label><Select value={String(new Date(`${f.start}T12:00:00Z`).getUTCDay())} onValueChange={v => setF({ ...f, start: nextWeekday(f.start, Number(v)) })}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].map((day,i) => <SelectItem key={day} value={String(i)}>{day}</SelectItem>)}</SelectContent></Select></div>}
+      {weeklyRota(draft.rotationDays) && <div className="space-y-1.5"><Label>Handover weekday</Label><Select value={String(new Date(`${f.start}T12:00:00Z`).getUTCDay())} onValueChange={v => setF({ ...f, start: nextWeekday(f.start, Number(v)) })}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].map((day,i) => <SelectItem key={day} value={String(i)}>{day}</SelectItem>)}</SelectContent></Select></div>}
     </div>
-    <ul className="space-y-1">{f.order.map((id,i) => <li key={id} className="flex items-center gap-2 rounded border px-2 py-1.5 text-sm"><span>{i+1}.</span><span className="min-w-0 flex-1 break-words">{name(id)}</span><Button size="icon" variant="ghost" disabled={i===0} aria-label={`Move ${name(id)} up`} onClick={() => move(i,-1)}><ArrowUp className="h-4 w-4"/></Button><Button size="icon" variant="ghost" disabled={i===f.order.length-1} aria-label={`Move ${name(id)} down`} onClick={() => move(i,1)}><ArrowDown className="h-4 w-4"/></Button><Button size="icon" variant="ghost" aria-label={`Remove ${name(id)}`} onClick={() => setF({ ...f, order: f.order.filter(x => x!==id) })}><X className="h-4 w-4"/></Button></li>)}</ul>
-    <Select value="" onValueChange={v => setF({ ...f, order: [...f.order,v] })}><SelectTrigger><SelectValue placeholder={`Add ${track} to roster`}/></SelectTrigger><SelectContent>{techs.filter(u => !f.order.includes(u.id)).map(u => <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>)}</SelectContent></Select>
-    {!valid && <p role="alert" className="text-sm text-destructive">Select eligible members and a whole staffing count no greater than the roster size.</p>}
+    <ul className="space-y-1">{f.order.map((id,i) => <li key={id} className="flex items-center gap-2 rounded border px-2 py-1.5 text-sm"><span>{i+1}.</span><span className="min-w-0 flex-1 break-words">{name(id)}{!active.some(u => u.id === id) && <span className="ml-2 text-destructive">{techs.find(u => u.id === id)?.registration_status === "terminated" ? "Terminated · No longer available" : "No longer eligible"}</span>}</span><Button size="icon" variant="ghost" disabled={i===0} aria-label={`Move ${name(id)} up`} onClick={() => move(i,-1)}><ArrowUp className="h-4 w-4"/></Button><Button size="icon" variant="ghost" disabled={i===f.order.length-1} aria-label={`Move ${name(id)} down`} onClick={() => move(i,1)}><ArrowDown className="h-4 w-4"/></Button><Button size="icon" variant="ghost" aria-label={`Remove ${name(id)}`} onClick={() => setF({ ...f, order: f.order.filter(x => x!==id) })}><X className="h-4 w-4"/></Button></li>)}</ul>
+    <Select value="" onValueChange={v => setF({ ...f, order: [...f.order,v] })}><SelectTrigger><SelectValue placeholder={`Add ${track} to roster`}/></SelectTrigger><SelectContent>{active.filter(u => !f.order.includes(u.id)).map(u => <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>)}</SelectContent></Select>
+    {!valid && <p role="alert" className="text-sm text-destructive">Choose active members, a rotation of 1–365 whole days and a staffing count no greater than the roster size.</p>}
     <Button disabled={!valid || busy} onClick={() => void save()}>{busy ? "Saving…" : `Save ${track} roster`}</Button>
   </section>;
 }

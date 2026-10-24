@@ -28,3 +28,5 @@ export function unfinishedJobs<J extends { id: string }>(jobs: J[], sheets: { jo
 }
 
 export const nextDay = (ymd: string) => { const d = new Date(ymd + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + 1); return d.toISOString().slice(0, 10); };
+
+export const canRequestLeaveConsultation = (role: AppRole) => role === "admin";
