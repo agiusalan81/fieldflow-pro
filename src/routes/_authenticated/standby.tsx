@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { nextWeekday } from '@/lib/testing-rules';
 
 export const Route = createFileRoute("/_authenticated/standby")({ staticData: { sitemap: false },
   head: () => ({
@@ -183,6 +184,7 @@ function RosterSettings({ cfg, techs, track }: { cfg: StandbyConfig; techs: { id
   const draft = { ...f, perShift: Number(staff) }; const valid = validRota(draft, techs.map(u => u.id));
   const save = async () => {
     if (!valid || busy) return; setBusy(true);
+    if (f.start !== cfg.start && !window.confirm(`Change ${track} handover anchor to ${f.start}? Future assignments will be recalculated; saved swaps remain.`)) { setBusy(false); return; }
     const r = await supabase.rpc("save_standby_track", { _track: track, _start: f.start, _rotation_days: f.rotationDays, _per_shift: Number(staff), _order: f.order });
     setBusy(false); if (r.error) { toast.error(r.error.message); return; } toast.success(`${trackLabel(track)} roster saved`);
     await Promise.all([qc.invalidateQueries({ queryKey: ["company-settings"] }), qc.invalidateQueries({ queryKey: ["supervisor-roster"] }), qc.invalidateQueries({ queryKey: ["standby-swaps"] })]);
@@ -193,6 +195,7 @@ function RosterSettings({ cfg, techs, track }: { cfg: StandbyConfig; techs: { id
       <div className="space-y-1.5"><Label>Rotate every</Label><Select value={String(f.rotationDays)} onValueChange={v => setF({ ...f, rotationDays: Number(v) })}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{[[1,"Day"],[2,"2 days"],[3,"3 days"],[7,"Week"],[14,"2 weeks"]].map(([v,l]) => <SelectItem key={v} value={String(v)}>{l}</SelectItem>)}</SelectContent></Select></div>
       <div className="space-y-1.5"><Label htmlFor={`${track}-staffing`}>{track === "technician" ? "Technicians" : "Supervisors"} per shift</Label><Input id={`${track}-staffing`} type="number" min="1" max={Math.max(1,f.order.length)} step="1" value={staff} onFocus={e => e.currentTarget.select()} onChange={e => setStaff(e.target.value)} onBlur={() => { if (!staff.trim()) setStaff("1"); }}/></div>
       <div className="space-y-1.5 sm:col-span-2"><Label>Rotation starts on</Label><Input type="date" value={f.start} onChange={e => setF({ ...f, start: e.target.value })}/></div>
+      {[7,14].includes(f.rotationDays) && <div className="space-y-1.5"><Label>Handover weekday</Label><Select value={String(new Date(`${f.start}T12:00:00Z`).getUTCDay())} onValueChange={v => setF({ ...f, start: nextWeekday(f.start, Number(v)) })}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].map((day,i) => <SelectItem key={day} value={String(i)}>{day}</SelectItem>)}</SelectContent></Select></div>}
     </div>
     <ul className="space-y-1">{f.order.map((id,i) => <li key={id} className="flex items-center gap-2 rounded border px-2 py-1.5 text-sm"><span>{i+1}.</span><span className="min-w-0 flex-1 break-words">{name(id)}</span><Button size="icon" variant="ghost" disabled={i===0} aria-label={`Move ${name(id)} up`} onClick={() => move(i,-1)}><ArrowUp className="h-4 w-4"/></Button><Button size="icon" variant="ghost" disabled={i===f.order.length-1} aria-label={`Move ${name(id)} down`} onClick={() => move(i,1)}><ArrowDown className="h-4 w-4"/></Button><Button size="icon" variant="ghost" aria-label={`Remove ${name(id)}`} onClick={() => setF({ ...f, order: f.order.filter(x => x!==id) })}><X className="h-4 w-4"/></Button></li>)}</ul>
     <Select value="" onValueChange={v => setF({ ...f, order: [...f.order,v] })}><SelectTrigger><SelectValue placeholder={`Add ${track} to roster`}/></SelectTrigger><SelectContent>{techs.filter(u => !f.order.includes(u.id)).map(u => <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>)}</SelectContent></Select>

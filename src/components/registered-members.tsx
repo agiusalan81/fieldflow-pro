@@ -3,6 +3,7 @@ import { RoleChangeControl } from "@/components/role-change-control";
 import { Link } from "@tanstack/react-router";
 import { usePayrollSetup, PayrollSetupAlert } from "@/components/payroll-setup-alert";
 import { payrollUiVisible } from "@/lib/payroll";
+import { usePlanFeatures } from '@/lib/plan-features';
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -19,7 +20,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export function RegisteredMembers({ role, meId }: { role: Role; meId: string }) {
   const qc = useQueryClient();
   const payroll = usePayrollSetup();
-  const payrollVisible = payrollUiVisible(useProfile().data);
+  const on = usePlanFeatures();
+  const payrollVisible = on('payroll') && payrollUiVisible(useProfile().data);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [target, setTarget] = useState<{ id: string; full_name: string; active: boolean } | null>(null);

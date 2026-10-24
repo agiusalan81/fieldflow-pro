@@ -11,6 +11,8 @@ import { ROLE_LABEL } from "@/lib/profile";
 import { getInvitation } from "@/lib/invites.functions";
 import { withInviteTimeout } from "@/lib/invite-loading";
 import { memberFullName, splitMemberName } from "@/lib/member-registration";
+import { PasswordInput } from '@/components/password-input';
+import { passwordsMatch } from '@/lib/testing-rules';
 
 const invitationQuery = (token: string) => queryOptions({
   queryKey: ["invitation", token],
@@ -63,7 +65,7 @@ function JoinPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const initialName = splitMemberName(invite?.full_name ?? "");
-  const [f, setF] = useState({ ...initialName, email: invite?.email ?? "", password: "" });
+  const [f, setF] = useState({ ...initialName, email: invite?.email ?? "", password: "", confirmation: "" });
   const [signedIn, setSignedIn] = useState(false);
   const [checkingAccount, setCheckingAccount] = useState(true);
   const [emailMode, setEmailMode] = useState(false);
@@ -104,6 +106,7 @@ function JoinPage() {
   const submit = async (e: FormEvent) => {
     e.preventDefault(); setBusy(true); setError(null);
     try {
+      if (!passwordsMatch(f.password, f.confirmation)) throw new Error('Passwords must match and contain at least 8 characters.');
       const fullName = memberFullName(f.firstName, f.surname);
       sessionStorage.setItem("fieldflow:pending-invite", token);
       const { data, error } = await withInviteTimeout(() => supabase.auth.signUp({

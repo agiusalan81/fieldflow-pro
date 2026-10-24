@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { enablePush, registerPush, type PushStatus } from "@/lib/web-push";
 import { useProfile } from "@/lib/profile";
+import { isMobileDevice } from '@/lib/testing-rules';
+import { usePlanFeatures } from '@/lib/plan-features';
 
 type Geo = "granted" | "denied" | "prompt" | "unsupported";
 async function geoState(): Promise<Geo> {
@@ -14,13 +16,15 @@ async function geoState(): Promise<Geo> {
 /** Bundled first-run permission setup: notifications for everyone, location for field staff. */
 export function DevicePermissions() {
   const { data: profile } = useProfile();
-  const field = profile?.real_role === "technician" || profile?.real_role === "supervisor";
+  const on = usePlanFeatures(!!profile);
+  const [mobile, setMobile] = useState(true);
+  const field = on('tracking') && (profile?.real_role === "technician" || profile?.real_role === "supervisor");
   const [push, setPush] = useState<PushStatus | null>(null);
   const [geo, setGeo] = useState<Geo | null>(null);
   const [busy, setBusy] = useState(false);
   const [later, setLater] = useState(false);
   const check = async () => { setPush(await registerPush()); setGeo(await geoState()); };
-  useEffect(() => { if (profile) void check(); }, [profile?.id]);
+  useEffect(() => { setMobile(isMobileDevice(navigator.userAgent)); if (profile) { setLater(localStorage.getItem(`fieldbridge:device-setup:${profile.id}`) === 'dismissed'); void check(); } }, [profile?.id]);
   if (!profile || push === null || geo === null) return null;
   const pushOk = push === "registered" || push === "unsupported";
   const geoOk = !field || geo === "granted" || geo === "unsupported";
@@ -52,11 +56,11 @@ export function DevicePermissions() {
           <Row icon={<Bell className="mt-0.5 h-4 w-4" />} label="Notifications" why="Lock-screen alerts for dispatched jobs, rota changes and team chat." ok={pushOk} bad={push === "blocked"} />
           {field && <Row icon={<MapPin className="mt-0.5 h-4 w-4" />} label="Location" why="Used only while you're clocked in, for travel and arrival times." ok={geoOk} bad={geo === "denied"} />}
         </div>
-        {blocked && <p className="text-sm text-muted-foreground">Something is blocked. Open your phone's settings → Apps (or browser) → FieldBridge → Permissions, allow it, then tap Check again.</p>}
+        {blocked && <p className="text-sm text-muted-foreground">{mobile ? "Open your phone's app or browser permissions and allow notifications/location, then tap Check again." : "Open the site controls beside the browser address and review Notifications and Location. Private browsing can block notifications; you can continue without them."}</p>}
         <div className="flex flex-col gap-2">
           {blocked ? <Button className="h-11" disabled={busy} onClick={check}>Check again</Button>
             : <Button className="h-11" disabled={busy} onClick={allow}>Allow all</Button>}
-          {blocked && <Button variant="ghost" className="h-11" onClick={() => setLater(true)}>Remind me next time</Button>}
+          {(blocked || !mobile) && <Button variant="ghost" className="h-11" onClick={() => { setLater(true); if (!mobile && profile) localStorage.setItem(`fieldbridge:device-setup:${profile.id}`, 'dismissed'); }}>{mobile ? 'Remind me next time' : 'Continue without setup'}</Button>}
         </div>
       </DialogContent>
     </Dialog>

@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from '@/components/password-input';
+import { passwordsMatch } from '@/lib/testing-rules';
 
 export const Route = createFileRoute("/auth")({ staticData: { sitemap: false },
   head: () => ({
@@ -59,7 +61,7 @@ function AuthPage() {
       else setNoCompany(true);
     });
   }, [navigate]);
-  const [form, setForm] = useState({ company: "", name: "", email: "", password: "" });
+  const [form, setForm] = useState({ company: "", name: "", email: "", password: "", confirmation: "" });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
@@ -79,6 +81,7 @@ function AuthPage() {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
+    if (mode === 'signup' && !passwordsMatch(form.password, form.confirmation)) { setError('Passwords must match and contain at least 8 characters.'); return; }
     setBusy(true);
     setError(null);
     form.email = form.email.trim().toLowerCase();
@@ -87,7 +90,7 @@ function AuthPage() {
         email: form.email,
         password: form.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
+          emailRedirectTo: window.location.origin,
           data: { company_name: form.company, full_name: form.name, referral_code: sessionStorage.getItem("fieldflow:referral") ?? "" },
         },
       });
@@ -173,6 +176,7 @@ function AuthPage() {
                 </button>
               </div>
             </Field>
+            {mode === 'signup' && <Field id="confirm-password" label="Confirm password"><PasswordInput id="confirm-password" value={form.confirmation} onChange={confirmation => setForm({ ...form, confirmation })}/>{form.confirmation && form.password !== form.confirmation && <p role="alert" className="text-sm text-destructive">Passwords do not match.</p>}</Field>}
             {mode === "signin" && (
               <div className="flex items-center justify-between gap-2">
                 <label htmlFor="remember" className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
