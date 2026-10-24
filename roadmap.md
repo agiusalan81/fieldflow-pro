@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Company Superuser Team dispatch entry and clearly reachable new-job creation
 - [ ] Custom on-call rotation days and active-only roster/swap choices with terminated placement flags
 - [ ] Atomic termination handover with work reassignment, rota removal and audited shift closure
 - [ ] Direct superuser leave decisions, accurate consultation labels and technician menu verification
