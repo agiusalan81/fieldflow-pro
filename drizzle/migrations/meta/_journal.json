@@ -659,6 +659,13 @@
       "when": 1792821846904,
       "tag": "0093_receipt_evidence_and_module_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 94,
+      "version": "7",
+      "when": 1792827240711,
+      "tag": "0094_client_experience_pack",
+      "breakpoints": true
     }
   ]
 }

@@ -3779,6 +3779,69 @@ export type Database = {
           },
         ]
       }
+      proposal_approvals: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string
+          decided_at: string | null
+          decision: string | null
+          expires_at: string
+          id: string
+          proposal_id: string
+          revoked_at: string | null
+          signer_comment: string | null
+          signer_name: string | null
+          snapshot: Json
+          token_hash: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by: string
+          decided_at?: string | null
+          decision?: string | null
+          expires_at?: string
+          id?: string
+          proposal_id: string
+          revoked_at?: string | null
+          signer_comment?: string | null
+          signer_name?: string | null
+          snapshot: Json
+          token_hash: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          decided_at?: string | null
+          decision?: string | null
+          expires_at?: string
+          id?: string
+          proposal_id?: string
+          revoked_at?: string | null
+          signer_comment?: string | null
+          signer_name?: string | null
+          snapshot?: Json
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposal_approvals_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposal_approvals_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proposals: {
         Row: {
           client_id: string | null
@@ -4670,7 +4733,20 @@ export type Database = {
         Args: { _asset: string }
         Returns: string
       }
+      create_proposal_approval_link: {
+        Args: { _proposal: string }
+        Returns: string
+      }
       current_company_id: { Args: never; Returns: string }
+      decide_proposal_approval: {
+        Args: {
+          _comment: string
+          _decision: string
+          _name: string
+          _token: string
+        }
+        Returns: undefined
+      }
       dwr_sheet_entries: {
         Args: { _date: string; _user: string }
         Returns: {
@@ -4688,6 +4764,7 @@ export type Database = {
       fieldbridge_public_legal: { Args: never; Returns: Json }
       fleet_day: { Args: { _date: string; _user: string }; Returns: Json }
       fleet_vehicle_list: { Args: never; Returns: Json }
+      get_equipment_logbook: { Args: { _token: string }; Returns: Json }
       get_equipment_report_target: { Args: { _token: string }; Returns: Json }
       get_invite: {
         Args: { _token: string }
@@ -4807,6 +4884,7 @@ export type Database = {
         Returns: boolean
       }
       read_client_report: { Args: { _hash: string }; Returns: Json }
+      read_proposal_approval: { Args: { _token: string }; Returns: Json }
       record_platform_usage: { Args: { _feature: string }; Returns: undefined }
       registered_members: {
         Args: never
