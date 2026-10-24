@@ -729,6 +729,27 @@
       "when": 1792837868035,
       "tag": "0103_client_portal_scope_lifecycle",
       "breakpoints": true
+    },
+    {
+      "idx": 104,
+      "version": "7",
+      "when": 1792838692438,
+      "tag": "0104_tenant_billing_and_bespoke_requests",
+      "breakpoints": true
+    },
+    {
+      "idx": 105,
+      "version": "7",
+      "when": 1792838912467,
+      "tag": "0105_read_assigned_unpublished_catalog",
+      "breakpoints": true
+    },
+    {
+      "idx": 106,
+      "version": "7",
+      "when": 1792838945271,
+      "tag": "0106_bespoke_owner_draft_guard",
+      "breakpoints": true
     }
   ]
 }

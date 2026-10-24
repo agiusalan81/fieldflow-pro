@@ -3,7 +3,7 @@ import { settingsSectionPatch } from "@/lib/settings-sections";
 import { TechnicalStructure } from "@/components/technical-structure";
 import { EstimateSettings } from "@/components/estimate-settings";
 import { PriceListSettings } from "@/components/price-list-settings";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -426,10 +426,10 @@ function SettingsSections({ superuser, companyId, userId }: { superuser: boolean
     ] },
     { title: "Documents & legal", items: [
       { key: "terms", label: "Terms & conditions", render: () => <DocumentSettings companyId={companyId} part="terms" /> },
-      { key: "library", label: libraryName, render: () => <DocumentLibrary companyId={companyId} userId={userId} /> },
+      { key: "library", label: libraryName, render: () => <div className="space-y-4">{superuser&&<Button asChild variant="outline"><Link to="/subscription" hash="custom-requests">Request a custom module / template</Link></Button>}<DocumentLibrary companyId={companyId} userId={userId} /></div> },
     ] },
     { title: "Commercial & integrations", items: [
-      { key: "estimates", label: "Estimates & suppliers", render: () => <EstimateSettings companyId={companyId} /> },
+      { key: "estimates", label: "Estimates & suppliers", render: () => <div className="space-y-4">{superuser&&<Button asChild variant="outline"><Link to="/subscription" hash="custom-requests">Request a custom module / template</Link></Button>}<EstimateSettings companyId={companyId} /></div> },
       { key: "pricelist", label: "Price list", render: () => <PriceListSettings companyId={companyId} /> },
       { key: "integrations", label: "Accounting", render: () => <IntegrationsSettings part="accounting" companyId={companyId} /> },
     ] },

@@ -3385,6 +3385,72 @@ export type Database = {
           },
         ]
       }
+      platform_custom_requests: {
+        Row: {
+          category: string
+          company_id: string
+          created_at: string
+          created_by: string
+          id: string
+          notes: string
+          product_id: string
+          quoted_price: number | null
+          response: string
+          samples: Json
+          status: string
+          target_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          notes?: string
+          product_id?: string
+          quoted_price?: number | null
+          response?: string
+          samples?: Json
+          status?: string
+          target_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          notes?: string
+          product_id?: string
+          quoted_price?: number | null
+          response?: string
+          samples?: Json
+          status?: string
+          target_date?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_custom_requests_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_custom_requests_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "platform_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_engagement_actions: {
         Row: {
           action_key: string

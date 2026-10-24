@@ -1,0 +1,1 @@
+CREATE POLICY catalog_assigned_read ON public.platform_catalog FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM public.platform_subscriptions s WHERE s.company_id=public.current_company_id() AND s.product_id=platform_catalog.product_id AND (s.plan_id=platform_catalog.id OR platform_catalog.id=ANY(s.pack_ids))));
