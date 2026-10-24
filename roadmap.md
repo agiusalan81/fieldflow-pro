@@ -1,4 +1,7 @@
 # Roadmap
+- [ ] Custom on-call rotation days and active-only roster/swap choices with terminated placement flags
+- [ ] Atomic termination handover with work reassignment, rota removal and audited shift closure
+- [ ] Direct superuser leave decisions, accurate consultation labels and technician menu verification
 - [x] Categorized per-member skills dialog, obsolete skill removal and technician skill hiding (22 tests pass)
 - [ ] Live skills assignment verification (blocked: requesting account's company access is revoked)
 - [x] Receipt autocrop works on real photos
