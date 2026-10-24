@@ -23,6 +23,7 @@ import { canDeleteSheet, canDeleteVisit, RECORD_DELETE_REFRESH_KEYS } from "@/li
 import { DispatchedVisits } from "@/components/dispatched-visits";
 import { NumInput } from "@/components/num-input";
 import { useEntrySuggestions } from "@/hooks/use-entry-suggestions";
+import { notifyOpenJob } from "@/lib/web-push.functions";
 import { SuggestedTextarea } from "@/components/suggested-textarea";
 import { matchesSheetFilter, matchesSheetDetails, validateCombinedSheets } from "@/lib/jobsheets";
 import { matchesSheetSearch } from "@/lib/dwr";
