@@ -3244,6 +3244,7 @@ export type Database = {
         Row: {
           billing_basis: string
           branding_required: boolean
+          coming_soon: boolean
           created_at: string
           id: string
           included_seats: number
@@ -3262,6 +3263,7 @@ export type Database = {
         Insert: {
           billing_basis?: string
           branding_required?: boolean
+          coming_soon?: boolean
           created_at?: string
           id?: string
           included_seats?: number
@@ -3280,6 +3282,7 @@ export type Database = {
         Update: {
           billing_basis?: string
           branding_required?: boolean
+          coming_soon?: boolean
           created_at?: string
           id?: string
           included_seats?: number
@@ -3957,9 +3960,12 @@ export type Database = {
           auto_charge: boolean
           auto_issue: boolean
           cadence: string
+          coming_soon_modules: string[]
           company_id: string | null
           created_at: string
           external_tenant_id: string | null
+          hidden_modules: string[]
+          hide_locked_modules: boolean
           id: string
           pack_ids: string[]
           pending_change: Json | null
@@ -3977,9 +3983,12 @@ export type Database = {
           auto_charge?: boolean
           auto_issue?: boolean
           cadence?: string
+          coming_soon_modules?: string[]
           company_id?: string | null
           created_at?: string
           external_tenant_id?: string | null
+          hidden_modules?: string[]
+          hide_locked_modules?: boolean
           id?: string
           pack_ids?: string[]
           pending_change?: Json | null
@@ -3997,9 +4006,12 @@ export type Database = {
           auto_charge?: boolean
           auto_issue?: boolean
           cadence?: string
+          coming_soon_modules?: string[]
           company_id?: string | null
           created_at?: string
           external_tenant_id?: string | null
+          hidden_modules?: string[]
+          hide_locked_modules?: boolean
           id?: string
           pack_ids?: string[]
           pending_change?: Json | null
@@ -5134,6 +5146,7 @@ export type Database = {
         Returns: boolean
       }
       company_storage_usage: { Args: { _company: string }; Returns: Json }
+      create_client_setup: { Args: { _details: Json }; Returns: Json }
       create_equipment_report_link: {
         Args: { _asset: string }
         Returns: string
@@ -5304,6 +5317,15 @@ export type Database = {
       }
       platform_set_company_module: {
         Args: { _mode: string; _module: string; _subscription: string }
+        Returns: undefined
+      }
+      platform_set_visibility: {
+        Args: {
+          _hidden: string[]
+          _hide_locked: boolean
+          _soon: string[]
+          _subscription: string
+        }
         Returns: undefined
       }
       platform_subscription_module_access: {
