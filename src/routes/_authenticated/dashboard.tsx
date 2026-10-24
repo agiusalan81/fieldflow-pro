@@ -161,6 +161,7 @@ function TechToday({ profile, readOnly, switcher }: { profile: Profile; readOnly
     <AppShell title={`Hi, ${profile.full_name.split(" ")[0]}`} actions={switcher}>
       <div className="mx-auto max-w-4xl space-y-6">
         <ShiftTracker profile={profile} />{switcher && !readOnly && <DepartureRequests />}
+        {!readOnly && <UpForGrabs profile={profile} />}
         <InternalWorkCard key={profile.id} profile={profile} readOnly={readOnly} />
         <Button asChild variant="outline" className="h-12 w-full"><Link to="/technical-library"><ClipboardList className="mr-2 h-5 w-5" />Technical library</Link></Button>
         <ScanQr />
