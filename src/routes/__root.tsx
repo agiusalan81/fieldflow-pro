@@ -155,8 +155,10 @@ function RootComponent() {
   useEffect(() => {
     void registerOfflineApp().catch(() => {});
     let accountId: string | undefined;
-    void supabase.auth.getSession().then(({ data }) => { accountId = data.session?.user.id; });
+    void supabase.auth.getSession().then(({ data }) => { accountId = data.session?.user.id; if (accountId) void linkPushToUser(accountId); });
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      // Bind this browser's push subscription to the signed-in user (Google or email), incl. restored sessions.
+      if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session?.user.id) setTimeout(() => void linkPushToUser(session.user.id), 0);
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
       if (event === "SIGNED_OUT") { clearUserPreview(); queryClient.clear(); if (accountId) void clearOfflineCache(accountId); accountId = undefined; }
       else { if (accountId && accountId !== session?.user.id) { clearUserPreview(); queryClient.clear(); } accountId = session?.user.id; queryClient.invalidateQueries(); }
