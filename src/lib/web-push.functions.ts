@@ -79,6 +79,31 @@ export const sendChatPush = createServerFn({ method: "POST" })
     return { sent };
   });
 
+/** Lock-screen alert to clocked-in field staff when a job is posted as open to claim. */
+export const notifyOpenJob = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ jobId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: me } = await supabase.from("users").select("company_id, role").eq("id", userId).maybeSingle();
+    if (!me || !["admin", "superuser", "supervisor"].includes(me.role)) throw new Error("Only office staff and supervisors can announce open jobs");
+    const { data: job } = await supabase.from("jobs").select("id, job_number, open_to_claim, clients(name), sites(name)").eq("id", data.jobId).eq("company_id", me.company_id).maybeSingle();
+    if (!job?.open_to_claim) return { sent: 0 };
+    // Only currently clocked-in field staff are alerted; off-shift devices stay quiet.
+    const { data: shifts } = await supabase.from("shifts").select("user_id").eq("company_id", me.company_id).is("ended_at", null).in("shift_type", ["shift", "standby"]);
+    const recipients = [...new Set((shifts ?? []).map((s) => s.user_id).filter((id) => id !== userId))];
+    if (!recipients.length) return { sent: 0 };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: subs } = await supabaseAdmin.from("push_subscriptions").select("endpoint,p256dh,auth").in("user_id", recipients);
+    const where = [job.clients?.name, job.sites?.name].filter(Boolean).join(" · ");
+    const sent = await deliver(supabaseAdmin, (subs ?? []) as Sub[], {
+      title: `Job #${job.job_number} up for grabs`,
+      body: `${where || "New open job"} — first to claim gets the place. Tap to view.`,
+      url: "/available-jobs", tag: `open-job:${job.id}`,
+    });
+    return { sent };
+  });
+
 const cat = (...a: Uint8Array[]) => { const o = new Uint8Array(a.reduce((n, x) => n + x.length, 0)); let i = 0; for (const x of a) { o.set(x, i); i += x.length; } return o; };
 const unb64 = (s: string) => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4)), (c) => c.charCodeAt(0));
 async function hmac(key: Uint8Array, msg: Uint8Array) {
