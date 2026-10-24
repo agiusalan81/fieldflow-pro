@@ -181,8 +181,10 @@ export type Database = {
       }
       client_contacts: {
         Row: {
+          all_sites: boolean
           client_id: string
           company_id: string
+          delivery_preferences: Json | null
           email: string | null
           first_name: string
           has_whatsapp: boolean
@@ -193,10 +195,13 @@ export type Database = {
           receives_job_sheets: boolean
           role_title: string | null
           site_id: string | null
+          site_ids: string[]
         }
         Insert: {
+          all_sites?: boolean
           client_id: string
           company_id: string
+          delivery_preferences?: Json | null
           email?: string | null
           first_name: string
           has_whatsapp?: boolean
@@ -207,10 +212,13 @@ export type Database = {
           receives_job_sheets?: boolean
           role_title?: string | null
           site_id?: string | null
+          site_ids?: string[]
         }
         Update: {
+          all_sites?: boolean
           client_id?: string
           company_id?: string
+          delivery_preferences?: Json | null
           email?: string | null
           first_name?: string
           has_whatsapp?: boolean
@@ -221,6 +229,7 @@ export type Database = {
           receives_job_sheets?: boolean
           role_title?: string | null
           site_id?: string | null
+          site_ids?: string[]
         }
         Relationships: [
           {
@@ -242,6 +251,170 @@ export type Database = {
             columns: ["site_id"]
             isOneToOne: false
             referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_portal_audit: {
+        Row: {
+          action: string
+          actor_id: string
+          client_id: string
+          company_id: string
+          contact_id: string | null
+          created_at: string
+          id: string
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          client_id: string
+          company_id: string
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          client_id?: string
+          company_id?: string
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      client_portal_invites: {
+        Row: {
+          access_role: string
+          all_sites: boolean
+          client_id: string
+          company_id: string
+          contact_id: string
+          created_at: string
+          created_by: string
+          email: string
+          expires_at: string
+          id: string
+          revoked_at: string | null
+          site_ids: string[]
+          token_hash: string
+          used_at: string | null
+        }
+        Insert: {
+          access_role?: string
+          all_sites?: boolean
+          client_id: string
+          company_id: string
+          contact_id: string
+          created_at?: string
+          created_by: string
+          email: string
+          expires_at?: string
+          id?: string
+          revoked_at?: string | null
+          site_ids?: string[]
+          token_hash: string
+          used_at?: string | null
+        }
+        Update: {
+          access_role?: string
+          all_sites?: boolean
+          client_id?: string
+          company_id?: string
+          contact_id?: string
+          created_at?: string
+          created_by?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          revoked_at?: string | null
+          site_ids?: string[]
+          token_hash?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_portal_invites_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_portal_invites_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_portal_invites_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "client_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_portal_memberships: {
+        Row: {
+          access_role: string
+          all_sites: boolean
+          client_id: string
+          company_id: string
+          contact_id: string
+          created_at: string
+          id: string
+          revoked_at: string | null
+          site_ids: string[]
+          user_id: string
+        }
+        Insert: {
+          access_role?: string
+          all_sites?: boolean
+          client_id: string
+          company_id: string
+          contact_id: string
+          created_at?: string
+          id?: string
+          revoked_at?: string | null
+          site_ids?: string[]
+          user_id: string
+        }
+        Update: {
+          access_role?: string
+          all_sites?: boolean
+          client_id?: string
+          company_id?: string
+          contact_id?: string
+          created_at?: string
+          id?: string
+          revoked_at?: string | null
+          site_ids?: string[]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_portal_memberships_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_portal_memberships_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_portal_memberships_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "client_contacts"
             referencedColumns: ["id"]
           },
         ]
@@ -4848,6 +5021,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_client_portal_invite: { Args: { _token: string }; Returns: string }
       accept_company_invite: { Args: { _token: string }; Returns: string }
       accept_company_invite_named: {
         Args: { _first_name: string; _surname: string; _token: string }
@@ -4857,6 +5031,18 @@ export type Database = {
       can_read_chat_object: { Args: { _name: string }; Returns: boolean }
       chat_sheet_access: { Args: { _sheet: string }; Returns: boolean }
       claim_open_job: { Args: { _job: string }; Returns: string }
+      client_message_recipients: {
+        Args: {
+          _channel: string
+          _client: string
+          _purpose: string
+          _site: string
+        }
+        Returns: Json
+      }
+      client_portal_directory: { Args: never; Returns: Json }
+      client_workspace: { Args: { _client: string }; Returns: Json }
+      client_workspace_scope: { Args: { _client: string }; Returns: Json }
       company_app_product_id: { Args: never; Returns: string }
       company_invoice_lapsed: {
         Args: { _subscription: string }
@@ -4933,6 +5119,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      invite_client_contact: {
+        Args: { _admin?: boolean; _client: string; _contact: string }
+        Returns: string
       }
       is_company_manager: { Args: never; Returns: boolean }
       is_on_standby: {
@@ -5041,6 +5231,10 @@ export type Database = {
           termination_reason: string
         }[]
       }
+      revoke_client_portal_access: {
+        Args: { _client: string; _contact: string }
+        Returns: undefined
+      }
       route_pending_work: {
         Args: {
           _action: string
@@ -5050,6 +5244,10 @@ export type Database = {
           _note?: string
           _sheet: string
         }
+        Returns: string
+      }
+      save_client_contact: {
+        Args: { _client: string; _contact: string; _details: Json }
         Returns: string
       }
       save_employee_payroll_setup: {

@@ -694,6 +694,13 @@
       "when": 1792836861931,
       "tag": "0098_maintenance_field_access",
       "breakpoints": true
+    },
+    {
+      "idx": 99,
+      "version": "7",
+      "when": 1792837110580,
+      "tag": "0099_client_recipient_matrix_and_portal",
+      "breakpoints": true
     }
   ]
 }
