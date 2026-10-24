@@ -5230,6 +5230,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      hq_save_setup_options: {
+        Args: { _options: Json; _subscription: string }
+        Returns: undefined
+      }
       invite_client_contact: {
         Args: { _admin?: boolean; _client: string; _contact: string }
         Returns: string
