@@ -67,6 +67,38 @@ describe("same-device sheet saves", () => {
     await expect(syncDraft(local)).rejects.toThrow("CONFLICT");
     expect(await getLocalDraft("editor", "external")).toEqual(local);
   });
+
+  it("still rejects external edits between queued saves", async () => {
+    api.getUser.mockResolvedValue({ data: { user: { id: "editor" } } });
+    let count = 0;
+    api.rpc.mockImplementation(async (_name, args) => {
+      count += 1;
+      if (count === 1) return { data: "v2", error: null };
+      expect(args._expected).toBe("v2");
+      return { data: null, error: new Error("CONFLICT: server advanced to external-v3") };
+    });
+    const first = syncDraft(snapshot("queued-external", "1"));
+    const next = syncDraft(snapshot("queued-external", "2"));
+    const rejected = expect(next).rejects.toThrow("CONFLICT");
+    await expect(first).resolves.toBe("v2");
+    await rejected;
+  });
+
+  it("does not block an unrelated sheet behind an in-flight save", async () => {
+    api.getUser.mockResolvedValue({ data: { user: { id: "editor" } } });
+    let release: (() => void) | undefined;
+    let started: (() => void) | undefined;
+    const entered = new Promise<void>(resolve => { started = resolve; });
+    api.rpc.mockImplementation(async (_name, args) => {
+      if (args._id === "held") { started?.(); await new Promise<void>(resolve => { release = resolve; }); }
+      return { data: "v2", error: null };
+    });
+    const held = syncDraft(snapshot("held", "1"));
+    await entered;
+    await expect(syncDraft(snapshot("independent", "1"))).resolves.toBe("v2");
+    release?.();
+    await held;
+  });
 });
 
 describe("explicit offline discard", () => {
