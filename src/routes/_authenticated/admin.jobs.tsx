@@ -154,7 +154,8 @@ function AdminJobs() {
   };
 
   return (
-    <AppShell title="Job sheets" actions={<NewJobDialog />}>
+    <AppShell title="Job sheets">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-semibold">Team dispatch</h2><NewJobDialog /></div>
       {canDeleteVisit(me?.role) && <DispatchedVisits />}
       <div className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_220px]">
         <Input placeholder="Search client, technician, asset or sheet no." value={q} onChange={(e) => setQ(e.target.value)} />
@@ -315,7 +316,7 @@ function NewJobDialog() {
   const { data: suggestions } = useEntrySuggestions();
   const { data: allUsers = [] } = useCompanyUsers();
   // Field crew are supervisors and technicians only; office staff dispatch but are not crew.
-  const users = allUsers.filter(u => ['technician','supervisor','maintenance'].includes(u.role));
+  const users = allUsers.filter(u => ['technician','supervisor','maintenance'].includes(u.role) && u.registration_status === 'active');
   const qc = useQueryClient();
   const search = Route.useSearch();
   const navigate = useNavigate();
@@ -397,9 +398,9 @@ function NewJobDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button size="sm"><Plus className="mr-1 h-4 w-4" />Schedule visit</Button></DialogTrigger>
+      <DialogTrigger asChild><Button size="sm"><Plus className="mr-1 h-4 w-4" />New job</Button></DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Schedule a visit</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>Create new job</DialogTitle></DialogHeader>
         <form onSubmit={save} className="space-y-3">
           <Select value={f.client_id} onValueChange={(v) => { if (v && v !== f.client_id) setF((cur) => ({ ...cur, client_id: v, site_id: "none", asset_id: "none" })); }}>
             <SelectTrigger><SelectValue placeholder={clients.length ? "Client" : "Add a client first"} /></SelectTrigger>
@@ -445,7 +446,7 @@ function NewJobDialog() {
             <div className="space-y-1.5"><Label>Until (optional)</Label><Input type="time" value={f.window_end} onChange={(e) => setF({ ...f, window_end: e.target.value })} /></div>
           </div>
           <div className="space-y-1.5"><Label>Problem summary</Label><SuggestedTextarea aria-label="Problem summary" value={f.problem_summary} onValueChange={problem_summary => setF({ ...f, problem_summary })} suggestions={suggestions?.problems} /></div>
-          <Button type="submit" className="w-full" disabled={saving}>{saving ? "Scheduling…" : "Schedule"}</Button>
+          <Button type="submit" className="w-full" disabled={saving}>{saving ? "Creating…" : "Create job"}</Button>
         </form>
       </DialogContent>
     </Dialog>
