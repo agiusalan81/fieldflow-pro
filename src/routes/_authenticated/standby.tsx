@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { nextWeekday } from '@/lib/testing-rules';
 
 export const Route = createFileRoute("/_authenticated/standby")({ staticData: { sitemap: false },
+  validateSearch: (s: Record<string, unknown>): { swap?: string } => ({ ...(typeof s["swap"] === "string" ? {swap:s["swap"]} : {}) }),
   head: () => ({
     meta: [
       { title: "On-call rota — FieldBridge" },
@@ -40,6 +41,7 @@ function StandbyPage() {
   const { data: users = [], isLoading: usersLoading, error: usersError } = useCompanyUsers();
   const { data: company } = useCompanyRules();
   const qc = useQueryClient();
+  const { swap: focusedSwap } = Route.useSearch();
   const feature = usePlanFeatures(!!profile);
   const [askTrack, setAskTrack] = useState<RotaTrack>("technician");
   const { data: supervisorRoster } = useQuery({ queryKey: ["supervisor-roster", profile?.company_id], enabled: !!profile && feature("standby"), queryFn: async () => { const r = await supabase.from("supervisor_rosters").select("*").maybeSingle(); if(r.error) throw r.error; return r.data; } });
@@ -55,6 +57,7 @@ function StandbyPage() {
     enabled: !!profile && feature("standby"),
     queryFn: async () => (await supabase.from("standby_swaps").select("*").order("created_at", { ascending: false }).limit(200)).data ?? [],
   });
+  useEffect(() => { if (focusedSwap && swaps.length) document.getElementById(`swap-${focusedSwap}`)?.scrollIntoView({block:"center"}); }, [focusedSwap, swaps]);
   if (!profile || !company) return <AppShell title="On-call rota"><p className="text-muted-foreground">Loading…</p></AppShell>;
   if (!feature("standby")) return <AppShell title="On-call rota"><EmptyState>On-call rota is switched off for your company.</EmptyState></AppShell>;
   const configs: Record<RotaTrack, StandbyConfig> = { technician: company.standby, supervisor: { start: supervisorRoster?.start_date ?? iso(today0()), rotationDays: supervisorRoster?.rotation_days ?? 7, perShift: supervisorRoster?.per_shift ?? 1, order: supervisorRoster?.member_order ?? [] } };
@@ -63,7 +66,8 @@ function StandbyPage() {
   const days = Array.from({ length: 7 }, (_, i) => iso(new Date(week.getFullYear(), week.getMonth(), week.getDate() + i)));
   const techs = users.filter((u) => activeRotaMember(u, askTrack));
   const phone = (id: string) => contacts.find(u => u.id === id)?.phone_number;
-  const refresh = () => qc.invalidateQueries({ queryKey: ["standby-swaps"] });
+  const refresh = () => Promise.all(["standby-swaps","action-notifications","on-call-menu-badge"].map(key => qc.invalidateQueries({queryKey:[key]})));
+  const snooze = async (id: string) => { const r = await supabase.rpc("snooze_standby_swap", {_swap:id}); if(r.error) {toast.error(r.error.message); return;} toast.success("Swap reminder snoozed for 1 hour"); await refresh(); };
 
   const request = async () => {
     if (!ask || !target) return;
@@ -78,17 +82,18 @@ function StandbyPage() {
     toast.success(status === "accepted" ? "Accepted — awaiting manager approval" : status === "declined" ? "Swap declined" : "Request cancelled");
     refresh();
   };
-  const incoming = swaps.filter((s) => s.target_id === profile.id && s.status === "pending");
+  const incoming = swaps.filter((s) => s.target_id === profile.id && s.status === "pending" && (s.id === focusedSwap || !s.snoozed_until || Date.parse(s.snoozed_until) <= Date.now()));
   const mine = swaps.filter((s) => s.requester_id === profile.id);
 
   return (
     <AppShell title="On-call rota">
       <div className="mx-auto max-w-5xl space-y-5">
         {incoming.map((s) => (
-          <div key={s.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-warning bg-warning/10 p-4">
+          <div key={s.id} id={`swap-${s.id}`} className={`flex flex-wrap items-center gap-3 rounded-lg border border-warning bg-warning/10 p-4 ${s.id === focusedSwap ? "ring-2 ring-primary" : ""}`}>
             <Repeat className="h-5 w-5 text-foreground" />
             <p className="flex-1 text-sm text-foreground"><b>{name(s.requester_id)}</b> asks you to take their standby on <b>{s.swap_date}{s.end_date && s.end_date !== s.swap_date ? ` → ${s.end_date}` : ""}</b>{s.note ? ` · ${s.note}` : ""}.</p>
             <Button size="sm" variant="outline" onClick={() => answer(s.id, "declined")}>Decline</Button>
+            <Button size="sm" variant="outline" onClick={() => void snooze(s.id)}>Snooze</Button>
             <Button size="sm" onClick={() => answer(s.id, "accepted")}>Accept</Button>
           </div>
         ))}
@@ -130,7 +135,7 @@ function StandbyPage() {
           </section>
         )}
 
-        {isManager(profile) && swaps.filter(s=>s.status==="accepted"&&!s.manager_approved).map(s=><div key={s.id} className="flex flex-wrap items-center gap-3 border-l-2 border-warning p-3 text-sm"><p className="flex-1">{name(s.requester_id)} → {name(s.target_id)} · {s.track} · {s.swap_date} → {s.end_date ?? s.swap_date} · Awaiting approval</p><Button size="sm" disabled={[s.requester_id,s.target_id].includes(profile.id)} onClick={async()=>{const r=await supabase.from("standby_swaps").update({manager_approved:true}).eq("id",s.id);if(r.error)toast.error(r.error.message);else{toast.success("Swap approved — rota updated");refresh();}}}>Approve swap</Button><Button size="sm" variant="outline" onClick={()=>answer(s.id,"cancelled")}>Decline swap</Button></div>)}
+        {isManager(profile) && swaps.filter(s=>s.status==="accepted"&&!s.manager_approved).map(s=><div key={s.id} id={`swap-${s.id}`} className={`flex flex-wrap items-center gap-3 border-l-2 border-warning p-3 text-sm ${s.id === focusedSwap ? "ring-2 ring-primary" : ""}`}><p className="flex-1">{name(s.requester_id)} → {name(s.target_id)} · {s.track} · {s.swap_date} → {s.end_date ?? s.swap_date} · Awaiting approval</p><Button size="sm" disabled={[s.requester_id,s.target_id].includes(profile.id)} onClick={async()=>{const r=await supabase.from("standby_swaps").update({manager_approved:true}).eq("id",s.id);if(r.error)toast.error(r.error.message);else{toast.success("Swap approved — rota updated");refresh();}}}>Approve swap</Button><Button size="sm" variant="outline" onClick={()=>answer(s.id,"cancelled")}>Decline swap</Button></div>)}
         {isManager(profile) && (
           <section className="rounded-xl border bg-card p-4">
             <h2 className="mb-2 font-medium text-foreground">All swap requests</h2>
