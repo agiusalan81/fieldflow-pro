@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { freeForRange, rotaFor, validRota } from "./rota";
+import { freeForRange, rotaFor, validRota, weeklyRota, activeRotaMember } from "./rota";
 const tech = { start: "2026-10-23", rotationDays: 7, perShift: 1, order: ["t1", "t2"] };
 const supervisor = { ...tech, rotationDays: 2, order: ["s1", "s2"] };
 describe("dual-track on-call rota", () => {
@@ -11,4 +11,11 @@ describe("dual-track on-call rota", () => {
   it("rejects people from the wrong role pool", () => { expect(validRota({ ...supervisor, order: ["t1"] }, ["s1", "s2"])).toBe(false); });
   it("caps staffing at selected members", () => { expect(validRota({ ...supervisor, perShift: 3 }, ["s1", "s2", "s3"])).toBe(false); });
   it("permits clearing a track without deleting evidence", () => { expect(validRota({ ...supervisor, order: [] }, ["s1", "s2"])).toBe(true); });
+});
+describe("custom rotation and membership", () => {
+  it.each([2,4,5,10])("accepts %i-day cycles", days => expect(validRota({...tech,rotationDays:days},["t1","t2"])).toBe(true));
+  it("cycles every four days from its date anchor", () => { const cfg={...tech,rotationDays:4}; expect(rotaFor("2026-10-26",cfg,[],"technician")).toEqual(["t1"]); expect(rotaFor("2026-10-27",cfg,[],"technician")).toEqual(["t2"]); });
+  it("anchors only weekly multiples", () => { expect(weeklyRota(7)).toBe(true); expect(weeklyRota(14)).toBe(true); expect(weeklyRota(4)).toBe(false); });
+  it("excludes terminated technicians", () => expect(activeRotaMember({role:"technician",registration_status:"terminated"},"technician")).toBe(false));
+  it("retains active technicians", () => expect(activeRotaMember({role:"technician",registration_status:"active"},"technician")).toBe(true));
 });

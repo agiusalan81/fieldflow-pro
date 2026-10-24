@@ -81,9 +81,9 @@ export function useCompanyUsers() {
     queryFn: async () => {
       const { data, error } = await supabase.from("users").select("id, full_name, role, technician_initials").order("full_name");
       if (error) throw error;
-      const roles = await supabase.from('user_roles').select('user_id,role');
+      const roles = await supabase.from('user_roles').select('user_id,role,registration_status');
       if (roles.error) throw roles.error;
-      return data.map(u => ({ ...u, role: (roles.data.find(r => r.user_id === u.id)?.role ?? u.role) as Role }));
+      return data.map(u => ({ ...u, role: (roles.data.find(r => r.user_id === u.id)?.role ?? u.role) as Role, registration_status: roles.data.find(r => r.user_id === u.id)?.registration_status ?? 'unavailable' }));
     },
   });
 }

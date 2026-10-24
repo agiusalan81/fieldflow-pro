@@ -5,7 +5,7 @@ import { RegisteredMembers } from "@/components/registered-members";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useProfile, isManager } from "@/lib/profile";
+import { useProfile, isManager, ROLE_LABEL } from "@/lib/profile";
 import { canSeeMember } from "@/lib/member-registration";
 import type { Role } from "@/lib/profile";
 import { AppShell, EmptyState } from "@/components/app-shell";
@@ -40,11 +40,12 @@ function LiveAvailability() {
     refetchInterval: 30_000,
     queryFn: async () => {
       const [u, s, l] = await Promise.all([
-        supabase.from("users").select("id, full_name, role, phone_number").order("full_name"),
+        supabase.rpc("registered_members"),
         supabase.from("shifts").select("user_id, shift_type, started_at").is("ended_at", null),
         supabase.from("leave_requests").select("user_id, leave_type, end_date").eq("status", "approved").lte("start_date", today).gte("end_date", today),
       ]);
-      return { users: u.data ?? [], shifts: s.data ?? [], leave: l.data ?? [] };
+      if (u.error) throw u.error; if (s.error) throw s.error; if (l.error) throw l.error;
+      return { users: (u.data ?? []).filter(u => u.registration_status === "active"), shifts: s.data ?? [], leave: l.data ?? [] };
     },
   });
   if (!isManager(profile)) return <AppShell title="Team availability"><EmptyState>Only supervisors and office staff can see team availability.</EmptyState></AppShell>;
@@ -69,7 +70,7 @@ function LiveAvailability() {
         <ul className="divide-y rounded-xl border bg-card">
           {rows.map(({ u, s, sub }) => (
             <li key={u.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
-              <div className="min-w-0 flex-1"><p className="truncate font-medium text-foreground">{u.full_name}</p><p className="text-xs capitalize text-muted-foreground">{u.role}{u.phone_number ? ` · ${u.phone_number}` : ""}</p><MemberSkills userId={u.id} role={u.role} name={u.full_name} editable/></div>
+              <div className="min-w-0 flex-1"><p className="truncate font-medium text-foreground">{u.full_name}</p><p className="text-xs capitalize text-muted-foreground">{ROLE_LABEL[u.role]}</p><MemberSkills userId={u.id} role={u.role} name={u.full_name} editable/></div>
               <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${CLS[s]}`}>{LABEL[s]}</span>
               <span className="w-24 text-right text-xs text-muted-foreground">{sub}</span>
             </li>

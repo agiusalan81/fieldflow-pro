@@ -1,0 +1,12 @@
+ALTER TABLE public.standby_swaps ADD COLUMN snoozed_until timestamptz;
+CREATE FUNCTION public.snooze_standby_swap(_swap uuid) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ DECLARE c uuid=public.current_company_id(); BEGIN
+IF c IS NULL OR NOT public.member_is_active(auth.uid()) OR NOT public.company_module_access(c,'standby') THEN RAISE EXCEPTION 'On-call access required' USING ERRCODE='42501'; END IF;
+UPDATE public.standby_swaps SET snoozed_until=now()+interval '1 hour' WHERE id=_swap AND company_id=c AND target_id=auth.uid() AND status='pending' AND coalesce(end_date,swap_date)>=current_date;
+IF NOT FOUND THEN RAISE EXCEPTION 'Only the recipient can snooze a pending request'; END IF;
+END $$;
+REVOKE ALL ON FUNCTION public.snooze_standby_swap(uuid) FROM PUBLIC,anon; GRANT EXECUTE ON FUNCTION public.snooze_standby_swap(uuid) TO authenticated;
+CREATE OR REPLACE FUNCTION public.standby_track_ids(_company uuid,_date date,_track text) RETURNS uuid[] LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=public AS $$ DECLARE st date;rot int;per int;o uuid[];ids uuid[]='{}';n int;blk int;first int;k int;sw record; BEGIN
+IF _track='technician' THEN SELECT standby_start,standby_rotation_days,standby_per_shift,standby_order INTO st,rot,per,o FROM public.company_settings WHERE company_id=_company; ELSIF _track='supervisor' THEN SELECT start_date,rotation_days,per_shift,member_order INTO st,rot,per,o FROM public.supervisor_rosters WHERE company_id=_company; ELSE RETURN ids; END IF;
+n=coalesce(cardinality(o),0);IF n=0 THEN RETURN ids; END IF;per=greatest(1,least(per,n));blk=floor((_date-st)::numeric/greatest(1,rot));first=(((blk*per)%n)+n)%n;
+FOR k IN 0..per-1 LOOP IF public.member_is_active(o[((first+k)%n)+1]) THEN ids=ids||o[((first+k)%n)+1]; END IF; END LOOP;
+FOR sw IN SELECT requester_id,target_id FROM public.standby_swaps WHERE company_id=_company AND track=_track AND _date BETWEEN swap_date AND coalesce(end_date,swap_date) AND status='accepted' AND manager_approved AND public.member_is_active(requester_id) AND public.member_is_active(target_id) ORDER BY created_at,id LOOP IF sw.requester_id=ANY(ids) AND NOT sw.target_id=ANY(ids) THEN ids=array_replace(ids,sw.requester_id,sw.target_id);END IF;END LOOP; RETURN ids; END $$;

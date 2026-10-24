@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { approvalBalance } from "@/lib/jobsheets";
-import { useProfile, isManager, isOffice } from "@/lib/profile";
+import { useProfile, useCompanyUsers, ROLE_LABEL, isManager, isOffice } from "@/lib/profile";
 import { canDecideLeave, type AppRole } from "@/lib/field-rules";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,7 @@ const STATUS_CLS: Record<string, string> = { pending: "bg-warning/25 text-warnin
 function LeaveApprovals() {
   const qc = useQueryClient();
   const { data: me } = useProfile();
+  const { data: members = [] } = useCompanyUsers();
   const { request } = Route.useSearch();
   const [month, setMonth] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
   const { data: reqs = [] } = useQuery({
@@ -85,7 +86,7 @@ function LeaveApprovals() {
                 return (
                   <li key={r.id} id={`leave-${r.id}`} className={`space-y-2 rounded-lg border p-3 ${r.id === request ? 'border-primary ring-2 ring-primary/20' : ''}`}>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-foreground">{r.users?.full_name} <span className="text-xs capitalize text-muted-foreground">· {r.users?.role}</span> · {leaveLabel(r.leave_type)}</p>
+                      <p className="truncate text-sm font-medium text-foreground">{r.users?.full_name} <span className="text-xs capitalize text-muted-foreground">· {ROLE_LABEL[members.find(u => u.id === r.user_id)?.role ?? 'technician']}</span> · {leaveLabel(r.leave_type)}</p>
                       <p className="text-xs text-muted-foreground">{r.start_date} → {r.end_date} · {Number(r.total_hours).toFixed(2)} h
                         {isOffice(me) && r.medical_certificate_path && <Button variant="link" size="sm" onClick={() => r.medical_certificate_path && openCert(r.medical_certificate_path)}>certificate</Button>}</p>
                       {r.optional_notes && <p className="mt-1 text-xs text-foreground">“{r.optional_notes}”</p>}
@@ -95,7 +96,7 @@ function LeaveApprovals() {
                       {isAnnual && <span className="rounded-full bg-muted px-2 py-0.5 tabular-nums">{bal.after.toFixed(2)} h after this</span>}
                       {bal.exceedsBy > 0 && <span className="rounded-full bg-warning/25 px-2 py-0.5 text-warning-foreground">Exceeds balance by {bal.exceedsBy.toFixed(2)} h</span>}
                     </div>
-                    <LeaveImpact request={r}/>
+                    <LeaveImpact request={{...r, users: r.users ? {...r.users, role: members.find(u => u.id === r.user_id)?.role ?? r.users.role} : null}}/>
                   </li>
                 );
               })}

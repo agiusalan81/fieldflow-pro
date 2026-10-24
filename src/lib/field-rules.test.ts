@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { canDecideLeave, missingProfileFields, unfinishedJobs, nextDay } from "@/lib/field-rules";
+import { canDecideLeave, canRequestLeaveConsultation, missingProfileFields, unfinishedJobs, nextDay } from "@/lib/field-rules";
 
 describe("leave approval routing", () => {
   it("supervisor approves technician leave", () => expect(canDecideLeave("supervisor", "technician", false)).toBe(true));
@@ -17,3 +17,6 @@ describe("unfinished work at clock-out", () => {
   it("keeps jobs without a completed sheet", () => expect(unfinishedJobs([{ id: "a" }, { id: "b" }, { id: "c" }], [{ job_id: "a", status: "completed" }, { job_id: "b", status: "in_progress" }]).map((j) => j.id)).toEqual(["b", "c"]));
   it("rolls to the next day", () => expect(nextDay("2026-12-31")).toBe("2027-01-01"));
 });
+
+it("company superuser never requires a consultation", () => expect(canRequestLeaveConsultation("superuser")).toBe(false));
+it("office admin can request operational consultation", () => expect(canRequestLeaveConsultation("admin")).toBe(true));

@@ -7,7 +7,7 @@ export function rotaFor(date: string, config: StandbyConfig, swaps: (Swap & { tr
   return standbyFor(date, config, swaps.filter(s => (s.track ?? "technician") === track));
 }
 export function validRota(config: StandbyConfig, eligibleIds: string[]) {
-  return !!config.start && [1, 2, 3, 7, 14].includes(config.rotationDays)
+  return !!config.start && Number.isInteger(config.rotationDays) && config.rotationDays >= 1 && config.rotationDays <= 365
     && new Set(config.order).size === config.order.length
     && config.order.every(id => eligibleIds.includes(id))
     && Number.isInteger(config.perShift) && config.perShift >= 1
@@ -21,3 +21,5 @@ export function freeForRange(id: string, start: string, end: string, config: Sta
   }
   return true;
 }
+export const weeklyRota = (days: number) => Number.isInteger(days) && days > 0 && days % 7 === 0;
+export const activeRotaMember = (member: { role: string; registration_status: string }, track: RotaTrack) => member.role === track && member.registration_status === "active";

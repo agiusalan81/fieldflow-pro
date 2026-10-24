@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useProfile, useCompanyUsers, isManager, isOffice } from "@/lib/profile";
 import { useCompanyRules } from "@/lib/company";
 import { type StandbyConfig } from "@/lib/dwr";
-import { rotaFor, freeForRange, validRota, ROTA_TRACKS, trackLabel, type RotaTrack } from "@/lib/rota";
+import { rotaFor, freeForRange, validRota, weeklyRota, activeRotaMember, ROTA_TRACKS, trackLabel, type RotaTrack } from "@/lib/rota";
 import { usePlanFeatures } from "@/lib/plan-features";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { nextWeekday } from '@/lib/testing-rules';
 
 export const Route = createFileRoute("/_authenticated/standby")({ staticData: { sitemap: false },
+  validateSearch: (s: Record<string, unknown>): { swap?: string } => ({ ...(typeof s["swap"] === "string" ? {swap:s["swap"]} : {}) }),
   head: () => ({
     meta: [
       { title: "On-call rota — FieldBridge" },
@@ -40,6 +41,7 @@ function StandbyPage() {
   const { data: users = [], isLoading: usersLoading, error: usersError } = useCompanyUsers();
   const { data: company } = useCompanyRules();
   const qc = useQueryClient();
+  const { swap: focusedSwap } = Route.useSearch();
   const feature = usePlanFeatures(!!profile);
   const [askTrack, setAskTrack] = useState<RotaTrack>("technician");
   const { data: supervisorRoster } = useQuery({ queryKey: ["supervisor-roster", profile?.company_id], enabled: !!profile && feature("standby"), queryFn: async () => { const r = await supabase.from("supervisor_rosters").select("*").maybeSingle(); if(r.error) throw r.error; return r.data; } });
@@ -55,15 +57,17 @@ function StandbyPage() {
     enabled: !!profile && feature("standby"),
     queryFn: async () => (await supabase.from("standby_swaps").select("*").order("created_at", { ascending: false }).limit(200)).data ?? [],
   });
+  useEffect(() => { if (focusedSwap && swaps.length) document.getElementById(`swap-${focusedSwap}`)?.scrollIntoView({block:"center"}); }, [focusedSwap, swaps]);
   if (!profile || !company) return <AppShell title="On-call rota"><p className="text-muted-foreground">Loading…</p></AppShell>;
   if (!feature("standby")) return <AppShell title="On-call rota"><EmptyState>On-call rota is switched off for your company.</EmptyState></AppShell>;
   const configs: Record<RotaTrack, StandbyConfig> = { technician: company.standby, supervisor: { start: supervisorRoster?.start_date ?? iso(today0()), rotationDays: supervisorRoster?.rotation_days ?? 7, perShift: supervisorRoster?.per_shift ?? 1, order: supervisorRoster?.member_order ?? [] } };
   const cfg = configs[askTrack];
   const name = (id: string) => users.find((u) => u.id === id)?.full_name ?? "—";
   const days = Array.from({ length: 7 }, (_, i) => iso(new Date(week.getFullYear(), week.getMonth(), week.getDate() + i)));
-  const techs = users.filter((u) => u.role === askTrack);
+  const techs = users.filter((u) => activeRotaMember(u, askTrack));
   const phone = (id: string) => contacts.find(u => u.id === id)?.phone_number;
-  const refresh = () => qc.invalidateQueries({ queryKey: ["standby-swaps"] });
+  const refresh = () => Promise.all(["standby-swaps","action-notifications","on-call-menu-badge"].map(key => qc.invalidateQueries({queryKey:[key]})));
+  const snooze = async (id: string) => { const r = await supabase.rpc("snooze_standby_swap", {_swap:id}); if(r.error) {toast.error(r.error.message); return;} toast.success("Swap reminder snoozed for 1 hour"); await refresh(); };
 
   const request = async () => {
     if (!ask || !target) return;
@@ -78,17 +82,18 @@ function StandbyPage() {
     toast.success(status === "accepted" ? "Accepted — awaiting manager approval" : status === "declined" ? "Swap declined" : "Request cancelled");
     refresh();
   };
-  const incoming = swaps.filter((s) => s.target_id === profile.id && s.status === "pending");
+  const incoming = swaps.filter((s) => s.target_id === profile.id && s.status === "pending" && (s.id === focusedSwap || !s.snoozed_until || Date.parse(s.snoozed_until) <= Date.now()));
   const mine = swaps.filter((s) => s.requester_id === profile.id);
 
   return (
     <AppShell title="On-call rota">
       <div className="mx-auto max-w-5xl space-y-5">
         {incoming.map((s) => (
-          <div key={s.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-warning bg-warning/10 p-4">
+          <div key={s.id} id={`swap-${s.id}`} className={`flex flex-wrap items-center gap-3 rounded-lg border border-warning bg-warning/10 p-4 ${s.id === focusedSwap ? "ring-2 ring-primary" : ""}`}>
             <Repeat className="h-5 w-5 text-foreground" />
             <p className="flex-1 text-sm text-foreground"><b>{name(s.requester_id)}</b> asks you to take their standby on <b>{s.swap_date}{s.end_date && s.end_date !== s.swap_date ? ` → ${s.end_date}` : ""}</b>{s.note ? ` · ${s.note}` : ""}.</p>
             <Button size="sm" variant="outline" onClick={() => answer(s.id, "declined")}>Decline</Button>
+            <Button size="sm" variant="outline" onClick={() => void snooze(s.id)}>Snooze</Button>
             <Button size="sm" onClick={() => answer(s.id, "accepted")}>Accept</Button>
           </div>
         ))}
@@ -130,7 +135,7 @@ function StandbyPage() {
           </section>
         )}
 
-        {isManager(profile) && swaps.filter(s=>s.status==="accepted"&&!s.manager_approved).map(s=><div key={s.id} className="flex flex-wrap items-center gap-3 border-l-2 border-warning p-3 text-sm"><p className="flex-1">{name(s.requester_id)} → {name(s.target_id)} · {s.track} · {s.swap_date} → {s.end_date ?? s.swap_date} · Awaiting approval</p><Button size="sm" disabled={[s.requester_id,s.target_id].includes(profile.id)} onClick={async()=>{const r=await supabase.from("standby_swaps").update({manager_approved:true}).eq("id",s.id);if(r.error)toast.error(r.error.message);else{toast.success("Swap approved — rota updated");refresh();}}}>Approve swap</Button><Button size="sm" variant="outline" onClick={()=>answer(s.id,"cancelled")}>Decline swap</Button></div>)}
+        {isManager(profile) && swaps.filter(s=>s.status==="accepted"&&!s.manager_approved).map(s=><div key={s.id} id={`swap-${s.id}`} className={`flex flex-wrap items-center gap-3 border-l-2 border-warning p-3 text-sm ${s.id === focusedSwap ? "ring-2 ring-primary" : ""}`}><p className="flex-1">{name(s.requester_id)} → {name(s.target_id)} · {s.track} · {s.swap_date} → {s.end_date ?? s.swap_date} · Awaiting approval</p><Button size="sm" disabled={[s.requester_id,s.target_id].includes(profile.id)} onClick={async()=>{const r=await supabase.from("standby_swaps").update({manager_approved:true}).eq("id",s.id);if(r.error)toast.error(r.error.message);else{toast.success("Swap approved — rota updated");refresh();}}}>Approve swap</Button><Button size="sm" variant="outline" onClick={()=>answer(s.id,"cancelled")}>Decline swap</Button></div>)}
         {isManager(profile) && (
           <section className="rounded-xl border bg-card p-4">
             <h2 className="mb-2 font-medium text-foreground">All swap requests</h2>
@@ -138,7 +143,7 @@ function StandbyPage() {
           </section>
         )}
 
-        {(isOffice(profile) || profile.role === "supervisor") && (usersLoading ? <p role="status">Loading registered members…</p> : usersError ? <p role="alert" className="text-destructive">Unable to load registered members.</p> : <div className="grid gap-6 lg:grid-cols-2">{ROTA_TRACKS.map(track => <RosterSettings key={track} cfg={configs[track]} techs={users.filter(u => u.role === track)} track={track} />)}</div>)}
+        {(isOffice(profile) || profile.role === "supervisor") && (usersLoading ? <p role="status">Loading registered members…</p> : usersError ? <p role="alert" className="text-destructive">Unable to load registered members.</p> : <div className="grid gap-6 lg:grid-cols-2">{ROTA_TRACKS.map(track => <RosterSettings key={track} cfg={configs[track]} techs={users} track={track} />)}</div>)}
       </div>
 
       <Dialog open={!!ask} onOpenChange={(o) => !o && setAsk(null)}>
@@ -176,30 +181,31 @@ function SwapList({ swaps, name, onCancel, meId, manager }: { swaps: { id: strin
   );
 }
 
-function RosterSettings({ cfg, techs, track }: { cfg: StandbyConfig; techs: { id: string; full_name: string }[]; track: RotaTrack }) {
-  const qc = useQueryClient(); const [f, setF] = useState(cfg); const [staff, setStaff] = useState(String(cfg.perShift)); const [busy, setBusy] = useState(false);
-  useEffect(() => { setF(cfg); setStaff(String(cfg.perShift)); }, [cfg.start, cfg.rotationDays, cfg.perShift, cfg.order.join(",")]);
+function RosterSettings({ cfg, techs, track }: { cfg: StandbyConfig; techs: { id: string; full_name: string; registration_status: string; role: string }[]; track: RotaTrack }) {
+  const qc = useQueryClient(); const [f, setF] = useState(cfg); const [rotation, setRotation] = useState(String(cfg.rotationDays)); const [staff, setStaff] = useState(String(cfg.perShift)); const [busy, setBusy] = useState(false);
+  useEffect(() => { setF(cfg); setRotation(String(cfg.rotationDays)); setStaff(String(cfg.perShift)); }, [cfg.start, cfg.rotationDays, cfg.perShift, cfg.order.join(",")]);
   const name = (id: string) => techs.find(u => u.id === id)?.full_name ?? "Unavailable member";
   const move = (i: number, delta: number) => { const o = [...f.order]; const a = o[i]; const b = o[i + delta]; if (!a || !b) return; o[i] = b; o[i + delta] = a; setF({ ...f, order: o }); };
-  const draft = { ...f, perShift: Number(staff) }; const valid = validRota(draft, techs.map(u => u.id));
+  const active = techs.filter(u => activeRotaMember(u, track));
+  const draft = { ...f, rotationDays: Number(rotation), perShift: Number(staff) }; const valid = validRota(draft, active.map(u => u.id));
   const save = async () => {
     if (!valid || busy) return; setBusy(true);
     if (f.start !== cfg.start && !window.confirm(`Change ${track} handover anchor to ${f.start}? Future assignments will be recalculated; saved swaps remain.`)) { setBusy(false); return; }
-    const r = await supabase.rpc("save_standby_track", { _track: track, _start: f.start, _rotation_days: f.rotationDays, _per_shift: Number(staff), _order: f.order });
+    const r = await supabase.rpc("save_standby_track", { _track: track, _start: f.start, _rotation_days: draft.rotationDays, _per_shift: Number(staff), _order: f.order });
     setBusy(false); if (r.error) { toast.error(r.error.message); return; } toast.success(`${trackLabel(track)} roster saved`);
     await Promise.all([qc.invalidateQueries({ queryKey: ["company-settings"] }), qc.invalidateQueries({ queryKey: ["supervisor-roster"] }), qc.invalidateQueries({ queryKey: ["standby-swaps"] })]);
   };
   return <section className="space-y-4 border-t pt-4">
     <h2 className="font-medium">{track === "technician" ? "Technician" : "Supervisor"} roster settings</h2>
     <div className="grid gap-3 sm:grid-cols-2">
-      <div className="space-y-1.5"><Label>Rotate every</Label><Select value={String(f.rotationDays)} onValueChange={v => setF({ ...f, rotationDays: Number(v) })}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{[[1,"Day"],[2,"2 days"],[3,"3 days"],[7,"Week"],[14,"2 weeks"]].map(([v,l]) => <SelectItem key={v} value={String(v)}>{l}</SelectItem>)}</SelectContent></Select></div>
+      <div className="space-y-1.5"><Label htmlFor={`${track}-rotation`}>Rotate every (days)</Label><Input id={`${track}-rotation`} type="number" inputMode="numeric" min="1" max="365" step="1" value={rotation} onFocus={e => e.currentTarget.select()} onChange={e => setRotation(e.target.value)}/></div>
       <div className="space-y-1.5"><Label htmlFor={`${track}-staffing`}>{track === "technician" ? "Technicians" : "Supervisors"} per shift</Label><Input id={`${track}-staffing`} type="number" min="1" max={Math.max(1,f.order.length)} step="1" value={staff} onFocus={e => e.currentTarget.select()} onChange={e => setStaff(e.target.value)} onBlur={() => { if (!staff.trim()) setStaff("1"); }}/></div>
       <div className="space-y-1.5 sm:col-span-2"><Label>Rotation starts on</Label><Input type="date" value={f.start} onChange={e => setF({ ...f, start: e.target.value })}/></div>
-      {[7,14].includes(f.rotationDays) && <div className="space-y-1.5"><Label>Handover weekday</Label><Select value={String(new Date(`${f.start}T12:00:00Z`).getUTCDay())} onValueChange={v => setF({ ...f, start: nextWeekday(f.start, Number(v)) })}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].map((day,i) => <SelectItem key={day} value={String(i)}>{day}</SelectItem>)}</SelectContent></Select></div>}
+      {weeklyRota(draft.rotationDays) && <div className="space-y-1.5"><Label>Handover weekday</Label><Select value={String(new Date(`${f.start}T12:00:00Z`).getUTCDay())} onValueChange={v => setF({ ...f, start: nextWeekday(f.start, Number(v)) })}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent>{['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].map((day,i) => <SelectItem key={day} value={String(i)}>{day}</SelectItem>)}</SelectContent></Select></div>}
     </div>
-    <ul className="space-y-1">{f.order.map((id,i) => <li key={id} className="flex items-center gap-2 rounded border px-2 py-1.5 text-sm"><span>{i+1}.</span><span className="min-w-0 flex-1 break-words">{name(id)}</span><Button size="icon" variant="ghost" disabled={i===0} aria-label={`Move ${name(id)} up`} onClick={() => move(i,-1)}><ArrowUp className="h-4 w-4"/></Button><Button size="icon" variant="ghost" disabled={i===f.order.length-1} aria-label={`Move ${name(id)} down`} onClick={() => move(i,1)}><ArrowDown className="h-4 w-4"/></Button><Button size="icon" variant="ghost" aria-label={`Remove ${name(id)}`} onClick={() => setF({ ...f, order: f.order.filter(x => x!==id) })}><X className="h-4 w-4"/></Button></li>)}</ul>
-    <Select value="" onValueChange={v => setF({ ...f, order: [...f.order,v] })}><SelectTrigger><SelectValue placeholder={`Add ${track} to roster`}/></SelectTrigger><SelectContent>{techs.filter(u => !f.order.includes(u.id)).map(u => <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>)}</SelectContent></Select>
-    {!valid && <p role="alert" className="text-sm text-destructive">Select eligible members and a whole staffing count no greater than the roster size.</p>}
+    <ul className="space-y-1">{f.order.map((id,i) => <li key={id} className="flex items-center gap-2 rounded border px-2 py-1.5 text-sm"><span>{i+1}.</span><span className="min-w-0 flex-1 break-words">{name(id)}{!active.some(u => u.id === id) && <span className="ml-2 text-destructive">{techs.find(u => u.id === id)?.registration_status === "terminated" ? "Terminated · No longer available" : "No longer eligible"}</span>}</span><Button size="icon" variant="ghost" disabled={i===0} aria-label={`Move ${name(id)} up`} onClick={() => move(i,-1)}><ArrowUp className="h-4 w-4"/></Button><Button size="icon" variant="ghost" disabled={i===f.order.length-1} aria-label={`Move ${name(id)} down`} onClick={() => move(i,1)}><ArrowDown className="h-4 w-4"/></Button><Button size="icon" variant="ghost" aria-label={`Remove ${name(id)}`} onClick={() => setF({ ...f, order: f.order.filter(x => x!==id) })}><X className="h-4 w-4"/></Button></li>)}</ul>
+    <Select value="" onValueChange={v => setF({ ...f, order: [...f.order,v] })}><SelectTrigger><SelectValue placeholder={`Add ${track} to roster`}/></SelectTrigger><SelectContent>{active.filter(u => !f.order.includes(u.id)).map(u => <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>)}</SelectContent></Select>
+    {!valid && <p role="alert" className="text-sm text-destructive">Choose active members, a rotation of 1–365 whole days and a staffing count no greater than the roster size.</p>}
     <Button disabled={!valid || busy} onClick={() => void save()}>{busy ? "Saving…" : `Save ${track} roster`}</Button>
   </section>;
 }
