@@ -6,6 +6,7 @@ import { enablePush, registerPush, type PushStatus } from "@/lib/web-push";
 import { useProfile } from "@/lib/profile";
 import { isMobileDevice } from '@/lib/testing-rules';
 import { usePlanFeatures } from '@/lib/plan-features';
+import { dismissSetup, setupDismissed } from '@/lib/device-setup';
 
 type Geo = "granted" | "denied" | "prompt" | "unsupported";
 async function geoState(): Promise<Geo> {
@@ -23,8 +24,18 @@ export function DevicePermissions() {
   const [geo, setGeo] = useState<Geo | null>(null);
   const [busy, setBusy] = useState(false);
   const [later, setLater] = useState(false);
-  const check = async () => { setPush(await registerPush()); setGeo(await geoState()); };
-  useEffect(() => { const phone = isMobileDevice(navigator.userAgent) && (navigator.maxTouchPoints ?? 0) > 0; setMobile(phone); if (phone && profile) { setLater(localStorage.getItem(`fieldbridge:device-setup:${profile.id}`) === 'dismissed'); void check(); } }, [profile?.id]);
+  const check = async () => { setBusy(true); try { const [p, g] = await Promise.all([registerPush(), geoState()]); setPush(p); setGeo(g); } finally { setBusy(false); } };
+  useEffect(() => {
+    let active = true;
+    const phone = isMobileDevice(navigator.userAgent) && (navigator.maxTouchPoints ?? 0) > 0;
+    setMobile(phone); setPush(null); setGeo(null);
+    if (!phone || !profile) return;
+    setLater(setupDismissed(profile.id));
+    const refresh = async () => { const [p, g] = await Promise.all([registerPush(), geoState()]); if (active) { setPush(p); setGeo(g); } };
+    const visible = () => { if (document.visibilityState === 'visible') void refresh(); };
+    void refresh(); window.addEventListener('focus', visible); document.addEventListener('visibilitychange', visible);
+    return () => { active = false; window.removeEventListener('focus', visible); document.removeEventListener('visibilitychange', visible); };
+  }, [profile?.id]);
   if (!mobile || !profile || push === null || geo === null) return null;
   const pushOk = push === "registered" || push === "unsupported";
   const geoOk = !field || geo === "granted" || geo === "unsupported";
@@ -33,9 +44,11 @@ export function DevicePermissions() {
 
   const allow = async () => {
     setBusy(true);
-    if (!pushOk && push !== "blocked") setPush(await enablePush());
-    if (field && geo === "prompt") await new Promise<void>((r) => navigator.geolocation.getCurrentPosition(() => r(), () => r(), { timeout: 15000 }));
-    setGeo(await geoState()); setBusy(false);
+    try {
+      if (!pushOk && push !== "blocked") setPush(await enablePush());
+      if (field && geo === "prompt") await new Promise<void>((r) => navigator.geolocation.getCurrentPosition(() => r(), () => r(), { timeout: 15000 }));
+      setGeo(await geoState());
+    } finally { setBusy(false); }
   };
 
   const Row = ({ icon, label, why, ok, bad }: { icon: React.ReactNode; label: string; why: string; ok: boolean; bad: boolean }) => (
@@ -60,7 +73,7 @@ export function DevicePermissions() {
         <div className="flex flex-col gap-2">
           {blocked ? <Button className="h-11" disabled={busy} onClick={check}>Check again</Button>
             : <Button className="h-11" disabled={busy} onClick={allow}>Allow all</Button>}
-          {(blocked || !mobile) && <Button variant="ghost" className="h-11" onClick={() => { setLater(true); if (!mobile && profile) localStorage.setItem(`fieldbridge:device-setup:${profile.id}`, 'dismissed'); }}>{mobile ? 'Remind me next time' : 'Continue without setup'}</Button>}
+          <Button variant="ghost" className="h-11" disabled={busy} onClick={() => { dismissSetup(profile.id); setLater(true); }}>Continue without setup</Button>
         </div>
       </DialogContent>
     </Dialog>
