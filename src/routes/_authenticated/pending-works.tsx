@@ -1,5 +1,6 @@
 import { PendingPhotoStrip } from "@/components/pending-photo-strip";
 import { EquipmentProblemQueue } from "@/components/equipment-problem-queue";
+import { InternalThread } from "@/components/jobsheet-internal-notes";
 import { Textarea } from "@/components/ui/textarea";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
@@ -154,7 +155,7 @@ function ReviewBody({ r }: { r: NonNullable<ReturnType<typeof usePendingWorks>["
       {row("Reported fault", r.reported_fault)}
       {row("Work done on this visit", r.repairs_performed)}
       <div className="rounded-lg border bg-muted/40 p-3">{row("Pending works (from technician)", r.pending_works_future_jobs)}</div>
-      {row("Internal comments", r.internal_comments_admin_only)}
+      <div><p className="text-xs text-muted-foreground">Internal comments</p><InternalThread sheetId={r.id} initial={r.internal_comments_admin_only} /></div>
       <div>
         <p className="mb-1 text-xs text-muted-foreground">Pending works photos ({photos.length})</p>
         {urls === null ? <p className="text-sm text-muted-foreground">Loading…</p> : urls.length ? (
