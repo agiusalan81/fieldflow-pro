@@ -1,8 +1,73 @@
 import "fake-indexeddb/auto";
 import { openDB } from "idb";
 import { describe, it, expect, vi } from "vitest";
-vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
-import { discardLocalDraft, saveLocalDraft, getLocalDraft, saveLocalPhoto, localPhoto, draftKey } from "./offline";
+const api = vi.hoisted(() => ({ getUser: vi.fn(), rpc: vi.fn() }));
+vi.mock("@/integrations/supabase/client", () => ({ supabase: { auth: { getUser: api.getUser }, rpc: api.rpc } }));
+import { discardLocalDraft, saveLocalDraft, getLocalDraft, saveLocalPhoto, localPhoto, draftKey, syncDraft, type DraftSnapshot } from "./offline";
+
+describe("same-device sheet saves", () => {
+  const snapshot = (sheetId: string, savedAt: string, expected = "v1"): DraftSnapshot => ({
+    key: draftKey("editor", sheetId), userId: "editor", sheetId, expected,
+    form: { repairs_performed: savedAt }, logs: [], parts: [], savedAt,
+  });
+
+  it("serializes overlapping autosave/manual/reconnect saves and rebases their captured versions", async () => {
+    api.getUser.mockResolvedValue({ data: { user: { id: "editor" } } });
+    let version = "v1";
+    let release: (() => void) | undefined;
+    let started: (() => void) | undefined;
+    const entered = new Promise<void>(resolve => { started = resolve; });
+    const held = new Promise<void>(resolve => { release = resolve; });
+    const expected: string[] = [];
+    api.rpc.mockImplementation(async (_name, args) => {
+      expected.push(args._expected);
+      if (expected.length === 1) { started?.(); await held; }
+      if (args._expected !== version) return { data: null, error: new Error("CONFLICT") };
+      version = `v${expected.length + 1}`;
+      return { data: version, error: null };
+    });
+    const first = snapshot("overlap", "1");
+    await saveLocalDraft(first);
+    const firstSave = syncDraft(first);
+    await entered;
+    const second = snapshot("overlap", "2");
+    await saveLocalDraft(second);
+    const secondSave = syncDraft(second);
+    const third = snapshot("overlap", "3");
+    await saveLocalDraft(third);
+    const thirdSave = syncDraft(third);
+    const result = Promise.all([firstSave, secondSave, thirdSave]);
+    release?.();
+    await expect(result).resolves.toEqual(["v2", "v3", "v4"]);
+    expect(expected).toEqual(["v1", "v2", "v3"]);
+    expect(await getLocalDraft("editor", "overlap")).toBeUndefined();
+  });
+
+  it("keeps newer typing on the device when an earlier save finishes", async () => {
+    api.getUser.mockResolvedValue({ data: { user: { id: "editor" } } });
+    let release: (() => void) | undefined;
+    let started: (() => void) | undefined;
+    const entered = new Promise<void>(resolve => { started = resolve; });
+    api.rpc.mockImplementation(async () => { started?.(); await new Promise<void>(resolve => { release = resolve; }); return { data: "v2", error: null }; });
+    const first = snapshot("typing", "1");
+    await saveLocalDraft(first);
+    const saving = syncDraft(first);
+    await entered;
+    await saveLocalDraft(snapshot("typing", "2"));
+    release?.();
+    await saving;
+    expect(await getLocalDraft("editor", "typing")).toMatchObject({ expected: "v2", form: { repairs_performed: "2" } });
+  });
+
+  it("does not bypass a genuine other-device version conflict or discard its draft", async () => {
+    api.getUser.mockResolvedValue({ data: { user: { id: "editor" } } });
+    api.rpc.mockResolvedValue({ data: null, error: new Error("CONFLICT: changed on another device") });
+    const local = snapshot("external", "1");
+    await saveLocalDraft(local);
+    await expect(syncDraft(local)).rejects.toThrow("CONFLICT");
+    expect(await getLocalDraft("editor", "external")).toEqual(local);
+  });
+});
 
 describe("explicit offline discard", () => {
   it("removes only the selected account's sheet draft, photos and sheet cache", async () => {
