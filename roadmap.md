@@ -1,8 +1,14 @@
 # Roadmap
-- [ ] Desktop permission setup never blocks PC users
-- [ ] Distinct team statuses and active-only live availability
-- [ ] Shared normal/pending dispatch with categorized multi-select skills, HQ-gated
+- [x] Desktop permission setup never blocks PC users (touch check added)
+- [x] Distinct team statuses and active-only live availability ("Available" label, muted off-shift)
+- [x] Shared normal/pending dispatch with categorized multi-select skills, HQ-gated (already wired via NewJobDialog)
 - [ ] Receipt autocrop improvements and receipt thumbnails
+- [x] HQ Coming soon / hide-locked flags save on immediate apply
+- [x] Welcome guide "Don't show again" checkbox
+- [x] Appearance panel labelled "Live preview"
+- [x] Up for grabs on technician dashboard: 5-min repeating alarm, dismiss, claim, push to clocked-in staff
+- [ ] Edit dispatched visit: skills module panel (HQ-gated)
+- [ ] Zoho-style contact persons grid on add/edit client
 - [ ] Verify the approved operational flows
 - [x] Swap notifications open the exact request with Accept, Decline and Snooze actions
 - [x] Company Superuser Team dispatch entry and clearly reachable new-job creation
