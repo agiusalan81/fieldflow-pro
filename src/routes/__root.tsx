@@ -99,6 +99,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "FieldBridge" },
       { property: "og:description", content: "Field service management" },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "FieldBridge App" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [

@@ -48,5 +48,5 @@ export type TrustPageKey = keyof typeof TRUST_PAGES;
 export const TRUST_LINKS = [ ["/privacy", "Privacy"], ["/terms", "Terms"], ["/security", "Security"], ["/accessibility", "Accessibility"] ] as const;
 export function trustHead(key: TrustPageKey) {
   const page = TRUST_PAGES[key]; const title = `${page.title} — FieldBridge`; const url = `https://fieldbridgeapp.com/${key}`;
-  return { meta: [{ title }, { name: "description", content: page.description }, { property: "og:title", content: title }, { property: "og:description", content: page.description }, { property: "og:type", content: "website" }, { property: "og:url", content: url }, { name: "twitter:card", content: "summary" }], links: [{ rel: "canonical", href: url }] };
+  return { meta: [{ title }, { name: "description", content: page.description }, { property: "og:title", content: title }, { property: "og:description", content: page.description }, { property: "og:type", content: "website" }, { property: "og:site_name", content: "FieldBridge App" }, { property: "og:url", content: url }, { name: "twitter:card", content: "summary" }], links: [{ rel: "canonical", href: url }] };
 }
