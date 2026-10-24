@@ -39,6 +39,6 @@ export function monthBounds(month:string){
 export async function combineReceiptPdfs(blobs:Blob[]){
  if(!blobs.length)throw new Error('No receipts for this month.');
  const output=await PDFDocument.create();
- for(const blob of blobs){const pdf=await PDFDocument.load(await blob.arrayBuffer());for(const page of await output.copyPages(pdf,pdf.getPageIndices()))output.addPage(page);}
+ for(const blob of blobs){const pdf=await PDFDocument.load(new Uint8Array(await blob.arrayBuffer()));for(const page of await output.copyPages(pdf,pdf.getPageIndices()))output.addPage(page);}
  return new Blob([new Uint8Array(await output.save())],{type:'application/pdf'});
 }
