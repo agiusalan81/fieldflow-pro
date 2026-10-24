@@ -17,7 +17,7 @@
 - Invite server functions/Query loaders have timeouts, middleware included; 
 - Tenant RLS uses company_id/current_company_id(); never UI company filters; 
 - Roles: protected user_roles; users.role is display-only; preview/permissions hide UI only. MemberSkills allows active tech/supervisor/maintenance under skills_dispatch guards.
-- user_roles helpers/restrictive tenant policies reject terminated actors; audit access changes; 
+- Role helpers/tenant policies reject terminated actors and audit access changes.
 - Invites redeem names atomically via single-use signup triggers; social users need no password; verified names; no client-assigned tenant/role.
 - Preview: real-superuser-only, actor-scoped, removable memory state; root blocks other screens/writes; 
 - Payroll uses tested gross/Malta engines, office RLS, snapshots, HQ guards; roster RPC updates existing settings only; 
@@ -66,9 +66,9 @@
 
 - Sheet autosave compares stable editing-state fingerprints and syncs only changed work; failed background sync never resurrects a removed/newer draft. Chat viewport fits the measured header and navigation on every breakpoint.
 
-- PDF.js stays on browser-compatible v4 with canvasContext rendering; newer Map APIs break field devices.
+- PDF.js uses v4/canvasContext; newer Map APIs break field devices.
 - PPM uses per-agreement asset plans and anchored, unique job occurrences generated transactionally by a manager RPC; existing jobs/sheets retain manual workflows and HQ module guards. SLA status is derived on read; component events are append-only private evidence.
 - Portal accounts have no employee roles; guarded RPCs enforce client/site authority, verified invites and current module access to isolate clients.
 - Delivery uses client_message_recipients; preferences choose recipients, not unsupported channel delivery.
 - Own-shift RPC captures one-time GPS; failure never blocks clock-out; history distinguishes action fixes from breadcrumbs.
-- Owner-only atomic immediate setup changes entitlements; ordinary setup preserves billing timing and explicit trial mode.
+- Tenant cards separate assignments/access; bespoke drafts freeze on submit, HQ reviews per product, samples stay private. Requests never charge/activate. Immediate setup is owner-only; ordinary setup retains timing/trial mode.
