@@ -67,3 +67,4 @@
 - Sheet autosave compares stable editing-state fingerprints and syncs only changed work; failed background sync never resurrects a removed/newer draft. Chat viewport fits the measured header and navigation on every breakpoint.
 
 - PDF.js stays on browser-compatible v4 with canvasContext rendering; newer Map APIs break field devices.
+- PPM uses per-agreement asset plans and anchored, unique job occurrences generated transactionally by a manager RPC; existing jobs/sheets retain manual workflows and HQ module guards. SLA status is derived on read; component events are append-only private evidence.

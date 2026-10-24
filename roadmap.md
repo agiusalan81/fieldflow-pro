@@ -236,5 +236,6 @@
 - [x] 26 regression tests passed, owner template save/reload and app feedback → HQ read-back checked; tenant analytics/feedback reads denied and signed-out HQ gated; desktop/390px layout checked, latest build OK. Test feedback retained as resolved verification evidence.
 - [x] HQ Switchboard and Tier Comparison: the Features/Module column now stays frozen while tier and pack columns scroll sideways; owner-session check confirmed the label and header stay pinned with a clean divider and no bleed-through; 17 HQ/plan tests passed, build OK.
 - [x] Client Experience pack: QR service logbook + online proposal approval built (on-my-way ETA stays in base plans); owner activates pack in HQ
-- [ ] Build PPM pack, Job Profitability pack; then activate
+- [ ] Native PPM: agreement asset coverage/cadence, duplicate-safe generated visits, overdue/SLA tracking and equipment component history; verify signed-in
+- [ ] Build Job Profitability pack; then activate packs after verification
 - [ ] Asset volume packs (+100 €69, +250 €149, +500 €249) need per-plan asset limits enforced first

@@ -12,7 +12,7 @@ export async function createDraftSheet(profile: Profile, jobId?: string) {
     if (existing) return existing.id;
     const { data: job } = await supabase
       .from("jobs")
-      .select("id, client_id, site_id, asset_id, problem_summary, assets(asset_category, custom_attributes, serial_number)")
+      .select("id, client_id, site_id, asset_id, problem_summary, ppm_plan_id, assets(asset_category, custom_attributes, serial_number)")
       .eq("id", jobId)
       .maybeSingle();
     if (job) {
@@ -20,6 +20,7 @@ export async function createDraftSheet(profile: Profile, jobId?: string) {
       prefill = {
         job_id: job.id, client_id: job.client_id, site_id: job.site_id, asset_id: job.asset_id,
         reported_fault: job.problem_summary,
+        ...(job.ppm_plan_id ? { is_maintenance: true } : {}),
         lift_model: ((job.assets?.custom_attributes as Record<string, unknown> | null)?.["model"] as string) ?? null,
         serial_number: job.assets?.serial_number ?? ((job.assets?.custom_attributes as Record<string, unknown> | null)?.["serial"] as string) ?? null,
         asset_type: cat.includes("escalator") ? "Escalator" : cat.includes("lift") || !cat ? "Lift" : "Other",
