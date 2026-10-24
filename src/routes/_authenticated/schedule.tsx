@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { assignmentFilter, isAssisting } from "@/lib/jobsheets";
 import { JobTravelActions } from "@/components/job-travel-actions";
 import { DeleteVisit } from "@/components/delete-visit";
+import { EditVisit } from "@/components/edit-visit";
 import { canDeleteVisit } from "@/lib/record-deletion";
 import { usePlanFeatures } from "@/lib/plan-features";
 import { PpmVisits } from "@/components/ppm-visits";
@@ -88,7 +89,7 @@ function Schedule() {
 
   const Actions = ({ j }: { j: Job }) => (
     <div className="grid grid-cols-2 gap-2">
-      {!isPreview && canDeleteVisit(profile?.role) && <div className="col-span-2 flex justify-end"><DeleteVisit id={j.id} number={j.job_number} onDeleted={() => setDetail(null)} /></div>}
+      {!isPreview && canDeleteVisit(profile?.role) && <div className="col-span-2 flex justify-end"><EditVisit visit={j} /><DeleteVisit id={j.id} number={j.job_number} onDeleted={() => setDetail(null)} /></div>}
       <Button variant="outline" className="h-10" onClick={() => setDetail(j)}>Details</Button>
       {j.sheet && j.sheet.status !== "draft" ? <Button asChild className="h-10" variant={j.sheet.status === "completed" ? "outline" : "default"}><Link to="/sheets/$sheetId" params={{ sheetId: j.sheet.id }}><FileText className="mr-1 h-4 w-4" />Open sheet{j.sheet.jobsheet_number ? ` #${j.sheet.jobsheet_number}` : ""}</Link></Button> : profile?.role === "technician" || profile?.role === "supervisor" ? <JobTravelActions profile={profile} jobId={j.id} address={j.sites?.address} readOnly={isPreview} assisting={isAssisting(j, profile.id)} /> : isPreview ? <Button disabled className="h-10"><FileText className="mr-1 h-4 w-4" />Start job</Button> : <Button asChild className="h-10"><Link to="/sheets/new" search={{ jobId: j.id }} onClick={() => autoAck(j)}><FileText className="mr-1 h-4 w-4" />Start job</Link></Button>}
     </div>
