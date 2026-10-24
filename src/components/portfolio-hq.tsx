@@ -17,6 +17,7 @@ import mark from "@/assets/fieldbridge-mark.png";
 import { HQBilling } from "@/components/hq-billing";
 import { HQBespokeRequests } from "@/components/hq-bespoke-requests";
 import { PLAN_FEATURES } from "@/lib/plan-features";
+import { hqModuleOptions } from '@/lib/hq-module-options';
 import { cadencePrices, cadenceDiscounts, monthlyEquivalent, costPerUser, estimatePhotoStorage, DEFAULT_TRIAL_DAYS, productLink } from "@/lib/platform";
 import type { Database } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,7 @@ export function PortfolioHQ() {
   const selected = data?.products.find((x) => x.id === product) ?? data?.products.find(x => x.slug === "fieldbridge" && x.active) ?? data?.products[0]; const pid = selected?.id;
   const money = (v: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency: selected?.currency ?? "EUR" }).format(v);
   const subscriptions = data?.subscriptions.filter((x) => x.product_id === pid) ?? []; const plans = data?.catalog.filter((x) => x.product_id === pid) ?? []; const ledger = data?.ledger.filter((x) => x.product_id === pid) ?? [];
+  const moduleOptions = hqModuleOptions(selected?.slug ?? '', selected?.modules ?? [], plans);
   const group = hqGroup(section);
   const refresh = () => { void Promise.all(["platform-hq", "plan-features", "company-commercial"].map(key => qc.invalidateQueries({ queryKey: [key] }))); };
   const inspectorSub = subscriptions.find(x => x.id === inspector);
