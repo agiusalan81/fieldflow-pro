@@ -3,6 +3,9 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
+import { usePlanFeatures } from "@/lib/plan-features";
+import { PpmCoverage } from "@/components/ppm-coverage";
+import { PpmVisits } from "@/components/ppm-visits";
 import { ContractTiers } from "@/components/contract-tiers";
 import { DocumentMasters } from "@/components/document-masters";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,6 +71,7 @@ function Renewals({ office }: { office: boolean }) {
 }
 
 function Agreements({ office, companyId }: { office: boolean; companyId?: string | undefined }) {
+  const on = usePlanFeatures();
   const qc = useQueryClient();
   const { data = [] } = useAgreements();
   const { data: opts } = useQuery({
@@ -123,13 +127,15 @@ function Agreements({ office, companyId }: { office: boolean; companyId?: string
       {!data.length ? <EmptyState>No client agreements yet.</EmptyState> : (
         <ul className="divide-y rounded-xl border bg-card">
           {data.map((a) => (
-            <li key={a.id} className="flex items-center gap-3 px-4 py-3 text-sm">
+            <li key={a.id} className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm">
               <div className="min-w-0 flex-1"><p className="truncate font-medium text-foreground">{a.clients?.name}</p><p className="text-muted-foreground">{a.contract_types?.name ?? "Custom"} · {a.start_date} → {a.end_date} · €{Number(a.annual_price).toFixed(2)}</p></div>
               <span className="text-xs text-muted-foreground">{daysUntil(a.end_date) < 0 ? "Expired" : `${daysUntil(a.end_date)} days left`}</span>
+              {on('ppm_automation') && <PpmCoverage agreementId={a.id} clientId={a.client_id} start={a.start_date} end={a.end_date} canManage={office} />}
             </li>
           ))}
         </ul>
       )}
+      {on('ppm_automation') && <PpmVisits canManage={office} />}
     </div>
   );
 }

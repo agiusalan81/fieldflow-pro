@@ -13,6 +13,9 @@ import { assignmentFilter, isAssisting } from "@/lib/jobsheets";
 import { JobTravelActions } from "@/components/job-travel-actions";
 import { DeleteVisit } from "@/components/delete-visit";
 import { canDeleteVisit } from "@/lib/record-deletion";
+import { usePlanFeatures } from "@/lib/plan-features";
+import { PpmVisits } from "@/components/ppm-visits";
+import { ppmStatus } from "@/lib/ppm";
 
 export const Route = createFileRoute("/_authenticated/schedule")({ staticData: { sitemap: false },
   head: () => ({
@@ -29,6 +32,7 @@ export const Route = createFileRoute("/_authenticated/schedule")({ staticData: {
 });
 
 type Job = {
+  ppm_due_date: string | null; ppm_deadline: string | null;
   assigned_technician_id: string | null; secondary_technician_id: string | null;
   id: string; job_number: number; scheduled_date: string; window_start: string | null; window_end: string | null;
   problem_summary: string | null; priority: string; acknowledged_at: string | null;
@@ -47,6 +51,7 @@ const SCHED: Record<string, [string, string]> = {
 const schedStatus = (j: Job) => SCHED[j.sheet?.status ?? "open"] ?? ["Open", "bg-muted text-muted-foreground"];
 
 function Schedule() {
+  const on = usePlanFeatures();
   const { data: profile, isPreview } = usePreviewProfile();
   const qc = useQueryClient();
   const [view, setView] = useState<"list" | "calendar">("list");
@@ -61,7 +66,7 @@ function Schedule() {
       if (!profile) return [];
       const { data, error } = await supabase
         .from("jobs")
-        .select("id, assigned_technician_id, secondary_technician_id, job_number, scheduled_date, window_start, window_end, problem_summary, priority, acknowledged_at, clients(name), sites(name, address), assets(reference_number, asset_category)")
+        .select("id, ppm_due_date, ppm_deadline, assigned_technician_id, secondary_technician_id, job_number, scheduled_date, window_start, window_end, problem_summary, priority, acknowledged_at, clients(name), sites(name, address), assets(reference_number, asset_category)")
         .or(assignmentFilter(profile.id))
         .gte("scheduled_date", today)
         .order("scheduled_date")
@@ -117,6 +122,7 @@ function Schedule() {
                     <div className="flex flex-col items-end gap-1"><PriorityBadge p={j.priority} /><span className={`rounded-full px-2 py-0.5 text-xs font-medium ${schedStatus(j)[1]}`}>{schedStatus(j)[0]}</span></div>
                   </div>
                   <p className="line-clamp-2 text-sm text-muted-foreground">{j.problem_summary || "No summary"}</p>
+                  {j.ppm_due_date && <p className="text-xs font-medium text-primary">PPM · {ppmStatus(j.ppm_due_date, j.ppm_deadline ?? j.ppm_due_date, j.sheet?.status === 'completed', today)}</p>}
                   <Actions j={j} />
                 </li>
               ))}
@@ -140,9 +146,9 @@ function Schedule() {
                   <div key={i} className={`min-h-16 rounded-md border p-1 sm:min-h-24 ${iso(i + 1) === today ? "border-primary" : ""}`}>
                     <p className="text-[11px] text-foreground">{i + 1}</p>
                     {list.map((j) => (
-                      <button key={j.id} onClick={() => setDetail(j)} className={`mt-0.5 block w-full truncate rounded px-1 text-left text-[10px] ${schedStatus(j)[1]}`}>
+                       <Button variant="ghost" key={j.id} onClick={() => setDetail(j)} className={`mt-0.5 block h-auto w-full truncate rounded px-1 py-0 text-left text-[10px] ${schedStatus(j)[1]}`}>
                         {j.window_start?.slice(0, 5)} {j.clients?.name}
-                      </button>
+                       </Button>
                     ))}
                   </div>
                 );
@@ -150,6 +156,7 @@ function Schedule() {
             </div>
           </section>
         )}
+        {on('ppm_automation') && <div className="mt-8"><PpmVisits canManage={!isPreview && !!profile && profile.role !== 'technician'} /></div>}
       </div>
 
       <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
