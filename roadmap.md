@@ -261,3 +261,5 @@
 - [x] Native PPM: agreement asset coverage/cadence, duplicate-safe generated visits, overdue/SLA tracking and append-only equipment component history. Owner coverage → 3 visits → Schedule/Equipment read-back verified; regeneration adds 0, due-date mutation rejected; 29 tests passed. Disposable agreement/visits removed; labelled component verification event retained as immutable evidence. SQL role-switch test cannot run with sandbox database permissions; authenticated browser checks passed.
 - [ ] Build Job Profitability pack; then activate packs after verification
 - [ ] Asset volume packs (+100 €69, +250 €149, +500 €249) need per-plan asset limits enforced first
+
+- [x] Leave approve unlock + higher-up consult, receipt autocrop, job-sheet picker with Today/Yesterday, /sheets date shortcuts, travel minute presets, instant expense categories with approval alerts

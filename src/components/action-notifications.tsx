@@ -51,27 +51,29 @@ export function ActionNotifications() {
   const core=on('core'),standby=on('standby');
   const threads=useUnreadThreads(core?p?.id:undefined);
   const manager=!!p&&isManager(p);
-  const leaveOn=core&&can('leave_approvals'),problemsOn=core&&manager&&can('pending_works');
-  const {data}=useQuery({queryKey:['action-notifications',p?.id,core,standby,leaveOn,problemsOn],enabled:!!p,refetchInterval:15000,queryFn:async()=>{
-    if(!p)return {incoming:0,approval:0,leave:[] as {id:string}[],responses:[] as {id:string}[],problems:[] as {id:string;asset_id:string;problem:string}[]};
+  const catsOn=!!p&&on('receipts')&&['admin','superuser','supervisor'].includes(p.role),leaveOn=core&&can('leave_approvals'),problemsOn=core&&manager&&can('pending_works');
+  const {data}=useQuery({queryKey:['action-notifications',p?.id,core,standby,leaveOn,problemsOn,catsOn],enabled:!!p,refetchInterval:15000,queryFn:async()=>{
+    if(!p)return {categories:0,incoming:0,approval:0,leave:[] as {id:string}[],responses:[] as {id:string}[],problems:[] as {id:string;asset_id:string;problem:string}[]};
     const zero=Promise.resolve({count:0,error:null});
     const empty=Promise.resolve({data:[] as {id:string}[],error:null});
-    const [incoming,approval,leave,problems,responses]=await Promise.all([
+    const [incoming,approval,leave,problems,responses,cats]=await Promise.all([
       standby?supabase.from('standby_swaps').select('id',{count:'exact',head:true}).eq('target_id',p.id).eq('status','pending'):zero,
       standby&&manager?supabase.from('standby_swaps').select('id',{count:'exact',head:true}).eq('status','accepted').eq('manager_approved',false):zero,
       leaveOn?supabase.from('leave_requests').select('id').eq('consulted_supervisor_id',p.id).eq('status','pending').is('supervisor_response',null):empty,
       problemsOn?supabase.from('equipment_problem_reports').select('id,asset_id,problem').eq('status','open').order('created_at',{ascending:false}).limit(10):Promise.resolve({data:[],error:null}),
       leaveOn&&isOffice(p)?supabase.from('leave_requests').select('id').eq('status','pending').not('supervisor_response','is',null):empty,
-    ]);if(incoming.error||approval.error||leave.error||responses.error)throw incoming.error||approval.error||leave.error||responses.error;return {incoming:incoming.count??0,approval:approval.count??0,leave:leave.data??[],responses:responses.data??[],problems:problems.data??[]};
+      catsOn?supabase.from('expense_categories').select('id',{count:'exact',head:true}).eq('status','pending'):zero,
+    ]);if(incoming.error||approval.error||leave.error||responses.error)throw incoming.error||approval.error||leave.error||responses.error;return {categories:cats.count??0,incoming:incoming.count??0,approval:approval.count??0,leave:leave.data??[],responses:responses.data??[],problems:problems.data??[]};
   }});
   const chat=threads.reduce((a,t)=>a+t.n,0);
   const problems=data?.problems??[];
-  const count=chat+(data?.incoming??0)+(data?.approval??0)+(data?.leave.length??0)+(data?.responses.length??0)+problems.length;
+  const count=chat+(data?.incoming??0)+(data?.approval??0)+(data?.leave.length??0)+(data?.responses.length??0)+problems.length+(data?.categories??0);
   const [open,setOpen]=useState(false);
   const item="h-auto w-full justify-start py-2";
   return <Popover open={open} onOpenChange={setOpen}><PopoverTrigger asChild><Button variant="ghost" size="icon" className="relative" aria-label={`Pending actions: ${count}`}><Bell className="h-5 w-5"/>{count>0&&<span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] text-destructive-foreground">{count}</span>}</Button></PopoverTrigger><PopoverContent align="end" className="max-h-[70vh] w-80 space-y-2 overflow-y-auto" onClick={(e)=>{if((e.target as HTMLElement).closest('a'))setOpen(false);}}><h2 className="font-medium">Pending actions</h2>{!count?<p className="text-sm text-muted-foreground">Nothing awaiting your attention.</p>:<>
     {threads.map(t=><Button key={t.key} asChild variant="outline" className={item}><Link to="/messages" search={{thread:t.key}}><Row icon={MessageSquare}>{t.name} · {t.n} new</Row></Link></Button>)}
     {problems.map(r=><Button key={r.id} asChild variant="outline" className={item}><Link to="/admin/jobs" search={{new:true,assetId:r.asset_id,problemId:r.id}}><Row icon={AlertTriangle}>Equipment problem: {r.problem}</Row></Link></Button>)}
+    {!!data?.categories&&<Button asChild variant="outline" className={item}><Link to="/expenses"><Row icon={AlertTriangle}>{data.categories} expense categor{data.categories===1?'y':'ies'} to approve</Row></Link></Button>}
     {!!data?.incoming&&<Button asChild variant="outline" className={item}><Link to="/standby"><Row icon={CalendarClock}>{data.incoming} on-call swap request(s)</Row></Link></Button>}
     {!!data?.approval&&<Button asChild variant="outline" className={item}><Link to="/standby"><Row icon={CalendarClock}>{data.approval} swap approval(s)</Row></Link></Button>}
     {data?.leave.map(r=><Button key={r.id} asChild variant="outline" className={item}><Link to="/admin/leave" search={{request:r.id}}><Row icon={CalendarDays}>Leave consultation — respond</Row></Link></Button>)}

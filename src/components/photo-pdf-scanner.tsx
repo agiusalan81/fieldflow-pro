@@ -7,7 +7,7 @@ import {toast} from 'sonner';
 function Photo({file}:{file:File}){const[url,setUrl]=useState('');useEffect(()=>{const u=URL.createObjectURL(file);setUrl(u);return()=>URL.revokeObjectURL(u);},[file]);return <img src={url} alt="Scanned page" className="h-32 w-full object-contain"/>;}
 export function PhotoPdfScanner({onAttach,label='Attach PDF',receipt=false}:{onAttach:(blob:Blob,pages:number)=>Promise<void>;label?:string;receipt?:boolean}){
  const [files,setFiles]=useState<File[]>([]),[busy,setBusy]=useState(false),[cropping,setCropping]=useState<number|null>(null);const camera=useRef<HTMLInputElement>(null),gallery=useRef<HTMLInputElement>(null);const camId=useId(),galId=useId();
- const add=(list:FileList|null)=>{if(list)setFiles(old=>[...old,...Array.from(list)]);};
+ const add=(list:FileList|null)=>{if(!list)return;const added=Array.from(list);setFiles(old=>{if(receipt&&added.length===1)setCropping(old.length);return [...old,...added];});};
  const attach=async()=>{setBusy(true);try{const pdf=await photosToPdf(files,receipt);await onAttach(pdf,files.length);setFiles([]);}catch(e){toast.error(e instanceof Error?e.message:'Could not attach scan');}finally{setBusy(false);}};
  const cropFile=cropping===null?undefined:files[cropping];
  if(cropFile)return <ReceiptCrop file={cropFile} onCancel={()=>setCropping(null)} onSave={f=>{setFiles(old=>old.map((item,i)=>i===cropping?f:item));setCropping(null);}}/>;

@@ -132,6 +132,7 @@ function SheetsPage() {
           <Input className="h-11" type="date" aria-label="From date" value={from} onChange={(e) => setFrom(e.target.value)} />
           <Input className="h-11" type="date" aria-label="To date" value={to} onChange={(e) => setTo(e.target.value)} />
         </div>
+        <div className="flex flex-wrap gap-2">{([["Today",0],["Yesterday",1]] as const).map(([label,back]) => { const d = new Date(); d.setDate(d.getDate()-back); const v = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; return <Button key={label} size="sm" variant={from===v&&to===v?"default":"outline"} onClick={() => { setFrom(v); setTo(v); }}>{label}</Button>; })}{(from||to) && <Button size="sm" variant="ghost" onClick={() => { setFrom(""); setTo(""); }}>Clear dates</Button>}</div>
         {!isPreview && <MonthlySheets sheets={filtered} office={profile?.role === "admin" || profile?.role === "superuser"} />}
         <Tabs value={tab} onValueChange={(v) => navigate({ to: "/sheets", search: v === "done" ? { tab: "done" } : {}, replace: true })}>
           <TabsList className="grid w-full grid-cols-2 sm:w-auto">

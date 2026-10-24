@@ -1,3 +1,4 @@
+import { TravelPicker } from "@/components/travel-picker";
 import { JobsheetInternalNotes } from "@/components/jobsheet-internal-notes";
 import { sheetFingerprint } from "@/lib/sheet-dirty";
 import { JobReceipts } from "@/components/job-receipts";
@@ -561,8 +562,8 @@ function SheetForm() {
                       );
                     })}
                     {client?.waive_transport
-                      ? <div className="space-y-1"><Label className="text-xs">Travel h</Label><p className="flex h-11 items-center rounded-md border border-dashed px-3 text-xs text-muted-foreground">Waived for this client</p></div>
-                      : <div className="space-y-1"><Label className="text-xs">Travel h</Label><NumInput step="0.25" min="0" className="h-11" value={l.traveling_time_hours} onChange={(v) => setLog(i, { traveling_time_hours: v })} /></div>}
+                      ? <div className="space-y-1"><Label className="text-xs">Travel</Label><p className="flex h-11 items-center rounded-md border border-dashed px-3 text-xs text-muted-foreground">Waived for this client</p></div>
+                      : <div className="space-y-1"><Label className="text-xs">Travel</Label><TravelPicker hours={l.traveling_time_hours} onChange={(v) => setLog(i, { traveling_time_hours: v })} /></div>}
                   </div>
                   <p className="mt-2 text-[11px] text-muted-foreground">
                     GPS in: {l.latitude_in != null ? `${l.latitude_in.toFixed(4)}, ${l.longitude_in?.toFixed(4)}` : "—"} · out: {l.latitude_out != null ? `${l.latitude_out.toFixed(4)}, ${l.longitude_out?.toFixed(4)}` : "—"}
