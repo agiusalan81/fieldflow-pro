@@ -4402,6 +4402,8 @@ export type Database = {
         Row: {
           auto_close_note: string | null
           auto_closed: boolean
+          clock_in_location: Json | null
+          clock_out_location: Json | null
           company_id: string
           created_at: string
           dwr_held: boolean
@@ -4415,6 +4417,8 @@ export type Database = {
         Insert: {
           auto_close_note?: string | null
           auto_closed?: boolean
+          clock_in_location?: Json | null
+          clock_out_location?: Json | null
           company_id: string
           created_at?: string
           dwr_held?: boolean
@@ -4428,6 +4432,8 @@ export type Database = {
         Update: {
           auto_close_note?: string | null
           auto_closed?: boolean
+          clock_in_location?: Json | null
+          clock_out_location?: Json | null
           company_id?: string
           created_at?: string
           dwr_held?: boolean
@@ -5230,6 +5236,16 @@ export type Database = {
       read_client_report: { Args: { _hash: string }; Returns: Json }
       read_proposal_approval: { Args: { _token: string }; Returns: Json }
       record_platform_usage: { Args: { _feature: string }; Returns: undefined }
+      record_shift_location: {
+        Args: {
+          _accuracy: number
+          _event: string
+          _latitude: number
+          _longitude: number
+          _shift: string
+        }
+        Returns: undefined
+      }
       registered_members: {
         Args: never
         Returns: {
@@ -5377,6 +5393,10 @@ export type Database = {
       set_subscription_pack: {
         Args: { _enabled: boolean; _pack: string; _subscription: string }
         Returns: undefined
+      }
+      shift_location_day: {
+        Args: { _date: string; _user: string }
+        Returns: Json
       }
       sign_batch_sheet: {
         Args: {

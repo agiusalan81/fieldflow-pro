@@ -708,6 +708,13 @@
       "when": 1792837560841,
       "tag": "0100_hq_immediate_trial_package",
       "breakpoints": true
+    },
+    {
+      "idx": 101,
+      "version": "7",
+      "when": 1792837613894,
+      "tag": "0101_shift_location_evidence_and_hq_setup_label",
+      "breakpoints": true
     }
   ]
 }
