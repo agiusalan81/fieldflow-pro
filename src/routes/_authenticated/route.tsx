@@ -7,6 +7,7 @@ import { InstallAppCard } from "@/components/install-app";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { StaffSignatureOnboarding } from "@/components/staff-signature";
+import { DevicePermissions } from "@/components/device-permissions";
 
 export const Route = createFileRoute("/_authenticated")({ staticData: { sitemap: "exclude-subtree" },
   ssr: false,
@@ -32,6 +33,7 @@ function AuthedLayout() {
     <>
       <Outlet />
       <StaffSignatureOnboarding />
+      <DevicePermissions />
       <Dialog open={offer} onOpenChange={setOffer}>
         <DialogContent>
           <DialogHeader><DialogTitle>You're in — welcome to FieldBridge</DialogTitle></DialogHeader>
