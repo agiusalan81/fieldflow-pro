@@ -4678,6 +4678,7 @@ export type Database = {
           note: string | null
           requester_id: string
           responded_at: string | null
+          snoozed_until: string | null
           status: string
           swap_date: string
           target_id: string
@@ -4694,6 +4695,7 @@ export type Database = {
           note?: string | null
           requester_id: string
           responded_at?: string | null
+          snoozed_until?: string | null
           status?: string
           swap_date: string
           target_id: string
@@ -4710,6 +4712,7 @@ export type Database = {
           note?: string | null
           requester_id?: string
           responded_at?: string | null
+          snoozed_until?: string | null
           status?: string
           swap_date?: string
           target_id?: string
@@ -5478,6 +5481,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      snooze_standby_swap: { Args: { _swap: string }; Returns: undefined }
       standby_track_ids: {
         Args: { _company: string; _date: string; _track: string }
         Returns: string[]
