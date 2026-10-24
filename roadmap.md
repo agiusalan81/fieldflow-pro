@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Separate internal client/site/contact management from paid portal access; gate portal invitations only and verify the staff flow
+- [x] Internal client/site/contact management separated from portal access; invitations gated, routing guard corrected, 10 tests pass and client save/read-back verified
 - [x] Desktop permission setup never blocks PC users (touch check added)
 - [x] Distinct team statuses and active-only live availability ("Available" label, muted off-shift)
 - [x] Shared normal/pending dispatch with categorized multi-select skills, HQ-gated (already wired via NewJobDialog)
