@@ -1,5 +1,7 @@
 import { labelKey, uniqueLabels } from "@/lib/attention-rules";
 import { tenantLocale } from "@/lib/locale";
+import { CONTACT_POSITIONS } from '@/lib/contact-editor';
+import { NativeSelect } from '@/components/ui/native-select';
 import { ClientRates } from "@/components/integrations-settings";
 import { ClientPortalInvitationGate } from '@/components/client-portal-invitation-gate';
 import { useClientPortalAccess } from '@/lib/client-portal-access';
@@ -64,7 +66,7 @@ function Entities() {
       <div className="mb-3"><Input placeholder="Search client, address, contact, lift reference or serial…" value={q} onChange={(e) => setQ(e.target.value)} /></div>
       <ClientsTab q={q} onOpen={onOpen} />
       <Dialog open={!!manage} onOpenChange={(o) => !o && setManage(null)}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
           <DialogHeader><DialogTitle>{manage?.name}</DialogTitle></DialogHeader>
           {manage && profile && (
             <Tabs defaultValue={manage.tab === "equipment" ? "equipment" : "sites"}>
@@ -87,7 +89,7 @@ function Entities() {
 }
 
 const DELIVERY_DOCS = [["job_sheet", "Job sheets"], ["estimate", "Estimates"], ["proposal", "Proposals"], ["contract", "Contracts"], ["invoice", "Invoices"]] as const;
-const ROLE_PRESETS: Record<string, string[]> = { "Owner": ["estimate", "proposal", "contract", "invoice"], "Operations manager": ["job_sheet", "estimate", "proposal", "contract"], "Site manager": ["job_sheet"], "Site supervisor": ["job_sheet"] };
+
 
 const match = (q: string, ...s: (string | null | undefined)[]) => s.join(" ").toLowerCase().includes(q.toLowerCase());
 
@@ -139,7 +141,7 @@ function ClientsTab({ q, onOpen }: TabProps) {
                 <Input required type="email" placeholder="Contact email *" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
                 <PhoneInput required code={f.code} number={f.number} onChange={(code, number) => setF({ ...f, code, number })} />
                 <label className="flex items-center gap-2 text-sm"><Checkbox checked={f.whatsapp} onCheckedChange={(c) => setF({ ...f, whatsapp: !!c })} />This number is on WhatsApp</label>
-                <div className="space-y-1.5"><Label>Contact role</Label><div className="flex flex-wrap gap-2">{["Owner", "Operations manager", "Site manager", "Site supervisor"].map(p => <Button key={p} type="button" size="sm" variant={f.role_title === p ? "default" : "outline"} onClick={() => setF({ ...f, role_title: p, docs: ROLE_PRESETS[p] ?? f.docs })}>{p}</Button>)}</div></div>
+                <div className="space-y-1.5"><Label>Position</Label><NativeSelect aria-label="Primary contact position" value={f.role_title} onValueChange={role_title => setF({ ...f, role_title })}><option value="">Select position</option>{CONTACT_POSITIONS.map(p => <option key={p}>{p}</option>)}</NativeSelect></div>
                 <div className="space-y-1.5"><Label>Sends to this contact</Label><div className="divide-y rounded-md border">{DELIVERY_DOCS.map(([k, label]) => <div key={k} className="flex items-center justify-between gap-3 px-3 py-2 text-sm"><span>{label}</span><span className="flex gap-4"><label className="flex items-center gap-1.5"><Checkbox checked={f.docs.includes(k)} onCheckedChange={v => setF({ ...f, docs: v ? [...f.docs, k] : f.docs.filter(x => x !== k) })} />Email</label><label className={`flex items-center gap-1.5 ${f.whatsapp ? "" : "opacity-50"}`}><Checkbox disabled={!f.whatsapp} checked={f.whatsapp && f.wa.includes(k)} onCheckedChange={v => setF({ ...f, wa: v ? [...f.wa, k] : f.wa.filter(x => x !== k) })} />WhatsApp</label></span></div>)}</div></div>
                 <ClientPortalInvitationGate><label className="flex items-center gap-2 text-sm"><Checkbox checked={f.invite} onCheckedChange={(c) => setF({ ...f, invite: !!c })} />Invite this contact to the client portal and copy the link</label></ClientPortalInvitationGate>
                 <Button type="submit" className="w-full">Save & continue</Button>

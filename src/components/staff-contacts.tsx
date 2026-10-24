@@ -33,7 +33,7 @@ export function StaffContacts({ clientId, companyId, siteId, title = 'Contact pe
   const [purpose, setPurpose] = useState<DeliveryPurpose>('job_sheet');
   const all = contactsQuery.data ?? [];
   const contacts = all.filter(c => contactScopeMatches(c, siteId));
-  const refresh = () => Promise.all(['client-contacts', 'client-workspace', 'contacts', 'entities-unified', 'entities-unified', 'entities-unified', 'entities-unified', 'entities-unified'].slice(0, 4).map(key => qc.invalidateQueries({ queryKey: key === 'client-contacts' || key === 'client-workspace' ? [key, clientId] : [key] })));
+  const refresh = () => Promise.all(['client-contacts', 'client-workspace', 'contacts', 'entities-unified'].map(key => qc.invalidateQueries({ queryKey: key === 'client-contacts' || key === 'client-workspace' ? [key, clientId] : [key] })));
   const save = async (e: React.FormEvent) => {
     e.preventDefault(); if (!edit || busy) return;
     setBusy(true);
