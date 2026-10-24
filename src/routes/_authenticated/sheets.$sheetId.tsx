@@ -216,8 +216,9 @@ function SheetForm() {
     const fingerprint=sheetFingerprint({form,logs,parts,photos,checks});
     if(cleanState.current===null){cleanState.current=fingerprint;return;}
     if(cleanState.current===fingerprint||busy)return;
+    const serverRevision = data.sheet.updated_at;
     const timer = setTimeout(() => {
-      const expected = revision.current ?? data.sheet.updated_at;
+      const expected = revision.current ?? serverRevision;
       const snapshot: DraftSnapshot = {
         key: draftKey(profile.id, sheetId), userId: profile.id, sheetId, expected,
         form: { ...form, checklist_values: checks, photo_paths: photos, repairs_performed: logs.map((l) => l.daily_work_description.trim()).filter(Boolean).join("\n") || form.repairs_performed },
