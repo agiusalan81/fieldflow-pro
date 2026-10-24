@@ -1,3 +1,4 @@
+import { swapReminderDue } from "@/lib/swap-reminders";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -54,6 +55,7 @@ function StandbyPage() {
   const [note, setNote] = useState("");
   const { data: swaps = [] } = useQuery({
     queryKey: ["standby-swaps", profile?.company_id],
+    refetchInterval: 15000,
     enabled: !!profile && feature("standby"),
     queryFn: async () => (await supabase.from("standby_swaps").select("*").order("created_at", { ascending: false }).limit(200)).data ?? [],
   });
@@ -82,7 +84,7 @@ function StandbyPage() {
     toast.success(status === "accepted" ? "Accepted — awaiting manager approval" : status === "declined" ? "Swap declined" : "Request cancelled");
     refresh();
   };
-  const incoming = swaps.filter((s) => s.target_id === profile.id && s.status === "pending" && (s.id === focusedSwap || !s.snoozed_until || Date.parse(s.snoozed_until) <= Date.now()));
+  const incoming = swaps.filter((s) => s.target_id === profile.id && s.status === "pending" && (s.id === focusedSwap || swapReminderDue(s.snoozed_until)));
   const mine = swaps.filter((s) => s.requester_id === profile.id);
 
   return (
