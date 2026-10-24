@@ -36,7 +36,7 @@ export const MODULE_DESCRIPTIONS: Record<string, string> = {
   tracking: "Technicians share location only while clocked in; managers see them on a live map.",
   fleet_management: "Vehicle list, daily routes and replay, mileage and fuel cost estimates.",
   skills_dispatch: "Custom skill catalogue, skill matching, crews larger than two, and open jobs technicians can claim.",
-  receipts: "Photograph receipts on the job; they are saved as private PDFs on the sheet.",
+  receipts: "Photo-only expense stash, cropped private receipt PDFs, job sheet attachments, office-approved categories and monthly per-person PDF archives.",
   technical_library: "Private manuals and drawings by trade, maker and model, with AI search over approved pages.",
   standby: "Independent technician and supervisor on-call rotas on one calendar, contact access and role-matched swaps with manager approval.",
   estimates: "Trade-specific estimates and lift requests for quotation sent to suppliers.",
