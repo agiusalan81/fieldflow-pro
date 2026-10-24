@@ -27,6 +27,9 @@ export const PLAN_FEATURES = [
   { key: "branding_industry", label: "Industry Experience: icons & wording" },
   { key: "client_presentation", label: "Branded client presentation" },
   { key: "payroll_statutory_mt", label: "Malta statutory payroll" },
+  { key: "client_portal", label: "Client Experience: on-my-way ETA, QR compliance logbook, online approvals" },
+  { key: "ppm_automation", label: "Commercial PPM: recurring visits, SLA timers, component history" },
+  { key: "job_profitability", label: "Financial Intelligence: job margins & contract profitability" },
 ] as const;
 export type PlanFeature = (typeof PLAN_FEATURES)[number]["key"];
 
@@ -56,6 +59,9 @@ export const MODULE_DESCRIPTIONS: Record<string, string> = {
   branding_industry: "Icons and wording tailored to the company's trade.",
   client_presentation: "Branded presentation for clients across reports and emails.",
   payroll_statutory_mt: "Malta tax, social security and statutory bonus calculations.",
+  client_portal: "Optional service pack: automatic on-my-way ETA messages, branded QR equipment logbook for building managers and one-click estimate approval.",
+  ppm_automation: "Optional service pack: contract-driven recurring maintenance visits, SLA breach countdowns and part replacement/warranty history per asset.",
+  job_profitability: "Optional service pack: real-time job gross margin from labour, overtime, parts and receipts, plus loss-making contract alerts.",
 };
 
 export const DEFAULT_APP_TITLE = "FieldBridge";
