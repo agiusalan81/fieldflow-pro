@@ -3726,6 +3726,7 @@ export type Database = {
           created_at: string
           endpoint: string
           p256dh: string
+          updated_at: string
           user_id: string
         }
         Insert: {
@@ -3733,6 +3734,7 @@ export type Database = {
           created_at?: string
           endpoint: string
           p256dh: string
+          updated_at?: string
           user_id: string
         }
         Update: {
@@ -3740,6 +3742,7 @@ export type Database = {
           created_at?: string
           endpoint?: string
           p256dh?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
