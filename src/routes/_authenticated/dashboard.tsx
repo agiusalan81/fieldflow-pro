@@ -27,6 +27,9 @@ import { usePreviewProfile, useUserPreview } from "@/lib/impersonation";
 import { JobTravelActions } from "@/components/job-travel-actions";
 import { UnfinishedWorkDialog } from "@/components/unfinished-work";
 import { captureShiftLocation } from '@/lib/shift-location';
+import { usePlanFeatures } from "@/lib/plan-features";
+import { alarmJobs, chime, OPEN_JOB_ALARM_MS } from "@/lib/open-job-alarm";
+import { Megaphone } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({ staticData: { sitemap: false },
   head: () => ({
