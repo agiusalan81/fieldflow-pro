@@ -30,6 +30,15 @@ export const savePushSubscription = createServerFn({ method: "POST" })
   });
 
 type Alert = { title: string; body: string; url: string; tag: string };
+
+/** Lock-screen-ready payload read by public/push-sw.js. */
+export function pushPayload(a: Alert) {
+  return {
+    title: a.title || "FieldBridge", body: a.body || "You have a new team chat message",
+    icon: "/icon-192x192.png", badge: "/badge-72x72.png", tag: a.tag,
+    data: { url: a.url, chatId: a.tag },
+  };
+}
 type Sub = { endpoint: string; p256dh: string; auth: string };
 
 /** Sends sender name + message preview, end-to-end encrypted to each device. */
@@ -100,7 +109,7 @@ async function encrypt(p256: any, sub: Sub, plain: Uint8Array) {
 async function deliver(supabaseAdmin: any, subs: Sub[], alert: Alert) {
     const { p256, d, pub } = await vapidKeys();
     const enc = new TextEncoder();
-    const payload = enc.encode(JSON.stringify(alert));
+    const payload = enc.encode(JSON.stringify(pushPayload(alert)));
     let sent = 0;
     await Promise.all(subs.map(async (s) => {
       const { endpoint } = s;
