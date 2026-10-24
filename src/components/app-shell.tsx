@@ -358,7 +358,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
           {profile && path === "/dashboard" && !preview.active && <QuickActions items={items.filter(i => !i.locked)} uid={profile.id} role={profile.role} manager={manager} />}
           {!preview.active && <LocationSharing />}
           
-          {lockedFeature && !planOn(lockedFeature) ? <ModulePreview feature={lockedFeature} title={title}/> : children}
+          {lockedFeature && (!planOn(lockedFeature) || lockedSoon) ? <ModulePreview feature={lockedFeature} title={title} comingSoon={lockedSoon}/> : children}
         </main>
       </div>
 
