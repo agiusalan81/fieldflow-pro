@@ -1,0 +1,22 @@
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { REQUEST_STATUSES, REQUEST_CATEGORIES } from '@/lib/tenant-commercial';
+import { RequestSamples } from '@/components/bespoke-requests';
+import type { Database } from '@/integrations/supabase/types';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+type Request=Database['public']['Tables']['platform_custom_requests']['Row'];
+export function HQBespokeRequests({productId,companies,money}:{productId:string;companies:{id:string;name:string}[];money:(n:number)=>string}) {
+  const [filter,setFilter]=useState('all');
+  const q=useQuery({queryKey:['hq-bespoke',productId],refetchInterval:30000,queryFn:async()=>{const r=await supabase.from('platform_custom_requests').select('*').eq('product_id',productId).neq('status','draft').order('created_at',{ascending:false});if(r.error)throw r.error;return r.data;}});
+  return <section className="space-y-4"><div className="flex flex-wrap items-center justify-between gap-3"><h3 className="text-lg font-semibold">Bespoke requests</h3><NativeSelect aria-label="Request status filter" value={filter} onValueChange={setFilter}><option value="all">All statuses</option>{Object.entries(REQUEST_STATUSES).filter(([k])=>k!=='draft').map(([k,v])=><option key={k} value={k}>{v}</option>)}</NativeSelect></div>{q.error&&<p className="text-destructive">{q.error.message}</p>}{q.isPending?<p>Loading requests…</p>:q.data?.filter(r=>filter==='all'||r.status===filter).map(r=><RequestReview key={`${r.id}-${r.updated_at}`} request={r} name={companies.find(c=>c.id===r.company_id)?.name??'Company'} money={money}/>)}{q.data?.filter(r=>filter==='all'||r.status===filter).length===0&&<p className="text-sm text-muted-foreground">No matching requests.</p>}</section>;
+}
+function RequestReview({request:r,name,money}:{request:Request;name:string;money:(n:number)=>string}){
+  const qc=useQueryClient();const [status,setStatus]=useState(r.status);const [response,setResponse]=useState(r.response);const [price,setPrice]=useState(r.quoted_price===null?'':String(r.quoted_price));const [busy,setBusy]=useState(false);
+  return <article className="space-y-3 rounded-md border bg-card p-4"><div><p className="text-xs text-muted-foreground">{name} · {r.created_at.slice(0,10)} · {REQUEST_CATEGORIES[r.category as keyof typeof REQUEST_CATEGORIES]}</p><h4 className="text-lg font-semibold">{r.title}</h4>{r.target_date&&<p className="text-xs">Target: {r.target_date}</p>}</div><p className="whitespace-pre-wrap break-words text-sm">{r.notes}</p><RequestSamples request={r}/><div className="grid gap-3 sm:grid-cols-2"><div><Label htmlFor={`${r.id}-status`}>Progress</Label><NativeSelect id={`${r.id}-status`} value={status} onValueChange={setStatus}>{Object.entries(REQUEST_STATUSES).filter(([k])=>k!=='draft').map(([k,v])=><option key={k} value={k}>{v}</option>)}</NativeSelect></div><div><Label htmlFor={`${r.id}-price`}>Quoted amount (optional)</Label><Input id={`${r.id}-price`} inputMode="decimal" value={price} onChange={e=>setPrice(e.target.value)}/>{price!==''&&Number.isFinite(Number(price))&&<p className="text-xs">{money(Number(price))}</p>}</div></div><Label htmlFor={`${r.id}-response`}>Response to company · quote currency & terms</Label><Textarea id={`${r.id}-response`} maxLength={10000} value={response} onChange={e=>setResponse(e.target.value)}/><Button disabled={busy} onClick={async()=>{setBusy(true);try{if(price!==''&&(!Number.isFinite(Number(price))||Number(price)<0))throw new Error('Enter a valid quoted amount');const u=await supabase.from('platform_custom_requests').update({status,response,quoted_price:price===''?null:Number(price)}).eq('id',r.id).select('id').single();if(u.error)throw u.error;toast.success('Request progress saved');void qc.invalidateQueries({queryKey:['hq-bespoke']});void qc.invalidateQueries({queryKey:['bespoke-requests']});}catch(e){toast.error((e as {message?:string})?.message??'Could not save review');}finally{setBusy(false);}}}>{busy?'Saving…':'Save review'}</Button></article>;
+}
