@@ -17,7 +17,7 @@
 - Invite server functions/Query loaders have timeouts, middleware included; 
 - Tenant RLS uses company_id/current_company_id(); never UI company filters; 
 - Roles: protected user_roles; users.role is display-only. Manager-only MemberSkills uses module guards; additions never assign; removal archives for history.
-- Role helpers/tenant policies reject terminated actors and audit access changes.
+- Atomic handover reviews jobs/rotas/shifts, preserving history; active-only rota choices share day validation. Snooze is recipient-only; alerts target each request.
 - Invites redeem names atomically via single-use signup triggers; social users need no password; verified names; no client-assigned tenant/role.
 - Preview: real-superuser-only, actor-scoped, removable memory state; root blocks other screens/writes; 
 - Payroll uses tested gross/Malta engines, office RLS, snapshots, HQ guards; roster RPC updates existing settings only; 
@@ -53,7 +53,7 @@
 - Leave/profile/clock-out handover rules use tested field-rules.ts plus guard_leave_decision; UI and DB agree.
 - HQ uses app_url, PLAN_FEATURES and owner-only toggles; isStorageAddon separates storage-only packs, retaining mixed feature bundles.
 - Attention: guarded atomic pending RPCs/separate actions; never edit signed content; 
-- Dual-track on-call uses separate supervisor config without changing technician payroll history; rota.ts scopes swaps, is_on_standby covers both, audited saves and role-matched swaps require independent approval; leave impact/blackouts remain DB-validated.
+- Dual-track rota keeps supervisor config separate from technician payroll; swaps need role-matched independent approval; leave impact/blackouts remain DB-validated.
 - Equipment QR: private routes/RLS; hashed revocable public lookup exposes only reference/category; reports stay bounded/throttled; private technical/client data.
 - Deletion shares record-deletion/DeleteVisit; office sheet and manager visit RLS apply; visit deletion keeps sheets, client-report FKs retain shared evidence.
 - QR dispatch closes only its matching report after visit insert, refreshes attention and clears URL state; failures warn against duplicate dispatch.
