@@ -29,7 +29,7 @@ it("never shows a blank alert for unreadable data and opens the chat on tap", as
   let p: Promise<void> | undefined;
   handlers["push"]?.({ data: { json: () => { throw new Error("bad"); }, text: () => "" }, waitUntil: (t: Promise<void>) => { p = t; } });
   await p;
-  expect(notifications[0]).toMatchObject({ title: "FieldBridge", options: { body: "You have a new team chat message" } });
+  expect(notifications[0]).toMatchObject({ title: "FieldBridge", options: { body: "New message" } });
   handlers["notificationclick"]?.({ notification: { close() {}, data: { url: "/messages?thread=x", chatId: "x" } }, waitUntil: (t: Promise<void>) => { p = t; } });
   await p;
   expect(opened).toEqual(["https://fieldbridgeapp.com/messages?thread=x"]);
