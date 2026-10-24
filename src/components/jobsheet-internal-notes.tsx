@@ -13,7 +13,7 @@ export function useInternalNotes(sheetId:string){
 }
 
 /** One internal thread: the comment written before signing opens it, later additions append beneath. */
-export function InternalThread({sheetId,initial,initialAt}:{sheetId:string;initial?:string|null;initialAt?:string|null}){
+export function InternalThread({sheetId,initial,initialAt}:{sheetId:string;initial?:string|null|undefined;initialAt?:string|null|undefined}){
  const notes=useInternalNotes(sheetId);
  const first=initial?.trim();
  if(!first&&!notes.data?.length&&!notes.error)return null;
@@ -23,7 +23,7 @@ export function InternalThread({sheetId,initial,initialAt}:{sheetId:string;initi
  </div>;
 }
 
-export function JobsheetInternalNotes({sheetId,userId,companyId,initial,initialAt}:{sheetId:string;userId:string;companyId:string;initial?:string|null;initialAt?:string|null}){
+export function JobsheetInternalNotes({sheetId,userId,companyId,initial,initialAt}:{sheetId:string;userId:string;companyId:string;initial?:string|null|undefined;initialAt?:string|null|undefined}){
  const [body,setBody]=useState(''),[busy,setBusy]=useState(false),qc=useQueryClient();
  const add=async()=>{setBusy(true);try{const r=await supabase.from('jobsheet_internal_notes').insert({company_id:companyId,jobsheet_id:sheetId,author_id:userId,body:body.trim()});if(r.error)throw r.error;setBody('');await qc.invalidateQueries({queryKey:internalNotesKey(sheetId)});toast.success('Internal comment added');}catch(e){toast.error(e instanceof Error?e.message:'Could not add comment');}finally{setBusy(false);}};
  return <section className="space-y-3"><h3 className="flex items-center gap-2 text-sm font-medium"><Lock className="h-4 w-4"/>Internal comments · office only</h3>
