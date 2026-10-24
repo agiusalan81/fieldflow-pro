@@ -59,7 +59,7 @@ export const MODULE_DESCRIPTIONS: Record<string, string> = {
   branding_industry: "Icons and wording tailored to the company's trade.",
   client_presentation: "Branded presentation for clients across reports and emails.",
   payroll_statutory_mt: "Malta tax, social security and statutory bonus calculations.",
-  client_portal: "Optional service pack: automatic on-my-way ETA messages, branded QR equipment logbook for building managers and one-click estimate approval.",
+  client_portal: "Optional service pack: client password portal, self-service contacts and site-based email/WhatsApp preferences, branded QR compliance logbook and online proposal approval. Existing on-my-way messages remain in base plans.",
   ppm_automation: "Optional service pack: contract-driven recurring maintenance visits, SLA breach countdowns and part replacement/warranty history per asset.",
   job_profitability: "Optional service pack: real-time job gross margin from labour, overtime, parts and receipts, plus loss-making contract alerts.",
 };

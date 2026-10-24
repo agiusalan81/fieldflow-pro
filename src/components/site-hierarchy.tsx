@@ -8,10 +8,12 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ClientRouting } from '@/components/client-routing';
+import { useProfile, isManager } from '@/lib/profile';
 
 /** Client → head-office contacts, then each site with its own contacts and equipment. */
 export function SiteHierarchy({ clientId, companyId }: { clientId: string; companyId: string }) {
   const qc = useQueryClient();
+  const { data: profile } = useProfile();
   const key = ["client-sites", clientId];
   const { data: sites = [] } = useQuery({ queryKey: key, queryFn: async () => (await supabase.from("sites").select("*").eq("client_id", clientId).order("name")).data ?? [] });
   const { data: assets = [] } = useQuery({ queryKey: ["client-assets", clientId], queryFn: async () => (await supabase.from("assets").select("*").eq("client_id", clientId).order("reference_number")).data ?? [] });
@@ -38,7 +40,7 @@ export function SiteHierarchy({ clientId, companyId }: { clientId: string; compa
 
   return (
     <div className="space-y-4">
-      <ClientRouting clientId={clientId}/>
+      {isManager(profile) && <ClientRouting clientId={clientId}/>}
       <section className="rounded-lg border p-3">
         <p className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground"><Building2 className="h-4 w-4" />Head office</p>
         <ContactsManager clientId={clientId} companyId={companyId} siteId={null} title="Head office contacts" />
