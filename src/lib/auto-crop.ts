@@ -4,7 +4,7 @@ export const FULL_CROP: CropBox = { x: 0, y: 0, width: 100, height: 100 };
 /** Otsu threshold: splits the photo into paper and background brightness. */
 function otsu(gray: ArrayLike<number>): number {
   const hist = new Array(256).fill(0);
-  for (let i = 0; i < gray.length; i++) hist[Math.round(gray[i]!)]++;
+  for (let i = 0; i < gray.length; i++) hist[Math.round((gray[i] ?? 0))]++;
   let sum = 0; for (let t = 0; t < 256; t++) sum += t * hist[t];
   let sumB = 0, wB = 0, best = 0, at = 128;
   for (let t = 0; t < 256; t++) {
@@ -17,46 +17,41 @@ function otsu(gray: ArrayLike<number>): number {
   return at;
 }
 
-/** Longest run of indices whose density passes the threshold, tolerating small gaps (text lines, folds). */
-function longestRun(density: number[], min: number): [number, number] | null {
-  let best: [number, number] | null = null, start = -1, gap = 0;
-  const tolerance = Math.max(2, Math.round(density.length * 0.03));
-  for (let i = 0; i <= density.length; i++) {
-    const hit = i < density.length && density[i]! >= min;
-    if (hit) { if (start < 0) start = i; gap = 0; continue; }
-    if (start < 0) continue;
-    if (i < density.length && ++gap <= tolerance) continue;
-    const end = i - gap - (i < density.length ? 0 : 0);
-    const e = Math.max(start, Math.min(end, density.length - 1));
-    if (!best || e - start > best[1] - best[0]) best = [start, e];
-    start = -1; gap = 0;
-  }
-  return best;
-}
-
-/**
- * Finds the receipt as the largest bright paper area (falls back to darker-on-light when the paper is darker
- * than its surroundings). Returns a percent crop with a 2% margin, or the full photo when unsure.
- */
+/** Select a connected paper surface, not a global row density (which misses narrow/off-centre receipts). */
 export function detectReceiptBounds(gray: Uint8ClampedArray | number[], w: number, h: number): CropBox {
-  if (w < 8 || h < 8) return FULL_CROP;
-  const t = otsu(gray);
-  // Paper is whichever class the photo's centre mostly belongs to.
-  let centreBright = 0, centre = 0;
-  for (let y = Math.floor(h * 0.35); y < h * 0.65; y++) for (let x = Math.floor(w * 0.35); x < w * 0.65; x++) { centre++; if (gray[y * w + x]! > t) centreBright++; }
-  const paperBright = centreBright >= centre / 2;
-  const paper = (i: number) => (gray[i]! > t) === paperBright;
-  const rows = Array.from({ length: h }, (_, y) => { let n = 0; for (let x = 0; x < w; x++) if (paper(y * w + x)) n++; return n / w; });
-  const rowRun = longestRun(rows, 0.25); if (!rowRun) return FULL_CROP;
-  const cols = Array.from({ length: w }, (_, x) => { let n = 0; for (let y = rowRun[0]; y <= rowRun[1]; y++) if (paper(y * w + x)) n++; return n / (rowRun[1] - rowRun[0] + 1); });
-  const colRun = longestRun(cols, 0.4); if (!colRun) return FULL_CROP;
-  const [top, bottom] = rowRun, [left, right] = colRun;
-  const m = 0.02;
-  const x0 = Math.max(0, left / w - m), y0 = Math.max(0, top / h - m);
-  const x1 = Math.min(1, (right + 1) / w + m), y1 = Math.min(1, (bottom + 1) / h + m);
-  const box = { x: x0 * 100, y: y0 * 100, width: (x1 - x0) * 100, height: (y1 - y0) * 100 };
-  if (box.width * box.height < 600) return FULL_CROP; // under 6% of the photo: unreliable
-  return box;
+  if (w < 8 || h < 8 || gray.length !== w * h) return FULL_CROP;
+  let low = 255, high = 0;
+  for (const value of gray) { low = Math.min(low, value); high = Math.max(high, value); }
+  if (high - low < 18) return FULL_CROP;
+  const threshold = otsu(gray);
+  let best: {score: number; left: number; right: number; top: number; bottom: number} | undefined;
+  for (const bright of [true, false]) {
+    const visited = new Uint8Array(w * h);
+    for (let seed = 0; seed < gray.length; seed++) {
+      if (visited[seed] || ((gray[seed] ?? 0) > threshold) !== bright) continue;
+      const queue = [seed]; visited[seed] = 1;
+      let left=w, right=0, top=h, bottom=0, count=0, border=0;
+      for (let at=0; at<queue.length; at++) {
+        const index=queue[at]; if (index === undefined) continue;
+        const x=index%w, y=Math.floor(index/w); count++;
+        left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);
+        if(x===0||x===w-1||y===0||y===h-1)border++;
+        for(const next of [x>0?index-1:-1,x<w-1?index+1:-1,y>0?index-w:-1,y<h-1?index+w:-1]) {
+          if(next<0||visited[next]||((gray[next] ?? 0)>threshold)!==bright)continue;
+          visited[next]=1;queue.push(next);
+        }
+      }
+      const area=(right-left+1)*(bottom-top+1), fill=count/area;
+      // A background surrounds the image; small text/shadows are not paper.
+      if(count<w*h*0.06||fill<0.45||area>w*h*0.97||border>2*(w+h)*0.3)continue;
+      const score=count*fill/(1+border);
+      if(!best||score>best.score)best={score,left,right,top,bottom};
+    }
+  }
+  if(!best)return FULL_CROP;
+  const x0=Math.max(0,best.left/w-0.02), y0=Math.max(0,best.top/h-0.02);
+  const x1=Math.min(1,(best.right+1)/w+0.02), y1=Math.min(1,(best.bottom+1)/h+0.02);
+  return {x:x0*100,y:y0*100,width:(x1-x0)*100,height:(y1-y0)*100};
 }
 
 export function autoCropImage(img: HTMLImageElement): CropBox {
@@ -66,6 +61,6 @@ export function autoCropImage(img: HTMLImageElement): CropBox {
   const ctx = c.getContext('2d', { willReadFrequently: true }); if (!ctx) return FULL_CROP;
   ctx.drawImage(img, 0, 0, w, h);
   const d = ctx.getImageData(0, 0, w, h).data, gray = new Uint8ClampedArray(w * h);
-  for (let i = 0; i < w * h; i++) gray[i] = (d[i * 4]! * 299 + d[i * 4 + 1]! * 587 + d[i * 4 + 2]! * 114) / 1000;
+  for (let i = 0; i < w * h; i++) gray[i] = ((d[i * 4] ?? 0) * 299 + (d[i * 4 + 1] ?? 0) * 587 + (d[i * 4 + 2] ?? 0) * 114) / 1000;
   return detectReceiptBounds(gray, w, h);
 }
