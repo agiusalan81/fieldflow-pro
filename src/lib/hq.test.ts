@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { canResetTestCompany, isStorageAddon, tenantLocation } from "./hq";
+import { canResetTestCompany, isStorageAddon, tenantLocation, trialUsesFullFeatures } from "./hq";
 import { featureOn } from "./plan-features";
 describe("HQ trial module control", () => {
+  it('immediate trial-to-tier application disables full-trial entitlement fallback',()=>{expect(trialUsesFullFeatures('trial',true)).toBe(false);expect(trialUsesFullFeatures('trial',false)).toBe(true);});
   it("disables Malta payroll during a UK company's trial without disabling gross payroll", () => {
     const status = {state:"trial",modules:[{name:"payroll_statutory_mt",enabled:false},{name:"payroll",enabled:true}]};
     expect(featureOn(status,"payroll_statutory_mt")).toBe(false);
