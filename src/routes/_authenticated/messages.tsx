@@ -40,7 +40,7 @@ function Messages() {
   const { data: users = [] } = useCompanyUsers();
   const qc = useQueryClient();
   const { thread: linked } = Route.useSearch();
-  const [filter, setFilter] = useState<"all" | "people" | "jobs">("all");
+  const [filter, setFilter] = useState<"all" | "people" | "jobs">("people");
   const [active, setActive] = useState<Thread | null>(null);
   const [text, setText] = useState("");
   const [files, setFiles] = useState<File[]>([]);
@@ -51,6 +51,8 @@ function Messages() {
   const [sendStatus, setSendStatus] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const feature = usePlanFeatures(!!profile);
+  const panelRef=useRef<HTMLDivElement>(null);
+  useEffect(()=>{const panel=panelRef.current;if(!panel)return;const resize=()=>{const nav=document.querySelector<HTMLElement>('[aria-label="Quick navigation"]');const bottom=nav&&getComputedStyle(nav).display!=="none"?nav.getBoundingClientRect().top:(window.visualViewport?.height??window.innerHeight);panel.style.height=`${Math.max(180,bottom-panel.getBoundingClientRect().top-28)}px`;};const observer=new ResizeObserver(resize);const header=document.querySelector(".fieldbridge-header");if(header)observer.observe(header);window.addEventListener("resize",resize);window.visualViewport?.addEventListener("resize",resize);resize();return()=>{observer.disconnect();window.removeEventListener("resize",resize);window.visualViewport?.removeEventListener("resize",resize);};},[]);
   const endRef = useRef<HTMLDivElement>(null);
   const { data: reads = {} } = useChatReads(profile?.id);
   const [askAlerts, setAskAlerts] = useState(false);
@@ -83,7 +85,7 @@ function Messages() {
   const threads: Thread[] = useMemo(() => {
     const people = users.filter((u) => u.id !== profile?.id).map((u) => ({ kind: "user" as const, id: u.id, label: u.full_name }));
     const js = jobs.map((j) => ({ kind: "job" as const, id: j.id, label: `${j.clients?.name ?? "Job"} · #${j.id.slice(0, 4)}` }));
-    return filter === "people" ? people : filter === "jobs" ? js : [...js, ...people];
+    return filter === "people" ? people : filter === "jobs" ? js : [...people, ...js];
   }, [users, jobs, profile, filter]);
 
   const inThread = (t: Thread, m: (typeof msgs)[number]) =>
@@ -105,9 +107,10 @@ function Messages() {
   // Open a thread from a notification link.
   useEffect(() => {
     if (!linked || active) return;
-    const t = threads.find((x) => keyOf(x) === linked);
+    const [kind,id]=linked.split(":");
+    const t:Thread|undefined=kind==="job" ? jobs.filter(j=>j.id===id).map(j=>({kind:"job" as const,id:j.id,label:`${j.clients?.name??"Job"} · #${j.id.slice(0,4)}`}))[0] : users.filter(u=>u.id===id).map(u=>({kind:"user" as const,id:u.id,label:u.full_name}))[0];
     if (t) setActive(t);
-  }, [linked, threads, active]);
+  }, [linked, jobs, users, active]);
 
   // Mark the open thread read whenever new messages arrive in it.
   useEffect(() => {
@@ -156,11 +159,11 @@ function Messages() {
 
   return (
     <AppShell title="Team chat">
-      <div className="grid h-[calc(100dvh-18rem)] min-h-72 overflow-hidden rounded-lg border bg-card md:h-[calc(100dvh-8rem)] md:grid-cols-[300px_minmax(0,1fr)]">
+      <div ref={panelRef} className="grid h-[calc(100dvh-18rem)] min-h-44 overflow-hidden rounded-lg border bg-card lg:h-[calc(100dvh-12rem)] md:grid-cols-[300px_minmax(0,1fr)]">
         <aside className={`${active ? "hidden md:flex" : "flex"} min-h-0 flex-col border-r`}>
           {askAlerts && <div className="flex items-center gap-2 border-b bg-muted/50 p-2 text-xs text-foreground"><Bell className="h-4 w-4 shrink-0" /><span className="flex-1">Get alerts when the app is in the background</span><Button size="sm" variant="secondary" onClick={() => void allowAlerts()}>Allow</Button></div>}
           <div className="flex gap-1 border-b p-2">
-            {(["all", "jobs", "people"] as const).map((f) => (
+            {(["people", "jobs", "all"] as const).map((f) => (
               <Button key={f} size="sm" variant={filter === f ? "secondary" : "ghost"} className="flex-1 capitalize" onClick={() => setFilter(f)}>
                 {f === "jobs" ? "Job threads" : f}
               </Button>

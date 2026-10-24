@@ -1,0 +1,58 @@
+import {useEffect,useState} from 'react';
+import {useQuery,useQueryClient} from '@tanstack/react-query';
+import {Camera,Download,FileText,Paperclip,Check,X,Plus,RotateCcw} from 'lucide-react';
+import {toast} from 'sonner';
+import {supabase} from '@/integrations/supabase/client';
+import {useProfile,useCompanyUsers,isOffice} from '@/lib/profile';
+import {usePlanFeatures} from '@/lib/plan-features';
+import {stashExpense,syncExpenses,localExpenses,attachExpense,monthBounds,combineReceiptPdfs,type ExpenseDraft} from '@/lib/expense-stash';
+import {Button} from '@/components/ui/button';
+import {Input} from '@/components/ui/input';
+import {Label} from '@/components/ui/label';
+import {SearchSelect} from '@/components/search-select';
+import {Dialog,DialogContent,DialogHeader,DialogTitle} from '@/components/ui/dialog';
+import {PhotoPdfScanner} from '@/components/photo-pdf-scanner';
+import {PdfReader} from '@/components/pdf-reader';
+
+export function ExpenseStash({sheetId,onAttached}:{sheetId?:string;onAttached?:()=>void}){
+ const {data:profile}=useProfile(),{data:users=[]}=useCompanyUsers(),features=usePlanFeatures(),qc=useQueryClient();
+ const [scan,setScan]=useState(false),[local,setLocal]=useState<ExpenseDraft[]>([]),[view,setView]=useState<Blob|null>(null),[busy,setBusy]=useState(false);
+ const [month,setMonth]=useState(new Date().toISOString().slice(0,7)),[person,setPerson]=useState(''),[proposed,setProposed]=useState('');
+ const [attaching,setAttaching]=useState<string|null>(null),[target,setTarget]=useState('');
+ const office=isOffice(profile);
+ const key=['expense-stash',profile?.id];
+ const expenses=useQuery({queryKey:key,enabled:!!profile,queryFn:async()=>{const r=await supabase.from('expense_receipts').select('*').order('created_at',{ascending:false});if(r.error)throw r.error;return r.data;}});
+ const categories=useQuery({queryKey:['expense-categories',profile?.id],enabled:!!profile,queryFn:async()=>{const r=await supabase.from('expense_categories').select('*').order('name');if(r.error)throw r.error;return r.data;}});
+ const links=useQuery({queryKey:['expense-links',profile?.id],enabled:!!profile,queryFn:async()=>{const r=await supabase.from('jobsheet_receipts').select('expense_id,jobsheet_id').not('expense_id','is',null);if(r.error)throw r.error;return r.data;}});
+ const sheets=useQuery({queryKey:['expense-sheets',profile?.id],enabled:!!profile,queryFn:async()=>{const r=await supabase.from('job_sheets').select('id,jobsheet_number,clients(name)').order('created_at',{ascending:false}).limit(500);if(r.error)throw r.error;return r.data;}});
+ const refresh=()=>{void qc.invalidateQueries({queryKey:key});void qc.invalidateQueries({queryKey:['expense-links']});if(profile)void localExpenses(profile.id).then(setLocal);};
+ useEffect(()=>{if(!profile)return;let active=true;const changed=()=>{if(active){void localExpenses(profile.id).then(setLocal);void qc.invalidateQueries({queryKey:['expense-stash',profile.id]});}};const sync=()=>void syncExpenses(profile.id).catch(e=>toast.error(e.message));changed();sync();window.addEventListener('fieldbridge-expenses',changed);window.addEventListener('online',sync);return()=>{active=false;window.removeEventListener('fieldbridge-expenses',changed);window.removeEventListener('online',sync);};},[profile?.id,qc]);
+ if(!profile)return null;
+ if(!features('receipts'))return <p className="text-muted-foreground">Receipt scanning is not included in your company plan.</p>;
+ const perform=async(fn:()=>Promise<void>)=>{setBusy(true);try{await fn();refresh();}catch(e){toast.error(e instanceof Error?e.message:'Could not save');}finally{setBusy(false);}};
+ const open=async(path:string,blob?:Blob)=>{if(blob){setView(blob);return;}await perform(async()=>{const r=await supabase.storage.from('job-receipts').download(path);if(r.error)throw r.error;setView(r.data);});};
+ const attach=async(id:string,to:string)=>{const expense=expenses.data?.find(e=>e.id===id);if(!expense||!to)return;await perform(async()=>{await attachExpense(expense,to,profile.id);setAttaching(null);onAttached?.();toast.success('Receipt attached');});};
+ const bounds=monthBounds(month||new Date().toISOString().slice(0,7));
+ const rows=(expenses.data??[]).filter(e=>e.created_at>=bounds.start&&e.created_at<bounds.end&&(!person||e.uploaded_by===person)&&!local.some(l=>l.id===e.id));
+ const exportMonth=()=>perform(async()=>{
+ if(!person)throw new Error('Choose a team member.');
+ const own=rows.filter(e=>e.uploaded_by===person);const direct=await supabase.from('jobsheet_receipts').select('file_path,created_at').eq('uploaded_by',person).is('expense_id',null).gte('created_at',bounds.start).lt('created_at',bounds.end).order('created_at');if(direct.error)throw direct.error;
+ const paths=[...new Set([...own.map(e=>e.file_path),...(direct.data??[]).map(e=>e.file_path)])];
+ const blobs:Blob[]=[];for(const path of paths){const r=await supabase.storage.from('job-receipts').download(path);if(r.error)throw new Error('A receipt is still uploading or unavailable. Retry before exporting.');blobs.push(r.data);}
+ const blob=await combineReceiptPdfs(blobs),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`Receipts-${users.find(u=>u.id===person)?.full_name??'staff'}-${month}.pdf`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ });
+ return <div className="space-y-5">
+ <div className="flex flex-wrap items-end gap-3"><Button disabled={busy} onClick={()=>setScan(true)}><Camera className="mr-2 h-4 w-4"/>Log expense</Button><div><Label htmlFor="receipt-month">Month</Label><Input id="receipt-month" type="month" value={month} onChange={e=>{if(e.target.value)setMonth(e.target.value);}}/></div>{office&&<><div className="min-w-48 flex-1"><Label>Team member</Label><SearchSelect value={person} placeholder="All team members" options={[{value:'',label:'All team members'},...users.map(u=>({value:u.id,label:u.full_name}))]} onChange={setPerson}/></div><Button variant="outline" disabled={busy||!person} onClick={exportMonth}><Download className="mr-2 h-4 w-4"/>Monthly PDF</Button></>}</div>
+ {(expenses.error||categories.error||links.error)&&<p role="alert" className="text-destructive">{expenses.error?.message??categories.error?.message??links.error?.message}</p>}
+ {expenses.isPending&&<p className="text-muted-foreground">Loading receipts…</p>}
+ <ul className="divide-y">{local.map(r=><li key={r.id} className="flex flex-wrap items-center gap-3 py-3"><Button variant="ghost" onClick={()=>open(r.file_path,r.blob)}><FileText className="mr-2 h-4 w-4"/>Saved on this device</Button><span className="text-sm text-warning">{r.error??'Upload pending'}</span><Button variant="outline" size="icon" aria-label="Retry expense upload" onClick={()=>perform(()=>syncExpenses(profile.id))}><RotateCcw className="h-4 w-4"/></Button></li>)}{rows.map(r=>{const linked=links.data?.find(l=>l.expense_id===r.id);return <li key={r.id} className="flex flex-wrap items-center gap-3 py-3"><Button variant="ghost" disabled={busy} onClick={()=>open(r.file_path)}><FileText className="mr-2 h-4 w-4"/>{new Date(r.created_at).toLocaleDateString()} · {r.page_count} pages</Button>{office&&<span className="text-sm text-muted-foreground">{users.find(u=>u.id===r.uploaded_by)?.full_name}</span>}<div className="min-w-44 flex-1"><SearchSelect value={r.category_id??''} placeholder="Category" options={(categories.data??[]).filter(c=>c.status==='approved').map(c=>({value:c.id,label:c.name}))} onChange={id=>perform(async()=>{const result=await supabase.from('expense_receipts').update({category_id:id||null}).eq('id',r.id);if(result.error)throw result.error;})}/></div>{linked?<span className="text-sm text-muted-foreground">Attached · #{sheets.data?.find(s=>s.id===linked.jobsheet_id)?.jobsheet_number??'job sheet'}</span>:<Button variant="outline" disabled={busy} onClick={()=>sheetId?attach(r.id,sheetId):(setTarget(''),setAttaching(r.id))}><Paperclip className="mr-2 h-4 w-4"/>Attach to job sheet</Button>}</li>;})}</ul>
+ {!rows.length&&!local.length&&!expenses.isPending&&<p className="py-6 text-center text-muted-foreground">No receipts this month.</p>}
+ <div className="flex flex-wrap gap-2 border-t pt-4"><Input aria-label="New expense category" className="min-w-40 flex-1" maxLength={100} value={proposed} onChange={e=>setProposed(e.target.value)} placeholder="Suggest a category"/><Button variant="outline" disabled={busy||!proposed.trim()} onClick={()=>perform(async()=>{const r=await supabase.from('expense_categories').insert({name:proposed.trim()});if(r.error)throw r.error;setProposed('');await qc.invalidateQueries({queryKey:['expense-categories']});toast.success('Category sent for office approval');})}><Plus className="mr-2 h-4 w-4"/>Suggest category</Button></div>
+ {office&&(categories.data??[]).some(c=>c.status==='pending')&&<section className="space-y-3 border-t pt-4"><h2 className="font-medium">Category approvals</h2>{categories.data?.filter(c=>c.status==='pending').map(c=><CategoryReview key={c.id} id={c.id} name={c.name} busy={busy} onReview={(name,status)=>perform(async()=>{const r=await supabase.from('expense_categories').update({name,status}).eq('id',c.id);if(r.error)throw r.error;await qc.invalidateQueries({queryKey:['expense-categories']});})}/>)}</section>}
+ {!office&&(categories.data??[]).filter(c=>c.status!=='approved').map(c=><p key={c.id} className="text-sm text-muted-foreground">{c.name} · {c.status}</p>)}
+ <Dialog open={scan} onOpenChange={setScan}><DialogContent className="max-h-[90dvh] overflow-y-auto"><DialogHeader><DialogTitle>Log expense</DialogTitle></DialogHeader><PhotoPdfScanner receipt label="Save to stash" onAttach={async(blob,pages)=>{await stashExpense(profile.id,profile.company_id,blob,pages);setScan(false);if(navigator.onLine)await syncExpenses(profile.id);refresh();toast.success((await localExpenses(profile.id)).length?'Receipt saved on this device — upload pending':'Receipt saved to stash');}}/></DialogContent></Dialog>
+ <Dialog open={!!view} onOpenChange={o=>!o&&setView(null)}><DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-3xl"><DialogHeader><DialogTitle>Receipt PDF</DialogTitle></DialogHeader>{view&&<PdfReader blob={view}/>}</DialogContent></Dialog>
+ <Dialog open={!!attaching} onOpenChange={o=>!o&&setAttaching(null)}><DialogContent><DialogHeader><DialogTitle>Attach receipt to job sheet</DialogTitle></DialogHeader><SearchSelect value={target} placeholder="Find job sheet" options={(sheets.data??[]).map(s=>({value:s.id,label:`#${s.jobsheet_number} · ${s.clients?.name??'Job sheet'}`}))} onChange={setTarget}/><Button disabled={busy||!target} onClick={()=>attaching&&attach(attaching,target)}><Paperclip className="mr-2 h-4 w-4"/>Attach receipt</Button></DialogContent></Dialog>
+ </div>;
+}
+function CategoryReview({id,name,busy,onReview}:{id:string;name:string;busy:boolean;onReview:(name:string,status:'approved'|'rejected')=>void}){const [draft,setDraft]=useState(name);return <div className="flex gap-2"><Input aria-label={`Category ${name}`} value={draft} maxLength={100} onChange={e=>setDraft(e.target.value)}/><Button disabled={busy||!draft.trim()} variant="outline" size="icon" aria-label={`Approve ${name}`} onClick={()=>onReview(draft.trim(),'approved')}><Check className="h-4 w-4"/></Button><Button disabled={busy} variant="outline" size="icon" aria-label={`Reject ${name}`} onClick={()=>onReview(name,'rejected')}><X className="h-4 w-4"/></Button></div>;}

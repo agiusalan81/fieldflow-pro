@@ -1196,6 +1196,86 @@ export type Database = {
           },
         ]
       }
+      expense_categories: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          name: string
+          proposed_by: string
+          status: string
+        }
+        Insert: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          name: string
+          proposed_by?: string
+          status?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          proposed_by?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_categories_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expense_receipts: {
+        Row: {
+          category_id: string | null
+          company_id: string
+          created_at: string
+          file_path: string
+          id: string
+          page_count: number
+          uploaded_by: string
+        }
+        Insert: {
+          category_id?: string | null
+          company_id?: string
+          created_at?: string
+          file_path: string
+          id?: string
+          page_count?: number
+          uploaded_by?: string
+        }
+        Update: {
+          category_id?: string | null
+          company_id?: string
+          created_at?: string
+          file_path?: string
+          id?: string
+          page_count?: number
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_receipts_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "expense_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_receipts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fault_library: {
         Row: {
           active: boolean
@@ -1953,6 +2033,48 @@ export type Database = {
           },
         ]
       }
+      jobsheet_internal_notes: {
+        Row: {
+          author_id: string
+          body: string
+          company_id: string
+          created_at: string
+          id: string
+          jobsheet_id: string
+        }
+        Insert: {
+          author_id?: string
+          body: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          jobsheet_id: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          jobsheet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobsheet_internal_notes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobsheet_internal_notes_jobsheet_id_fkey"
+            columns: ["jobsheet_id"]
+            isOneToOne: false
+            referencedRelation: "job_sheets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       jobsheet_parts: {
         Row: {
           company_id: string
@@ -2008,6 +2130,7 @@ export type Database = {
         Row: {
           company_id: string
           created_at: string
+          expense_id: string | null
           file_path: string
           id: string
           jobsheet_id: string
@@ -2017,6 +2140,7 @@ export type Database = {
         Insert: {
           company_id: string
           created_at?: string
+          expense_id?: string | null
           file_path: string
           id?: string
           jobsheet_id: string
@@ -2026,6 +2150,7 @@ export type Database = {
         Update: {
           company_id?: string
           created_at?: string
+          expense_id?: string | null
           file_path?: string
           id?: string
           jobsheet_id?: string
@@ -2038,6 +2163,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobsheet_receipts_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "expense_receipts"
             referencedColumns: ["id"]
           },
           {

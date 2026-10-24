@@ -1,4 +1,8 @@
 # Roadmap
+- [x] Chat composer clears navigation at 390/711/900/1280px; People / Job threads / All ordering, stable dirty-check autosave and stale-sync protection. 26 focused tests passed.
+- [x] Built all-role photo/PDF Expense Stash, adjustable border crop, attachment in both directions, approved categories and monthly per-person PDF export under the receipts HQ module. Real capture/crop/save/attachment verified; disposable records removed.
+- [x] Signed sheets accept private receipts and append-only notes without modifying signed fields; own-note UI read-back and unchanged signed record verified.
+- [ ] Verify office category edit/approve/reject and monthly PDF download through the live office UI (blocked: available requesting account is Technician; PDF page preservation and technician approval denial tested).
 - [ ] Repair and test account-specific lock-screen chat registration, encrypted delivery and current-device diagnostics; user tests Android installed app as agiusalan@gmail.com.
 - [x] Brand Studio: 52 asset-backed font families, underline controls and preview/PDF decoration. 20 focused tests passed; isolated live controls loaded Montserrat and underlining, all 50 new fonts embedded into PDFs; build OK. Existing HQ font/styling gates retained.
 - [x] Push hardening: always display received pushes despite stale focused windows, explicit ECDH x-coordinate derivation, bounded delivery, foreground/reconnect subscription refresh and honest zero-delivery feedback; worker regression test passed.

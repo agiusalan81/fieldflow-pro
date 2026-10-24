@@ -1,15 +1,15 @@
 import { PDFDocument } from 'pdf-lib';
-export async function photosToPdf(files: File[]): Promise<Blob> {
+export async function photosToPdf(files: File[], receipt = false): Promise<Blob> {
   if (!files.length) throw new Error('Add at least one photo.');
   const pdf=await PDFDocument.create();
   for(const file of files){
     if(!file.type.startsWith('image/')) throw new Error('Choose photos only.');
     const bitmap=await createImageBitmap(file);
-    const scale=Math.min(1,2000/Math.max(bitmap.width,bitmap.height));
+    const scale=Math.min(1,(receipt?3200:2000)/Math.max(bitmap.width,bitmap.height));
     const canvas=document.createElement('canvas');canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);
     const ctx=canvas.getContext('2d');if(!ctx)throw new Error('Photo processing unavailable.');
     ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();
-    const blob=await new Promise<Blob>((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('Could not process photo.')),'image/jpeg',0.86));
+    const blob=await new Promise<Blob>((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('Could not process photo.')),'image/jpeg',receipt?0.95:0.86));
     const image=await pdf.embedJpg(await blob.arrayBuffer());const page=pdf.addPage([595,842]);
     const fit=Math.min(555/image.width,802/image.height);page.drawImage(image,{x:(595-image.width*fit)/2,y:(842-image.height*fit)/2,width:image.width*fit,height:image.height*fit});
   }

@@ -78,7 +78,7 @@ export async function syncPending(userId: string, qc: QueryClient) {
     for (const snapshot of await pendingDrafts(userId)) {
       if (snapshot.error?.includes("CONFLICT")) continue;
       try { await syncDraft(snapshot); qc.invalidateQueries({ queryKey: ["sheet", snapshot.sheetId] }); }
-      catch (e) { await saveLocalDraft({ ...snapshot, error: (e as Error).message }); }
+      catch (e) { const current=await getLocalDraft(userId,snapshot.sheetId); if(current?.savedAt===snapshot.savedAt)await saveLocalDraft({ ...current, error: (e as Error).message }); }
     }
     qc.invalidateQueries({ queryKey: ["sheets"] }); qc.invalidateQueries({ queryKey: ["admin-jobs"] });
   } finally { syncing = false; window.dispatchEvent(new Event("fieldops-offline")); }

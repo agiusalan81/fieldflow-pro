@@ -37,6 +37,7 @@ type NavItem = { to: string; label: string; icon: typeof Clock; module?: ModuleK
 
 const techNav: NavItem[] = [
   { group: "Field work", to: "/dashboard", label: "Today", icon: LayoutDashboard },
+  { group: "Field work", to: "/expenses", label: "Log expense", icon: FileText, feature: "receipts" },
   { group: "Field work", to: "/sheets", label: "Job sheets", icon: ClipboardList },
   { group: "Field work", to: "/schedule", label: "Schedule", icon: CalendarClock },
   { group: "Field work", to: "/available-jobs", label: "Available jobs", icon: Hammer, feature: "skills_dispatch" },
@@ -53,6 +54,7 @@ const techNav: NavItem[] = [
 ];
 
 const adminNav: NavItem[] = [
+  { group: "Operations", to: "/expenses", label: "Log expense", icon: FileText, feature: "receipts" },
   { group: "Operations", to: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { group: "Operations", to: "/technical-library", label: "Technical library", icon: FileText, feature: "technical_library" },
   { group: "Operations", to: "/admin/jobs", label: "Job sheets", icon: ClipboardList },
@@ -86,6 +88,7 @@ const adminNav: NavItem[] = [
 
 /** Supervisors follow the technician menu for their own day, plus a team section. */
 const supervisorNav: NavItem[] = [
+  { group: "Field work", to: "/expenses", label: "Log expense", icon: FileText, feature: "receipts" },
   { group: "Field work", to: "/dashboard", label: "Today & team", icon: LayoutDashboard },
   { group: "Field work", to: "/sheets", label: "My job sheets", icon: ClipboardList },
   { group: "Field work", to: "/schedule", label: "My schedule", icon: CalendarClock },
