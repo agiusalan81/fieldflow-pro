@@ -117,7 +117,8 @@ function PendingWorks() {
           {review && <ReviewBody r={review} />}
           <div className="grid gap-2 sm:grid-cols-2">
             <Button variant="outline" className="h-11" onClick={() => review && navigate({ to: "/sheets/$sheetId", params: { sheetId: review.id } })}>Open full job sheet</Button>
-            <Button className="h-11" onClick={async () => { if (review) { if(await setStatus(review.id, "quote")) setReview(null); } }}><Receipt className="mr-1 h-4 w-4" />Needs estimate</Button>
+            <Button variant="outline" className="h-11" onClick={async () => { if (review) { if(await setStatus(review.id, "quote")) setReview(null); } }}><Receipt className="mr-1 h-4 w-4" />Mark needs estimate</Button>
+            <Button className="h-11 sm:col-span-2" onClick={async () => { if (!review) return; const id = review.id; if (review.pending_status === "quote" || await setStatus(id, "quote")) { setReview(null); void navigate({ to: "/estimates", search: { fromSheet: id } }); } }}><Receipt className="mr-1 h-4 w-4" />Make estimate</Button>
           </div>
         </DialogContent>
       </Dialog>

@@ -1,10 +1,11 @@
 import { z } from 'zod';
 export type CommercialStatus = { state?: string; writable?: boolean; subscription_status?: string; plan_id?: string | null; pack_ids?: string[]; cadence?: string; seats?: number; agreed_price?: number; trial_package_only?: boolean; trial_ends_at?: string; pending_change?: Record<string, unknown> | null; modules?: { name: string; enabled: boolean }[] };
 export type CommercialItem = { id: string; kind: string; modules: string[] };
-export function itemAccess(item: CommercialItem, status: CommercialStatus): { label: string; assigned: boolean; available: boolean } {
+export function itemAccess(item: CommercialItem, status: CommercialStatus, coveredByHigherPlan = false): { label: string; assigned: boolean; available: boolean } {
   const assigned = item.kind === 'plan' ? item.id === status.plan_id : !!status.pack_ids?.includes(item.id);
   const available = status.state === 'legacy' || (item.modules.length > 0 && item.modules.every(m => m === 'core' || status.modules?.some(x => x.name === m && x.enabled)));
   if (status.state === 'legacy') return { label: assigned ? 'Assigned · legacy' : 'Legacy access', assigned, available };
+  if (coveredByHigherPlan && !assigned && item.kind === 'plan') return { label: status.state === 'trial' ? 'Included in trial access' : 'Included in current plan', assigned: false, available: true };
   if (status.state === 'trial') return { label: assigned ? 'Activated · trial' : available ? 'Included in trial access' : 'Available', assigned, available };
   if (assigned) return { label: status.state === 'active' ? 'Subscribed' : 'Assigned · access paused', assigned, available };
   return { label: available ? 'Included in current access' : 'Available', assigned, available };
