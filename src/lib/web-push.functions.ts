@@ -24,7 +24,7 @@ export const savePushSubscription = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // A device moves to whoever signed in on it last.
-    const { error } = await supabaseAdmin.from("push_subscriptions").upsert({ ...data, user_id: context.userId }, { onConflict: "endpoint" });
+    const { error } = await supabaseAdmin.from("push_subscriptions").upsert({ ...data, user_id: context.userId, updated_at: new Date().toISOString() }, { onConflict: "endpoint" });
     if (error) throw new Error("Could not save notification settings");
     return { ok: true };
   });

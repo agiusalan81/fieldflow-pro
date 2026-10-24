@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { OfflineStatus } from "@/components/offline-status";
 import { registerOfflineApp } from "@/lib/pwa";
 import { clearOfflineCache } from "@/lib/offline";
+import { linkPushToUser } from "@/lib/web-push";
 import { UserPreviewBoundary } from "@/components/user-preview";
 import { clearUserPreview } from "@/lib/impersonation";
 import { MemberAccessBoundary } from "@/components/member-access-boundary";
