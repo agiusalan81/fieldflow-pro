@@ -21,6 +21,11 @@ function ProblemForm() {
    if (!value || typeof value !== 'object' || Array.isArray(value) || typeof value['reference'] !== 'string') return null;
    return { reference: value['reference'], category: typeof value['category'] === 'string' ? value['category'] : '' };
  } });
+ const logbook = useQuery({ queryKey: ['equipment-logbook', token], enabled: valid, retry: false, queryFn: async () => {
+   const r = await supabase.rpc('get_equipment_logbook', { _token: token });
+   if (r.error || !r.data) return null;
+   return r.data as unknown as { company: string; next_visit: string | null; visits: { date: string; number: string; type: string }[] };
+ } });
  const send = async (e: React.FormEvent) => {
    e.preventDefault(); if (!target.data || busy) return;
    setBusy(true); setError('');
@@ -33,6 +38,10 @@ function ProblemForm() {
  return <main className="mx-auto max-w-lg px-5 py-10">
    <p className="mb-5 text-sm font-medium text-muted-foreground">FieldBridge</p><h1 className="mb-6 text-2xl font-semibold">Report a problem</h1>
    {valid && target.data && <section className="mb-6 border-y py-4"><p className="text-xs text-muted-foreground">Equipment reference</p><h2 className="break-words text-xl font-semibold">{target.data.reference}</h2><p className="break-words text-sm text-muted-foreground">{target.data.category}</p></section>}
+   {valid && target.data && logbook.data && <section className="mb-6 rounded-lg border bg-card p-4"><h2 className="font-semibold">Service logbook</h2><p className="text-xs text-muted-foreground">Maintained by {logbook.data.company}</p>
+     {logbook.data.next_visit && <p className="mt-3 text-sm">Next scheduled visit: <span className="font-medium">{new Date(logbook.data.next_visit).toLocaleDateString()}</span></p>}
+     {logbook.data.visits.length ? <ul className="mt-3 divide-y text-sm">{logbook.data.visits.map(v => <li key={v.number + v.date} className="flex justify-between gap-3 py-2"><span>{new Date(v.date).toLocaleDateString()} · {v.type}</span><span className="font-mono text-xs text-muted-foreground">{v.number}</span></li>)}</ul> : <p className="mt-3 text-sm text-muted-foreground">No completed visits recorded yet.</p>}
+   </section>}
    {!valid ? <p role="alert">This reporting link is unavailable.</p> : target.isPending ? <p role="status">Checking equipment…</p> : target.isError ? <div className="space-y-3"><p role="alert">Equipment could not be checked. Please try again.</p><Button variant="outline" onClick={() => target.refetch()}>Retry</Button></div> : !target.data ? <p role="alert">This reporting link is unavailable.</p> : done ? <div role="status" className="space-y-3"><h2 className="font-medium">Report received</h2><p className="text-muted-foreground">Your report has been sent to the service team.</p></div> : <form onSubmit={send} className="space-y-4">
      <div className="grid gap-4 sm:grid-cols-2"><div><Label htmlFor="report-first">Name</Label><Input id="report-first" required maxLength={100} value={f.first} onChange={e => setF({ ...f, first: e.target.value })}/></div><div><Label htmlFor="report-last">Surname</Label><Input id="report-last" required maxLength={100} value={f.last} onChange={e => setF({ ...f, last: e.target.value })}/></div></div>
      <div><Label htmlFor="report-position">Position</Label><Input id="report-position" required maxLength={100} value={f.position} onChange={e => setF({ ...f, position: e.target.value })}/></div>
