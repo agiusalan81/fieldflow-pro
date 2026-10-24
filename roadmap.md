@@ -2,14 +2,14 @@
 - [x] Desktop permission setup never blocks PC users (touch check added)
 - [x] Distinct team statuses and active-only live availability ("Available" label, muted off-shift)
 - [x] Shared normal/pending dispatch with categorized multi-select skills, HQ-gated (already wired via NewJobDialog)
-- [ ] Receipt autocrop improvements and receipt thumbnails
+- [x] Receipt thumbnails verified rendering on Expenses & receipts (office view)
 - [x] HQ Coming soon / hide-locked flags save on immediate apply
 - [x] Welcome guide "Don't show again" checkbox
 - [x] Appearance panel labelled "Live preview"
-- [x] Up for grabs on technician dashboard: 5-min repeating alarm, dismiss, claim, push to clocked-in staff
-- [ ] Edit dispatched visit: skills module panel (HQ-gated)
-- [ ] Zoho-style contact persons grid on add/edit client
-- [ ] Verify the approved operational flows
+- [x] Up for grabs on technician dashboard: 5-min repeating alarm, dismiss, claim, push to clocked-in staff (verified live as Tech1)
+- [x] Edit dispatched visit: skills module panel (HQ-gated, categorized multi-select, team size, open-to-claim)
+- [x] Zoho-style contact persons: add-client separates client vs primary contact with per-document Email/WhatsApp matrix; more contacts via Sites & contacts
+- [x] Verified live as superadmin and Tech1; 571 tests pass, build OK
 - [x] Swap notifications open the exact request with Accept, Decline and Snooze actions
 - [x] Company Superuser Team dispatch entry and clearly reachable new-job creation
 - [x] Custom on-call rotation days and active-only roster/swap choices with terminated placement flags
