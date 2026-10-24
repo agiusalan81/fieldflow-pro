@@ -15,6 +15,6 @@ export function contactWrite(contact: RoutingContact) {
     all_sites: contact.all_sites, site_ids: contact.all_sites ? [] : [...new Set(contact.site_ids)],
     site_id: contact.all_sites ? null : contact.site_ids[0] ?? null,
     has_whatsapp: contact.has_whatsapp, delivery_preferences: preferences,
-    receives_job_sheets: !!preferences.job_sheet?.email,
+    receives_job_sheets: !!preferences['job_sheet']?.email,
   };
 }
