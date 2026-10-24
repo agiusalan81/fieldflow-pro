@@ -1,5 +1,6 @@
 # Roadmap
 ## Requested testing fixes — 24 October 2026
+- [ ] HQ Setup Package: explicit immediate-entitlement toggle, including full-trial → Basic; preserve existing billed invoice amounts and dates.
 - [ ] #1 Device-aware permission setup without desktop lockout.
 - [ ] #2 Signup password visibility and confirmation.
 - [ ] #3 Payroll-disabled setup-alert/action suppression.
