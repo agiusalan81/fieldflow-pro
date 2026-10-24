@@ -638,6 +638,13 @@
       "when": 1792782921628,
       "tag": "0090_public_read_active_products",
       "breakpoints": true
+    },
+    {
+      "idx": 91,
+      "version": "7",
+      "when": 1792816399035,
+      "tag": "0091_push_subscriptions_user_fk_updated_at",
+      "breakpoints": true
     }
   ]
 }

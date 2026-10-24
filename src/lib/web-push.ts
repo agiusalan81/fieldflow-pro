@@ -54,6 +54,21 @@ async function registerDevice(): Promise<PushStatus> {
   }
 }
 
+/** Re-links this browser's existing subscription to whoever is signed in (any sign-in method). */
+let lastLinked: string | undefined;
+export async function linkPushToUser(userId: string): Promise<void> {
+  if (!pushSupported() || Notification.permission !== "granted") return;
+  try {
+    const reg = await navigator.serviceWorker.getRegistration("/push/");
+    const sub = await reg?.pushManager.getSubscription();
+    if (!sub) { void registerPush(); return; }
+    const key = `${userId}|${sub.endpoint}`;
+    if (lastLinked === key) return;
+    await savePushSubscription({ data: { endpoint: sub.endpoint, p256dh: b64(sub.getKey("p256dh")), auth: b64(sub.getKey("auth")) } });
+    lastLinked = key;
+  } catch (e) { console.error("push link failed", e); }
+}
+
 export async function currentPushEndpoint(): Promise<string | undefined> {
   if (!pushSupported()) return undefined;
   const reg = await navigator.serviceWorker.getRegistration("/push/");
