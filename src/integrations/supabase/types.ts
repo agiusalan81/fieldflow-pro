@@ -3901,6 +3901,7 @@ export type Database = {
           stripe_customer_id: string | null
           tenant_name: string
           trial_ends_at: string
+          trial_package_only: boolean
         }
         Insert: {
           agreed_price?: number
@@ -3920,6 +3921,7 @@ export type Database = {
           stripe_customer_id?: string | null
           tenant_name?: string
           trial_ends_at?: string
+          trial_package_only?: boolean
         }
         Update: {
           agreed_price?: number
@@ -3939,6 +3941,7 @@ export type Database = {
           stripe_customer_id?: string | null
           tenant_name?: string
           trial_ends_at?: string
+          trial_package_only?: boolean
         }
         Relationships: [
           {
@@ -5119,6 +5122,18 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      hq_apply_setup_now: {
+        Args: {
+          _cadence: string
+          _modes: Json
+          _packs: string[]
+          _plan: string
+          _price: number
+          _seats: number
+          _subscription: string
+        }
+        Returns: undefined
       }
       invite_client_contact: {
         Args: { _admin?: boolean; _client: string; _contact: string }
