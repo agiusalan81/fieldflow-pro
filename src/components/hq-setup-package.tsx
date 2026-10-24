@@ -34,11 +34,14 @@ export function HQSetupPackage({ subscription, catalog, modules, overrides, comp
   const [modes, setModes] = useState<Record<string, Mode>>({});
   const [saving, setSaving] = useState(false);
   const [immediate, setImmediate] = useState(false);
+  const [hideLocked, setHideLocked] = useState(false);
+  const [soon, setSoon] = useState<string[]>([]);
   const tiers = catalog.filter((c) => c.kind === "plan"); const packList = catalog.filter((c) => c.kind === "pack");
   const setup = overrides.filter((o) => o.subscription_id === subscription.id && o.reason === SETUP_REASON);
 
   const start = () => {
     setImmediate(subscription.trial_package_only);
+    setHideLocked(!!subscription.hide_locked_modules); setSoon(subscription.coming_soon_modules ?? []);
     setPlan(subscription.plan_id); setPacks(subscription.pack_ids ?? []); setUsers(subscription.seats); setCadence(subscription.cadence); setPrice(Number(subscription.agreed_price));
     setModes(Object.fromEntries(modules.map((m) => { const o = setup.find((x) => x.module === m); return [m, o ? (o.enabled ? "on" : "off") : "package"]; })));
     setOpen(true);
@@ -84,6 +87,7 @@ export function HQSetupPackage({ subscription, catalog, modules, overrides, comp
           }
         }
       }
+      { const v = await supabase.from("platform_subscriptions").update({ hide_locked_modules: hideLocked, coming_soon_modules: soon }).eq("id", subscription.id); if (v.error) throw v.error; }
       if (setup.length) { const d = await supabase.from("platform_overrides").delete().in("id", setup.map((o) => o.id)); if (d.error) throw d.error; }
       const rows = Object.entries(modes).filter(([m, v]) => v !== "package" && m !== "core").map(([module, v]) => ({ subscription_id: subscription.id, module, enabled: v === "on", starts_at: new Date().toISOString(), ends_at: PERMANENT_UNTIL, reason: SETUP_REASON }));
       if (rows.length) { const i = await supabase.from("platform_overrides").insert(rows); if (i.error) throw i.error; }
@@ -100,7 +104,8 @@ export function HQSetupPackage({ subscription, catalog, modules, overrides, comp
       <div className="space-y-1">{packList.length === 0 && <p className="text-sm text-muted-foreground">No packs yet.</p>}{packList.map((p) => <label key={p.id} className="flex items-center gap-2 text-sm"><Checkbox disabled={p.state !== "active" && !packs.includes(p.id)} checked={packs.includes(p.id)} onCheckedChange={(v) => setPacks(v ? [...packs, p.id] : packs.filter((x) => x !== p.id))} />{p.name} · {money(priceFor(p, cadence))} {basisLabel(p.billing_basis)}</label>)}</div>
       <Label>Modules</Label>
       <p className="text-xs text-muted-foreground">"From package" follows the tier and packs. Force a module on or off for this company only.</p>
-      <div className="space-y-2">{modules.filter((m) => m !== "core").map((m) => <div key={m} className="flex items-center justify-between gap-2 text-sm"><span>{PLAN_FEATURES.find((f) => f.key === m)?.label ?? m}<span className="ml-2 text-xs text-muted-foreground">{included.has(m) ? "in package" : "not in package"}</span></span><NativeSelect aria-label={`${m} access`} value={modes[m] ?? "package"} onValueChange={(v) => setModes({ ...modes, [m]: v as Mode })}><option value="package">From package</option><option value="on">Always on</option><option value="off">Always off</option></NativeSelect></div>)}</div>
+      <div className="space-y-2">{modules.filter((m) => m !== "core").map((m) => <div key={m} className="flex items-center justify-between gap-2 text-sm"><span>{PLAN_FEATURES.find((f) => f.key === m)?.label ?? m}<span className="ml-2 text-xs text-muted-foreground">{included.has(m) ? "in package" : "not in package"}</span></span><NativeSelect aria-label={`${m} access`} value={modes[m] ?? "package"} onValueChange={(v) => setModes({ ...modes, [m]: v as Mode })}><option value="package">From package</option><option value="on">Always on</option><option value="off">Always off</option></NativeSelect><label className="flex items-center gap-1 text-xs"><Checkbox checked={soon.includes(m)} onCheckedChange={v => setSoon(v ? [...soon, m] : soon.filter(x => x !== m))} />Coming soon</label></div>)}</div>
+      <label className="flex items-start gap-3 border-y py-3 text-sm"><Checkbox checked={hideLocked} onCheckedChange={v=>setHideLocked(!!v)}/><span><span className="font-medium">Hide locked modules</span><span className="block text-xs text-muted-foreground">Locked items disappear from this company's menu instead of showing a lock (for grandfathered companies). Modules marked Coming soon still show with an Inquire button.</span></span></label>
       <div className="grid grid-cols-2 gap-2"><div><Label>Users</Label><Input type="number" min={0} value={users} onChange={(e) => setUsers(Number(e.target.value))} /></div><div><Label>Billing period</Label><NativeSelect aria-label="Billing period" value={cadence} onValueChange={setCadence}>{["monthly", "quarterly", "yearly"].map((x) => <option key={x} value={x}>{x}</option>)}</NativeSelect></div></div>
       <div className="flex flex-wrap items-end gap-2"><div className="flex-1"><Label>Agreed price / period</Label><Input type="number" min={0} value={price} onChange={(e) => setPrice(Number(e.target.value))} /></div><Button type="button" variant="outline" onClick={() => setPrice(suggested)}>Use suggested {money(suggested)}</Button></div>
       <label className="flex items-start gap-3 border-y py-3 text-sm"><Checkbox checked={immediate} onCheckedChange={v=>setImmediate(!!v)}/><span><span className="font-medium">Apply package access immediately</span><span className="block text-xs text-muted-foreground">Trial → Basic and other tier changes take effect now, without full-trial features overriding the package. Existing invoices and trial dates stay unchanged; no automatic refund or upgrade invoice.</span></span></label>
