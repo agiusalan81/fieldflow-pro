@@ -10,13 +10,13 @@
 <!-- LOVABLE:END -->
 
 ## Rules
-- Analytics uses coarse subscription/day counts and lifetime totals; owner-only reports and server-derived tenant identity  Inserts count work, not visits. Outreach/feedback are product-scoped; saved follow-ups send nothing.
+- Analytics: owner-only coarse work counts; tenant identity server-derived. Outreach/feedback product-scoped; saved follow-ups send nothing.
 - HQ uses product-scoped workspaces, owner-only directory/access RPCs and separate legal profiles; test resets retain operational, financial, identity, storage and offline evidence.
 - App chrome uses neutral card surfaces (no gradients) with token-coloured controls; phone theme metadata matches the neutral bar colour because browser chrome cannot render gradients.
 - Travel shares one component/startJobTravel; arrival saves the time log before on-site status; 
 - Invite server functions/Query loaders have timeouts, middleware included; 
 - Tenant RLS uses company_id/current_company_id(); never UI company filters; 
-- Roles live in protected user_roles; users.role is display-only; View As/permissions.ts hide UI only. Shared MemberSkills permits active technician/supervisor assignments with HQ skills_dispatch read/write guards.
+- Roles: protected user_roles; users.role is display-only; preview/permissions hide UI only. MemberSkills allows active tech/supervisor/maintenance under skills_dispatch guards.
 - user_roles helpers/restrictive tenant policies reject terminated actors; audit access changes; 
 - Invites redeem names atomically via single-use signup triggers; social users need no password; verified names; no client-assigned tenant/role.
 - Preview: real-superuser-only, actor-scoped, removable memory state; root blocks other screens/writes; 
@@ -31,7 +31,7 @@
 - Auth emails share auth-brand.tsx; the managed handler owns verification and dispatch for reliable account recovery.
 - Company Settings retains visited sections while navigating; shared document-preview tabs power desktop and mobile previews; preserve drafts without implicit saves and keep previews consistent.
 - Independent settings editors use settingsSectionPatch to write only owned columns; JSON styling saves merge current stored keys; 
-- Controlled number inputs retain raw editing text until blur; optional previous-entry suggestions read bounded RLS-scoped history with account/company cache keys; 
+- Numbers keep raw text until blur; suggestions use bounded RLS history and account/company cache keys.
 - Service sheets share a typed safe projection/renderers for preview, print and email; 
 - Pending works close via close_pending_on_followup trigger; sheet creation requires clock-in or standby; enforce without UI.
 - Billing precedence in billing.ts; config in integrations.ts; job_sheets_guard_billing allows only office review; completed rows in the office Job sheets list open the shared BillingReview and saves refresh list/attention queries; protected prices and reachable review without dashboard tables.
@@ -48,7 +48,7 @@
 - Client reports use immutable DB-built safe snapshots and hashed expiring/revocable links; photo paths stay server-only; 
 - Sheet safety/checklist snapshots are checked at completion; safety keys share checklist_values; offline safety.
 - Clock-in shares plate/consent helpers. Fleet appends active-shift GPS with module/tenant guards; mileage excludes jitter/gaps; 
-- Receipt PDFs use account-scoped offline queues and private storage; the receipts HQ module gates stash/category writes. Stash attachments reference immutable PDFs; monthly office exports copy original pages. Post-signature notes are append-only separate records, excluded from client projections.
+- Receipts: account-scoped offline queues/private storage, HQ-gated writes, immutable attachments and original-page exports. Post-signature notes append privately, excluded from client projections.
 - Technical library: private storage/RLS; publish checks real/displayed supervisor/superuser; AI reads approved pages as caller; 
 - Leave/profile/clock-out handover rules use tested field-rules.ts plus guard_leave_decision; UI and DB agree.
 - HQ uses app_url, PLAN_FEATURES and owner-only toggles; isStorageAddon separates storage-only packs, retaining mixed feature bundles.
@@ -59,7 +59,7 @@
 - QR dispatch closes only its matching report after visit insert, refreshes attention and clears URL state; failures warn against duplicate dispatch.
 - Chat compresses photos, not documents. Push uses a dedicated /push/ worker, retains legacy handlers, encrypts previews and tests only the caller's current device; provider acceptance is not delivery proof.
 - FieldBridge subscription invoices live in platform_invoices (frozen once issued by trigger) with rules in tested saas-billing.ts; storage usage via company_storage_usage RPC; 
-- FieldBridge payments: invoice checkout in payments.functions.ts (superuser via RLS), signed webhook at api/public/payments/webhook settles only exact-amount matches idempotently; daily cron api/public/jobs/billing-daily runs saas-billing.server.ts (renewals, overdue, saved-card charges, reminder emails); company_invoice_lapsed() drives read-only access; 
+- Payments: superuser RLS checkout; signed webhook settles exact amounts idempotently; billing-daily runs renewals/charges/reminders; company_invoice_lapsed drives read-only.
 
 - Public catalog/legal use narrow reads; HQ stays private. Trust pages share renderers; sitemap uses explicit route decisions, no generated lastmod.
 - Staff signatures share staff-signature editors and own-user RPC; protected real roles govern eligibility and profile guards retain identity protection.
@@ -68,3 +68,7 @@
 
 - PDF.js stays on browser-compatible v4 with canvasContext rendering; newer Map APIs break field devices.
 - PPM uses per-agreement asset plans and anchored, unique job occurrences generated transactionally by a manager RPC; existing jobs/sheets retain manual workflows and HQ module guards. SLA status is derived on read; component events are append-only private evidence.
+- Portal accounts have no employee roles; guarded RPCs enforce client/site authority, verified invites and current module access to isolate clients.
+- Delivery uses client_message_recipients; preferences choose recipients, not unsupported channel delivery.
+- Own-shift RPC captures one-time GPS; failure never blocks clock-out; history distinguishes action fixes from breadcrumbs.
+- Owner-only atomic immediate setup changes entitlements; ordinary setup preserves billing timing and explicit trial mode.
