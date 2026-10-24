@@ -743,6 +743,13 @@
       "when": 1792838912467,
       "tag": "0105_read_assigned_unpublished_catalog",
       "breakpoints": true
+    },
+    {
+      "idx": 106,
+      "version": "7",
+      "when": 1792838945271,
+      "tag": "0106_bespoke_owner_draft_guard",
+      "breakpoints": true
     }
   ]
 }
