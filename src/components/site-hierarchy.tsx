@@ -7,10 +7,13 @@ import { ContactsManager, EquipmentManager } from "@/components/client-manager";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { usePlanFeatures } from '@/lib/plan-features';
+import { ModulePreview } from '@/components/module-preview';
 
 /** Client → head-office contacts, then each site with its own contacts and equipment. */
 export function SiteHierarchy({ clientId, companyId }: { clientId: string; companyId: string }) {
   const qc = useQueryClient();
+  const management = usePlanFeatures()('client_management');
   const key = ["client-sites", clientId];
   const { data: sites = [] } = useQuery({ queryKey: key, queryFn: async () => (await supabase.from("sites").select("*").eq("client_id", clientId).order("name")).data ?? [] });
   const { data: assets = [] } = useQuery({ queryKey: ["client-assets", clientId], queryFn: async () => (await supabase.from("assets").select("*").eq("client_id", clientId).order("reference_number")).data ?? [] });
@@ -44,8 +47,9 @@ export function SiteHierarchy({ clientId, companyId }: { clientId: string; compa
 
       <div className="flex items-center justify-between">
         <h3 className="font-medium text-foreground">Sites ({sites.length})</h3>
-        {!edit && <Button size="sm" onClick={() => setEdit({ name: "", address: "" })}><Plus className="mr-1 h-4 w-4" />Add new site</Button>}
+        {management && !edit && <Button size="sm" onClick={() => setEdit({ name: "", address: "" })}><Plus className="mr-1 h-4 w-4" />Add new site</Button>}
       </div>
+      {!management && <ModulePreview feature="client_management" title="Sites & multiple contacts" />}
       {edit && (
         <form onSubmit={save} className="space-y-2 rounded-lg border bg-muted/30 p-3">
           <Input required placeholder="Site name (e.g. Centerparc)" value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} />
@@ -66,10 +70,10 @@ export function SiteHierarchy({ clientId, companyId }: { clientId: string; compa
                 </div>
               </AccordionTrigger>
               <AccordionContent className="space-y-4">
-                <div className="flex justify-end gap-1">
+                {management && <div className="flex justify-end gap-1">
                   <Button size="sm" variant="ghost" onClick={() => setEdit({ id: s.id, name: s.name, address: s.address ?? "" })}><Pencil className="mr-1 h-3.5 w-3.5" />Edit site</Button>
                   <Button size="sm" variant="ghost" onClick={() => remove(s.id)}><Trash2 className="mr-1 h-3.5 w-3.5" />Delete</Button>
-                </div>
+                </div>}
                 <ContactsManager clientId={clientId} companyId={companyId} siteId={s.id} title="Site contacts" />
                 <EquipmentManager clientId={clientId} companyId={companyId} siteId={s.id} />
               </AccordionContent>
