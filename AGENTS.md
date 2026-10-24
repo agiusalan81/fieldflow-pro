@@ -10,56 +10,56 @@
 <!-- LOVABLE:END -->
 
 ## Rules
-- Analytics uses coarse subscription/day counts and lifetime totals; owner-only reports and server-derived tenant identity isolate companies. Inserts count work, not visits. Outreach/feedback are product-scoped; saved follow-ups send nothing.
+- Analytics uses coarse subscription/day counts and lifetime totals; owner-only reports and server-derived tenant identity  Inserts count work, not visits. Outreach/feedback are product-scoped; saved follow-ups send nothing.
 - HQ uses product-scoped workspaces, owner-only directory/access RPCs and separate legal profiles; test resets retain operational, financial, identity, storage and offline evidence.
 - App chrome uses neutral card surfaces (no gradients) with token-coloured controls; phone theme metadata matches the neutral bar colour because browser chrome cannot render gradients.
-- Travel shares one component/startJobTravel; arrival saves the time log before on-site status; consistent travel/arrival.
-- Invite server functions/Query loaders have timeouts, middleware included; prevent hangs.
-- Tenant RLS uses company_id/current_company_id(); never UI company filters; one access boundary.
+- Travel shares one component/startJobTravel; arrival saves the time log before on-site status; 
+- Invite server functions/Query loaders have timeouts, middleware included; 
+- Tenant RLS uses company_id/current_company_id(); never UI company filters; 
 - Roles live in protected user_roles; users.role is display-only; View As/permissions.ts hide UI only. Shared MemberSkills permits active technician/supervisor assignments with HQ skills_dispatch read/write guards.
-- user_roles helpers/restrictive tenant policies reject terminated actors; audit access changes; session revocation.
+- user_roles helpers/restrictive tenant policies reject terminated actors; audit access changes; 
 - Invites redeem names atomically via single-use signup triggers; social users need no password; verified names; no client-assigned tenant/role.
-- Preview: real-superuser-only, actor-scoped, removable memory state; root blocks other screens/writes; preserve identity.
-- Payroll uses tested gross/Malta engines, office RLS, snapshots, HQ guards; roster RPC updates existing settings only; preserve pay and roster access.
-- Payroll routes share payroll-page.tsx. Opening leave/payslips save atomically with issued-slip/totals guards; year-qualified carry-forward prevents double consumption; immutable issued pay.
+- Preview: real-superuser-only, actor-scoped, removable memory state; root blocks other screens/writes; 
+- Payroll uses tested gross/Malta engines, office RLS, snapshots, HQ guards; roster RPC updates existing settings only; 
+- Payroll routes share payroll-page.tsx. Opening leave/payslips save atomically with issued-slip/totals guards; year-qualified carry-forward prevents double consumption; 
 - Sign-off/leave/overtime/checklist/renewals use tested jobsheets.ts; shared rules.
-- DWR: one canonical report/shift; retain corrected/superseded originals; filing clears held flags; retry-safe hours/pay.
-- Dispatch: lead plus optional assistant both read one sheet; only lead starts/edits; daily logs seed both initials; one journey/labour ledger.
+- DWR: one canonical report/shift; retain corrected/superseded originals; filing clears held flags; 
+- Dispatch: lead plus optional assistant both read one sheet; only lead starts/edits; daily logs seed both initials; 
 - Overtime uses captured DWR intervals/rules; old reports show associated sites only; factual allocation.
-- Typography uses applyTypography/AppShell; locale uses locale.ts; tenant presentation.
+- Typography uses applyTypography/AppShell; locale uses locale.ts; 
 - Branding shares asset-backed font IDs and preview/PDF decorations; DB/HQ locks protect saved values.
 - Auth emails share auth-brand.tsx; the managed handler owns verification and dispatch for reliable account recovery.
 - Company Settings retains visited sections while navigating; shared document-preview tabs power desktop and mobile previews; preserve drafts without implicit saves and keep previews consistent.
-- Independent settings editors use settingsSectionPatch to write only owned columns; JSON styling saves merge current stored keys; prevent stale hidden editors overwriting other sections.
-- Controlled number inputs retain raw editing text until blur; optional previous-entry suggestions read bounded RLS-scoped history with account/company cache keys; easy replacement without changing access boundaries.
-- Service sheets share a typed safe projection/renderers for preview, print and email; client-safe consistency.
+- Independent settings editors use settingsSectionPatch to write only owned columns; JSON styling saves merge current stored keys; 
+- Controlled number inputs retain raw editing text until blur; optional previous-entry suggestions read bounded RLS-scoped history with account/company cache keys; 
+- Service sheets share a typed safe projection/renderers for preview, print and email; 
 - Pending works close via close_pending_on_followup trigger; sheet creation requires clock-in or standby; enforce without UI.
 - Billing precedence in billing.ts; config in integrations.ts; job_sheets_guard_billing allows only office review; completed rows in the office Job sheets list open the shared BillingReview and saves refresh list/attention queries; protected prices and reachable review without dashboard tables.
 - WhatsApp rules use tested whatsapp-templates.ts; AI/Meta calls use manager-only whatsapp-templates.functions.ts; validate consistently.
 - Daily time logs keep technician_count separate from initials; labour uses headcount, DWR personal elapsed time; correct hours.
-- Combined PDFs use email builder/RLS; office combines completed sheets for one client; client isolation.
-- Client notices use client-notices.functions.ts and tested client-notices.ts; guard_departure prevents self-approval; accountability.
+- Combined PDFs use email builder/RLS; office combines completed sheets for one client; 
+- Client notices use client-notices.functions.ts and tested client-notices.ts; guard_departure prevents self-approval; 
 - job_sheets embeds use users!job_sheets_assigned_technician_id_fkey; two users FKs.
 - Signing batches: creator-owned, finalized transactionally; store delivery before sending via shared PDF builder; atomic, retry-safe delivery.
 - Offline: account-scoped IndexedDB/optimistic RPC/PWA; confirmed discard atomically removes only that account/sheet draft/photos/cache; retain inaccessible drafts.
-- Published document masters are immutable; attachments/agreements/sheets snapshot definitions; preserve history.
-- Platform authority is protected separately in user_roles; HQ uses a narrow directory RPC, not tenant reads; isolate companies.
-- Plan access: DB write guards + plan-features.ts menu gating; legacy stays on. RFQ rules in lift-rfq.ts; safe rollout.
-- Client reports use immutable DB-built safe snapshots and hashed expiring/revocable links; photo paths stay server-only; no internal disclosure.
+- Published document masters are immutable; attachments/agreements/sheets snapshot definitions; 
+- Platform authority is protected separately in user_roles; HQ uses a narrow directory RPC, not tenant reads; 
+- Plan access: DB write guards + plan-features.ts menu gating; legacy stays on. RFQ rules in lift-rfq.ts; 
+- Client reports use immutable DB-built safe snapshots and hashed expiring/revocable links; photo paths stay server-only; 
 - Sheet safety/checklist snapshots are checked at completion; safety keys share checklist_values; offline safety.
-- Clock-in shares plate/consent helpers. Fleet appends active-shift GPS with module/tenant guards; mileage excludes jitter/gaps; honest isolated tracking.
+- Clock-in shares plate/consent helpers. Fleet appends active-shift GPS with module/tenant guards; mileage excludes jitter/gaps; 
 - Receipt PDFs use account-scoped offline queues and private storage; the receipts HQ module gates stash/category writes. Stash attachments reference immutable PDFs; monthly office exports copy original pages. Post-signature notes are append-only separate records, excluded from client projections.
-- Technical library: private storage/RLS; publish checks real/displayed supervisor/superuser; AI reads approved pages as caller; secure View As.
+- Technical library: private storage/RLS; publish checks real/displayed supervisor/superuser; AI reads approved pages as caller; 
 - Leave/profile/clock-out handover rules use tested field-rules.ts plus guard_leave_decision; UI and DB agree.
 - HQ uses app_url, PLAN_FEATURES and owner-only toggles; isStorageAddon separates storage-only packs, retaining mixed feature bundles.
-- Attention: guarded atomic pending RPCs/separate actions; never edit signed content; immutable evidence; no duplicate dispatch.
+- Attention: guarded atomic pending RPCs/separate actions; never edit signed content; 
 - Dual-track on-call uses separate supervisor config without changing technician payroll history; rota.ts scopes swaps, is_on_standby covers both, audited saves and role-matched swaps require independent approval; leave impact/blackouts remain DB-validated.
 - Equipment QR: private routes/RLS; hashed revocable public lookup exposes only reference/category; reports stay bounded/throttled; private technical/client data.
 - Deletion shares record-deletion/DeleteVisit; office sheet and manager visit RLS apply; visit deletion keeps sheets, client-report FKs retain shared evidence.
 - QR dispatch closes only the matching equipment report after a successful visit insert, refreshes all attention queries and clears dispatch search parameters; a failed report close warns without inviting duplicate dispatch.
 - Chat compresses photos, not documents. Push uses a dedicated /push/ worker, retains legacy handlers, encrypts previews and tests only the caller's current device; provider acceptance is not delivery proof.
-- FieldBridge subscription invoices live in platform_invoices (frozen once issued by trigger) with rules in tested saas-billing.ts; storage usage via company_storage_usage RPC; immutable billing history.
-- FieldBridge payments: invoice checkout in payments.functions.ts (superuser via RLS), signed webhook at api/public/payments/webhook settles only exact-amount matches idempotently; daily cron api/public/jobs/billing-daily runs saas-billing.server.ts (renewals, overdue, saved-card charges, reminder emails); company_invoice_lapsed() drives read-only access; server-verified payment state and one entitlement source.
+- FieldBridge subscription invoices live in platform_invoices (frozen once issued by trigger) with rules in tested saas-billing.ts; storage usage via company_storage_usage RPC; 
+- FieldBridge payments: invoice checkout in payments.functions.ts (superuser via RLS), signed webhook at api/public/payments/webhook settles only exact-amount matches idempotently; daily cron api/public/jobs/billing-daily runs saas-billing.server.ts (renewals, overdue, saved-card charges, reminder emails); company_invoice_lapsed() drives read-only access; 
 
 - Public pricing/legal use narrow publishable reads; HQ profiles stay owner-only. Trust pages share trust-pages. Required route decisions drive sitemap.ts; no generated lastmod.
 - Staff signatures share staff-signature editors and own-user RPC; protected real roles govern eligibility and profile guards retain identity protection.
