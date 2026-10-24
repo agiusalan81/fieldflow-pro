@@ -52,7 +52,28 @@ export async function uploadLocalPhotos(userId: string, sheetId: string) {
     if (error && error.message !== "The resource already exists") throw error;
   }
 }
-export async function syncDraft(snapshot: DraftSnapshot) {
+type SheetSyncQueue = { tail: Promise<unknown>; versions: Set<string>; latest: string | undefined };
+const sheetSyncQueues = new Map<string, SheetSyncQueue>();
+/** Share serialization across autosave, explicit save and reconnect, without bypassing server conflicts. */
+export function syncDraft(snapshot: DraftSnapshot): Promise<string> {
+  const key = draftKey(snapshot.userId, snapshot.sheetId);
+  const queue = sheetSyncQueues.get(key) ?? { tail: Promise.resolve(), versions: new Set<string>(), latest: undefined };
+  const task = queue.tail.catch(() => {}).then(async () => {
+    // Only rebase versions advanced by our own successful saves in this queue.
+    const expected = queue.latest && queue.versions.has(snapshot.expected) ? queue.latest : snapshot.expected;
+    const result = await syncDraftNow({ ...snapshot, expected });
+    queue.versions.add(expected);
+    queue.versions.add(result);
+    queue.latest = result;
+    return result;
+  });
+  queue.tail = task;
+  sheetSyncQueues.set(key, queue);
+  const cleanup = () => { if (queue.tail === task) sheetSyncQueues.delete(key); };
+  void task.then(cleanup, cleanup);
+  return task;
+}
+async function syncDraftNow(snapshot: DraftSnapshot) {
   const { data: identity } = await supabase.auth.getUser();
   if (identity.user?.id !== snapshot.userId) throw new Error("Sign back into the account that saved this draft");
   await uploadLocalPhotos(snapshot.userId, snapshot.sheetId);

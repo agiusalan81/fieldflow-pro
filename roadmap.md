@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Verify serialized job-sheet autosave/manual/reconnect saves prevent false same-device conflicts and retain newer edits
 - [x] Internal contact-person table, position/site dropdowns and full delivery checkboxes; signed-in save/read-back and temporary-data cleanup verified
 - [x] Tier switch off/on survives reload; atomic immediate setup saves tier/pack/visibility and rejects invalid core changes; 23 regression tests pass
 - [x] Notification setup dismissal persists per account; gesture-unlocked chat audio tested in-browser and with regression tests (real phone push delivery remains unverified)
