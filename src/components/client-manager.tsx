@@ -1,4 +1,7 @@
 import { EquipmentQr } from "@/components/equipment-qr";
+import { ClientPortalInvitationGate } from '@/components/client-portal-invitation-gate';
+import { useClientPortalAccess } from '@/lib/client-portal-access';
+import { PORTAL_URL } from '@/lib/client-routing';
 import { labelKey, uniqueLabels } from "@/lib/attention-rules";
 import { parsePhone } from "@/lib/contact-details";
 import { tenantLocale } from "@/lib/locale";
@@ -70,6 +73,7 @@ const emptyContact = (): ContactDraft => ({ first_name: "", last_name: "", email
 
 /** siteId: undefined = every contact of the client, null = head-office contacts, string = that site's contacts. */
 export function ContactsManager({ clientId, companyId, siteId, title = "Contacts" }: { clientId: string; companyId: string; siteId?: string | null; title?: string }) {
+  const portalAccess = useClientPortalAccess();
   const qc = useQueryClient();
   const { data: profile } = useProfile();
   const key = ["client-contacts", clientId];
@@ -105,6 +109,14 @@ export function ContactsManager({ clientId, companyId, siteId, title = "Contacts
     if (!confirm("Delete this contact?")) return;
     const { error } = await supabase.from("client_contacts").delete().eq("id", id);
     if (error) toast.error(error.message); else refresh();
+  };
+  const invite = async (id: string) => {
+    if (!portalAccess.allowed) return;
+    const { data, error } = await supabase.rpc('invite_client_contact', { _client: clientId, _contact: id, _admin: false });
+    if (error || !data) { toast.error(error?.message ?? 'Portal invitation could not be created'); return; }
+    const link = `${PORTAL_URL}?invite=${data}`;
+    try { await navigator.clipboard.writeText(link); toast.success('Portal invitation link copied'); }
+    catch { toast.message('Portal invitation link', { description: link }); }
   };
 
   const form = (
@@ -144,7 +156,7 @@ export function ContactsManager({ clientId, companyId, siteId, title = "Contacts
       {editing === "new" && form}
       {contacts.length === 0 && editing !== "new" && <p className="text-sm text-muted-foreground">No contacts yet.</p>}
       {contacts.map((c) => editing === c.id ? <div key={c.id}>{form}</div> : (
-        <div key={c.id} className="flex items-center gap-3 rounded-lg border p-2">
+        <div key={c.id} className="flex flex-wrap items-center gap-3 rounded-lg border p-2">
           <label className="flex flex-col items-center text-[10px] text-muted-foreground"><Checkbox aria-label="Send job sheets" checked={c.receives_job_sheets} onCheckedChange={(v) => toggleRecipient(c.id, !!v)} />Send</label>
           <div className="min-w-0 flex-1 text-sm">
             <div className="font-medium">{c.first_name} {c.last_name}{c.role_title && <span className="ml-2 text-xs font-normal text-muted-foreground">{c.role_title}</span>}{c.is_primary_contact && <span className="ml-2 rounded bg-primary/15 px-1.5 text-xs text-primary">Primary</span>}{c.has_whatsapp && <WhatsAppBadge />}</div>
@@ -152,6 +164,7 @@ export function ContactsManager({ clientId, companyId, siteId, title = "Contacts
           </div>
           <Button size="icon" variant="ghost" aria-label="Edit" onClick={() => { const p = splitPhone(c.phone); setF({ first_name: c.first_name, last_name: c.last_name ?? "", email: c.email ?? "", code: p.code, number: p.number, role_title: c.role_title ?? "", is_primary_contact: c.is_primary_contact, receives_job_sheets: c.receives_job_sheets, has_whatsapp: c.has_whatsapp }); setEditing(c.id); }}><Pencil className="h-4 w-4" /></Button>
           <Button size="icon" variant="ghost" aria-label="Delete" onClick={() => remove(c.id)}><Trash2 className="h-4 w-4" /></Button>
+          <ClientPortalInvitationGate><Button size="sm" variant="outline" onClick={() => void invite(c.id)}>Invite to client portal</Button></ClientPortalInvitationGate>
         </div>
       ))}
     </div>
