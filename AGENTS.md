@@ -72,3 +72,5 @@
 - Delivery uses client_message_recipients; preferences choose recipients, not unsupported channel delivery.
 - Own-shift RPC captures one-time GPS; failure never blocks clock-out; history distinguishes action fixes from breadcrumbs.
 - Tenant cards separate assignments/access; bespoke drafts freeze on submit, HQ reviews per product, samples stay private. Requests never charge/activate. Immediate setup is owner-only; ordinary setup retains timing/trial mode.
+- Site surveys: universal site_surveys with guard_site_survey (status/pricing office-only, reviewer from company default) and tested survey-pricing.ts; supplier quotes never feed client estimates or Zoho directly — office prices them in the generator; why: keeps trade packs (e.g. lift RFQ) layered on one engine.
+- Sites show via site-display.ts (optional store_code); portal edits only store_code through portal_set_site_store_code; why: chains share names and portal must not edit addresses.

@@ -18,7 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 export const Route = createFileRoute("/_authenticated/surveys")({
   staticData: { sitemap: false },
-  validateSearch: (s: Record<string, unknown>) => ({ survey: typeof s.survey === "string" ? s.survey : undefined }),
+  validateSearch: (s: Record<string, unknown>) => ({ survey: typeof s["survey"] === "string" ? s["survey"] : undefined }),
   head: () => ({ meta: [
     { title: "Site surveys — FieldBridge" },
     { name: "description", content: "Capture site surveys in the field and route them to the right office reviewer for pricing." },
