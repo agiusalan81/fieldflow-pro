@@ -1,5 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { z } from "zod";
+import { useNavigate } from "@tanstack/react-router";
 import { parseIntegrations, ACCOUNTING } from "@/lib/integrations";
 import { parsePhotos } from "@/lib/jobsheets";
 import { estimateExportCsv } from "@/lib/estimate-export";
@@ -22,21 +21,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CommercialRecipients } from '@/components/commercial-recipients';
 
-export const Route = createFileRoute("/_authenticated/estimates")({ staticData: { sitemap: false },
-  validateSearch: z.object({ fromSheet: z.string().uuid().optional() }),
-  head: () => ({
-    meta: [
-      { title: "Estimates — FieldBridge" },
-      { name: "description", content: "Lift estimate requests on site: specs, sketch, photos, site contact and supplier follow-up." },
-      { property: "og:title", content: "Estimates — FieldBridge" },
-      { property: "og:description", content: "Site-to-supplier estimate requests with reminders." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
-  component: Estimates,
-});
-
 const STEPS = [
   { key: "draft", label: "Draft" },
   { key: "sent", label: "Sent to supplier" },
@@ -52,7 +36,7 @@ type Rfq = { values?: Record<string, string>; contact?: Contact; notes?: string;
 type Form = { id: string; isNew: boolean; title: string; client_id: string; site_id: string; supplier_name: string; supplier_email: string; values: Record<string, string>; contact: Contact; notes: string; sketch: string | null; photos: string[]; source_sheet: string | null; accounting: Accounting | null };
 const ROLES = ["Site agent / contractor", "Architect", "Building administrator / owner", "Facility manager", "Electrical / civil subcontractor"];
 
-function Estimates() {
+export function SupplierRfqs() {
   const { data: profile } = useProfile();
   const qc = useQueryClient();
   const { data: cfg } = useEstimateConfig(profile?.company_id);
@@ -61,7 +45,7 @@ function Estimates() {
     queryFn: async () => { const { data, error } = await supabase.from("lift_estimates").select("*, clients(name), sites(name)").order("updated_at", { ascending: false }); if (error) throw error; return data; },
   });
   const [form, setForm] = useState<Form | null>(null);
-  const { fromSheet } = Route.useSearch();
+  const fromSheet: string | undefined = undefined;
   const navigate = useNavigate();
   const { data: integ } = useQuery({ queryKey: ["integrations-accounting", profile?.company_id], enabled: !!profile, queryFn: async () => parseIntegrations((await supabase.from("company_settings").select("integrations").maybeSingle()).data?.integrations).accounting });
   const provider = ACCOUNTING.find((a) => a.key === integ?.provider);
@@ -119,9 +103,9 @@ function Estimates() {
 
   const now = Date.now();
   return (
-    <AppShell title="Estimates">
+    <>
       <div className="mx-auto max-w-4xl space-y-4">
-        <Button className="h-11 w-full sm:w-auto" onClick={openNew}>New estimate</Button>
+        <Button className="h-11 w-full sm:w-auto" onClick={openNew}>New supplier RFQ</Button>
         {!data.length ? <EmptyState>No estimates yet.</EmptyState> : data.map((e) => {
           const idx = STEPS.findIndex((s) => s.key === e.status);
           const next = STEPS[idx + 1];
@@ -167,7 +151,7 @@ function Estimates() {
         })}
       </div>
       {form && cfg && profile && <EstimateForm form={form} setForm={setForm} cfg={cfg} companyId={profile.company_id} sender={sender} onSaved={() => { setForm(null); qc.invalidateQueries({ queryKey: ["estimates"] }); }} />}
-    </AppShell>
+    </>
   );
 }
 
