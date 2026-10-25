@@ -15,6 +15,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useCompanyRules } from "@/lib/company";
+import { WORKING_WINDOWS, canSubmitSurvey, parseSurveyDetails, surveyReviewerOptions, type SurveyDetails, type TradeReview } from "@/lib/survey-details";
+import { SurveyContacts, SurveyTrades, SurveyObservations, SurveyTradeReview } from "@/components/survey-field-details";
 
 export const Route = createFileRoute("/_authenticated/surveys")({
   staticData: { sitemap: false },
@@ -38,7 +41,7 @@ type Survey = {
   id: string; client_id: string | null; site_id: string | null; location_ref: string | null; survey_purpose: string; track: "direct" | "supplier_rfq"; status: string;
   access_notes: string | null; working_window: string | null; hazards: string[]; scope_summary: string | null; recommended_action: string | null; urgency: string;
   labour_hours: number | null; technicians: number | null; materials: Json; other_items: Json; reviewer_id: string | null; created_by: string; pricing: Json; zoho_sync: boolean | null;
-  updated_at: string; clients?: { name: string } | null;
+  field_details: Json; trade_review: Json; updated_at: string; clients?: { name: string } | null;
 };
 const items = (v: Json): Item[] => (Array.isArray(v) ? (v as unknown as Item[]) : []);
 
@@ -56,7 +59,7 @@ function SurveysPage() {
 function List({ onOpen, manager, superuser }: { onOpen: (id: string) => void; manager: boolean; superuser: boolean }) {
   const [filter, setFilter] = useState("open");
   const q = useQuery({ queryKey: ["site-surveys"], queryFn: async () => {
-    const r = await supabase.from("site_surveys").select("id,status,track,survey_purpose,location_ref,updated_at,clients(name)").order("updated_at", { ascending: false }).limit(200);
+    const r = await supabase.from("site_surveys").select("id,status,track,survey_purpose,location_ref,field_details,updated_at,clients(name)").order("updated_at", { ascending: false }).limit(200);
     if (r.error) throw r.error; return r.data;
   } });
   const create = async () => {
@@ -73,7 +76,7 @@ function List({ onOpen, manager, superuser }: { onOpen: (id: string) => void; ma
     {q.isLoading ? <p className="text-muted-foreground">Loading…</p> : q.error ? <p role="alert" className="text-destructive">Surveys could not be loaded.</p> : !rows.length ? <EmptyState>{manager ? "No site surveys match this filter." : "You have no site surveys yet."}</EmptyState> :
       <ul className="space-y-2">{rows.map((s) => <li key={s.id}><button className="w-full rounded-xl border bg-card p-4 text-left hover:bg-muted/40" onClick={() => onOpen(s.id)}>
         <div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-muted px-2 py-0.5 text-xs">{STATUS[s.status] ?? s.status}</span><span className="text-xs text-muted-foreground">{s.track === "supplier_rfq" ? "Supplier quotes needed" : "Direct office estimate"}</span></div>
-        <p className="mt-1 font-medium">{s.clients?.name ?? "No client yet"}{s.location_ref ? ` · ${s.location_ref}` : ""}</p>
+        <p className="mt-1 font-medium">{s.clients?.name ?? (parseSurveyDetails(s.field_details).clientName || "No client yet")}{s.location_ref ? ` · ${s.location_ref}` : parseSurveyDetails(s.field_details).siteName ? ` · ${parseSurveyDetails(s.field_details).siteName}` : ""}</p>
         <p className="text-xs text-muted-foreground">{PURPOSES.find((p) => p[0] === s.survey_purpose)?.[1]} · updated {new Date(s.updated_at).toLocaleString()}</p>
       </button></li>)}</ul>}
   </div>;
@@ -82,9 +85,9 @@ function List({ onOpen, manager, superuser }: { onOpen: (id: string) => void; ma
 function useTeam() {
   return useQuery({ queryKey: ["survey-team"], queryFn: async () => {
     const [u, r] = await Promise.all([supabase.from("users").select("id,full_name"), supabase.from("user_roles").select("user_id,role,registration_status")]);
-    if (u.error) throw u.error;
+    if (u.error) throw u.error; if (r.error) throw r.error;
     const roles = new Map((r.data ?? []).filter((x) => x.registration_status === "active").map((x) => [x.user_id, x.role as string]));
-    return (u.data ?? []).filter((x) => ["superuser", "admin", "supervisor"].includes(roles.get(x.id) ?? "")).map((x) => ({ id: x.id, name: x.full_name, role: roles.get(x.id)! }));
+    return (u.data ?? []).filter((x) => ["superuser", "admin", "supervisor"].includes(roles.get(x.id) ?? "")).map((x) => ({ id: x.id, name: x.full_name, role: roles.get(x.id) ?? "" }));
   } });
 }
 const roleLabel: Record<string, string> = { superuser: "Company Superuser", admin: "Office Admin", supervisor: "Supervisor" };
@@ -99,7 +102,8 @@ function ReviewSettings() {
   const [open, setOpen] = useState(false);
   if (!q.data) return null;
   const save = async (patch: Partial<NonNullable<typeof q.data>>) => {
-    const r = await supabase.from("company_settings").update(patch).eq("company_id", q.data!.company_id);
+    const settings = q.data; if (!settings) return;
+    const r = await supabase.from("company_settings").update(patch).eq("company_id", settings.company_id);
     if (r.error) toast.error(r.error.message); else { toast.success("Survey routing saved"); void qc.invalidateQueries({ queryKey: ["survey-settings"] }); }
   };
   return <section className="rounded-xl border bg-card p-4">
@@ -122,23 +126,29 @@ function Editor({ id, onBack }: { id: string; onBack: () => void }) {
   const qc = useQueryClient();
   const { data: profile } = useProfile();
   const team = useTeam();
+  const company = useCompanyRules();
   const q = useQuery({ queryKey: ["site-survey", id], queryFn: async () => { const r = await supabase.from("site_surveys").select("*").eq("id", id).single(); if (r.error) throw r.error; return r.data as unknown as Survey; } });
   const clients = useQuery({ queryKey: ["survey-clients"], queryFn: async () => (await supabase.from("clients").select("id,name").order("name")).data ?? [] });
   const [s, setS] = useState<Survey | null>(null);
   useEffect(() => { if (q.data) setS(q.data); }, [q.data]);
-  const sites = useQuery({ queryKey: ["client-sites", s?.client_id], enabled: !!s?.client_id, queryFn: async () => (await supabase.from("sites").select("*").eq("client_id", s!.client_id!).order("name")).data ?? [] });
+  const clientId = s?.client_id;
+  const sites = useQuery({ queryKey: ["client-sites", clientId], enabled: !!clientId, queryFn: async () => { if (!clientId) return []; const r = await supabase.from("sites").select("*").eq("client_id", clientId).order("name"); if (r.error) throw r.error; return r.data; } });
   const [busy, setBusy] = useState(false);
   if (q.error) return <p role="alert" className="text-destructive">This survey is not available to you.</p>;
   if (!s || !profile) return <p className="text-muted-foreground">Loading…</p>;
-  const office = isManager(profile) || s.reviewer_id === profile.id;
+  const office = isManager(profile);
   const editable = s.status === "draft" && (s.created_by === profile.id || office);
   const set = (patch: Partial<Survey>) => setS({ ...s, ...patch });
+  const details = parseSurveyDetails(s.field_details);
+  const setDetails = (value: SurveyDetails) => set({ field_details: value as unknown as Json });
+  const reviewers = surveyReviewerOptions(team.data ?? [], office);
+  const reviewer = office ? s.reviewer_id : reviewers.some(m => m.id === s.reviewer_id) ? s.reviewer_id : reviewers.length === 1 ? reviewers[0]?.id ?? null : null;
 
   const persist = async (patch: Partial<Survey> = {}) => {
     setBusy(true);
-    const next = { ...s, ...patch };
+    const next = { ...s, reviewer_id: reviewer, ...patch };
     const { id: _id, created_by: _c, updated_at: _u, clients: _cl, ...row } = next;
-    const writable = office ? row : (({ pricing: _p, zoho_sync: _z, ...rest }) => rest)(row);
+    const writable = office ? row : (({ pricing: _p, zoho_sync: _z, track: _t, trade_review: _tr, ...rest }) => rest)(row);
     const r = await supabase.from("site_surveys").update(writable as never).eq("id", id).select("*").single();
     setBusy(false);
     if (r.error) { toast.error(r.error.message); return false; }
@@ -147,29 +157,35 @@ function Editor({ id, onBack }: { id: string; onBack: () => void }) {
     return true;
   };
   const submit = async () => {
-    if (!s.client_id || !s.site_id || !s.scope_summary?.trim()) { toast.error("Choose a client and site and describe the scope before submitting."); return; }
-    if (await persist({ status: "submitted" })) toast.success("Survey sent for office review");
+    if (!canSubmitSurvey(s, details)) { toast.error("Enter a client, site/location and scope before submitting."); return; }
+    if (!office && !reviewer) { toast.error("Select your supervisor before sending the survey."); return; }
+    if (await persist({ status: "submitted" })) toast.success("Survey sent");
   };
   const remove = async () => { if (!confirm("Delete this draft survey?")) return; const r = await supabase.from("site_surveys").delete().eq("id", id); if (r.error) toast.error(r.error.message); else { void qc.invalidateQueries({ queryKey: ["site-surveys"] }); onBack(); } };
 
   return <div className="mx-auto max-w-4xl space-y-5">
     <div className="flex flex-wrap items-center gap-2"><Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="mr-1 h-4 w-4" />All surveys</Button><span className="rounded-full bg-muted px-2 py-0.5 text-xs">{STATUS[s.status]}</span></div>
-    <fieldset disabled={!editable} className="space-y-4 rounded-xl border bg-card p-4">
+    <fieldset disabled={!editable} className="min-w-0 space-y-4 border-b pb-5">
       <legend className="px-1 font-medium">Survey details</legend>
       <div className="grid gap-3 sm:grid-cols-2">
-        <div><Label htmlFor="sv-client">Client</Label><select id="sv-client" className={sel} value={s.client_id ?? ""} onChange={(e) => set({ client_id: e.target.value || null, site_id: null })}><option value="">Choose client…</option>{clients.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
-        <div><Label htmlFor="sv-site">Site / Location</Label><select id="sv-site" className={sel} value={s.site_id ?? ""} onChange={(e) => set({ site_id: e.target.value || null })} disabled={!s.client_id}><option value="">Choose site…</option>{sites.data?.map((x) => <option key={x.id} value={x.id}>{formatSiteDisplay(x)}</option>)}</select></div>
+        <div><Label htmlFor="sv-client">Client</Label><select id="sv-client" className={sel} value={s.client_id ?? ""} onChange={(e) => set({ client_id: e.target.value || null, site_id: null })}><option value="">New client / enter on site</option>{clients.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
+        <div><Label htmlFor="sv-site">Site / Location</Label><select id="sv-site" className={sel} value={s.site_id ?? ""} onChange={(e) => set({ site_id: e.target.value || null })} disabled={!s.client_id}><option value="">New site / enter on site</option>{sites.data?.map((x) => <option key={x.id} value={x.id}>{formatSiteDisplay(x)}</option>)}</select></div>
+        {!s.client_id && <div><Label htmlFor="sv-new-client">Client name</Label><Input id="sv-new-client" value={details.clientName} onChange={e => setDetails({ ...details, clientName: e.target.value })} /></div>}
+        {!s.site_id && <><div><Label htmlFor="sv-new-site">Site name / door</Label><Input id="sv-new-site" value={details.siteName} onChange={e => setDetails({ ...details, siteName: e.target.value })} /></div><div><Label htmlFor="sv-new-address">Street / location</Label><Input id="sv-new-address" value={details.address} onChange={e => setDetails({ ...details, address: e.target.value })} /></div><div><Label htmlFor="sv-new-code">Branch / Store ID (optional)</Label><Input id="sv-new-code" value={details.storeCode} onChange={e => setDetails({ ...details, storeCode: e.target.value })} /></div></>}
         <div><Label htmlFor="sv-loc">Equipment / location reference</Label><Input id="sv-loc" placeholder="e.g. Lift 2, Plant room B" value={s.location_ref ?? ""} onChange={(e) => set({ location_ref: e.target.value })} /></div>
-        <div><Label htmlFor="sv-purpose">Survey purpose</Label><select id="sv-purpose" className={sel} value={s.survey_purpose} onChange={(e) => set({ survey_purpose: e.target.value, track: e.target.value === "new_install" ? "supplier_rfq" : s.track })}>{PURPOSES.map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
+        <div><Label htmlFor="sv-purpose">Survey purpose</Label><select id="sv-purpose" className={sel} value={s.survey_purpose} onChange={(e) => set({ survey_purpose: e.target.value, track: office && e.target.value === "new_install" ? "supplier_rfq" : s.track })}>{PURPOSES.map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
       </div>
-      <fieldset className="space-y-1"><legend className="text-sm font-medium">How will this be priced?</legend>
+      <SurveyContacts details={details} onChange={setDetails} />
+      <SurveyTrades details={details} companyTrades={company.data?.trades ?? []} onChange={setDetails} />
+      {office && <fieldset className="space-y-1"><legend className="text-sm font-medium">How will this be priced?</legend>
         {([["direct", "Office prices directly from our price list (repairs, replacements)"], ["supplier_rfq", "Supplier quotes needed first (new installations, major equipment)"]] as const).map(([k, v]) => <label key={k} className="flex items-center gap-2 text-sm"><input type="radio" name="track" checked={s.track === k} onChange={() => set({ track: k })} />{v}</label>)}
-      </fieldset>
+      </fieldset>}
       <div className="grid gap-3 sm:grid-cols-2">
         <div><Label htmlFor="sv-access">Access & logistics</Label><Textarea id="sv-access" value={s.access_notes ?? ""} onChange={(e) => set({ access_notes: e.target.value })} /></div>
-        <div><Label htmlFor="sv-window">Working window</Label><Input id="sv-window" placeholder="e.g. Weekdays after 18:00" value={s.working_window ?? ""} onChange={(e) => set({ working_window: e.target.value })} /></div>
+        <div className="space-y-2"><div><Label htmlFor="sv-window">Working window</Label><Input id="sv-window" placeholder="e.g. Weekdays after 18:00" value={s.working_window ?? ""} onChange={(e) => set({ working_window: e.target.value })} /></div>{editable && <div className="flex flex-wrap gap-1">{WORKING_WINDOWS.map(window => <Button key={window} type="button" size="sm" variant="outline" className="h-auto whitespace-normal py-1 text-xs" onClick={() => set({ working_window: window })}>{window}</Button>)}</div>}</div>
       </div>
       <fieldset><legend className="text-sm font-medium">Site hazards</legend><div className="mt-1 grid gap-1 sm:grid-cols-2">{HAZARDS.map((h) => <label key={h} className="flex items-center gap-2 text-sm"><Checkbox checked={s.hazards.includes(h)} onCheckedChange={(v) => set({ hazards: v ? [...s.hazards, h] : s.hazards.filter((x) => x !== h) })} />{h}</label>)}</div></fieldset>
+      <SurveyObservations details={details} onChange={setDetails} disabled={!editable} companyId={profile.company_id} surveyId={id} />
       <div><Label htmlFor="sv-scope">Scope summary</Label><Textarea id="sv-scope" rows={4} value={s.scope_summary ?? ""} onChange={(e) => set({ scope_summary: e.target.value })} /></div>
       <div className="grid gap-3 sm:grid-cols-3">
         <div><Label htmlFor="sv-rec">Recommended action</Label><Input id="sv-rec" value={s.recommended_action ?? ""} onChange={(e) => set({ recommended_action: e.target.value })} /></div>
@@ -178,12 +194,14 @@ function Editor({ id, onBack }: { id: string; onBack: () => void }) {
         <div><Label htmlFor="sv-urg">Urgency</Label><select id="sv-urg" className={sel} value={s.urgency} onChange={(e) => set({ urgency: e.target.value })}><option value="routine">Routine</option><option value="soon">Within 2 weeks</option><option value="urgent">Urgent</option></select></div>
       </div>
       <ItemList label="Materials & equipment needed" value={items(s.materials)} onChange={(v) => set({ materials: v as unknown as Json })} />
-      <ItemList label="Other items not in our lists (sent to FieldBridge for future templates)" value={items(s.other_items)} onChange={(v) => set({ other_items: v as unknown as Json })} />
+      <ItemList label="Other materials / equipment" value={items(s.other_items)} onChange={(v) => set({ other_items: v as unknown as Json })} />
     </fieldset>
     {(editable || office) && <div className="flex flex-wrap items-end gap-2">
-      <div className="w-72"><Label htmlFor="sv-rev">Reviewer</Label><select id="sv-rev" className={sel} value={s.reviewer_id ?? ""} onChange={(e) => office && s.status !== "draft" ? void persist({ reviewer_id: e.target.value || null }) : set({ reviewer_id: e.target.value || null })}><option value="">Company default</option>{team.data?.map((m) => <option key={m.id} value={m.id}>{m.name} · {roleLabel[m.role]}</option>)}</select></div>
+      <div className="w-72"><Label htmlFor="sv-rev">Reviewer</Label><select id="sv-rev" className={sel} value={reviewer ?? ""} onChange={(e) => office && s.status !== "draft" ? void persist({ reviewer_id: e.target.value || null }) : set({ reviewer_id: e.target.value || null })}><option value="">{office ? "Company default" : "Choose supervisor…"}</option>{reviewers.map((m) => <option key={m.id} value={m.id}>{m.name} · {roleLabel[m.role]}</option>)}</select></div>
       {editable && <><Button variant="outline" disabled={busy} onClick={() => void persist().then((ok) => ok && toast.success("Draft saved"))}>Save draft</Button><Button disabled={busy} onClick={() => void submit()}><Send className="mr-1 h-4 w-4" />Submit for review</Button><Button variant="ghost" disabled={busy} onClick={() => void remove()}><Trash2 className="mr-1 h-4 w-4" />Delete</Button></>}
     </div>}
+    {office && <SurveyTradeReview details={details} review={(s.trade_review ?? {}) as unknown as TradeReview} onChange={value => set({ trade_review: value as unknown as Json })} />}
+    {office && !editable && details.trades.length > 0 && <Button variant="outline" disabled={busy} onClick={() => void persist().then(ok => ok && toast.success("Trade handling saved"))}>Save trade handling</Button>}
     {office && s.status !== "draft" && <PriceGenerator survey={s} busy={busy} persist={persist} />}
   </div>;
 }
@@ -209,14 +227,14 @@ function PriceGenerator({ survey, busy, persist }: { survey: Survey; busy: boole
     {p[key].map((l: PricingLine, i) => <div key={i} className="flex gap-2"><Input aria-label={`${title} ${i + 1}`} value={l.label} onChange={(e) => setP({ ...p, [key]: p[key].map((x, j) => j === i ? { ...x, label: e.target.value } : x) })} /><Input aria-label={`${title} amount ${i + 1}`} className="w-32" inputMode="decimal" value={l.amount} onChange={(e) => setP({ ...p, [key]: p[key].map((x, j) => j === i ? { ...x, amount: Number(e.target.value) || 0 } : x) })} /><Button size="icon" variant="ghost" aria-label="Remove" onClick={() => setP({ ...p, [key]: p[key].filter((_, j) => j !== i) })}><Trash2 className="h-4 w-4" /></Button></div>)}
     <Button size="sm" variant="outline" onClick={() => setP({ ...p, [key]: [...p[key], { label: "", amount: 0 }] })}><Plus className="mr-1 h-4 w-4" />Add</Button></div>;
   const save = (status?: string) => void persist({ pricing: p as unknown as Json, zoho_sync: zoho, ...(status ? { status } : survey.status === "submitted" ? { status: "under_review" } : {}) }).then((ok) => ok && toast.success("Pricing saved"));
-  return <section className="space-y-4 rounded-xl border bg-card p-4">
+  return <section className="min-w-0 space-y-4 border-b pb-5">
     <h2 className="font-semibold">Office price generator <span className="text-xs font-normal text-muted-foreground">(internal — never shown to the client)</span></h2>
     {survey.track === "supplier_rfq" && <p className="border-l-2 border-primary bg-muted p-2 text-sm">Enter the supplier's quoted price you selected under "Base cost". Supplier quotes stay internal and are never sent to clients or accounting.</p>}
     {lines("base", survey.track === "supplier_rfq" ? "Base cost (selected supplier quote)" : "Materials & parts cost")}
     {lines("logistics", "Freight, clearance & transport")}
     {lines("site", "Site logistics & equipment hire")}
     <div className="space-y-2"><Label>Labour</Label>
-      {p.labour.map((l, i) => <div key={i} className="grid grid-cols-[1fr_5rem_5rem_6rem_auto] gap-2"><Input aria-label={`Labour ${i + 1}`} value={l.label} onChange={(e) => setP({ ...p, labour: p.labour.map((x, j) => j === i ? { ...x, label: e.target.value } : x) })} />{(["people", "hours", "rate"] as const).map((k) => <Input key={k} aria-label={`Labour ${k} ${i + 1}`} placeholder={k} inputMode="decimal" value={l[k]} onChange={(e) => setP({ ...p, labour: p.labour.map((x, j) => j === i ? { ...x, [k]: Number(e.target.value) || 0 } : x) })} />)}<Button size="icon" variant="ghost" aria-label="Remove" onClick={() => setP({ ...p, labour: p.labour.filter((_, j) => j !== i) })}><Trash2 className="h-4 w-4" /></Button></div>)}
+      {p.labour.map((l, i) => <div key={i} className="grid grid-cols-2 gap-2 sm:grid-cols-[1fr_5rem_5rem_6rem_auto]"><Input aria-label={`Labour ${i + 1}`} value={l.label} onChange={(e) => setP({ ...p, labour: p.labour.map((x, j) => j === i ? { ...x, label: e.target.value } : x) })} />{(["people", "hours", "rate"] as const).map((k) => <Input key={k} aria-label={`Labour ${k} ${i + 1}`} placeholder={k} inputMode="decimal" value={l[k]} onChange={(e) => setP({ ...p, labour: p.labour.map((x, j) => j === i ? { ...x, [k]: Number(e.target.value) || 0 } : x) })} />)}<Button size="icon" variant="ghost" aria-label="Remove" onClick={() => setP({ ...p, labour: p.labour.filter((_, j) => j !== i) })}><Trash2 className="h-4 w-4" /></Button></div>)}
       <Button size="sm" variant="outline" onClick={() => setP({ ...p, labour: [...p.labour, { label: "", people: 1, hours: 1, rate: 0 }] })}><Plus className="mr-1 h-4 w-4" />Add labour</Button></div>
     <div className="grid gap-3 sm:grid-cols-3">{([["contingencyPct", "Contingency %"], ["marginPct", "Target margin %"], ["vatPct", "VAT %"]] as const).map(([k, v]) => <div key={k}><Label htmlFor={`pg-${k}`}>{v}</Label><Input id={`pg-${k}`} inputMode="decimal" value={p[k]} onChange={(e) => setP({ ...p, [k]: Number(e.target.value) || 0 })} /></div>)}</div>
     <dl className="grid grid-cols-2 gap-1 text-sm sm:grid-cols-4"><dt className="text-muted-foreground">Internal cost</dt><dd>{money(t.cost)}</dd><dt className="text-muted-foreground">Profit</dt><dd>{money(t.profit)}</dd></dl>

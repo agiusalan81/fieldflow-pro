@@ -862,6 +862,13 @@
       "when": 1792914742036,
       "tag": "0122_hq_module_roadmap",
       "breakpoints": true
+    },
+    {
+      "idx": 123,
+      "version": "7",
+      "when": 1792917082337,
+      "tag": "0123_survey_on_site_details_and_trade_review",
+      "breakpoints": true
     }
   ]
 }
