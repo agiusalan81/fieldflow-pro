@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Send, Trash2 } from "lucide-react";
@@ -219,6 +219,7 @@ function ItemList({ label, value, trades, onChange }: { label: string; value: It
   </div>;
 }
 
+const F = ({ label, children, className = "" }: { label: string; children: ReactNode; className?: string }) => <label className={`min-w-0 space-y-1 ${className}`}><span className="block text-xs text-muted-foreground">{label}</span>{children}</label>;
 const money = (v: number) => `€${v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 function PriceGenerator({ survey, busy, persist }: { survey: Survey; busy: boolean; persist: (p: Partial<Survey>) => Promise<boolean> }) {
@@ -229,7 +230,6 @@ function PriceGenerator({ survey, busy, persist }: { survey: Survey; busy: boole
   });
   const [zoho, setZoho] = useState<boolean>(survey.zoho_sync ?? survey.track === "direct");
   const t = pricingTotals(p), client = clientEstimateView(p);
-  const F = ({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) => <label className={`min-w-0 space-y-1 ${className}`}><span className="block text-xs text-muted-foreground">{label}</span>{children}</label>;
   const lines = (key: "base" | "logistics" | "site", title: string, rated = false) => <div className="space-y-2"><Label>{title}</Label>
     {p[key].map((l: PricingLine, i) => { const upd = (patch: Partial<PricingLine>) => setP({ ...p, [key]: p[key].map((x, j) => j === i ? { ...x, ...patch } : x) }); const unit = l.unit ?? "fixed"; return <div key={i} className="grid grid-cols-2 items-end gap-2 sm:grid-cols-[1fr_8rem_6rem_7rem_auto]">
       <F label="Description" className="col-span-2 sm:col-span-1"><Input value={l.label} onChange={(e) => upd({ label: e.target.value })} /></F>
