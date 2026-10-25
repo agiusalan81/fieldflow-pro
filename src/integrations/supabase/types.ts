@@ -3287,6 +3287,7 @@ export type Database = {
       }
       platform_catalog: {
         Row: {
+          asset_limit: number | null
           billing_basis: string
           branding_required: boolean
           coming_soon: boolean
@@ -3306,6 +3307,7 @@ export type Database = {
           yearly_price: number
         }
         Insert: {
+          asset_limit?: number | null
           billing_basis?: string
           branding_required?: boolean
           coming_soon?: boolean
@@ -3325,6 +3327,7 @@ export type Database = {
           yearly_price?: number
         }
         Update: {
+          asset_limit?: number | null
           billing_basis?: string
           branding_required?: boolean
           coming_soon?: boolean
@@ -5335,6 +5338,7 @@ export type Database = {
       client_workspace: { Args: { _client: string }; Returns: Json }
       client_workspace_scope: { Args: { _client: string }; Returns: Json }
       company_app_product_id: { Args: never; Returns: string }
+      company_asset_limit: { Args: { _company: string }; Returns: number }
       company_invoice_lapsed: {
         Args: { _subscription: string }
         Returns: boolean

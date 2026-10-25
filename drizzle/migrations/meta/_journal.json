@@ -890,6 +890,13 @@
       "when": 1792926956198,
       "tag": "0126_job_sheet_maintenance_notes",
       "breakpoints": true
+    },
+    {
+      "idx": 127,
+      "version": "7",
+      "when": 1792945053678,
+      "tag": "0127_lift_pack_and_asset_limits",
+      "breakpoints": true
     }
   ]
 }
