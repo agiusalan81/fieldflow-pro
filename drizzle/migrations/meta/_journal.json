@@ -820,6 +820,13 @@
       "when": 1792907394268,
       "tag": "0116_site_surveys_and_store_codes",
       "breakpoints": true
+    },
+    {
+      "idx": 117,
+      "version": "7",
+      "when": 1792907424544,
+      "tag": "0117_client_workspace_store_code",
+      "breakpoints": true
     }
   ]
 }
