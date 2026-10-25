@@ -25,7 +25,6 @@ import { Route as AuthenticatedCompanyRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedContractsRouteImport } from './routes/_authenticated/contracts'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedDwrRouteImport } from './routes/_authenticated/dwr'
-import { Route as AuthenticatedEstimatesRouteImport } from './routes/_authenticated/estimates'
 import { Route as AuthenticatedExpensesRouteImport } from './routes/_authenticated/expenses'
 import { Route as AuthenticatedFleetRouteImport } from './routes/_authenticated/fleet'
 import { Route as AuthenticatedHoursRouteImport } from './routes/_authenticated/hours'
@@ -151,11 +150,6 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
 const AuthenticatedDwrRoute = AuthenticatedDwrRouteImport.update({
   id: '/dwr',
   path: '/dwr',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedEstimatesRoute = AuthenticatedEstimatesRouteImport.update({
-  id: '/estimates',
-  path: '/estimates',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedExpensesRoute = AuthenticatedExpensesRouteImport.update({
@@ -423,7 +417,6 @@ export interface FileRoutesByFullPath {
   '/contracts': typeof AuthenticatedContractsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/dwr': typeof AuthenticatedDwrRoute
-  '/estimates': typeof AuthenticatedEstimatesRoute
   '/expenses': typeof AuthenticatedExpensesRoute
   '/fleet': typeof AuthenticatedFleetRoute
   '/hours': typeof AuthenticatedHoursRoute
@@ -487,7 +480,6 @@ export interface FileRoutesByTo {
   '/contracts': typeof AuthenticatedContractsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/dwr': typeof AuthenticatedDwrRoute
-  '/estimates': typeof AuthenticatedEstimatesRoute
   '/expenses': typeof AuthenticatedExpensesRoute
   '/fleet': typeof AuthenticatedFleetRoute
   '/hours': typeof AuthenticatedHoursRoute
@@ -553,7 +545,6 @@ export interface FileRoutesById {
   '/_authenticated/contracts': typeof AuthenticatedContractsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/dwr': typeof AuthenticatedDwrRoute
-  '/_authenticated/estimates': typeof AuthenticatedEstimatesRoute
   '/_authenticated/expenses': typeof AuthenticatedExpensesRoute
   '/_authenticated/fleet': typeof AuthenticatedFleetRoute
   '/_authenticated/hours': typeof AuthenticatedHoursRoute
@@ -619,7 +610,6 @@ export interface FileRouteTypes {
     | '/contracts'
     | '/dashboard'
     | '/dwr'
-    | '/estimates'
     | '/expenses'
     | '/fleet'
     | '/hours'
@@ -683,7 +673,6 @@ export interface FileRouteTypes {
     | '/contracts'
     | '/dashboard'
     | '/dwr'
-    | '/estimates'
     | '/expenses'
     | '/fleet'
     | '/hours'
@@ -748,7 +737,6 @@ export interface FileRouteTypes {
     | '/_authenticated/contracts'
     | '/_authenticated/dashboard'
     | '/_authenticated/dwr'
-    | '/_authenticated/estimates'
     | '/_authenticated/expenses'
     | '/_authenticated/fleet'
     | '/_authenticated/hours'
@@ -933,13 +921,6 @@ declare module '@tanstack/react-router' {
       path: '/dwr'
       fullPath: '/dwr'
       preLoaderRoute: typeof AuthenticatedDwrRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/estimates': {
-      id: '/_authenticated/estimates'
-      path: '/estimates'
-      fullPath: '/estimates'
-      preLoaderRoute: typeof AuthenticatedEstimatesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/expenses': {
@@ -1289,7 +1270,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedContractsRoute: typeof AuthenticatedContractsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDwrRoute: typeof AuthenticatedDwrRoute
-  AuthenticatedEstimatesRoute: typeof AuthenticatedEstimatesRoute
   AuthenticatedExpensesRoute: typeof AuthenticatedExpensesRoute
   AuthenticatedFleetRoute: typeof AuthenticatedFleetRoute
   AuthenticatedHoursRoute: typeof AuthenticatedHoursRoute
@@ -1331,7 +1311,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedContractsRoute: AuthenticatedContractsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDwrRoute: AuthenticatedDwrRoute,
-  AuthenticatedEstimatesRoute: AuthenticatedEstimatesRoute,
   AuthenticatedExpensesRoute: AuthenticatedExpensesRoute,
   AuthenticatedFleetRoute: AuthenticatedFleetRoute,
   AuthenticatedHoursRoute: AuthenticatedHoursRoute,

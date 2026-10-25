@@ -38,7 +38,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/admin/jobs")({ staticData: { sitemap: false },
-  validateSearch: (s: Record<string, unknown>): { new?: boolean | undefined; assetId?: string | undefined; problemId?: string | undefined; review?:string } => ({ ...(typeof s["review"]==="string"?{review:s["review"]}:{}), new: s["new"] === true || s["new"] === "true" ? true : undefined, assetId: typeof s["assetId"] === "string" ? s["assetId"] : undefined, problemId: typeof s["problemId"] === "string" ? s["problemId"] : undefined }),
+  validateSearch: (s: Record<string, unknown>): { new?: boolean | undefined; assetId?: string | undefined; problemId?: string | undefined; review?:string; quoteJob?:string } => ({ ...(typeof s['quoteJob'] === 'string' ? { quoteJob: s['quoteJob'] } : {}), ...(typeof s["review"]==="string"?{review:s["review"]}:{}), new: s["new"] === true || s["new"] === "true" ? true : undefined, assetId: typeof s["assetId"] === "string" ? s["assetId"] : undefined, problemId: typeof s["problemId"] === "string" ? s["problemId"] : undefined }),
   head: () => ({
     meta: [
       { title: "Job sheets — FieldBridge" },

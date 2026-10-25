@@ -17,8 +17,8 @@ export type QuoteDocument = z.infer<typeof quoteDocumentSchema>;
 export type QuoteTotals = { subtotal: number; discount: number; net: number; vat: number; total: number };
 export type QuoteSnapshot = {
   reference: string; revision: number; document: QuoteDocument; totals: QuoteTotals;
-  company: { name: string; logo?: string | null; address?: string | null; vat?: string | null; primary?: string | null; footer?: string | null };
-  currency: string; client: string; site?: string | null; equipment?: string | null;
+  company: { name: string; logo?: string | null | undefined; address?: string | null | undefined; vat?: string | null | undefined; primary?: string | null | undefined; footer?: string | null | undefined };
+  currency: string; client: string; site?: string | null | undefined; equipment?: string | null | undefined;
   status?: string; signer_name?: string | null; decided_at?: string | null; allow_decision?: boolean;
 };
 const round = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;

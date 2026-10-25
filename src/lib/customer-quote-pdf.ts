@@ -38,7 +38,7 @@ export async function buildCustomerQuotePdf(s: QuoteSnapshot): Promise<Uint8Arra
   write('Priced items', 11, true);
   for (const l of d.lines) { write(l.description, 10, true); write(`${l.quantity} ${l.unit} x ${money(l.rate)} | Discount ${l.discount}% | VAT ${l.vat}% | Net ${money(quoteLineTotals(l).net)}`, 9); }
   write(`Subtotal ${money(t.subtotal)} | Discount ${money(t.discount)}`, 10); write(`Net ${money(t.net)} | VAT ${money(t.vat)} | Total ${money(t.total)}`, 12, true);
-  for (const [title, text] of [['Payment terms', d.payment], ['Expected work timeframe', d.timeframe], ['Exclusions', d.exclusions], ['Customer notes', d.notes]]) { if (text) { write(title, 11, true); write(text); } }
+  for (const [title, text] of [['Payment terms', d.payment], ['Expected work timeframe', d.timeframe], ['Exclusions', d.exclusions], ['Customer notes', d.notes]] as const) { if (text) { write(title, 11, true); write(text); } }
   doc.getPages().forEach((p, i) => { p.drawText(safe(s.company.footer ?? '').slice(0, 100), { x: 42, y: 40, size: 8, font, color: grey }); p.drawText(`${i + 1} / ${doc.getPageCount()}`, { x: 515, y: 40, size: 8, font, color: grey }); });
   return doc.save();
 }
