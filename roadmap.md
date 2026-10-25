@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Document draft rows: inline add/remove/reorder preserving specs; optional lift stop/door/car-access pricing and client display; save/read-back verification
+- [x] Document draft rows: add/remove/reorder preserving specs; optional independent lift stops/doors/car-access prices and compound/itemised client display; admin save/reload and technician price exclusion verified, mobile clipping fixed, 21 tests passed, fixtures removed
 - [x] Survey updates: on-site locations, multiple contacts/email, working windows, multi-trade observations/materials and handling; office/technician save/reload/submission verified, supervisor-only and commercial guards checked, fixtures removed
 - [x] Overview / Today & team always visible outside navigation groups; phone labels verified
 - [x] Expense date/amount/searchable inline categories and silent field states; real save/read-back verified, temporary scan/row cleaned
