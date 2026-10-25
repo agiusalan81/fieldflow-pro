@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Send, Trash2 } from "lucide-react";
@@ -8,7 +8,7 @@ import type { Json } from "@/integrations/supabase/types";
 import { useProfile, isManager } from "@/lib/profile";
 import { usePlanFeatures } from "@/lib/plan-features";
 import { formatSiteDisplay } from "@/lib/site-display";
-import { clientEstimateView, parsePricing, pricingTotals, type Pricing, type PricingLine } from "@/lib/survey-pricing";
+import { clientEstimateView, parsePricing, pricingTotals, type Pricing, type PricingLine, type RateUnit } from "@/lib/survey-pricing";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useCompanyRules } from "@/lib/company";
-import { WORKING_WINDOWS, canSubmitSurvey, parseSurveyDetails, surveyReviewerOptions, surveyTradeLabel, type SurveyDetails, type TradeReview } from "@/lib/survey-details";
+import { SuggestedTextarea } from "@/components/suggested-textarea";
+import { ACCESS_SUGGESTIONS, WORKING_WINDOWS, canSubmitSurvey, surveyItemsPending, parseSurveyDetails, surveyReviewerOptions, surveyTradeLabel, type SurveyDetails, type TradeReview } from "@/lib/survey-details";
 import { SurveyContacts, SurveyTrades, SurveyObservations, SurveyTradeReview } from "@/components/survey-field-details";
 
 export const Route = createFileRoute("/_authenticated/surveys")({
@@ -59,7 +60,7 @@ function SurveysPage() {
 function List({ onOpen, manager, superuser }: { onOpen: (id: string) => void; manager: boolean; superuser: boolean }) {
   const [filter, setFilter] = useState("open");
   const q = useQuery({ queryKey: ["site-surveys"], queryFn: async () => {
-    const r = await supabase.from("site_surveys").select("id,status,track,survey_purpose,location_ref,field_details,updated_at,clients(name)").order("updated_at", { ascending: false }).limit(200);
+    const r = await supabase.from("site_surveys").select("id,status,track,survey_purpose,location_ref,field_details,materials,other_items,updated_at,clients(name)").order("updated_at", { ascending: false }).limit(200);
     if (r.error) throw r.error; return r.data;
   } });
   const create = async () => {
@@ -75,7 +76,7 @@ function List({ onOpen, manager, superuser }: { onOpen: (id: string) => void; ma
     </div>
     {q.isLoading ? <p className="text-muted-foreground">Loading…</p> : q.error ? <p role="alert" className="text-destructive">Surveys could not be loaded.</p> : !rows.length ? <EmptyState>{manager ? "No site surveys match this filter." : "You have no site surveys yet."}</EmptyState> :
       <ul className="space-y-2">{rows.map((s) => <li key={s.id}><button className="w-full rounded-xl border bg-card p-4 text-left hover:bg-muted/40" onClick={() => onOpen(s.id)}>
-        <div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-muted px-2 py-0.5 text-xs">{STATUS[s.status] ?? s.status}</span><span className="text-xs text-muted-foreground">{s.track === "supplier_rfq" ? "Supplier quotes needed" : "Direct office estimate"}</span></div>
+        <div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-muted px-2 py-0.5 text-xs">{STATUS[s.status] ?? s.status}</span>{s.status === "draft" && surveyItemsPending(items(s.materials), items(s.other_items), parseSurveyDetails(s.field_details)) && <span className="rounded-full border border-primary px-2 py-0.5 text-xs text-primary">Materials to complete</span>}<span className="text-xs text-muted-foreground">{s.track === "supplier_rfq" ? "Supplier quotes needed" : "Direct office estimate"}</span></div>
         <p className="mt-1 font-medium">{s.clients?.name ?? (parseSurveyDetails(s.field_details).clientName || "No client yet")}{s.location_ref ? ` · ${s.location_ref}` : parseSurveyDetails(s.field_details).siteName ? ` · ${parseSurveyDetails(s.field_details).siteName}` : ""}</p>
         <p className="text-xs text-muted-foreground">{PURPOSES.find((p) => p[0] === s.survey_purpose)?.[1]} · updated {new Date(s.updated_at).toLocaleString()}</p>
       </button></li>)}</ul>}
@@ -133,6 +134,8 @@ function Editor({ id, onBack }: { id: string; onBack: () => void }) {
   useEffect(() => { if (q.data) setS(q.data); }, [q.data]);
   const clientId = s?.client_id;
   const sites = useQuery({ queryKey: ["client-sites", clientId], enabled: !!clientId, queryFn: async () => { if (!clientId) return []; const r = await supabase.from("sites").select("*").eq("client_id", clientId).order("name"); if (r.error) throw r.error; return r.data; } });
+  const pastAccess = useQuery({ queryKey: ["survey-access-history", profile?.company_id], enabled: !!profile, staleTime: 60_000, queryFn: async () => (await supabase.from("site_surveys").select("access_notes").not("access_notes", "is", null).order("updated_at", { ascending: false }).limit(100)).data ?? [] });
+  const accessSuggestions = [...new Set([...ACCESS_SUGGESTIONS, ...(pastAccess.data ?? []).map(x => (x.access_notes ?? "").trim()).filter(Boolean)])];
   const [busy, setBusy] = useState(false);
   if (q.error) return <p role="alert" className="text-destructive">This survey is not available to you.</p>;
   if (!s || !profile) return <p className="text-muted-foreground">Loading…</p>;
@@ -158,13 +161,14 @@ function Editor({ id, onBack }: { id: string; onBack: () => void }) {
   };
   const submit = async () => {
     if (!canSubmitSurvey(s, details)) { toast.error("Enter a client, site/location and scope before submitting."); return; }
+    if (surveyItemsPending(items(s.materials), items(s.other_items), details)) { toast.error("Add the materials & equipment, or tick “Not applicable”. Save as draft to complete them later."); return; }
     if (!office && !reviewer) { toast.error("Select your supervisor before sending the survey."); return; }
     if (await persist({ status: "submitted" })) toast.success("Survey sent");
   };
-  const remove = async () => { if (!confirm("Delete this draft survey?")) return; const r = await supabase.from("site_surveys").delete().eq("id", id); if (r.error) toast.error(r.error.message); else { void qc.invalidateQueries({ queryKey: ["site-surveys"] }); onBack(); } };
+  const remove = async () => { if (!confirm(s.status === "draft" ? "Delete this draft survey? This cannot be undone." : `Delete this ${STATUS[s.status]?.toLowerCase() ?? ""} survey, including its pricing and photos list? This cannot be undone.`)) return; const r = await supabase.from("site_surveys").delete().eq("id", id); if (r.error) toast.error(r.error.message); else { void qc.invalidateQueries({ queryKey: ["site-surveys"] }); onBack(); } };
 
   return <div className="mx-auto max-w-4xl space-y-5">
-    <div className="flex flex-wrap items-center gap-2"><Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="mr-1 h-4 w-4" />All surveys</Button><span className="rounded-full bg-muted px-2 py-0.5 text-xs">{STATUS[s.status]}</span></div>
+    <div className="flex flex-wrap items-center gap-2"><Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="mr-1 h-4 w-4" />All surveys</Button><span className="rounded-full bg-muted px-2 py-0.5 text-xs">{STATUS[s.status]}</span>{s.status === "draft" && surveyItemsPending(items(s.materials), items(s.other_items), details) && <span className="rounded-full border border-primary px-2 py-0.5 text-xs text-primary">Materials to complete</span>}{office && !editable && <Button className="ml-auto" variant="ghost" size="sm" disabled={busy} onClick={() => void remove()}><Trash2 className="mr-1 h-4 w-4" />Delete survey</Button>}</div>
     <fieldset disabled={!editable} className="min-w-0 space-y-4 border-b pb-5">
       <legend className="px-1 font-medium">Survey details</legend>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -181,7 +185,7 @@ function Editor({ id, onBack }: { id: string; onBack: () => void }) {
         {([["direct", "Office prices directly from our price list (repairs, replacements)"], ["supplier_rfq", "Supplier quotes needed first (new installations, major equipment)"]] as const).map(([k, v]) => <label key={k} className="flex items-center gap-2 text-sm"><input type="radio" name="track" checked={s.track === k} onChange={() => set({ track: k })} />{v}</label>)}
       </fieldset>}
       <div className="grid gap-3 sm:grid-cols-2">
-        <div><Label htmlFor="sv-access">Access & logistics</Label><Textarea id="sv-access" value={s.access_notes ?? ""} onChange={(e) => set({ access_notes: e.target.value })} /></div>
+        <div><Label htmlFor="sv-access">Access & logistics</Label><SuggestedTextarea id="sv-access" disabled={!editable} value={s.access_notes ?? ""} suggestions={accessSuggestions} onValueChange={(v) => set({ access_notes: v })} /></div>
         <div className="space-y-2"><div><Label htmlFor="sv-window">Working window</Label><Input id="sv-window" placeholder="e.g. Weekdays after 18:00" value={s.working_window ?? ""} onChange={(e) => set({ working_window: e.target.value })} /></div>{editable && <div className="flex flex-wrap gap-1">{WORKING_WINDOWS.map(window => <Button key={window} type="button" size="sm" variant="outline" className="h-auto whitespace-normal py-1 text-xs" onClick={() => set({ working_window: window })}>{window}</Button>)}</div>}</div>
       </div>
       <fieldset><legend className="text-sm font-medium">Site hazards</legend><div className="mt-1 grid gap-1 sm:grid-cols-2">{HAZARDS.map((h) => <label key={h} className="flex items-center gap-2 text-sm"><Checkbox checked={s.hazards.includes(h)} onCheckedChange={(v) => set({ hazards: v ? [...s.hazards, h] : s.hazards.filter((x) => x !== h) })} />{h}</label>)}</div></fieldset>
@@ -193,6 +197,8 @@ function Editor({ id, onBack }: { id: string; onBack: () => void }) {
         <div><Label htmlFor="sv-techs">Technicians needed</Label><Input id="sv-techs" inputMode="numeric" value={s.technicians ?? ""} onChange={(e) => set({ technicians: e.target.value === "" ? null : Number(e.target.value) })} /></div>
         <div><Label htmlFor="sv-urg">Urgency</Label><select id="sv-urg" className={sel} value={s.urgency} onChange={(e) => set({ urgency: e.target.value })}><option value="routine">Routine</option><option value="soon">Within 2 weeks</option><option value="urgent">Urgent</option></select></div>
       </div>
+      <label className="flex items-center gap-2 text-sm"><Checkbox checked={details.materialsNA === true} onCheckedChange={(v) => setDetails({ ...details, materialsNA: v === true })} />Not applicable — no materials or equipment needed</label>
+      <p className="text-xs text-muted-foreground">No time on site? Save as draft and add the items later.</p>
       <ItemList label="Materials & equipment needed" trades={details.trades} value={items(s.materials)} onChange={(v) => set({ materials: v as unknown as Json })} />
       <ItemList label="Other materials / equipment" trades={details.trades} value={items(s.other_items)} onChange={(v) => set({ other_items: v as unknown as Json })} />
     </fieldset>
@@ -213,6 +219,7 @@ function ItemList({ label, value, trades, onChange }: { label: string; value: It
   </div>;
 }
 
+const F = ({ label, children, className = "" }: { label: string; children: ReactNode; className?: string }) => <label className={`min-w-0 space-y-1 ${className}`}><span className="block text-xs text-muted-foreground">{label}</span>{children}</label>;
 const money = (v: number) => `€${v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 function PriceGenerator({ survey, busy, persist }: { survey: Survey; busy: boolean; persist: (p: Partial<Survey>) => Promise<boolean> }) {
@@ -223,19 +230,30 @@ function PriceGenerator({ survey, busy, persist }: { survey: Survey; busy: boole
   });
   const [zoho, setZoho] = useState<boolean>(survey.zoho_sync ?? survey.track === "direct");
   const t = pricingTotals(p), client = clientEstimateView(p);
-  const lines = (key: "base" | "logistics" | "site", title: string) => <div className="space-y-2"><Label>{title}</Label>
-    {p[key].map((l: PricingLine, i) => <div key={i} className="flex gap-2"><Input aria-label={`${title} ${i + 1}`} value={l.label} onChange={(e) => setP({ ...p, [key]: p[key].map((x, j) => j === i ? { ...x, label: e.target.value } : x) })} /><Input aria-label={`${title} amount ${i + 1}`} className="w-32" inputMode="decimal" value={l.amount} onChange={(e) => setP({ ...p, [key]: p[key].map((x, j) => j === i ? { ...x, amount: Number(e.target.value) || 0 } : x) })} /><Button size="icon" variant="ghost" aria-label="Remove" onClick={() => setP({ ...p, [key]: p[key].filter((_, j) => j !== i) })}><Trash2 className="h-4 w-4" /></Button></div>)}
-    <Button size="sm" variant="outline" onClick={() => setP({ ...p, [key]: [...p[key], { label: "", amount: 0 }] })}><Plus className="mr-1 h-4 w-4" />Add</Button></div>;
+  const lines = (key: "base" | "logistics" | "site", title: string, rated = false) => <div className="space-y-2"><Label>{title}</Label>
+    {p[key].map((l: PricingLine, i) => { const upd = (patch: Partial<PricingLine>) => setP({ ...p, [key]: p[key].map((x, j) => j === i ? { ...x, ...patch } : x) }); const unit = l.unit ?? "fixed"; return <div key={i} className="grid grid-cols-2 items-end gap-2 sm:grid-cols-[1fr_8rem_6rem_7rem_auto]">
+      <F label="Description" className="col-span-2 sm:col-span-1"><Input value={l.label} onChange={(e) => upd({ label: e.target.value })} /></F>
+      {rated ? <F label="Charged"><select className={sel} value={unit} onChange={(e) => upd({ unit: e.target.value as RateUnit, qty: l.qty ?? 1 })}><option value="fixed">Fixed price</option><option value="hour">Per hour</option><option value="day">Per day</option></select></F> : <span className="hidden sm:block" />}
+      {rated && unit !== "fixed" ? <F label={unit === "hour" ? "Hours" : "Days"}><Input inputMode="decimal" value={l.qty ?? 1} onChange={(e) => upd({ qty: Number(e.target.value) || 0 })} /></F> : <span className="hidden sm:block" />}
+      <F label={unit === "hour" ? "Rate / hr (€)" : unit === "day" ? "Rate / day (€)" : "Amount (€)"}><Input inputMode="decimal" value={l.amount} onChange={(e) => upd({ amount: Number(e.target.value) || 0 })} /></F>
+      <Button size="icon" variant="ghost" aria-label={`Remove ${title} ${i + 1}`} onClick={() => setP({ ...p, [key]: p[key].filter((_, j) => j !== i) })}><Trash2 className="h-4 w-4" /></Button></div>; })}
+    <Button size="sm" variant="outline" onClick={() => setP({ ...p, [key]: [...p[key], { label: "", amount: 0, ...(rated ? { unit: "day" as const, qty: 1 } : {}) }] })}><Plus className="mr-1 h-4 w-4" />Add</Button></div>;
   const save = (status?: string) => void persist({ pricing: p as unknown as Json, zoho_sync: zoho, ...(status ? { status } : survey.status === "submitted" ? { status: "under_review" } : {}) }).then((ok) => ok && toast.success("Pricing saved"));
   return <section className="min-w-0 space-y-4 border-b pb-5">
     <h2 className="font-semibold">Office price generator <span className="text-xs font-normal text-muted-foreground">(internal — never shown to the client)</span></h2>
     {survey.track === "supplier_rfq" && <p className="border-l-2 border-primary bg-muted p-2 text-sm">Enter the supplier's quoted price you selected under "Base cost". Supplier quotes stay internal and are never sent to clients or accounting.</p>}
     {lines("base", survey.track === "supplier_rfq" ? "Base cost (selected supplier quote)" : "Materials & parts cost")}
     {lines("logistics", "Freight, clearance & transport")}
-    {lines("site", "Site logistics & equipment hire")}
+    {lines("site", "Site logistics & equipment hire", true)}
     <div className="space-y-2"><Label>Labour</Label>
-      {p.labour.map((l, i) => <div key={i} className="grid grid-cols-2 gap-2 sm:grid-cols-[1fr_5rem_5rem_6rem_auto]"><Input aria-label={`Labour ${i + 1}`} value={l.label} onChange={(e) => setP({ ...p, labour: p.labour.map((x, j) => j === i ? { ...x, label: e.target.value } : x) })} />{(["people", "hours", "rate"] as const).map((k) => <Input key={k} aria-label={`Labour ${k} ${i + 1}`} placeholder={k} inputMode="decimal" value={l[k]} onChange={(e) => setP({ ...p, labour: p.labour.map((x, j) => j === i ? { ...x, [k]: Number(e.target.value) || 0 } : x) })} />)}<Button size="icon" variant="ghost" aria-label="Remove" onClick={() => setP({ ...p, labour: p.labour.filter((_, j) => j !== i) })}><Trash2 className="h-4 w-4" /></Button></div>)}
-      <Button size="sm" variant="outline" onClick={() => setP({ ...p, labour: [...p.labour, { label: "", people: 1, hours: 1, rate: 0 }] })}><Plus className="mr-1 h-4 w-4" />Add labour</Button></div>
+      {p.labour.map((l, i) => { const upd = (patch: Partial<Pricing["labour"][number]>) => setP({ ...p, labour: p.labour.map((x, j) => j === i ? { ...x, ...patch } : x) }); const unit = l.unit ?? "hour"; return <div key={i} className="grid grid-cols-2 items-end gap-2 sm:grid-cols-[1fr_5rem_7rem_5rem_7rem_auto]">
+        <F label="Role / task" className="col-span-2 sm:col-span-1"><Input value={l.label} onChange={(e) => upd({ label: e.target.value })} /></F>
+        <F label="People"><Input inputMode="decimal" value={l.people} onChange={(e) => upd({ people: Number(e.target.value) || 0 })} /></F>
+        <F label="Charged"><select className={sel} value={unit} onChange={(e) => upd({ unit: e.target.value as "hour" | "day" })}><option value="hour">Per hour</option><option value="day">Per day</option></select></F>
+        <F label={unit === "day" ? "Days" : "Hours"}><Input inputMode="decimal" value={l.hours} onChange={(e) => upd({ hours: Number(e.target.value) || 0 })} /></F>
+        <F label={unit === "day" ? "Rate / day (€)" : "Rate / hr (€)"}><Input inputMode="decimal" value={l.rate} onChange={(e) => upd({ rate: Number(e.target.value) || 0 })} /></F>
+        <Button size="icon" variant="ghost" aria-label={`Remove labour ${i + 1}`} onClick={() => setP({ ...p, labour: p.labour.filter((_, j) => j !== i) })}><Trash2 className="h-4 w-4" /></Button></div>; })}
+      <Button size="sm" variant="outline" onClick={() => setP({ ...p, labour: [...p.labour, { label: "", people: 1, hours: 1, rate: 0, unit: "hour" }] })}><Plus className="mr-1 h-4 w-4" />Add labour</Button></div>
     <div className="grid gap-3 sm:grid-cols-3">{([["contingencyPct", "Contingency %"], ["marginPct", "Target margin %"], ["vatPct", "VAT %"]] as const).map(([k, v]) => <div key={k}><Label htmlFor={`pg-${k}`}>{v}</Label><Input id={`pg-${k}`} inputMode="decimal" value={p[k]} onChange={(e) => setP({ ...p, [k]: Number(e.target.value) || 0 })} /></div>)}</div>
     <dl className="grid grid-cols-2 gap-1 text-sm sm:grid-cols-4"><dt className="text-muted-foreground">Internal cost</dt><dd>{money(t.cost)}</dd><dt className="text-muted-foreground">Profit</dt><dd>{money(t.profit)}</dd></dl>
     <div><Label htmlFor="pg-desc">Client-facing description</Label><Textarea id="pg-desc" rows={3} placeholder="Rewrite the scope in plain client language" value={p.clientDescription} onChange={(e) => setP({ ...p, clientDescription: e.target.value })} /></div>

@@ -16,3 +16,9 @@ describe("survey field workflow", () => {
   it("allows submission with client and location captured on site", () => expect(canSubmitSurvey({ client_id: null, site_id: null, scope_summary: "Repair pipe" }, parseSurveyDetails({ clientName: "New prospect", siteName: "Shop 2", address: "Main Street" }))).toBe(true));
   it("does not submit an unidentified site", () => expect(canSubmitSurvey({ client_id: null, site_id: null, scope_summary: "Repair pipe" }, parseSurveyDetails({ clientName: "New prospect", siteName: "Shop 2" }))).toBe(false));
 });
+import { surveyItemsPending } from "./survey-details";
+describe("materials completion", () => {
+  it("is pending when nothing listed and not marked N/A", () => { expect(surveyItemsPending([], [], {})).toBe(true); });
+  it("is complete when marked not applicable", () => { expect(surveyItemsPending([], [], { materialsNA: true })).toBe(false); });
+  it("is pending when an item has no name", () => { expect(surveyItemsPending([{ label: " " }], [], { materialsNA: true })).toBe(true); });
+});
