@@ -911,6 +911,13 @@
       "when": 1792948351121,
       "tag": "0129_hq_layers_core_quotes_lift_rfq_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 130,
+      "version": "7",
+      "when": 1792952773367,
+      "tag": "0130_delete_document_master_with_detach",
+      "breakpoints": true
     }
   ]
 }
