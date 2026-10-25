@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Copy, Eye, Archive, Plus, Trash2, Paperclip, Pencil } from "lucide-react";
+import { Copy, Eye, Archive, Plus, Trash2, Paperclip, Pencil, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import { ChecklistRowEditor } from "@/components/checklist-row-editor";
 import { useCompanyRules } from "@/lib/company";
 import { companyHasLiftTrade } from "@/lib/trade-association";
 import { CompanyTradeSelect } from "@/components/company-trade-select";
+import { buildMasterDocumentPdf } from "@/lib/master-document-pdf";
 import { CommercialPriceSummary, LiftCommercialEditor } from "@/components/lift-commercial";
 
 type Master = Database["public"]["Tables"]["document_masters"]["Row"];
@@ -35,6 +36,18 @@ function ChecklistEntry({ item, spec, index }: { item: string; spec: FieldSpec; 
 
 export function MasterPreview({ doc, initialView = "client" }: { doc: PreviewDoc; initialView?: Audience }) {
   const [view, setView] = useState<Audience>(initialView);
+  const { data: company } = useCompanyRules();
+  const [downloading, setDownloading] = useState(false);
+  const download = async () => {
+    setDownloading(true);
+    try {
+      const bytes = await buildMasterDocumentPdf(doc, view, company?.logo ? { logo: company.logo } : {});
+      const url = URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: "application/pdf" }));
+      const anchor = document.createElement("a"); anchor.href = url; anchor.download = `${doc.name.replace(/[\\/:*?"<>|]/g, "_")}-${view}.pdf`; anchor.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) { toast.error(error instanceof Error ? error.message : "Could not download document"); }
+    finally { setDownloading(false); }
+  };
   const tech = view === "technician";
   const sections = sectionsFor(parseSections(doc.sections), view);
   const rows = checklistRows(doc.items, doc.field_specs).filter(row => row.item.trim());
@@ -58,7 +71,7 @@ export function MasterPreview({ doc, initialView = "client" }: { doc: PreviewDoc
   ];
   return <div className="min-w-0 space-y-3 overflow-hidden">
     <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-semibold">{doc.name}</h3>
-      <div role="group" aria-label="Copy" className="flex gap-1">{AUDIENCES.map((a) => <Button key={a.key} size="sm" variant={view === a.key ? "default" : "outline"} onClick={() => setView(a.key)}>{a.key === "client" ? "Client copy" : "Technician copy"}</Button>)}</div></div>
+      <div role="group" aria-label="Copy" className="flex flex-wrap gap-1">{AUDIENCES.map((a) => <Button key={a.key} size="sm" variant={view === a.key ? "default" : "outline"} onClick={() => setView(a.key)}>{a.key === "client" ? "Client copy" : "Technician copy"}</Button>)}<Button title="Download selected copy as PDF" aria-label="Download document PDF" size="icon" variant="outline" disabled={downloading} onClick={download}><Download className="h-4 w-4" /></Button></div></div>
     <A4Document title={doc.name} subtitle={[doc.trade, doc.revision && `Revision ${doc.revision}`, tech ? "Technician copy" : "Client copy"].filter(Boolean).join(" · ")} blocks={blocks.length ? blocks : [<p key="e" className="opacity-60">Nothing to show on this copy yet.</p>]} />
   </div>;
 }

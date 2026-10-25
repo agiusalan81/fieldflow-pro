@@ -12,9 +12,9 @@
 ## Rules
 - Analytics: owner-only coarse counts; server-derived tenant. Product-scoped outreach/feedback; saved follow-ups send nothing.
 - HQ uses product-scoped workspaces, owner-only directory/access RPCs and separate legal profiles; test resets retain operational, financial, identity, storage and offline evidence.
-- Chrome: neutral surfaces, token controls; phone theme matches neutral bar (browser chrome cannot render gradients).
-- Travel shares one component/startJobTravel; arrival saves the time log before on-site status; 
-- Invite server functions/Query loaders have timeouts, middleware included; 
+- Chrome: neutral surfaces/token controls; phone theme matches neutral bar, never gradients.
+- Travel shares startJobTravel; arrival saves time before on-site status.
+- Invite functions/loaders use timeouts and middleware.
 - Tenant RLS uses company_id/current_company_id(); never UI company filters; 
 - Roles: protected user_roles; users.role is display-only. Manager-only MemberSkills uses module guards; additions never assign; removal archives for history.
 - Atomic handover reviews jobs/rotas/shifts, preserving history; active-only rota choices share day validation. Snooze is recipient-only; alerts target each request.
@@ -42,7 +42,7 @@
 - job_sheets embeds use users!job_sheets_assigned_technician_id_fkey; two users FKs.
 - Signing batches: creator-owned, finalized transactionally; store delivery before sending via shared PDF builder; atomic, retry-safe delivery.
 - Offline: account-scoped IndexedDB/optimistic RPC/PWA; confirmed discard atomically removes only that account/sheet draft/photos/cache; retain inaccessible drafts.
-- Published masters immutable; uses snapshot definitions. document-blocks.ts calculates trade pricing in master JSON; checklist descriptions/specs move together, preserving controls.
+- Master content is immutable except names; snapshots preserve history. document-blocks pricing is shared by masters/tiers (JSON inputs plus annual totals); paired checklist rows retain specs. trade-association matches company synonyms for selectors/pricing.
 - Platform authority is protected separately in user_roles; HQ uses a narrow directory RPC, not tenant reads; 
 - Plan access: DB write guards + plan-features.ts menu gating; legacy stays on. RFQ rules in lift-rfq.ts; 
 - Client reports use immutable DB-built safe snapshots and hashed expiring/revocable links; photo paths stay server-only; 
