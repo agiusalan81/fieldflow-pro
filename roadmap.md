@@ -1,6 +1,6 @@
 # Roadmap
-- [ ] Survey updates: on-site client/site, multiple contacts with email, working-window suggestions, multi-trade observations and office trade decisions; supervisor-only field routing
-- [ ] Keep Overview / Today & team visible outside navigation groups
+- [x] Survey updates: on-site locations, multiple contacts/email, working windows, multi-trade observations/materials and handling; office/technician save/reload/submission verified, supervisor-only and commercial guards checked, fixtures removed
+- [x] Overview / Today & team always visible outside navigation groups; phone labels verified
 - [x] Expense date/amount/searchable inline categories and silent field states; real save/read-back verified, temporary scan/row cleaned
 - [x] Job-sheet Branch/Store ID in form/list/print/email; 1/3/6/12-month completed history with RLS; required skills labelled
 - [x] Administration approvals hub and exact category/equipment review links; unlisted equipment entry and office catalogue action
