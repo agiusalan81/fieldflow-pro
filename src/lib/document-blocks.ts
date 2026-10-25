@@ -65,13 +65,13 @@ const pct = (v: unknown): number => Math.min(100, Math.max(0, num(v) ?? 0));
 export function parseCommercial(raw: unknown): Commercial {
   const r = raw && typeof raw === "object" ? raw as Record<string, unknown> : {};
   return {
-    visitsPerYear: num(r.visitsPerYear),
-    basePrice: num(r.basePrice),
-    billingCycle: BILLING_CYCLES.some((c) => c.key === r.billingCycle) ? r.billingCycle as BillingCycle : "annually",
-    labourDiscountPct: pct(r.labourDiscountPct),
-    partsDiscountPct: pct(r.partsDiscountPct),
-    terms: typeof r.terms === "string" ? r.terms : "",
-    showOnClient: r.showOnClient !== false,
+    visitsPerYear: num(r["visitsPerYear"]),
+    basePrice: num(r["basePrice"]),
+    billingCycle: BILLING_CYCLES.some((c) => c.key === r["billingCycle"]) ? r["billingCycle"] as BillingCycle : "annually",
+    labourDiscountPct: pct(r["labourDiscountPct"]),
+    partsDiscountPct: pct(r["partsDiscountPct"]),
+    terms: typeof r["terms"] === "string" ? r["terms"] : "",
+    showOnClient: r["showOnClient"] !== false,
   };
 }
 
