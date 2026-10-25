@@ -50,6 +50,7 @@ import { Route as AuthenticatedTechnicalLibraryRouteImport } from './routes/_aut
 import { Route as ApproveTokenRouteImport } from './routes/approve.$token'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as ProblemTokenRouteImport } from './routes/problem.$token'
+import { Route as QuoteTokenRouteImport } from './routes/quote.$token'
 import { Route as ReferralCodeRouteImport } from './routes/referral.$code'
 import { Route as ReportTokenRouteImport } from './routes/report.$token'
 import { Route as AuthenticatedAdminApprovalsRouteImport } from './routes/_authenticated/admin.approvals'
@@ -281,6 +282,11 @@ const ProblemTokenRoute = ProblemTokenRouteImport.update({
   path: '/problem/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const QuoteTokenRoute = QuoteTokenRouteImport.update({
+  id: '/quote/$token',
+  path: '/quote/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ReferralCodeRoute = ReferralCodeRouteImport.update({
   id: '/referral/$code',
   path: '/referral/$code',
@@ -442,6 +448,7 @@ export interface FileRoutesByFullPath {
   '/approve/$token': typeof ApproveTokenRoute
   '/join/$token': typeof JoinTokenRoute
   '/problem/$token': typeof ProblemTokenRoute
+  '/quote/$token': typeof QuoteTokenRoute
   '/referral/$code': typeof ReferralCodeRoute
   '/report/$token': typeof ReportTokenRoute
   '/admin/approvals': typeof AuthenticatedAdminApprovalsRoute
@@ -505,6 +512,7 @@ export interface FileRoutesByTo {
   '/approve/$token': typeof ApproveTokenRoute
   '/join/$token': typeof JoinTokenRoute
   '/problem/$token': typeof ProblemTokenRoute
+  '/quote/$token': typeof QuoteTokenRoute
   '/referral/$code': typeof ReferralCodeRoute
   '/report/$token': typeof ReportTokenRoute
   '/admin/approvals': typeof AuthenticatedAdminApprovalsRoute
@@ -570,6 +578,7 @@ export interface FileRoutesById {
   '/approve/$token': typeof ApproveTokenRoute
   '/join/$token': typeof JoinTokenRoute
   '/problem/$token': typeof ProblemTokenRoute
+  '/quote/$token': typeof QuoteTokenRoute
   '/referral/$code': typeof ReferralCodeRoute
   '/report/$token': typeof ReportTokenRoute
   '/_authenticated/admin/approvals': typeof AuthenticatedAdminApprovalsRoute
@@ -635,6 +644,7 @@ export interface FileRouteTypes {
     | '/approve/$token'
     | '/join/$token'
     | '/problem/$token'
+    | '/quote/$token'
     | '/referral/$code'
     | '/report/$token'
     | '/admin/approvals'
@@ -698,6 +708,7 @@ export interface FileRouteTypes {
     | '/approve/$token'
     | '/join/$token'
     | '/problem/$token'
+    | '/quote/$token'
     | '/referral/$code'
     | '/report/$token'
     | '/admin/approvals'
@@ -762,6 +773,7 @@ export interface FileRouteTypes {
     | '/approve/$token'
     | '/join/$token'
     | '/problem/$token'
+    | '/quote/$token'
     | '/referral/$code'
     | '/report/$token'
     | '/_authenticated/admin/approvals'
@@ -799,6 +811,7 @@ export interface RootRouteChildren {
   ApproveTokenRoute: typeof ApproveTokenRoute
   JoinTokenRoute: typeof JoinTokenRoute
   ProblemTokenRoute: typeof ProblemTokenRoute
+  QuoteTokenRoute: typeof QuoteTokenRoute
   ReferralCodeRoute: typeof ReferralCodeRoute
   ReportTokenRoute: typeof ReportTokenRoute
   ApiPublicJobsBillingDailyRoute: typeof ApiPublicJobsBillingDailyRoute
@@ -1097,6 +1110,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProblemTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/quote/$token': {
+      id: '/quote/$token'
+      path: '/quote/$token'
+      fullPath: '/quote/$token'
+      preLoaderRoute: typeof QuoteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/referral/$code': {
       id: '/referral/$code'
       path: '/referral/$code'
@@ -1363,6 +1383,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApproveTokenRoute: ApproveTokenRoute,
   JoinTokenRoute: JoinTokenRoute,
   ProblemTokenRoute: ProblemTokenRoute,
+  QuoteTokenRoute: QuoteTokenRoute,
   ReferralCodeRoute: ReferralCodeRoute,
   ReportTokenRoute: ReportTokenRoute,
   ApiPublicJobsBillingDailyRoute: ApiPublicJobsBillingDailyRoute,
