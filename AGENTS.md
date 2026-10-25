@@ -42,7 +42,7 @@
 - job_sheets embeds use users!job_sheets_assigned_technician_id_fkey; two users FKs.
 - Signing batches: creator-owned, finalized transactionally; store delivery before sending via shared PDF builder; atomic, retry-safe delivery.
 - Offline: account-scoped IndexedDB/optimistic RPC/PWA; confirmed discard atomically removes only that account/sheet draft/photos/cache; retain inaccessible drafts.
-- Master content is immutable except names; snapshots preserve history. document-blocks pricing is shared by masters/tiers (JSON inputs plus annual totals); paired checklist rows retain specs. trade-association matches company synonyms for selectors/pricing.
+- Master content immutable except names; document-blocks pricing shared by masters/tiers; trade-association synonyms drive selectors/pricing.
 - Platform authority is protected separately in user_roles; HQ uses a narrow directory RPC, not tenant reads; 
 - Plan access: DB write guards + plan-features.ts menu gating; legacy stays on. RFQ rules in lift-rfq.ts; 
 - Client reports use immutable DB-built safe snapshots and hashed expiring/revocable links; photo paths stay server-only; 
@@ -53,7 +53,7 @@
 - Leave/profile/clock-out handover rules use tested field-rules.ts plus guard_leave_decision; UI and DB agree.
 - HQ merges registry/product/catalog module keys; catalog writes register keys atomically. Owner-only toggles; isStorageAddon separates storage packs.
 - Attention: guarded atomic pending RPCs/separate actions; never edit signed content; 
-- Dual-track rota separates supervisor config from payroll; same-primary-skill recipient acceptance applies swaps atomically with its own audit; legacy swaps retain independent review.
+- Dual-track rota separates supervisor config from payroll; same-primary-skill swaps apply atomically with audit.
 - Equipment QR: private routes/RLS; hashed revocable public lookup exposes only reference/category; reports stay bounded/throttled; private technical/client data.
 - Deletion shares record-deletion/DeleteVisit; office sheet and manager visit RLS apply; visit deletion keeps sheets, client-report FKs retain shared evidence.
 - QR dispatch closes only its matching report after visit insert, refreshes attention and clears URL state; failures warn against duplicate dispatch.
