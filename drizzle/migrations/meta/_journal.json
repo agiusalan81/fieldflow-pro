@@ -827,6 +827,13 @@
       "when": 1792907424544,
       "tag": "0117_client_workspace_store_code",
       "breakpoints": true
+    },
+    {
+      "idx": 118,
+      "version": "7",
+      "when": 1792912865265,
+      "tag": "0118_expense_details_and_primary_skills",
+      "breakpoints": true
     }
   ]
 }
