@@ -4678,6 +4678,7 @@ export type Database = {
           company_id: string
           created_at: string
           created_by: string
+          field_details: Json
           hazards: string[]
           id: string
           labour_hours: number | null
@@ -4695,6 +4696,7 @@ export type Database = {
           survey_purpose: string
           technicians: number | null
           track: string
+          trade_review: Json
           updated_at: string
           urgency: string
           working_window: string | null
@@ -4706,6 +4708,7 @@ export type Database = {
           company_id?: string
           created_at?: string
           created_by?: string
+          field_details?: Json
           hazards?: string[]
           id?: string
           labour_hours?: number | null
@@ -4723,6 +4726,7 @@ export type Database = {
           survey_purpose?: string
           technicians?: number | null
           track?: string
+          trade_review?: Json
           updated_at?: string
           urgency?: string
           working_window?: string | null
@@ -4734,6 +4738,7 @@ export type Database = {
           company_id?: string
           created_at?: string
           created_by?: string
+          field_details?: Json
           hazards?: string[]
           id?: string
           labour_hours?: number | null
@@ -4751,6 +4756,7 @@ export type Database = {
           survey_purpose?: string
           technicians?: number | null
           track?: string
+          trade_review?: Json
           updated_at?: string
           urgency?: string
           working_window?: string | null
