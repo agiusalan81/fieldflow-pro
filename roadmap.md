@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] HQ layer tabs, domain groups and side-by-side tier/pack editing; separate Core customer quoting from vertical lift RFQs; verify tests and live controls
 - [ ] Core customer estimates/proposals: editor, totals, PDF, issued snapshots, secure links, email action and atomic conversion added; conversion UI parked until billing carry-forward is connected. Remaining: authenticated E2E (requesting account revoked; active test account approval needed), email delivery verification, DB regression tests, billing integration and final pack-boundary review
 - [x] Document updates: both-copy defaults, company trade/equipment choices and synonyms, draft/tier lift calculator, client sample PDF and safe rename; signed-in save/reload verified at €765, laptop/phone inspected, fixtures removed, 47 tests passed
 - [x] Document draft rows: add/remove/reorder preserving specs; optional independent lift stops/doors/car-access prices and compound/itemised client display; admin save/reload and technician price exclusion verified, mobile clipping fixed, 21 tests passed, fixtures removed

@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 /** Features Platform HQ can include in plans/packs or switch on/off per company. */
 export const PLAN_FEATURES = [
-  { key: "core", label: "Core: job sheets, schedule, clients, team & customer quotes" },
+  { key: "core", label: "Operations: job sheets, schedule, clients & team" },
+  { key: "customer_quotes", label: "Customer quoting & simple proposals" },
   { key: "client_management", label: "Client management: sites & multiple contacts" },
   { key: "tracking", label: "Shift location & live map" },
   { key: "fleet_management", label: "Fleet Management: routes, mileage & fuel" },
@@ -11,10 +12,10 @@ export const PLAN_FEATURES = [
   { key: "receipts", label: "Receipt scan to PDF" },
   { key: "technical_library", label: "Technical library" },
   { key: "standby", label: "On-call rota & swaps" },
-  { key: "estimates", label: "Supplier RFQ & estimate tracking" },
+  { key: "estimates", label: "Lift supplier RFQ & estimate tracking" },
   { key: "site_surveys", label: "Site surveys: field inspections & reviewer pricing" },
   { key: "qs_pricing", label: "Pricing & quantity surveying: price lists, BoQ, as-built QS" },
-  { key: "supplier_email", label: "Supplier emails & reminders" },
+  { key: "supplier_email", label: "Lift supplier emails & reminders" },
   { key: "contracts", label: "Contracts & renewals" },
   { key: "payroll", label: "Payroll: hours & international gross earnings" },
   { key: "safety", label: "Safety & faults" },
@@ -39,6 +40,7 @@ export type PlanFeature = (typeof PLAN_FEATURES)[number]["key"];
 /** Plain-language overview of what each module unlocks, shown in HQ. */
 export const MODULE_DESCRIPTIONS: Record<string, string> = {
   core: "Job sheets, schedule, dispatch, clients, sites, equipment, team, customer estimates and simple proposals. Always included.",
+  customer_quotes: "Core customer estimates and simple proposals: labour/material line items, discounts, VAT, branded PDFs and secure sharing. Separate from internal lift supplier RFQs; included with Core.",
   client_management: "Staff-managed sites, multiple contacts and document delivery preferences. Included from Plus upwards; the customer portal is a separate optional pack.",
   tracking: "Technicians share location only while clocked in; managers see them on a live map.",
   fleet_management: "Vehicle list, daily routes and replay, mileage and fuel cost estimates.",
@@ -47,7 +49,7 @@ export const MODULE_DESCRIPTIONS: Record<string, string> = {
   technical_library: "Private manuals and drawings by trade, maker and model, with AI search over approved pages.",
   standby: "Independent technician and supervisor on-call rotas on one calendar, contact access and role-matched swaps with manager approval.",
   site_surveys: "Universal site surveys captured in the field, routed to an office reviewer and priced with the price generator. Sold separately from Estimates and can be bundled in packs.",
-  estimates: "Internal supplier requests for quotation and quote follow-up. Basic customer estimates and simple proposals are included in Core.",
+  estimates: "Vertical lift supplier RFQs, technical specifications and internal estimate follow-up within the Lifts & Escalators suite. Supplier prices never enter customer documents automatically.",
   qs_pricing: "Company price lists, bills of quantities and as-built quantity surveying.",
   supplier_email: "Email suppliers from estimates and send automatic follow-up reminders.",
   contracts: "Maintenance agreements, contract tiers and renewal reminders.",
