@@ -1,0 +1,2 @@
+ALTER TABLE public.job_sheets ADD COLUMN IF NOT EXISTS maintenance_notes text;
+COMMENT ON COLUMN public.job_sheets.maintenance_notes IS 'Technician maintenance notes; shown on the customer job sheet, PDF and email.';
