@@ -2,7 +2,7 @@ import { usePlanFeatures } from "@/lib/plan-features";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Copy, Eye, Archive, Plus, Trash2, Paperclip, Pencil, Download } from "lucide-react";
+import { Camera, Copy, Eye, Archive, Plus, Trash2, Paperclip, Pencil, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,6 @@ import { AUDIENCES, TECH_CHECK_OPTIONS, parseAudience, parseSections, sectionsFo
 import { BILLING_CYCLES, DEFAULT_LIFT_PRICING, audienceCopyRows, stepPrice, specChoices, checklistRows, extrasFor, hasCommercial, parseCommercial, parseExtras, parseFieldSpecs, specShows, type BlockAudience, type Commercial, type Extra, type FieldSpec } from "@/lib/document-blocks";
 import { ChecklistRowEditor } from "@/components/checklist-row-editor";
 import { RichText } from "@/components/rich-text";
-import { Camera } from "lucide-react";
 import { useCompanyRules } from "@/lib/company";
 import { companyHasLiftTrade, isLiftTrade } from "@/lib/trade-association";
 import { CompanyTradeSelect } from "@/components/company-trade-select";

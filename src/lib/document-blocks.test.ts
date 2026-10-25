@@ -93,3 +93,29 @@ describe("checklist row identity", () => {
     expect(moved.filter((_, i) => i !== 1)).toEqual([rows[1]]);
   });
 });
+
+import { audienceCopyRows, resolveChecklistValue, stepPrice } from "./document-blocks";
+import { parseRich, stripRich, wrapSelection } from "./rich-text";
+describe("checklist copies and reports", () => {
+  it("unanswered steps report as N/A", () => {
+    expect(resolveChecklistValue(undefined)).toBe("N/A");
+    expect(resolveChecklistValue("")).toBe("N/A");
+    expect(resolveChecklistValue(false)).toBe("N/A");
+    expect(resolveChecklistValue("Pass")).toBe("Pass");
+  });
+  it("client step price prints only when positive", () => {
+    expect(stepPrice({ ...DEFAULT_SPEC, price: 45 })).toBe("€45.00");
+    expect(stepPrice(DEFAULT_SPEC)).toBeNull();
+    expect(parseFieldSpecs([{ price: -3, photo: "yes" }], 1)[0]).toEqual(DEFAULT_SPEC);
+  });
+  it("technician copy drops client-only rows", () => {
+    const r = audienceCopyRows(["A", "B"], [{ audience: "client" }, { audience: "both", photo: true }], "technician");
+    expect(r.items).toEqual(["B"]);
+    expect(r.specs[0]?.photo).toBe(true);
+  });
+  it("formatting markers parse and strip", () => {
+    expect(parseRich("**Brake** [red]critical[/red]")).toEqual([{ text: "Brake", bold: true }, { text: " " }, { text: "critical", color: "red" }]);
+    expect(stripRich("__Doors__ *ok*")).toBe("Doors ok");
+    expect(wrapSelection("abc", 1, 2, "**").text).toBe("a**b**c");
+  });
+});
