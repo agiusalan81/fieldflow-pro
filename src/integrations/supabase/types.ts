@@ -776,6 +776,8 @@ export type Database = {
           standby_rotation_days: number
           standby_start: string
           sunday_rate: number
+          survey_reviewer_mode: string
+          survey_reviewer_user_id: string | null
           technical_structure: Json
           terms: Json
           theme: Json
@@ -787,6 +789,8 @@ export type Database = {
           work_days: number[]
           work_end: string
           work_start: string
+          zoho_sync_direct: boolean
+          zoho_sync_supplier: boolean
         }
         Insert: {
           after_hours_rate?: number
@@ -824,6 +828,8 @@ export type Database = {
           standby_rotation_days?: number
           standby_start?: string
           sunday_rate?: number
+          survey_reviewer_mode?: string
+          survey_reviewer_user_id?: string | null
           technical_structure?: Json
           terms?: Json
           theme?: Json
@@ -835,6 +841,8 @@ export type Database = {
           work_days?: number[]
           work_end?: string
           work_start?: string
+          zoho_sync_direct?: boolean
+          zoho_sync_supplier?: boolean
         }
         Update: {
           after_hours_rate?: number
@@ -872,6 +880,8 @@ export type Database = {
           standby_rotation_days?: number
           standby_start?: string
           sunday_rate?: number
+          survey_reviewer_mode?: string
+          survey_reviewer_user_id?: string | null
           technical_structure?: Json
           terms?: Json
           theme?: Json
@@ -883,6 +893,8 @@ export type Database = {
           work_days?: number[]
           work_end?: string
           work_start?: string
+          zoho_sync_direct?: boolean
+          zoho_sync_supplier?: boolean
         }
         Relationships: [
           {
@@ -4609,6 +4621,115 @@ export type Database = {
           },
         ]
       }
+      site_surveys: {
+        Row: {
+          access_notes: string | null
+          client_id: string | null
+          company_id: string
+          created_at: string
+          created_by: string
+          hazards: string[]
+          id: string
+          labour_hours: number | null
+          location_ref: string | null
+          materials: Json
+          other_items: Json
+          pricing: Json
+          recommended_action: string | null
+          reviewed_at: string | null
+          reviewer_id: string | null
+          scope_summary: string | null
+          site_id: string | null
+          status: string
+          submitted_at: string | null
+          survey_purpose: string
+          technicians: number | null
+          track: string
+          updated_at: string
+          urgency: string
+          working_window: string | null
+          zoho_sync: boolean | null
+        }
+        Insert: {
+          access_notes?: string | null
+          client_id?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          hazards?: string[]
+          id?: string
+          labour_hours?: number | null
+          location_ref?: string | null
+          materials?: Json
+          other_items?: Json
+          pricing?: Json
+          recommended_action?: string | null
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          scope_summary?: string | null
+          site_id?: string | null
+          status?: string
+          submitted_at?: string | null
+          survey_purpose?: string
+          technicians?: number | null
+          track?: string
+          updated_at?: string
+          urgency?: string
+          working_window?: string | null
+          zoho_sync?: boolean | null
+        }
+        Update: {
+          access_notes?: string | null
+          client_id?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          hazards?: string[]
+          id?: string
+          labour_hours?: number | null
+          location_ref?: string | null
+          materials?: Json
+          other_items?: Json
+          pricing?: Json
+          recommended_action?: string | null
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          scope_summary?: string | null
+          site_id?: string | null
+          status?: string
+          submitted_at?: string | null
+          survey_purpose?: string
+          technicians?: number | null
+          track?: string
+          updated_at?: string
+          urgency?: string
+          working_window?: string | null
+          zoho_sync?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_surveys_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_surveys_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_surveys_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sites: {
         Row: {
           address: string | null
@@ -4617,6 +4738,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          store_code: string | null
         }
         Insert: {
           address?: string | null
@@ -4625,6 +4747,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          store_code?: string | null
         }
         Update: {
           address?: string | null
@@ -4633,6 +4756,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          store_code?: string | null
         }
         Relationships: [
           {
@@ -5335,6 +5459,10 @@ export type Database = {
       platform_subscription_module_access: {
         Args: { _module: string; _subscription: string }
         Returns: boolean
+      }
+      portal_set_site_store_code: {
+        Args: { _code: string; _site: string }
+        Returns: undefined
       }
       read_client_report: { Args: { _hash: string }; Returns: Json }
       read_proposal_approval: { Args: { _token: string }; Returns: Json }
