@@ -1,8 +1,9 @@
 # Roadmap
-- [ ] Expense date/amount/searchable inline categories and silent field review states
-- [ ] Job-sheet site ID, company-controlled history and open-job required skills
-- [ ] Administration approvals hub with exact review links and unlisted asset suggestions
-- [ ] Neutral departure coordination and primary-skill recipient-accepted standby swaps
+- [x] Expense date/amount/searchable inline categories and silent field states; real save/read-back verified, temporary scan/row cleaned
+- [x] Job-sheet Branch/Store ID in form/list/print/email; 1/3/6/12-month completed history with RLS; required skills labelled
+- [x] Administration approvals hub and exact category/equipment review links; unlisted equipment entry and office catalogue action
+- [x] Neutral departure coordination; manager-assigned primary skills and atomic matching-role/skill recipient acceptance
+- [ ] Live standby swap regression (blocked: protected helper execution unavailable to sandbox test role); rollback fixture retained
 - [x] Phase 1 universal site surveys: delegated reviewer, bell alerts, office price generator, per-track Zoho defaults; Branch/Store ID on sites, contacts, previews and portal
 - [ ] Phase 2: lift supplier RFQ dispatch/quarantine/reminders and formal client estimate template from price generator
 - [x] Same-device sheet saves serialized; overlap reproduced then fixed, regression tests retain newer edits and external conflicts (live write verification blocked: requesting account has revoked company access)
