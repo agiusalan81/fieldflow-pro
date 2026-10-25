@@ -1,0 +1,7 @@
+import { Body, Button, Container, Head, Heading, Html, Preview, Text } from '@react-email/components';
+import type { TemplateEntry } from './registry';
+type Props = { company?: string; name?: string; title?: string; reference?: string; total?: string; validUntil?: string; documentUrl?: string };
+function CustomerQuote({ company = '', name = '', title = '', reference = '', total = '', validUntil = '', documentUrl = '' }: Props) {
+  return <Html><Head /><Preview>{company}: {title}</Preview><Body style={{ backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }}><Container style={{ maxWidth: '560px', padding: '24px' }}><Heading>{company}</Heading><Text>Hello {name},</Text><Text>Your requested quote <strong>{reference}</strong> for <strong>{title}</strong> is ready.</Text><Text>Total: {total}<br />Valid until: {validUntil}</Text><Button href={documentUrl} style={{ backgroundColor: '#14213d', color: '#ffffff', padding: '12px 20px', borderRadius: '6px' }}>View quote and download PDF</Button></Container></Body></Html>;
+}
+export const template = { component: CustomerQuote, subject: d => `${d['company'] ?? ''} — Quote ${d['reference'] ?? ''}`, displayName: 'Customer quote', previewData: { company: 'Example company', name: 'Customer', title: 'Scheduled repair', reference: 'Q-1001', total: '€212.40', validUntil: '2026-11-25', documentUrl: 'https://fieldbridgeapp.com' } } satisfies TemplateEntry;

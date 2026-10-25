@@ -897,6 +897,13 @@
       "when": 1792945053678,
       "tag": "0127_lift_pack_and_asset_limits",
       "breakpoints": true
+    },
+    {
+      "idx": 128,
+      "version": "7",
+      "when": 1792947454470,
+      "tag": "0128_core_customer_quotes",
+      "breakpoints": true
     }
   ]
 }
