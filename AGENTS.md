@@ -69,5 +69,5 @@
 - Delivery uses client_message_recipients; preferences choose recipients, not unsupported channel delivery.
 - Own-shift RPC captures one-time GPS; failure never blocks clock-out; history distinguishes action fixes from breadcrumbs.
 - Bespoke requests freeze on submit, stay private, never charge/activate; immediate setup is owner-only.
-- Surveys: site_surveys + guard_site_survey (office-only status/pricing) + tested survey-pricing.ts; supplier quotes reach clients/Zoho only via the price generator; trade packs layer on top.
+- Surveys: guard_site_survey protects manager pricing/trade_review; field_details atomically snapshots contacts/sites/trade observations without changing catalogues; field reviewers are active supervisors; supplier quotes stay internal.
 - Sites render via site-display.ts; portal edits only store_code. Approvals use category/object links; completed field-sheet history is company-controlled restrictive RLS.
