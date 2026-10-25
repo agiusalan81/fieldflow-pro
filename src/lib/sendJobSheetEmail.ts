@@ -181,7 +181,7 @@ async function prepareSheet(supabase: AuthClient, sheetId: string, recipients?: 
     const site = sheet.sites;
     const asset = sheet.assets as { reference_number: string } | null;
     const company = (sheet.companies as { name: string } | null)?.name ?? "";
-    const address = site ? formatSiteDisplay({...site,address:site.address||client?.billing_address}) : client?.billing_address??"";
+    const address = site ? formatSiteDisplay({...site,address:site.address||client?.billing_address||null}) : client?.billing_address??"";
     const date = new Date(sheet.created_at).toLocaleDateString("en-GB");
 
     const [{ data: logs }, { data: parts }] = await Promise.all([

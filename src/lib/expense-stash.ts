@@ -28,7 +28,7 @@ export async function syncExpenses(userId:string){
  if(upload.error&&!/already exists|Duplicate/i.test(upload.error.message))throw upload.error;
   if(attach_to){const linked=await supabase.from('jobsheet_receipts').select('id').eq('expense_id',row.id).eq('jobsheet_id',attach_to).maybeSingle();if(linked.error)throw linked.error;if(!linked.data)await attachExpense(row,attach_to,userId);}
  await (await db()).delete('receipts',row.id);
- }catch(e){await (await db()).put('receipts',{...receipt,error:e instanceof Error?e.message:'Upload failed'});}
+ }catch(e){const saved=await(await db()).get('receipts',receipt.id) as ExpenseDraft|undefined;await (await db()).put('receipts',{...(saved??receipt),error:e instanceof Error?e.message:'Upload failed'});}
  }
  }finally{running.delete(userId);changed();}
 }
