@@ -1,4 +1,6 @@
 # Roadmap
+- [x] Document Studio editor: bold/italic/underline/colour toolbar, step client prices, per-step photos, technician notes/photo box, N/A default rule, standalone tech/client copies and Bronze–Platinum duplicates, scroll-following preview; 21 tests pass
+- [ ] Document Studio 3-step upload wizard redesign and Source Uploads tab; carry step photos/notes into live job sheets
 - [x] HQ layer/domain tabs and side-by-side tier/pack matrix plus grouped editor; separate Core customer_quotes display/access alias and vertical lift RFQ write guard; 32 tests pass, build OK, live schema verified
 - [ ] HQ layer live save/read-back and SQL rollback regression (blocked: requesting account company access revoked; sandbox test role cannot update platform_subscriptions)
 - [ ] Core customer estimates/proposals: editor, totals, PDF, issued snapshots, secure links, email action and atomic conversion added; conversion UI parked until billing carry-forward is connected. Remaining: authenticated E2E (requesting account revoked; active test account approval needed), email delivery verification, DB regression tests, billing integration and final pack-boundary review

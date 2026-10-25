@@ -1,4 +1,5 @@
-import { BILLING_CYCLES, checklistRows, commercialPriceLines, commercialTotal, extrasFor, hasCommercial, parseCommercial, parseExtras, specShows, specChoices } from "./document-blocks";
+import { BILLING_CYCLES, checklistRows, commercialPriceLines, commercialTotal, extrasFor, hasCommercial, stepPrice, parseCommercial, parseExtras, specShows, specChoices } from "./document-blocks";
+import { stripRich } from "./rich-text";
 import { parseSections, sectionsFor, type Audience } from "./document-audience";
 
 export type MasterDocumentContent = { name: string; trade?: string; body: string; kind: string; items: string[]; sections?: unknown; field_specs?: unknown; commercial?: unknown; extras?: unknown };
@@ -8,8 +9,10 @@ export function masterDocumentLines(doc: MasterDocumentContent, view: Audience):
   const lines = [doc.name, [doc.trade, view === "client" ? "Client copy" : "Technician copy"].filter(Boolean).join(" · "), doc.body];
   for (const section of sectionsFor(parseSections(doc.sections), view)) lines.push(section.title, section.body);
   if (doc.kind === "checklist") for (const row of checklistRows(doc.items, doc.field_specs).filter(row => row.item.trim() && specShows(row.spec, view))) {
-    lines.push(view === "client" ? `• ${row.item}` : `${row.item}   ${row.spec.control === "reading" ? `________ ${row.spec.unit}` : row.spec.control === "passfail" ? "Pass / Fail / N/A" : row.spec.control === "choice" ? specChoices(row.spec).join(" / ") : "[   ]"}`);
+    const item = stripRich(row.item), price = stepPrice(row.spec);
+    lines.push(view === "client" ? `• ${item}${price ? `   ${price}` : ""}` : `${item}   ${row.spec.control === "reading" ? `________ ${row.spec.unit}` : row.spec.control === "passfail" ? "Pass / Fail / N/A" : row.spec.control === "choice" ? specChoices(row.spec).join(" / ") : "[   ]"}${row.spec.photo ? "   [Photo]" : ""}`);
   }
+  if (view === "technician") lines.push("Technician notes & observations", "______________________________________________________________\n______________________________________________________________\n______________________________________________________________", "Unticked steps are reported as N/A.");
   for (const extra of extrasFor(parseExtras(doc.extras), view)) lines.push(`${extra.label}: ${extra.value}`);
   const c = parseCommercial(doc.commercial);
   if (view === "client" && c.showOnClient && hasCommercial(c)) {
