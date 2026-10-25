@@ -3800,6 +3800,38 @@ export type Database = {
           },
         ]
       }
+      platform_module_roadmap: {
+        Row: {
+          module: string
+          product_id: string
+          release_target: string
+          targeted: boolean
+          updated_at: string
+        }
+        Insert: {
+          module: string
+          product_id: string
+          release_target?: string
+          targeted?: boolean
+          updated_at?: string
+        }
+        Update: {
+          module?: string
+          product_id?: string
+          release_target?: string
+          targeted?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_module_roadmap_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "platform_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_outreach_templates: {
         Row: {
           body: string

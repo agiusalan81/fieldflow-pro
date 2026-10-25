@@ -1,4 +1,5 @@
 import { AttentionOverview } from "@/components/attention-overview";
+import { ApprovalsBanner } from "@/components/approvals-banner";
 import { LiveLocations } from "@/components/live-locations";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -350,8 +351,8 @@ function MyHours({ profile }: { profile: Profile }) {
 }
 
 function OfficeOverview({ profile }: { profile: Profile }) {
-  return <AppShell title={profile.companies?.name ?? "Overview"} actions={<Button asChild size="sm" variant="outline"><Link to="/company">Company settings</Link></Button>}><div className="mx-auto max-w-5xl space-y-5"><ShiftTracker profile={profile}/><AttentionOverview/></div></AppShell>;
+  return <AppShell title={profile.companies?.name ?? "Overview"} actions={<Button asChild size="sm" variant="outline"><Link to="/company">Company settings</Link></Button>}><div className="mx-auto max-w-5xl space-y-5"><ApprovalsBanner/><ShiftTracker profile={profile}/><AttentionOverview/></div></AppShell>;
 }
 function SupervisorOverview({ profile, switcher }: { profile: Profile; switcher?: ReactNode }) {
-  return <AppShell title="Team attention" actions={switcher}><div className="mx-auto max-w-5xl space-y-5"><ShiftTracker profile={profile}/><AttentionOverview/></div></AppShell>;
+  return <AppShell title="Team attention" actions={switcher}><div className="mx-auto max-w-5xl space-y-5"><ApprovalsBanner/><ShiftTracker profile={profile}/><AttentionOverview/></div></AppShell>;
 }
