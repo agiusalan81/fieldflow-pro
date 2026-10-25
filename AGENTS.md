@@ -48,12 +48,12 @@
 - Client reports use immutable DB-built safe snapshots and hashed expiring/revocable links; photo paths stay server-only; 
 - Sheet safety/checklist snapshots are checked at completion; safety keys share checklist_values; offline safety.
 - Clock-in shares plate/consent helpers. Fleet appends active-shift GPS with module/tenant guards; mileage excludes jitter/gaps; 
-- Receipts: account-scoped offline queues/private storage, HQ-gated writes, immutable attachments and original-page exports. Post-signature notes append privately, excluded from client projections.
+- ExpenseCapture shares date/amount/category across stash/sheets; offline queues retain category/attachment intent. Private receipts stay HQ-gated and immutable; post-signature notes never reach clients.
 - Technical library: private storage/RLS; publish checks real/displayed supervisor/superuser; AI reads approved pages as caller; 
 - Leave/profile/clock-out handover rules use tested field-rules.ts plus guard_leave_decision; UI and DB agree.
 - HQ merges registry/product/catalog module keys; catalog writes register keys atomically. Owner-only toggles; isStorageAddon separates storage packs.
 - Attention: guarded atomic pending RPCs/separate actions; never edit signed content; 
-- Dual-track rota keeps supervisor config separate from technician payroll; swaps need role-matched independent approval; leave impact/blackouts remain DB-validated.
+- Dual-track rota separates supervisor config from payroll; same-primary-skill recipient acceptance applies swaps atomically with its own audit; legacy swaps retain independent review.
 - Equipment QR: private routes/RLS; hashed revocable public lookup exposes only reference/category; reports stay bounded/throttled; private technical/client data.
 - Deletion shares record-deletion/DeleteVisit; office sheet and manager visit RLS apply; visit deletion keeps sheets, client-report FKs retain shared evidence.
 - QR dispatch closes only its matching report after visit insert, refreshes attention and clears URL state; failures warn against duplicate dispatch.
@@ -70,4 +70,4 @@
 - Own-shift RPC captures one-time GPS; failure never blocks clock-out; history distinguishes action fixes from breadcrumbs.
 - Bespoke requests freeze on submit, stay private, never charge/activate; immediate setup is owner-only.
 - Surveys: site_surveys + guard_site_survey (office-only status/pricing) + tested survey-pricing.ts; supplier quotes reach clients/Zoho only via the price generator; trade packs layer on top.
-- Sites render via site-display.ts; portal edits only store_code via portal_set_site_store_code.
+- Sites render via site-display.ts; portal edits only store_code. Approvals use category/object links; completed field-sheet history is company-controlled restrictive RLS.
