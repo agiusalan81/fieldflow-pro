@@ -77,7 +77,7 @@ function ObservationPhotos({ companyId, surveyId, observation, disabled, onChang
 export function SurveyObservations({ details, onChange, disabled, companyId, surveyId }: { details: SurveyDetails; onChange: (value: SurveyDetails) => void; disabled: boolean; companyId: string; surveyId: string }) {
   const patch = (id: string, p: Partial<SurveyObservation>) => onChange({ ...details, observations: details.observations.map(o => o.id === id ? { ...o, ...p } : o) });
   return <section className="space-y-4">
-    <h2 className="font-medium">Room / area observations</h2>
+    <h2 className="font-medium">Room / area observations <span className="text-xs font-normal text-muted-foreground">(optional)</span></h2>
     {groupSurveyObservations(details).map(g => <section key={g.trade} className="space-y-3 border-t pt-3">
       <h3 className="text-sm font-semibold">{g.label}</h3>
       {g.observations.map((o, i) => <div key={o.id} className="space-y-2 rounded-md border bg-card p-3">

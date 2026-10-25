@@ -27,3 +27,9 @@ describe('site display', () => {
   it('prefixes branch ID and address', () => expect(formatSiteDisplay({ name: 'Costa', address: 'Valletta', store_code: '104' })).toBe('[#104] Costa — Valletta'));
   it('falls back to name', () => expect(formatSiteTitle({ name: 'Costa', store_code: '' })).toBe('Costa'));
 });
+
+import { lineTotal } from "./survey-pricing";
+describe("rate units", () => {
+  it("multiplies per-day equipment hire by days", () => { expect(lineTotal({ label: "Scaffold", amount: 120, unit: "day", qty: 3 })).toBe(360); });
+  it("keeps fixed amounts as-is", () => { expect(lineTotal({ label: "Skip", amount: 90, qty: 5 })).toBe(90); });
+});
