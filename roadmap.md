@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Core customer estimates/proposals: line-item pricing, branded PDF/email delivery, acceptance history and atomic accepted-estimate-to-job conversion; preserve internal supplier RFQ and HQ pack boundaries
 - [x] Document updates: both-copy defaults, company trade/equipment choices and synonyms, draft/tier lift calculator, client sample PDF and safe rename; signed-in save/reload verified at €765, laptop/phone inspected, fixtures removed, 47 tests passed
 - [x] Document draft rows: add/remove/reorder preserving specs; optional independent lift stops/doors/car-access prices and compound/itemised client display; admin save/reload and technician price exclusion verified, mobile clipping fixed, 21 tests passed, fixtures removed
 - [x] Survey updates: on-site locations, multiple contacts/email, working windows, multi-trade observations/materials and handling; office/technician save/reload/submission verified, supervisor-only and commercial guards checked, fixtures removed
