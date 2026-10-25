@@ -52,6 +52,8 @@ export function ActionNotifications() {
   const threads=useUnreadThreads(core?p?.id:undefined);
   const manager=!!p&&isManager(p);
   const catsOn=!!p&&on('receipts')&&['admin','superuser','supervisor'].includes(p.role),leaveOn=core&&can('leave_approvals'),problemsOn=core&&manager&&can('pending_works');
+  const surveysOn=!!p&&on('estimates')&&manager;
+  const surveys=useQuery({queryKey:['action-notifications','surveys',p?.id,surveysOn],enabled:surveysOn,refetchInterval:15000,queryFn:async()=>{const r=await supabase.from('site_surveys').select('id,location_ref,reviewer_id').in('status',['submitted','under_review']).or(`reviewer_id.eq.${p!.id},reviewer_id.is.null`).order('submitted_at',{ascending:true}).limit(20);if(r.error)throw r.error;return r.data;}}).data??[];
   const {data}=useQuery({queryKey:['action-notifications',p?.id,core,standby,leaveOn,problemsOn,catsOn],enabled:!!p,refetchInterval:15000,queryFn:async()=>{
     if(!p)return {categories:[] as {id:string;name:string}[],incoming:[] as {id:string}[],approval:[] as {id:string}[],leave:[] as {id:string}[],responses:[] as {id:string}[],problems:[] as {id:string;asset_id:string;problem:string}[]};
     const zero=Promise.resolve({count:0,data:[],error:null});
@@ -67,11 +69,12 @@ export function ActionNotifications() {
   }});
   const chat=threads.reduce((a,t)=>a+t.n,0);
   const problems=data?.problems??[];
-  const count=chat+(data?.incoming.length??0)+(data?.approval.length??0)+(data?.leave.length??0)+(data?.responses.length??0)+problems.length+(data?.categories.length??0);
+  const count=surveys.length+chat+(data?.incoming.length??0)+(data?.approval.length??0)+(data?.leave.length??0)+(data?.responses.length??0)+problems.length+(data?.categories.length??0);
   const [open,setOpen]=useState(false);
   const item="h-auto w-full justify-start py-2";
   return <Popover open={open} onOpenChange={setOpen}><PopoverTrigger asChild><Button variant="ghost" size="icon" className="relative" aria-label={`Pending actions: ${count}`}><Bell className="h-5 w-5"/>{count>0&&<span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] text-destructive-foreground">{count}</span>}</Button></PopoverTrigger><PopoverContent align="end" className="max-h-[70vh] w-80 space-y-2 overflow-y-auto" onClick={(e)=>{if((e.target as HTMLElement).closest('a'))setOpen(false);}}><h2 className="font-medium">Pending actions</h2>{!count?<p className="text-sm text-muted-foreground">Nothing awaiting your attention.</p>:<>
     {threads.map(t=><Button key={t.key} asChild variant="outline" className={item}><Link to="/messages" search={{thread:t.key}}><Row icon={MessageSquare}>{t.name} · {t.n} new</Row></Link></Button>)}
+    {surveys.map(v=><Button key={v.id} asChild variant="outline" className={item}><Link to="/surveys" search={{survey:v.id}}><Row icon={AlertTriangle}>Site survey to review{v.location_ref?`: ${v.location_ref}`:''}{v.reviewer_id?' (assigned to you)':''}</Row></Link></Button>)}
     {problems.map(r=><Button key={r.id} asChild variant="outline" className={item}><Link to="/admin/jobs" search={{new:true,assetId:r.asset_id,problemId:r.id}}><Row icon={AlertTriangle}>Equipment problem: {r.problem}</Row></Link></Button>)}
     {data?.categories.map(c=><Button key={c.id} asChild variant="outline" className={item}><Link to="/expenses" search={{category:c.id}}><Row icon={AlertTriangle}>Expense category to approve: {c.name}</Row></Link></Button>)}
     {data?.incoming.map(s=><Button key={s.id} asChild variant="outline" className={item}><Link to="/standby" search={{swap:s.id}}><Row icon={CalendarClock}>On-call swap — Accept, Decline or Snooze</Row></Link></Button>)}
