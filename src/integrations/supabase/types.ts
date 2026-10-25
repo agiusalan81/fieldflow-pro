@@ -1932,6 +1932,7 @@ export type Database = {
           status: Database["public"]["Enums"]["job_status"]
           technician_name: string | null
           travel_start_time: string | null
+          unlisted_equipment: string | null
           updated_at: string
           visit_outcome: string
           work_end_time: string | null
@@ -1995,6 +1996,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["job_status"]
           technician_name?: string | null
           travel_start_time?: string | null
+          unlisted_equipment?: string | null
           updated_at?: string
           visit_outcome?: string
           work_end_time?: string | null
@@ -2058,6 +2060,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["job_status"]
           technician_name?: string | null
           travel_start_time?: string | null
+          unlisted_equipment?: string | null
           updated_at?: string
           visit_outcome?: string
           work_end_time?: string | null
