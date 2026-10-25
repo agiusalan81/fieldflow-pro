@@ -83,6 +83,7 @@ type Status = { state?: string; modules?: { name: string; enabled: boolean }[] |
 
 /** Feature is on unless the company's plan lists it and it is switched off. Companies without a plan keep everything. */
 export function featureOn(status: Status | undefined, key: string) {
+  if (key === "customer_quotes") return featureOn(status, "core");
   if (!status || status.state === "legacy") return true;
   const m = status.modules?.find((x) => x.name === key);
   return m ? m.enabled : true;
@@ -102,6 +103,7 @@ export function usePlanFeatures(enabled = true) {
 
 /** HQ display choices for locked modules: hide entirely (e.g. grandfathered tenants) or mark as Coming soon. */
 export function lockedVisibility(status: Status | undefined, key: string) {
+  if (key === "customer_quotes") return lockedVisibility(status, "core");
   const comingSoon = !!status?.coming_soon_modules?.includes(key);
   const hidden = !comingSoon && (!!status?.hide_locked_modules || !!status?.hidden_modules?.includes(key));
   return { hidden, comingSoon };
