@@ -1,5 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { formatSiteTitle } from "@/lib/site-display";
+import { useCompanyRules } from "@/lib/company";
+import { sheetWithinHistory } from "@/lib/sheet-history";
 import { MonthlySheets } from "@/components/monthly-sheets";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -34,6 +37,7 @@ export const Route = createFileRoute("/_authenticated/sheets/")({ staticData: { 
 function SheetsPage() {
   const { data: profile, isPreview } = usePreviewProfile();
   const qc = useQueryClient();
+  const {data:company}=useCompanyRules();
   const navigate = useNavigate();
   const { tab = "open" } = Route.useSearch();
   const [q, setQ] = useState("");
@@ -43,7 +47,7 @@ function SheetsPage() {
   const [to, setTo] = useState("");
 
   const { data: sheets = [] } = useQuery({
-    queryKey: ["sheets", profile?.id],
+    queryKey: ["sheets", profile?.id,company?.fieldSheetHistoryMonths],
     enabled: !!profile,
     queryFn: async () => {
       if (!profile) return [];
@@ -52,7 +56,7 @@ function SheetsPage() {
       const assistingJobs = (assignments.data ?? []).map(j => j.id);
       let query = supabase
         .from("job_sheets")
-        .select("id, jobsheet_number, status, signature_data, created_at, updated_at, reported_fault, is_installation, is_tech_assistance, is_maintenance, assigned_technician_id, client_id, clients(name), sites(name), assets(reference_number)")
+        .select("id, jobsheet_number, status, signature_data, created_at, updated_at, reported_fault, is_installation, is_tech_assistance, is_maintenance, assigned_technician_id, client_id, clients(name), sites(name,address,store_code), assets(reference_number)")
         .order("updated_at", { ascending: false });
       query = assistingJobs.length ? query.or(`assigned_technician_id.eq.${profile.id},job_id.in.(${assistingJobs.join(",")})`) : query.eq("assigned_technician_id", profile.id);
       const { data, error } = await query;
@@ -63,8 +67,8 @@ function SheetsPage() {
   const clients = Array.from(new Map(sheets.map((s) => [s.client_id, s.clients?.name ?? ""])).entries());
   const filtered = sheets.filter((s) => {
     const d = s.created_at.slice(0, 10);
-    return (client === "all" || s.client_id === client) && (!from || d >= from) && (!to || d <= to) && matchesSheetType(s, jobType)
-      && matchesSheetSearch(s.jobsheet_number, [s.clients?.name, s.sites?.name, s.assets?.reference_number, s.reported_fault], q);
+    return (s.status!=="completed"||sheetWithinHistory(s.created_at,company?.fieldSheetHistoryMonths??12)) && (client === "all" || s.client_id === client) && (!from || d >= from) && (!to || d <= to) && matchesSheetType(s, jobType)
+      && matchesSheetSearch(s.jobsheet_number, [s.clients?.name, s.sites?formatSiteTitle(s.sites):undefined, s.assets?.reference_number, s.reported_fault], q);
   });
   const open = filtered.filter((s) => s.status !== "completed");
   const done = filtered.filter((s) => s.status === "completed");
@@ -84,7 +88,7 @@ function SheetsPage() {
           <span className="font-mono text-sm text-primary">#{s.jobsheet_number}</span>
           <StatusBadge status={s.status} />
         </div>
-        <p className="mt-1 truncate font-medium text-foreground">{s.clients?.name}{s.sites?.name ? ` · ${s.sites.name}` : ""}</p>
+        <p className="mt-1 truncate font-medium text-foreground">{s.clients?.name}{s.sites?.name ? ` · ${formatSiteTitle(s.sites)}` : ""}</p>
         <p className="truncate text-xs text-muted-foreground">{s.assets?.reference_number ?? "No lift"} · {s.reported_fault || "No fault noted"} · {new Date(s.created_at).toLocaleDateString()}</p>
       </div>
       <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
@@ -132,7 +136,6 @@ function SheetsPage() {
           <Input className="h-11" type="date" aria-label="From date" value={from} onChange={(e) => setFrom(e.target.value)} />
           <Input className="h-11" type="date" aria-label="To date" value={to} onChange={(e) => setTo(e.target.value)} />
         </div>
-        <div className="flex flex-wrap gap-2">{([["Today",0],["Yesterday",1]] as const).map(([label,back]) => { const d = new Date(); d.setDate(d.getDate()-back); const v = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; return <Button key={label} size="sm" variant={from===v&&to===v?"default":"outline"} onClick={() => { setFrom(v); setTo(v); }}>{label}</Button>; })}{(from||to) && <Button size="sm" variant="ghost" onClick={() => { setFrom(""); setTo(""); }}>Clear dates</Button>}</div>
         {!isPreview && <MonthlySheets sheets={filtered} office={profile?.role === "admin" || profile?.role === "superuser"} />}
         <Tabs value={tab} onValueChange={(v) => navigate({ to: "/sheets", search: v === "done" ? { tab: "done" } : {}, replace: true })}>
           <TabsList className="grid w-full grid-cols-2 sm:w-auto">
