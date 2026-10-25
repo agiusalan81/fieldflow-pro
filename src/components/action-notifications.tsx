@@ -52,7 +52,7 @@ export function ActionNotifications() {
   const threads=useUnreadThreads(core?p?.id:undefined);
   const manager=!!p&&isManager(p);
   const catsOn=!!p&&on('receipts')&&['admin','superuser','supervisor'].includes(p.role),leaveOn=core&&can('leave_approvals'),problemsOn=core&&manager&&can('pending_works');
-  const surveysOn=!!p&&on('estimates')&&manager;
+  const surveysOn=!!p&&on('site_surveys')&&manager;
   const surveys=useQuery({queryKey:['action-notifications','surveys',p?.id,surveysOn],enabled:surveysOn,refetchInterval:15000,queryFn:async()=>{if(!p)return [];const r=await supabase.from('site_surveys').select('id,location_ref,reviewer_id').in('status',['submitted','under_review']).or(`reviewer_id.eq.${p.id},reviewer_id.is.null`).order('submitted_at',{ascending:true}).limit(20);if(r.error)throw r.error;return r.data;}}).data??[];
   const {data}=useQuery({queryKey:['action-notifications',p?.id,core,standby,leaveOn,problemsOn,catsOn],enabled:!!p,refetchInterval:15000,queryFn:async()=>{
     if(!p)return {categories:[] as {id:string;name:string}[],incoming:[] as {id:string}[],approval:[] as {id:string}[],leave:[] as {id:string}[],responses:[] as {id:string}[],problems:[] as {id:string;asset_id:string;problem:string}[]};
