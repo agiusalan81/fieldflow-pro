@@ -111,9 +111,16 @@ function AdminJobs() {
   const open = (id: string) => { saveSheetOrder(listRef.current); return navigate({ to: "/sheets/$sheetId", params: { sheetId: id } }); };
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
 
+  const [equipmentRef,setEquipmentRef]=useState("");
   const confirmApprove = async () => {
     const j = approving;
     if (!j) return;
+    if (!j.assets?.id && j.unlisted_equipment) {
+      if(!equipmentRef.trim()){toast.error('Enter an equipment reference');return;}
+      const r=await supabase.from('assets').insert({company_id:j.company_id,client_id:j.client_id,site_id:j.site_id,reference_number:equipmentRef.trim(),asset_category:j.asset_type==='Other'?j.asset_type_other||'Other':j.asset_type||'Other',serial_number:j.serial_number,custom_attributes:{model:j.lift_model,field_description:j.unlisted_equipment}}).select('id').single();
+      if(r.error){toast.error(r.error.message);return;}
+      // Catalogue addition does not relink or rewrite signed sheet content.
+    }
     if (j.assets?.id) {
       const attrs = { ...((j.assets.custom_attributes ?? {}) as Record<string, unknown>) };
       if (j.lift_model) attrs["model"] = j.lift_model;
@@ -131,7 +138,7 @@ function AdminJobs() {
   };
 
   const {review:focusedReview}=Route.useSearch();
-  useEffect(()=>{if(focusedReview){const found=jobs.find(j=>j.id===focusedReview&&j.requires_admin_approval);if(found)setApproving(found);}},[focusedReview,jobs]);
+  useEffect(()=>{if(focusedReview){const found=jobs.find(j=>j.id===focusedReview&&j.requires_admin_approval);if(found){setApproving(found);setEquipmentRef("");}}},[focusedReview,jobs]);
   const queue = jobs.filter((j) => matchesSheetFilter(j, "admin_queue"));
   const base = jobs.filter((j) => matchesSheetDetails(j, { ...details, initials: staff.find((u) => u.id === details.technician) ? initialsOf(staff.find((u) => u.id === details.technician) ?? { full_name: "" }) : undefined }) && (!mine || j.assigned_technician_id === me?.id) && matchesSheetSearch(j.jobsheet_number, [j.clients?.name, j.users?.full_name, j.assets?.reference_number, j.sites?.name, j.reported_fault], q));
   const list = base.filter((j) => matchesSheetFilter(j, filter));
@@ -288,7 +295,8 @@ function AdminJobs() {
                 <div className="grid grid-cols-3 px-3 py-1.5"><span className="text-muted-foreground">Model</span><span>{String(((approving.assets?.custom_attributes ?? {}) as Record<string, unknown>)["model"] ?? "—")}</span><span className="font-medium">{approving.lift_model || "—"}</span></div>
                 <div className="grid grid-cols-3 px-3 py-1.5"><span className="text-muted-foreground">Serial</span><span>{approving.assets?.serial_number ?? "—"}</span><span className="font-medium">{approving.serial_number || "—"}</span></div>
               </div>
-              {!approving.assets && <p className="text-xs text-muted-foreground">No equipment is linked, so only the approval flag will be cleared.</p>}
+              {!approving.assets&&approving.unlisted_equipment&&<div className="space-y-2"><p>{approving.unlisted_equipment}</p><Label htmlFor="review-equipment-ref">Equipment reference</Label><Input id="review-equipment-ref" maxLength={100} value={equipmentRef} onChange={e=>setEquipmentRef(e.target.value)}/></div>}
+              {!approving.assets&&!approving.unlisted_equipment&&<p className="text-xs text-muted-foreground">No linked equipment; this review records the field details.</p>}
             </div>
           )}
           <DialogFooter>
