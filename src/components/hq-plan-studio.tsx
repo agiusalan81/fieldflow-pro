@@ -3,6 +3,8 @@ import type { Database } from "@/integrations/supabase/types";
 import { PLAN_FEATURES } from "@/lib/plan-features";
 import { Button } from "@/components/ui/button";
 import { isStorageAddon } from "@/lib/hq";
+import { groupModules, sortModules } from "@/lib/module-categories";
+import { Fragment } from "react";
 
 type Catalog = Database["public"]["Tables"]["platform_catalog"]["Row"];
 
@@ -34,14 +36,14 @@ export function HQTierComparison({ catalog, modules, money, onEdit }: {
           <th scope="col" className="sticky left-0 z-20 min-w-52 bg-muted p-3 text-left font-medium shadow-[inset_-1px_0_0_0_var(--color-border)]">Module</th>
           {tiers.map((t) => <th key={t.id} scope="col" className="min-w-28 p-3 text-center font-medium">{t.name}</th>)}
         </tr></thead>
-        <tbody>{modules.map((m) => <tr key={m} className="border-b last:border-b-0">
+        <tbody>{groupModules(modules).map((g) => <Fragment key={g.label}><tr className="border-b bg-muted/60"><th colSpan={tiers.length + 1} scope="colgroup" className="sticky left-0 p-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">{g.label}</th></tr>{g.modules.map((m) => <tr key={m} className="border-b last:border-b-0">
           <th scope="row" className="sticky left-0 z-10 bg-card p-3 text-left font-normal shadow-[inset_-1px_0_0_0_var(--color-border)]">{featureLabel(m)}</th>
           {tiers.map((t) => <td key={t.id} className="p-3 text-center">
             {t.modules.includes(m)
               ? <Check className="mx-auto h-4 w-4 text-brand-amber" aria-label={`${t.name} includes ${featureLabel(m)}`} />
               : <Minus className="mx-auto h-4 w-4 text-muted-foreground/40" aria-label={`${t.name} does not include ${featureLabel(m)}`} />}
           </td>)}
-        </tr>)}</tbody>
+        </tr>)}</Fragment>)}</tbody>
       </table>
     </div>
   </section>;
@@ -68,7 +70,7 @@ export function HQPackBuilder({ catalog, money, onEdit, onNew }: {
         {p.storage_gb > 0 && <p className="text-xs text-muted-foreground">+{p.storage_gb} GB storage</p>}
         <div className="mt-3 flex flex-wrap gap-1.5">
           {p.modules.length === 0 && <span className="text-xs text-muted-foreground">Storage-only pack</span>}
-          {p.modules.map((m) => <span key={m} className="rounded-full bg-muted px-2 py-0.5 text-xs">{featureLabel(m)}</span>)}
+          {sortModules(p.modules).map((m) => <span key={m} className="rounded-full bg-muted px-2 py-0.5 text-xs">{featureLabel(m)}</span>)}
         </div>
       </article>)}
     </div>
