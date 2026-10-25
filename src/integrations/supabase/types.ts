@@ -1211,9 +1211,12 @@ export type Database = {
           audience: string[]
           body: string
           cloned_from: string | null
+          commercial: Json
           company_id: string
           created_at: string
           created_by: string
+          extras: Json
+          field_specs: Json
           id: string
           items: string[]
           kind: string
@@ -1229,9 +1232,12 @@ export type Database = {
           audience?: string[]
           body?: string
           cloned_from?: string | null
+          commercial?: Json
           company_id: string
           created_at?: string
           created_by?: string
+          extras?: Json
+          field_specs?: Json
           id?: string
           items?: string[]
           kind?: string
@@ -1247,9 +1253,12 @@ export type Database = {
           audience?: string[]
           body?: string
           cloned_from?: string | null
+          commercial?: Json
           company_id?: string
           created_at?: string
           created_by?: string
+          extras?: Json
+          field_specs?: Json
           id?: string
           items?: string[]
           kind?: string
