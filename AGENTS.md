@@ -29,12 +29,12 @@
 - Typography: applyTypography/AppShell; locale: locale.ts.
 - Branding shares asset-backed font IDs and preview/PDF decorations; DB/HQ locks protect saved values.
 - Auth emails share auth-brand.tsx; the managed handler owns verification and dispatch for reliable account recovery.
-- Company Settings retains visited sections while navigating; shared document-preview tabs power desktop and mobile previews; preserve drafts without implicit saves and keep previews consistent.
+- Company Settings keeps visited sections mounted; shared document-preview tabs serve desktop/mobile; no implicit draft saves.
 - Independent settings editors use settingsSectionPatch to write only owned columns; JSON styling saves merge current stored keys; 
 - Numbers keep raw text until blur; suggestions use bounded RLS history and account/company cache keys.
 - Service sheets share a typed safe projection/renderers for preview, print and email; 
 - Pending works close via close_pending_on_followup trigger; sheet creation requires clock-in or standby; enforce without UI.
-- Billing precedence in billing.ts; config in integrations.ts; job_sheets_guard_billing allows only office review; completed rows in the office Job sheets list open the shared BillingReview and saves refresh list/attention queries; protected prices and reachable review without dashboard tables.
+- Billing precedence in billing.ts, config in integrations.ts; job_sheets_guard_billing allows office review only; completed office list rows open shared BillingReview.
 - WhatsApp rules use tested whatsapp-templates.ts; AI/Meta calls use manager-only whatsapp-templates.functions.ts; validate consistently.
 - Daily time logs keep technician_count separate from initials; labour uses headcount, DWR personal elapsed time; correct hours.
 - Combined PDFs use email builder/RLS; office combines completed sheets for one client; 
@@ -60,17 +60,14 @@
 - Chat compresses photos, not documents. Push: dedicated /push/ worker, legacy handlers, encrypted previews, caller-device tests; acceptance is not delivery proof. Audio unlocks on gestures; setup dismissal is account-scoped.
 - FieldBridge subscription invoices live in platform_invoices (frozen once issued by trigger) with rules in tested saas-billing.ts; storage usage via company_storage_usage RPC; 
 - Payments: superuser RLS checkout; signed webhook settles exact amounts idempotently; billing-daily runs renewals/charges/reminders; company_invoice_lapsed drives read-only.
-
 - Public catalog/legal use narrow reads; HQ stays private. Trust pages share renderers; sitemap uses explicit route decisions, no generated lastmod.
 - Staff signatures share staff-signature editors and own-user RPC; protected real roles govern eligibility and profile guards retain identity protection.
-
 - Sheet sync serializes per account/sheet, rebasing only local versions to prevent false conflicts. Autosave uses dirty fingerprints; failures retain newer drafts. Chat fits measured header/navigation at every breakpoint.
-
 - PDF.js uses v4/canvasContext; newer Map APIs break field devices.
 - PPM uses per-agreement asset plans and anchored, unique job occurrences generated transactionally by a manager RPC; existing jobs/sheets retain manual workflows and HQ module guards. SLA status is derived on read; component events are append-only private evidence.
 - StaffContacts/contact-editor own contact writes; portal scope is staff-only. HQ setup options save atomically; staff/portal access stays independent.
 - Delivery uses client_message_recipients; preferences choose recipients, not unsupported channel delivery.
 - Own-shift RPC captures one-time GPS; failure never blocks clock-out; history distinguishes action fixes from breadcrumbs.
-- Tenant cards separate assignments/access; bespoke drafts freeze on submit, HQ reviews per product, samples stay private. Requests never charge/activate. Immediate setup is owner-only; ordinary setup retains timing/trial mode.
-- Site surveys: universal site_surveys with guard_site_survey (status/pricing office-only, reviewer from company default) and tested survey-pricing.ts; supplier quotes never feed client estimates or Zoho directly — office prices them in the generator; why: keeps trade packs (e.g. lift RFQ) layered on one engine.
-- Sites show via site-display.ts (optional store_code); portal edits only store_code through portal_set_site_store_code; why: chains share names and portal must not edit addresses.
+- Bespoke requests freeze on submit, stay private, never charge/activate; immediate setup is owner-only.
+- Surveys: site_surveys + guard_site_survey (office-only status/pricing) + tested survey-pricing.ts; supplier quotes reach clients/Zoho only via the price generator; trade packs layer on top.
+- Sites render via site-display.ts; portal edits only store_code via portal_set_site_store_code.
