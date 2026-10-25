@@ -10,9 +10,9 @@
 <!-- LOVABLE:END -->
 
 ## Rules
-- Analytics: owner-only coarse work counts; tenant identity server-derived. Outreach/feedback product-scoped; saved follow-ups send nothing.
+- Analytics: owner-only coarse counts; server-derived tenant. Product-scoped outreach/feedback; saved follow-ups send nothing.
 - HQ uses product-scoped workspaces, owner-only directory/access RPCs and separate legal profiles; test resets retain operational, financial, identity, storage and offline evidence.
-- App chrome uses neutral card surfaces (no gradients) with token-coloured controls; phone theme metadata matches the neutral bar colour because browser chrome cannot render gradients.
+- Chrome: neutral surfaces, token controls; phone theme matches neutral bar (browser chrome cannot render gradients).
 - Travel shares one component/startJobTravel; arrival saves the time log before on-site status; 
 - Invite server functions/Query loaders have timeouts, middleware included; 
 - Tenant RLS uses company_id/current_company_id(); never UI company filters; 
@@ -42,7 +42,7 @@
 - job_sheets embeds use users!job_sheets_assigned_technician_id_fkey; two users FKs.
 - Signing batches: creator-owned, finalized transactionally; store delivery before sending via shared PDF builder; atomic, retry-safe delivery.
 - Offline: account-scoped IndexedDB/optimistic RPC/PWA; confirmed discard atomically removes only that account/sheet draft/photos/cache; retain inaccessible drafts.
-- Published document masters are immutable; attachments/agreements/sheets snapshot definitions; 
+- Published masters immutable; uses snapshot definitions. document-blocks.ts calculates trade pricing in master JSON; checklist descriptions/specs move together, preserving controls.
 - Platform authority is protected separately in user_roles; HQ uses a narrow directory RPC, not tenant reads; 
 - Plan access: DB write guards + plan-features.ts menu gating; legacy stays on. RFQ rules in lift-rfq.ts; 
 - Client reports use immutable DB-built safe snapshots and hashed expiring/revocable links; photo paths stay server-only; 

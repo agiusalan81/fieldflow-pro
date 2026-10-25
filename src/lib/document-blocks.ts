@@ -95,9 +95,9 @@ export function parseLiftPricing(raw: unknown): LiftPricing | null {
   const r = raw as Record<string, unknown>;
   const count = (key: keyof LiftPricing) => Math.floor(num(r[key]) ?? DEFAULT_LIFT_PRICING[key]);
   return {
-    stops: count("stops"), includedStops: count("includedStops"), extraStopRate: num(r.extraStopRate) ?? 0,
-    landingDoors: count("landingDoors"), includedLandingDoors: count("includedLandingDoors"), landingDoorRate: num(r.landingDoorRate) ?? 0,
-    carAccess: r.carAccess === 2 || r.carAccess === 3 ? r.carAccess : 1, extraCarDoorRate: num(r.extraCarDoorRate) ?? 0,
+    stops: count("stops"), includedStops: count("includedStops"), extraStopRate: num(r["extraStopRate"]) ?? 0,
+    landingDoors: count("landingDoors"), includedLandingDoors: count("includedLandingDoors"), landingDoorRate: num(r["landingDoorRate"]) ?? 0,
+    carAccess: r["carAccess"] === 2 || r["carAccess"] === 3 ? r["carAccess"] : 1, extraCarDoorRate: num(r["extraCarDoorRate"]) ?? 0,
   };
 }
 const money = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
@@ -105,7 +105,8 @@ export function commercialPriceLines(c: Commercial) {
   const lines = [{ key: "base", label: "Base service", quantity: 1, rate: c.basePrice ?? 0, amount: c.basePrice ?? 0 }];
   if (c.liftPricing) {
     const p = c.liftPricing;
-    lines[0].label = `Base service (includes ${p.includedStops} stops and 1 car access${p.includedLandingDoors ? `, ${p.includedLandingDoors} landing doors` : ""})`;
+    const base = lines[0];
+    if (base) base.label = `Base service (includes ${p.includedStops} stops and 1 car access${p.includedLandingDoors ? `, ${p.includedLandingDoors} landing doors` : ""})`;
     lines.push(
       { key: "stops", label: `Additional stops (${p.stops} total stops)`, quantity: Math.max(0, p.stops - p.includedStops), rate: p.extraStopRate, amount: 0 },
       { key: "landing", label: `Landing doors (${p.landingDoors} landing doors)`, quantity: Math.max(0, p.landingDoors - p.includedLandingDoors), rate: p.landingDoorRate, amount: 0 },

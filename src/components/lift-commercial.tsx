@@ -29,7 +29,7 @@ export function LiftCommercialEditor({ value, onChange }: { value: Commercial; o
   </div>;
 }
 
-export function CommercialPriceSummary({ value, cycle }: { value: Commercial; cycle?: string }) {
+export function CommercialPriceSummary({ value, cycle }: { value: Commercial; cycle?: string | undefined }) {
   const total = commercialTotal(value);
   if (total === null) return null;
   const p = value.liftPricing;
