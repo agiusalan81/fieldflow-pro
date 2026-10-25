@@ -2,11 +2,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { PLAN_FEATURES, MODULE_DESCRIPTIONS } from "@/lib/plan-features";
+import { MODULE_DESCRIPTIONS } from "@/lib/plan-features";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { isStorageAddon } from "@/lib/hq";
-import { groupModules, moduleLabel } from "@/lib/module-categories";
+import { groupModules, moduleLabel, moduleLayer } from "@/lib/module-categories";
 import { Fragment } from "react";
 
 type Catalog = Database["public"]["Tables"]["platform_catalog"]["Row"];
@@ -18,7 +18,7 @@ function useCommercialRefresh() {
     toast.success("Saved");
   };
 }
-export function HQFeatureMatrix({ catalog, modules, onEdit }: { catalog: Catalog[]; modules: string[]; onEdit: (item: Catalog) => void }) {
+export function HQFeatureMatrix({ catalog, modules, money, onEdit }: { catalog: Catalog[]; modules: string[]; money: (v: number) => string; onEdit: (item: Catalog) => void }) {
   catalog = catalog.filter(item => !isStorageAddon(item));
   const refresh = useCommercialRefresh();
   const mutation = useMutation({
@@ -28,12 +28,12 @@ export function HQFeatureMatrix({ catalog, modules, onEdit }: { catalog: Catalog
     },
     onSuccess: refresh, onError: (error) => toast.error(error.message),
   });
-  void PLAN_FEATURES; const groups = groupModules(modules).map(g => ({ label: g.label, features: g.modules.map(key => ({ key, label: moduleLabel(key) })) }));
+  const groups = groupModules(modules).map(g => ({ label: g.label, features: g.modules.map(key => ({ key, label: moduleLabel(key) })) }));
   if (!catalog.length) return null;
   return <div className="overflow-x-auto border"><table className="w-full border-collapse text-sm">
     <caption className="sr-only">Tier and pack feature composition</caption>
-    <thead><tr className="border-b bg-muted/40"><th scope="col" className="sticky left-0 z-20 min-w-64 bg-muted p-4 text-left shadow-[inset_-1px_0_0_0_var(--color-border)]">Features</th>{catalog.map(item => <th key={item.id} scope="col" className="min-w-36 p-3 text-center"><Button variant="ghost" size="sm" onClick={() => onEdit(item)}>{item.name}</Button><p className="font-normal text-xs capitalize text-muted-foreground">{item.kind === "plan" ? "Tier" : "Pack"} · {item.state}</p></th>)}</tr></thead>
-    <tbody>{groups.map(g => <Fragment key={g.label}><tr className="border-b bg-muted/60"><th colSpan={catalog.length + 1} scope="colgroup" className="sticky left-0 p-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">{g.label}</th></tr>{g.features.map(feature => <tr key={feature.key} className="border-b last:border-b-0"><th scope="row" className="sticky left-0 z-10 bg-card p-4 text-left font-medium shadow-[inset_-1px_0_0_0_var(--color-border)]">{feature.label}{MODULE_DESCRIPTIONS[feature.key] && <p className="mt-1 max-w-sm text-xs font-normal text-muted-foreground">{MODULE_DESCRIPTIONS[feature.key]}</p>}</th>{catalog.map(item => <td key={item.id} className="p-3 text-center"><Switch aria-label={`${item.name}: ${feature.label}`} checked={item.modules.includes(feature.key)} disabled={mutation.isPending || (feature.key === "core" && item.kind === "plan")} onCheckedChange={enabled => mutation.mutate({ id: item.id, module: feature.key, enabled })} /></td>)}</tr>)}</Fragment>)}</tbody>
+    <thead><tr className="border-b bg-muted/40"><th scope="col" className="sticky left-0 z-20 w-64 min-w-52 bg-muted p-4 text-left shadow-[inset_-1px_0_0_0_var(--color-border)]">Modules</th>{catalog.map(item => <th key={item.id} scope="col" className="min-w-44 p-3 text-center"><Button variant="ghost" size="sm" className="h-auto max-w-52 whitespace-normal" onClick={() => onEdit(item)}>{item.name}</Button><p className="font-normal text-xs capitalize text-muted-foreground">{item.state}</p><p className="mt-2 font-semibold">{money(Number(item.monthly_price ?? 0))}<span className="font-normal text-xs"> / month</span></p><p className="mt-1 font-normal text-xs text-muted-foreground">{item.kind === "plan" ? `${item.included_seats} users · ${item.storage_gb || 10} GB` : `+${item.storage_gb} GB`}</p><p className="font-normal text-xs text-muted-foreground">{item.kind === "plan" ? `${item.asset_limit == null ? "Unlimited" : item.asset_limit} assets` : `+${item.asset_limit ?? 0} assets`}</p></th>)}</tr></thead>
+    <tbody>{groups.map(g => <Fragment key={g.label}><tr className="border-b bg-muted/60"><th colSpan={catalog.length + 1} scope="colgroup" className="p-3 text-left text-xs font-semibold uppercase text-muted-foreground"><span className="sticky left-3">{g.label}</span></th></tr>{g.features.map(feature => <tr key={feature.key} className="border-b last:border-b-0"><th scope="row" className="sticky left-0 z-10 bg-card p-4 text-left font-medium shadow-[inset_-1px_0_0_0_var(--color-border)]"><span className="mb-1 block text-[10px] font-normal uppercase text-muted-foreground">{moduleLayer(feature.key)}</span>{feature.label}{MODULE_DESCRIPTIONS[feature.key] && <p className="mt-1 max-w-sm text-xs font-normal text-muted-foreground">{MODULE_DESCRIPTIONS[feature.key]}</p>}</th>{catalog.map(item => <td key={item.id} className="p-3 text-center"><Switch aria-label={`${item.name}: ${feature.label}`} checked={feature.key === "customer_quotes" && item.kind === "plan" ? item.modules.includes("core") : item.modules.includes(feature.key)} disabled={mutation.isPending || (["core", "customer_quotes"].includes(feature.key) && item.kind === "plan")} onCheckedChange={enabled => mutation.mutate({ id: item.id, module: feature.key, enabled })} /></td>)}</tr>)}</Fragment>)}</tbody>
   </table></div>;
 }
 export function HQCompanyPacks({ subscription, packs, companyName }: { subscription: Subscription; packs: Catalog[]; companyName: string }) {
