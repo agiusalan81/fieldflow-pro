@@ -1,3 +1,4 @@
+import { usePlanFeatures } from "@/lib/plan-features";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -17,7 +18,8 @@ import { companyHasLiftTrade } from "@/lib/trade-association";
 type Tier = Database["public"]["Tables"]["contract_types"]["Row"];
 export function ContractTiers({ companyId }: { companyId: string }) {
   const { data: company } = useCompanyRules();
-  const liftEnabled = companyHasLiftTrade(company?.industry, company?.trades);
+  const planOn = usePlanFeatures();
+  const liftEnabled = companyHasLiftTrade(company?.industry, company?.trades) && planOn("lift_pack");
   const qc = useQueryClient(); const [edit, setEdit] = useState<Partial<Tier> | null>(null);
   const { data: tiers = [] } = useQuery({ queryKey: ["contract-tiers"], queryFn: async () => { const r = await supabase.from("contract_types").select("*").order("name"); if (r.error) throw r.error; return r.data; } });
   const { data: masters = [] } = useQuery({ queryKey: ["document-masters"], queryFn: async () => { const r = await supabase.from("document_masters").select("*").order("name"); if (r.error) throw r.error; return r.data; } });

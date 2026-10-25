@@ -1,3 +1,4 @@
+import { usePlanFeatures } from "@/lib/plan-features";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -125,7 +126,8 @@ export function AudienceToggles({ value, onChange, disabled }: { value: Audience
 export function DocumentMasters({ companyId, clientId }: { companyId: string; clientId?: string }) {
   const qc = useQueryClient();
   const { data: company } = useCompanyRules();
-  const liftEnabled = companyHasLiftTrade(company?.industry, company?.trades);
+  const planOn = usePlanFeatures();
+  const liftEnabled = companyHasLiftTrade(company?.industry, company?.trades) && planOn("lift_pack");
   const [edit, setEdit] = useState<Master | null>(null);
   const editLift = liftEnabled && (!edit?.trade || isLiftTrade(edit.trade));
   const [renaming, setRenaming] = useState<Master | null>(null);

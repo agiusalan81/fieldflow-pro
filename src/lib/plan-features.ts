@@ -31,6 +31,7 @@ export const PLAN_FEATURES = [
   { key: "payroll_statutory_mt", label: "Malta statutory payroll" },
   { key: "client_portal", label: "Client Experience: on-my-way ETA, QR compliance logbook, online approvals" },
   { key: "ppm_automation", label: "Commercial PPM: recurring visits, SLA timers, component history" },
+  { key: "lift_pack", label: "Lifts & Escalators pack: component pricing, lift surveys & RFQ" },
   { key: "job_profitability", label: "Financial Intelligence: job margins & contract profitability" },
 ] as const;
 export type PlanFeature = (typeof PLAN_FEATURES)[number]["key"];
@@ -65,6 +66,7 @@ export const MODULE_DESCRIPTIONS: Record<string, string> = {
   payroll_statutory_mt: "Malta tax, social security and statutory bonus calculations.",
   client_portal: "Optional service pack: client password portal, self-service contacts and site-based email/WhatsApp preferences, branded QR compliance logbook and online proposal approval. Existing on-my-way messages remain in base plans.",
   ppm_automation: "Optional service pack: contract-driven recurring maintenance visits, SLA breach countdowns and part replacement/warranty history per asset.",
+  lift_pack: "Vertical trade pack for lift and escalator companies: stops, landing doors and car-access pricing with sample calculations on client documents. Only shown to companies whose trade is lifts or escalators.",
   job_profitability: "Optional service pack: real-time job gross margin from labour, overtime, parts and receipts, plus loss-making contract alerts.",
 };
 
