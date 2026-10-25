@@ -11,7 +11,7 @@
 
 ## Rules
 - Analytics: owner-only coarse counts; server-derived tenant. Product-scoped outreach/feedback; saved follow-ups send nothing.
-- HQ uses product-scoped workspaces, owner-only directory/access RPCs and separate legal profiles; test resets retain operational, financial, identity, storage and offline evidence.
+- HQ uses product-scoped workspaces, owner-only RPCs and separate legal profiles; test resets retain all evidence.
 - Chrome: neutral surfaces/token controls; phone theme matches neutral bar, never gradients.
 - Travel shares startJobTravel; arrival saves time before on-site status.
 - Invite functions/loaders use timeouts and middleware.
@@ -48,7 +48,7 @@
 - Client reports use immutable DB-built safe snapshots and hashed expiring/revocable links; photo paths stay server-only; 
 - Sheet safety/checklist snapshots are checked at completion; safety keys share checklist_values; offline safety.
 - Clock-in shares plate/consent helpers. Fleet appends active-shift GPS with module/tenant guards; mileage excludes jitter/gaps; 
-- ExpenseCapture shares date/amount/category across stash/sheets; offline queues retain category/attachment intent. Private receipts stay HQ-gated and immutable; post-signature notes never reach clients.
+- ExpenseCapture shares date/amount/category across stash/sheets; private receipts stay HQ-gated and immutable; post-signature notes never reach clients.
 - Technical library: private storage/RLS; publish checks real/displayed supervisor/superuser; AI reads approved pages as caller; 
 - Leave/profile/clock-out handover rules use tested field-rules.ts plus guard_leave_decision; UI and DB agree.
 - HQ merges registry/product/catalog module keys; catalog writes register keys atomically. Owner-only toggles; isStorageAddon separates storage packs.
@@ -57,18 +57,18 @@
 - Equipment QR: private routes/RLS; hashed revocable public lookup exposes only reference/category; reports stay bounded/throttled; private technical/client data.
 - Deletion shares record-deletion/DeleteVisit; office sheet and manager visit RLS apply; visit deletion keeps sheets, client-report FKs retain shared evidence.
 - QR dispatch closes only its matching report after visit insert, refreshes attention and clears URL state; failures warn against duplicate dispatch.
-- Chat compresses photos, not documents. Push: dedicated /push/ worker, legacy handlers, encrypted previews, caller-device tests; acceptance is not delivery proof. Audio unlocks on gestures; setup dismissal is account-scoped.
+- Chat compresses photos only. Push: dedicated /push/ worker, encrypted previews; acceptance is not delivery proof. Audio unlocks on gestures.
 - FieldBridge subscription invoices live in platform_invoices (frozen once issued by trigger) with rules in tested saas-billing.ts; storage usage via company_storage_usage RPC; 
 - Payments: superuser RLS checkout; signed webhook settles exact amounts idempotently; billing-daily runs renewals/charges/reminders; company_invoice_lapsed drives read-only.
 - Public catalog/legal use narrow reads; HQ stays private. Trust pages share renderers; sitemap uses explicit route decisions, no generated lastmod.
 - Staff signatures share staff-signature editors and own-user RPC; protected real roles govern eligibility and profile guards retain identity protection.
-- Sheet sync serializes per account/sheet, rebasing only local versions to prevent false conflicts. Autosave uses dirty fingerprints; failures retain newer drafts. Chat fits measured header/navigation at every breakpoint.
+- Sheet sync serializes per account/sheet, rebasing local versions only. Autosave uses dirty fingerprints; failures retain newer drafts.
 - PDF.js uses v4/canvasContext; newer Map APIs break field devices.
 - PPM: per-agreement asset plans; manager RPC generates unique anchored jobs transactionally; SLA derived on read; component events append-only.
 - StaffContacts/contact-editor own contact writes; portal scope is staff-only. HQ setup options save atomically; staff/portal access stays independent.
 - Delivery uses client_message_recipients; preferences choose recipients, not unsupported channel delivery.
 - Own-shift RPC captures one-time GPS; failure never blocks clock-out; history distinguishes action fixes from breadcrumbs.
 - Bespoke requests freeze on submit, stay private, never charge/activate; immediate setup is owner-only.
-- Surveys: guard_site_survey protects manager pricing/trade_review; field_details atomically snapshots contacts/sites/trade observations without changing catalogues; field reviewers are active supervisors; supplier quotes stay internal.
+- Surveys: guard_site_survey protects manager pricing/trade_review; field_details snapshots contacts/sites atomically; supplier quotes stay internal.
 - Sites render via site-display.ts; portal edits only store_code. Approvals use category/object links; completed field-sheet history is company-controlled restrictive RLS.
-- Asset allowances live on platform_catalog.asset_limit (plan = included, NULL unlimited; pack = extra) and are enforced by the assets_guard_limit trigger via company_asset_limit(); trials/legacy are never limited — keeps limits DB-guarded, not UI-only.
+- Asset limits: platform_catalog.asset_limit (plan NULL=unlimited, pack=extra) enforced by assets_guard_limit trigger; trials/legacy unlimited.
