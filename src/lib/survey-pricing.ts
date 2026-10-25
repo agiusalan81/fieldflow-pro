@@ -1,10 +1,12 @@
 /** Universal price generator: internal costs + margin produce a client total; internal figures never reach the client view. */
-export type PricingLine = { label: string; amount: number };
+export type RateUnit = 'fixed' | 'hour' | 'day';
+/** amount is a fixed price, or a rate per hour/day multiplied by qty. */
+export type PricingLine = { label: string; amount: number; unit?: RateUnit; qty?: number };
 export type Pricing = {
   base: PricingLine[];      // supplier / materials base cost
   logistics: PricingLine[]; // freight, clearance, transport
   site: PricingLine[];      // crane, scaffold, skip
-  labour: { label: string; people: number; hours: number; rate: number }[];
+  labour: { label: string; people: number; hours: number; rate: number; unit?: 'hour' | 'day' }[]; // hours = quantity in unit
   contingencyPct: number;
   marginPct: number;        // margin on selling price (0–90)
   vatPct: number;
@@ -13,7 +15,8 @@ export type Pricing = {
 export const emptyPricing = (): Pricing => ({ base: [], logistics: [], site: [], labour: [], contingencyPct: 0, marginPct: 25, vatPct: 18, clientDescription: '' });
 
 const n = (v: unknown) => (Number.isFinite(Number(v)) ? Number(v) : 0);
-const sum = (l: PricingLine[]) => l.reduce((a, x) => a + n(x.amount), 0);
+export const lineTotal = (x: PricingLine) => n(x.amount) * (x.unit && x.unit !== 'fixed' ? n(x.qty ?? 1) : 1);
+const sum = (l: PricingLine[]) => l.reduce((a, x) => a + lineTotal(x), 0);
 const r2 = (v: number) => Math.round(v * 100) / 100;
 
 export function parsePricing(raw: unknown): Pricing {
