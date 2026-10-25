@@ -1,22 +1,50 @@
-import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
+import { useRef } from "react";
+import { ArrowDown, ArrowUp, Bold, Camera, Italic, Plus, Trash2, Underline } from "lucide-react";
 import { checklistRows, DEFAULT_CHOICES, DEFAULT_SPEC, rowsFromText, FIELD_CONTROLS, moveChecklistRow, type BlockAudience, type FieldControl, type FieldSpec } from "@/lib/document-blocks";
+import { RICH_COLORS, wrapSelection } from "@/lib/rich-text";
+import { RichText } from "@/components/rich-text";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+const SWATCH: Record<string, string> = { red: "bg-destructive", amber: "bg-warning", blue: "bg-primary", green: "bg-success" };
+
 export function ChecklistRowEditor({ items, specs, onChange }: { items: string[]; specs: FieldSpec[]; onChange: (items: string[], specs: FieldSpec[]) => void }) {
   const rows = checklistRows(items, specs);
+  const area = useRef<HTMLTextAreaElement>(null);
   const setRows = (next: typeof rows) => onChange(next.map(row => row.item), next.map(row => row.spec));
   const update = (index: number, item: string, spec: FieldSpec) => setRows(rows.map((row, i) => i === index ? { item, spec } : row));
+  const setText = (text: string) => { const next = rowsFromText(text, rows.map(r => r.spec)); onChange(next.items, next.specs); };
+  const format = (open: string, close = open) => {
+    const el = area.current; if (!el) return;
+    if (el.selectionStart === el.selectionEnd) return;
+    const r = wrapSelection(el.value, el.selectionStart, el.selectionEnd, open, close);
+    setText(r.text);
+    requestAnimationFrame(() => { el.focus(); el.setSelectionRange(r.start, r.end); });
+  };
+  const keep = (e: React.MouseEvent) => e.preventDefault();
   return <div className="space-y-2"><Label htmlFor="checklist-text">Checklist steps</Label>
-    <p className="text-xs text-muted-foreground">Type one step per line — each line becomes a row automatically. Set controls for each row below.</p>
-    <Textarea id="checklist-text" rows={Math.max(4, items.length + 1)} value={items.join("\n")} onChange={e => { const next = rowsFromText(e.target.value, rows.map(r => r.spec)); onChange(next.items, next.specs); }} placeholder={"Check brake operation\nInspect landing doors\nTest alarm button"} />
-    <Label>Technician controls per step</Label>
+    <p className="text-xs text-muted-foreground">Type one step per line — each line becomes a row. Select text, then use the toolbar to format it.</p>
+    <div role="toolbar" aria-label="Text formatting" className="flex flex-wrap items-center gap-1 rounded-md border bg-muted/40 p-1">
+      <Button type="button" size="icon" variant="ghost" title="Bold" aria-label="Bold" onMouseDown={keep} onClick={() => format("**")}><Bold className="h-4 w-4" /></Button>
+      <Button type="button" size="icon" variant="ghost" title="Italic" aria-label="Italic" onMouseDown={keep} onClick={() => format("*")}><Italic className="h-4 w-4" /></Button>
+      <Button type="button" size="icon" variant="ghost" title="Underline" aria-label="Underline" onMouseDown={keep} onClick={() => format("__")}><Underline className="h-4 w-4" /></Button>
+      <span className="mx-1 h-5 w-px bg-border" />
+      {RICH_COLORS.map(c => <button key={c.key} type="button" title={c.label} aria-label={`Colour ${c.label}`} onMouseDown={keep} onClick={() => format(`[${c.key}]`, `[/${c.key}]`)} className={`h-5 w-5 rounded-full border ${SWATCH[c.key]}`} />)}
+    </div>
+    <Textarea ref={area} id="checklist-text" className="font-mono text-sm" rows={Math.max(4, items.length + 1)} value={items.join("\n")} onChange={e => setText(e.target.value)} placeholder={"Check brake operation\nInspect landing doors\nTest alarm button"} />
+    <Label>Controls per step</Label>
     {rows.map((row, i) => <div key={i} className="space-y-2 rounded-lg border p-2">
       <div className="flex min-w-0 items-center gap-1"><span className="w-6 shrink-0 text-sm text-muted-foreground">{i + 1}.</span><Input aria-label={`Checklist step ${i + 1}`} placeholder="Step description" value={row.item} onChange={e => update(i, e.target.value, row.spec)} /></div>
+      {row.item.trim() && <p className="pl-7 text-xs text-muted-foreground"><RichText text={row.item} /></p>}
       <div className="grid gap-2 sm:grid-cols-2"><Select value={row.spec.control} onValueChange={v => update(i, row.item, { ...row.spec, control: v as FieldControl, ...(v === "choice" && !row.spec.options?.length ? { options: [...DEFAULT_CHOICES] } : {}) })}><SelectTrigger aria-label={`Control for step ${i + 1}`}><SelectValue /></SelectTrigger><SelectContent>{FIELD_CONTROLS.map(c => <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>)}</SelectContent></Select><Select value={row.spec.audience} onValueChange={v => update(i, row.item, { ...row.spec, audience: v as BlockAudience })}><SelectTrigger aria-label={`Visibility for step ${i + 1}`}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="both">Both copies</SelectItem><SelectItem value="technician">Technician only</SelectItem><SelectItem value="client">Client only</SelectItem></SelectContent></Select></div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Input className="w-32" type="number" min={0} step="0.01" aria-label={`Client price for step ${i + 1}`} placeholder="Client price €" value={row.spec.price ?? ""} onChange={e => { const n = Number(e.target.value); const { price: _p, ...rest } = row.spec; update(i, row.item, e.target.value && n > 0 ? { ...rest, price: n } : rest); }} />
+        <label className="flex items-center gap-1 text-xs"><Camera className="h-3.5 w-3.5" />Photos<Switch aria-label={`Allow photos for step ${i + 1}`} checked={!!row.spec.photo} onCheckedChange={on => { const { photo: _ph, ...rest } = row.spec; update(i, row.item, on ? { ...rest, photo: true } : rest); }} /></label>
+      </div>
       <div className="flex items-center justify-end gap-1">{row.spec.control === "choice" && <Input className="mr-auto min-w-0 flex-1" aria-label={`Choices for step ${i + 1}`} placeholder="Done, Satisfactory, N/A" value={(row.spec.options ?? DEFAULT_CHOICES).join(", ")} onChange={e => update(i, row.item, { ...row.spec, options: e.target.value.split(",").map(o => o.trimStart()) })} />}{row.spec.control === "reading" && <Input className="mr-auto max-w-40" aria-label={`Unit for step ${i + 1}`} placeholder="Unit (bar, °C)" maxLength={20} value={row.spec.unit} onChange={e => update(i, row.item, { ...row.spec, unit: e.target.value })} />}
         <Button type="button" size="icon" variant="ghost" title="Move up" aria-label={`Move step ${i + 1} up`} disabled={i === 0} onClick={() => setRows(moveChecklistRow(rows, i, i - 1))}><ArrowUp className="h-4 w-4" /></Button>
         <Button type="button" size="icon" variant="ghost" title="Move down" aria-label={`Move step ${i + 1} down`} disabled={i === rows.length - 1} onClick={() => setRows(moveChecklistRow(rows, i, i + 1))}><ArrowDown className="h-4 w-4" /></Button>
