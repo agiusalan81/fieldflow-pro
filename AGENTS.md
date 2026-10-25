@@ -71,3 +71,4 @@
 - Bespoke requests freeze on submit, stay private, never charge/activate; immediate setup is owner-only.
 - Surveys: guard_site_survey protects manager pricing/trade_review; field_details atomically snapshots contacts/sites/trade observations without changing catalogues; field reviewers are active supervisors; supplier quotes stay internal.
 - Sites render via site-display.ts; portal edits only store_code. Approvals use category/object links; completed field-sheet history is company-controlled restrictive RLS.
+- Asset allowances live on platform_catalog.asset_limit (plan = included, NULL unlimited; pack = extra) and are enforced by the assets_guard_limit trigger via company_asset_limit(); trials/legacy are never limited — keeps limits DB-guarded, not UI-only.
