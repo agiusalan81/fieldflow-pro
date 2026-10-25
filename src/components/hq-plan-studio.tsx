@@ -25,7 +25,7 @@ export function HQTierComparison({ catalog, modules, money, onEdit }: {
         </div>
         <p className="mt-2 text-lg font-semibold">{money(Number(t.monthly_price ?? 0))}<span className="text-xs font-normal text-muted-foreground"> / month</span></p>
         <p className="text-xs text-muted-foreground">{money(Number(t.quarterly_price ?? 0))} / quarter · {money(Number(t.yearly_price ?? 0))} / year</p>
-        <p className="mt-2 text-xs text-muted-foreground">{t.included_seats} users · {t.storage_gb || 10} GB storage{t.billing_basis === "per_user" ? " · billed per user" : ""}</p>
+        <p className="mt-2 text-xs text-muted-foreground">{t.included_seats} users · {t.storage_gb || 10} GB storage · {t.asset_limit == null ? "unlimited" : t.asset_limit} assets{t.billing_basis === "per_user" ? " · billed per user" : ""}</p>
         <p className="mt-3 text-xs font-medium">{t.modules.length} of {modules.length} modules included</p>
       </article>)}
     </div>
@@ -67,7 +67,7 @@ export function HQPackBuilder({ catalog, money, onEdit, onNew }: {
           <Button size="icon" variant="ghost" aria-label={`Edit ${p.name}`} onClick={() => onEdit(p)}><Pencil className="h-4 w-4" /></Button>
         </div>
         <p className="mt-2 font-semibold">{money(Number(p.monthly_price ?? 0))}<span className="text-xs font-normal text-muted-foreground"> / month{p.billing_basis === "per_user" ? " per user" : ""}</span></p>
-        {p.storage_gb > 0 && <p className="text-xs text-muted-foreground">+{p.storage_gb} GB storage</p>}
+        {p.storage_gb > 0 && <p className="text-xs text-muted-foreground">+{p.storage_gb} GB storage</p>}{(p.asset_limit ?? 0) > 0 && <p className="text-xs text-muted-foreground">+{p.asset_limit} assets</p>}
         <div className="mt-3 flex flex-wrap gap-1.5">
           {p.modules.length === 0 && <span className="text-xs text-muted-foreground">Storage-only pack</span>}
           {sortModules(p.modules).map((m) => <span key={m} className="rounded-full bg-muted px-2 py-0.5 text-xs">{featureLabel(m)}</span>)}
