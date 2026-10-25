@@ -8,7 +8,7 @@ export function masterDocumentLines(doc: MasterDocumentContent, view: Audience):
   const lines = [doc.name, [doc.trade, view === "client" ? "Client copy" : "Technician copy"].filter(Boolean).join(" · "), doc.body];
   for (const section of sectionsFor(parseSections(doc.sections), view)) lines.push(section.title, section.body);
   if (doc.kind === "checklist") for (const row of checklistRows(doc.items, doc.field_specs).filter(row => row.item.trim() && specShows(row.spec, view))) {
-    lines.push(view === "client" ? `• ${row.item}` : `${row.item}   ${row.spec.control === "reading" ? `________ ${row.spec.unit}` : row.spec.control === "passfail" ? "Pass / Fail / N/A" : "[   ]"}`);
+    lines.push(view === "client" ? `• ${row.item}` : `${row.item}   ${row.spec.control === "reading" ? `________ ${row.spec.unit}` : row.spec.control === "passfail" ? "Pass / Fail / N/A" : row.spec.control === "choice" ? specChoices(row.spec).join(" / ") : "[   ]"}`);
   }
   for (const extra of extrasFor(parseExtras(doc.extras), view)) lines.push(`${extra.label}: ${extra.value}`);
   const c = parseCommercial(doc.commercial);

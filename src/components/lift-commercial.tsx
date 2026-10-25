@@ -5,7 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
-export function LiftCommercialEditor({ value, onChange }: { value: Commercial; onChange: (value: Commercial) => void }) {
+export function LiftCommercialEditor({ value, onChange, alwaysOn = false }: { value: Commercial; onChange: (value: Commercial) => void; alwaysOn?: boolean }) {
   const p = value.liftPricing;
   const fields: { key: Exclude<keyof LiftPricing, "carAccess">; label: string; count?: boolean }[] = [
     { key: "stops", label: "Stops / travel floors", count: true },
@@ -17,7 +17,7 @@ export function LiftCommercialEditor({ value, onChange }: { value: Commercial; o
     { key: "extraCarDoorRate", label: "Price per extra cabin door (€)" },
   ];
   return <div className="space-y-3 border-t pt-3">
-    <label className="flex items-center justify-between gap-2 text-sm font-medium">Lift component pricing<Switch aria-label="Lift component pricing" checked={p !== null} onCheckedChange={enabled => onChange({ ...value, liftPricing: enabled ? { ...DEFAULT_LIFT_PRICING } : null })} /></label>
+    {alwaysOn ? <p className="text-sm font-medium">Lift component pricing — stops, landing doors & car access</p> : <label className="flex items-center justify-between gap-2 text-sm font-medium">Lift component pricing<Switch aria-label="Lift component pricing" checked={p !== null} onCheckedChange={enabled => onChange({ ...value, liftPricing: enabled ? { ...DEFAULT_LIFT_PRICING } : null })} /></label>}
     {p && <>
       <div className="grid gap-3 sm:grid-cols-2">{fields.map(field => <div key={field.key} className="min-w-0 space-y-1"><Label htmlFor={`lift-${field.key}`}>{field.label}</Label><NumInput id={`lift-${field.key}`} min={0} step={field.count ? 1 : "0.01"} value={p[field.key]} onChange={n => onChange({ ...value, liftPricing: { ...p, [field.key]: Math.max(0, field.count ? Math.floor(n) : n) } })} /></div>)}
         <div className="space-y-1"><Label htmlFor="lift-car-access">Car access</Label><Select value={String(p.carAccess)} onValueChange={v => onChange({ ...value, liftPricing: { ...p, carAccess: v === "3" ? 3 : v === "2" ? 2 : 1 } })}><SelectTrigger id="lift-car-access"><SelectValue /></SelectTrigger><SelectContent>{[1, 2, 3].map(n => <SelectItem key={n} value={String(n)}>{n} car access</SelectItem>)}</SelectContent></Select></div>

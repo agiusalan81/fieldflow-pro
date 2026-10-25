@@ -2,15 +2,30 @@
 
 export type BlockAudience = "both" | "technician" | "client";
 
-export type FieldControl = "checkbox" | "passfail" | "reading";
+export type FieldControl = "checkbox" | "passfail" | "reading" | "choice";
 export const FIELD_CONTROLS: { key: FieldControl; label: string }[] = [
   { key: "checkbox", label: "Checkbox" },
   { key: "passfail", label: "Pass / Fail / N/A" },
   { key: "reading", label: "Numeric reading" },
+  { key: "choice", label: "Custom choices" },
 ];
 
-export type FieldSpec = { control: FieldControl; audience: BlockAudience; unit: string };
+export const DEFAULT_CHOICES = ["Done", "Satisfactory", "N/A"];
+
+export type FieldSpec = { control: FieldControl; audience: BlockAudience; unit: string; options?: string[] };
 export const DEFAULT_SPEC: FieldSpec = { control: "checkbox", audience: "both", unit: "" };
+
+/** Choices shown for a custom-choice step, falling back to the standard preset. */
+export function specChoices(spec: FieldSpec): string[] {
+  const list = (spec.options ?? []).map(o => o.trim()).filter(Boolean);
+  return list.length ? list : DEFAULT_CHOICES;
+}
+
+/** Turns typed lines into checklist rows, keeping each existing row's settings by position. */
+export function rowsFromText(text: string, specs: FieldSpec[]): { items: string[]; specs: FieldSpec[] } {
+  const items = text.split("\n");
+  return { items, specs: items.map((_, i) => specs[i] ?? { ...DEFAULT_SPEC }) };
+}
 
 /** Keep descriptions and their controls paired through every row operation. */
 export function checklistRows(items: string[], raw: unknown) {
@@ -39,6 +54,7 @@ export function parseFieldSpecs(raw: unknown, itemCount: number): FieldSpec[] {
       control: isControl(r.control) ? r.control : DEFAULT_SPEC.control,
       audience: isAudience(r.audience) ? r.audience : DEFAULT_SPEC.audience,
       unit: typeof r.unit === "string" ? r.unit.slice(0, 20) : "",
+      ...(Array.isArray(r.options) ? { options: r.options.filter((o): o is string => typeof o === "string").map(o => o.slice(0, 40)).slice(0, 12) } : {}),
     };
   });
 }
