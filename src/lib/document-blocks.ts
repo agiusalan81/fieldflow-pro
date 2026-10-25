@@ -12,7 +12,27 @@ export const FIELD_CONTROLS: { key: FieldControl; label: string }[] = [
 
 export const DEFAULT_CHOICES = ["Done", "Satisfactory", "N/A"];
 
-export type FieldSpec = { control: FieldControl; audience: BlockAudience; unit: string; options?: string[] };
+/** price: optional client-copy line price; photo: technician may attach photos to this step. */
+export type FieldSpec = { control: FieldControl; audience: BlockAudience; unit: string; options?: string[]; price?: number; photo?: boolean };
+
+/** Unanswered steps always report as N/A so completed reports never show blanks. */
+export function resolveChecklistValue(value: unknown): string {
+  if (value === true) return "Done";
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  if (typeof value === "string" && value.trim()) return value.trim();
+  return "N/A";
+}
+
+/** Formats a client-copy step price, or null when the step has none. */
+export function stepPrice(spec: FieldSpec): string | null {
+  return typeof spec.price === "number" && spec.price > 0 ? `€${spec.price.toFixed(2)}` : null;
+}
+
+/** Builds a standalone copy keeping only rows visible to one audience, rewritten to that audience. */
+export function audienceCopyRows(items: string[], specs: unknown, view: "technician" | "client") {
+  const rows = checklistRows(items, specs).filter(r => r.item.trim() && specShows(r.spec, view));
+  return { items: rows.map(r => r.item), specs: rows.map(r => ({ ...r.spec, audience: view })) };
+}
 export const DEFAULT_SPEC: FieldSpec = { control: "checkbox", audience: "both", unit: "" };
 
 /** Choices shown for a custom-choice step, falling back to the standard preset. */
@@ -55,6 +75,8 @@ export function parseFieldSpecs(raw: unknown, itemCount: number): FieldSpec[] {
       audience: isAudience(r.audience) ? r.audience : DEFAULT_SPEC.audience,
       unit: typeof r.unit === "string" ? r.unit.slice(0, 20) : "",
       ...(Array.isArray(r.options) ? { options: r.options.filter((o): o is string => typeof o === "string").map(o => o.slice(0, 40)).slice(0, 12) } : {}),
+      ...(typeof r.price === "number" && Number.isFinite(r.price) && r.price > 0 ? { price: Math.round(r.price * 100) / 100 } : {}),
+      ...(r.photo === true ? { photo: true } : {}),
     };
   });
 }

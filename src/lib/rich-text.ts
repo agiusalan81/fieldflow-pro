@@ -3,7 +3,7 @@
 export const RICH_COLORS = [
   { key: "red", label: "Critical (red)", token: "text-destructive" },
   { key: "amber", label: "Caution (amber)", token: "text-warning" },
-  { key: "blue", label: "Note (blue)", token: "text-info" },
+  { key: "blue", label: "Note (blue)", token: "text-primary" },
   { key: "green", label: "Verified (green)", token: "text-success" },
 ] as const;
 export type RichColor = (typeof RICH_COLORS)[number]["key"];
