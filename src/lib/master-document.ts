@@ -1,4 +1,4 @@
-import { BILLING_CYCLES, checklistRows, commercialPriceLines, commercialTotal, extrasFor, hasCommercial, parseCommercial, parseExtras, specShows } from "./document-blocks";
+import { BILLING_CYCLES, checklistRows, commercialPriceLines, commercialTotal, extrasFor, hasCommercial, parseCommercial, parseExtras, specShows, specChoices } from "./document-blocks";
 import { parseSections, sectionsFor, type Audience } from "./document-audience";
 
 export type MasterDocumentContent = { name: string; trade?: string; body: string; kind: string; items: string[]; sections?: unknown; field_specs?: unknown; commercial?: unknown; extras?: unknown };
