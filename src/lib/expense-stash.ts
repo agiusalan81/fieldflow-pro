@@ -1,14 +1,16 @@
 import { openDB } from 'idb';
 import { PDFDocument } from 'pdf-lib';
 import { supabase } from '@/integrations/supabase/client';
-export type ExpenseDraft = { id:string; company_id:string; uploaded_by:string; file_path:string; page_count:number; created_at:string; blob:Blob; error?:string };
+import type { ExpenseDetails } from '@/lib/expense-details';
+export type ExpenseDraft = { id:string; company_id:string; uploaded_by:string; file_path:string; page_count:number; created_at:string; blob:Blob; error?:string; expense_date?:string; amount?:number; currency?:string; category_id?:string|null; category_name?:string; attach_to?:string };
 const db = () => openDB('fieldbridge-expenses',1,{upgrade(d){d.createObjectStore('receipts',{keyPath:'id'});}});
 const changed = () => window.dispatchEvent(new Event('fieldbridge-expenses'));
 export async function localExpenses(userId:string):Promise<ExpenseDraft[]>{return (await (await db()).getAll('receipts')).filter(r=>r.uploaded_by===userId);}
-export async function stashExpense(userId:string,companyId:string,blob:Blob,pages:number){
+export async function stashExpense(userId:string,companyId:string,blob:Blob,pages:number,details?:ExpenseDetails,sheetId?:string){
  if(blob.size>20*1024*1024)throw new Error('Receipt PDF must be under 20 MB.');
  const id=crypto.randomUUID();
- await (await db()).put('receipts',{id,company_id:companyId,uploaded_by:userId,file_path:`${companyId}/expenses/${id}.pdf`,page_count:pages,created_at:new Date().toISOString(),blob});changed();
+  await (await db()).put('receipts',{id,company_id:companyId,uploaded_by:userId,file_path:`${companyId}/expenses/${id}.pdf`,page_count:pages,created_at:new Date().toISOString(),blob,...details,...(sheetId?{attach_to:sheetId}:{})});changed();
+  return id;
 }
 const running=new Set<string>();
 export async function syncExpenses(userId:string){
@@ -18,11 +20,13 @@ export async function syncExpenses(userId:string){
  const identity=await supabase.auth.getUser();if(identity.data.user?.id!==userId)throw new Error('Sign in to the account that saved these receipts.');
  for(const receipt of await localExpenses(userId)){
  try{
- const {blob,error:_error,...row}=receipt;
+  const {blob,error:_error,category_name,attach_to,...row}=receipt;
+  if(category_name&&!row.category_id){const found=await supabase.from('expense_categories').select('id').ilike('name',category_name.replace(/[%_]/g,'')).neq('status','rejected').limit(1).maybeSingle();if(found.error)throw found.error;if(found.data)row.category_id=found.data.id;else{const cat=await supabase.from('expense_categories').insert({name:category_name}).select('id').single();if(cat.error)throw cat.error;row.category_id=cat.data.id;}await(await db()).put('receipts',{...receipt,category_id:row.category_id});}
  const existing=await supabase.from('expense_receipts').select('id').eq('id',row.id).maybeSingle();if(existing.error)throw existing.error;
  if(!existing.data){const r=await supabase.from('expense_receipts').insert(row);if(r.error)throw r.error;}
  const upload=await supabase.storage.from('job-receipts').upload(row.file_path,blob,{contentType:'application/pdf',upsert:false});
  if(upload.error&&!/already exists|Duplicate/i.test(upload.error.message))throw upload.error;
+  if(attach_to){const linked=await supabase.from('jobsheet_receipts').select('id').eq('expense_id',row.id).eq('jobsheet_id',attach_to).maybeSingle();if(linked.error)throw linked.error;if(!linked.data)await attachExpense(row,attach_to,userId);}
  await (await db()).delete('receipts',row.id);
  }catch(e){await (await db()).put('receipts',{...receipt,error:e instanceof Error?e.message:'Upload failed'});}
  }
