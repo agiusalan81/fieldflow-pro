@@ -4819,6 +4819,7 @@ export type Database = {
       }
       standby_swaps: {
         Row: {
+          acceptance_applied: boolean
           approved_at: string | null
           approved_by: string | null
           company_id: string
@@ -4836,6 +4837,7 @@ export type Database = {
           track: string
         }
         Insert: {
+          acceptance_applied?: boolean
           approved_at?: string | null
           approved_by?: string | null
           company_id: string
@@ -4853,6 +4855,7 @@ export type Database = {
           track?: string
         }
         Update: {
+          acceptance_applied?: boolean
           approved_at?: string | null
           approved_by?: string | null
           company_id?: string
