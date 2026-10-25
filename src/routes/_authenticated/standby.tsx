@@ -47,6 +47,7 @@ function StandbyPage() {
   const [askTrack, setAskTrack] = useState<RotaTrack>("technician");
   const { data: supervisorRoster } = useQuery({ queryKey: ["supervisor-roster", profile?.company_id], enabled: !!profile && feature("standby"), queryFn: async () => { const r = await supabase.from("supervisor_rosters").select("*").maybeSingle(); if(r.error) throw r.error; return r.data; } });
   const { data: contacts = [] } = useQuery({ queryKey: ["rota-contacts", profile?.company_id], enabled: !!profile && feature("standby"), queryFn: async () => { const r = await supabase.from("users").select("id,phone_number"); if(r.error) throw r.error; return r.data; } });
+  const candidates = useQuery({queryKey:['standby-candidates',profile?.id,feature('skills_dispatch')],enabled:!!profile&&feature('standby')&&feature('skills_dispatch'),queryFn:async()=>{const r=await supabase.rpc('standby_swap_candidates');if(r.error)throw r.error;return r.data;}});
   // Start at today so upcoming standby days always show the swap option.
   const [week, setWeek] = useState(() => today0());
   const [ask, setAsk] = useState<string | null>(null);
@@ -81,7 +82,7 @@ function StandbyPage() {
   const answer = async (id: string, status: "accepted" | "declined" | "cancelled") => {
     const { error } = await supabase.from("standby_swaps").update({ status }).eq("id", id);
     if (error) { toast.error(error.message); return; }
-    toast.success(status === "accepted" ? "Accepted — awaiting manager approval" : status === "declined" ? "Swap declined" : "Request cancelled");
+    toast.success(status === "accepted" ? "Swap accepted — rota updated" : status === "declined" ? "Swap declined" : "Request cancelled");
     refresh();
   };
   const incoming = swaps.filter((s) => s.target_id === profile.id && s.status === "pending" && (s.id === focusedSwap || swapReminderDue(s.snoozed_until)));
@@ -156,10 +157,10 @@ function StandbyPage() {
           <div className="space-y-1.5"><Label>Ask colleague</Label>
             <Select value={target} onValueChange={setTarget}>
               <SelectTrigger className="h-11"><SelectValue placeholder={`Choose a ${askTrack}`} /></SelectTrigger>
-              <SelectContent>{techs.filter((u) => u.id !== profile.id && (!ask || freeForRange(u.id, ask, end || ask, cfg, swaps, askTrack))).map((u) => <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>)}</SelectContent>
+              <SelectContent>{techs.filter((u) => u.id !== profile.id && candidates.data?.some(c=>c.user_id===u.id) && (!ask || freeForRange(u.id, ask, end || ask, cfg, swaps, askTrack))).map((u) => <SelectItem key={u.id} value={u.id}>{u.full_name}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <p className="text-xs text-muted-foreground">Colleague acceptance is followed by supervisor/admin approval before the rota changes.</p>
+          <p className="text-xs text-muted-foreground"></p>
           <Button className="h-11" disabled={!target} onClick={request}>Send request</Button>
         </DialogContent>
       </Dialog>
@@ -174,7 +175,7 @@ function SwapList({ swaps, name, onCancel, meId, manager }: { swaps: { id: strin
         <li key={s.id} className="flex flex-wrap items-center gap-2 py-2">
           <span className="tabular-nums text-muted-foreground">{s.swap_date}{s.end_date && s.end_date !== s.swap_date ? ` → ${s.end_date}` : ""}</span>
           <span className="flex-1 text-foreground">{name(s.requester_id)} → {name(s.target_id)} · {s.track ?? "technician"}</span>
-          <span className={`rounded-full px-2 py-0.5 text-xs capitalize ${SWAP_CLS[s.status] ?? ""}`}>{s.status === "accepted" ? (s.manager_approved ? "Approved" : "Awaiting manager") : s.status}</span>
+          <span className={`rounded-full px-2 py-0.5 text-xs capitalize ${SWAP_CLS[s.status] ?? ""}`}>{s.status === "accepted" ? (s.manager_approved ? "Applied" : "Office review") : s.status}</span>
           <span className="text-xs text-muted-foreground">asked {new Date(s.created_at).toLocaleDateString()}</span>
           {s.status === "pending" && (s.requester_id === meId || manager) && <Button size="icon" variant="ghost" className="h-7 w-7" aria-label="Cancel request" onClick={() => onCancel(s.id)}><X className="h-3.5 w-3.5" /></Button>}
         </li>

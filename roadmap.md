@@ -1,4 +1,8 @@
 # Roadmap
+- [ ] Expense date/amount/searchable inline categories and silent field review states
+- [ ] Job-sheet site ID, company-controlled history and open-job required skills
+- [ ] Administration approvals hub with exact review links and unlisted asset suggestions
+- [ ] Neutral departure coordination and primary-skill recipient-accepted standby swaps
 - [x] Phase 1 universal site surveys: delegated reviewer, bell alerts, office price generator, per-track Zoho defaults; Branch/Store ID on sites, contacts, previews and portal
 - [ ] Phase 2: lift supplier RFQ dispatch/quarantine/reminders and formal client estimate template from price generator
 - [x] Same-device sheet saves serialized; overlap reproduced then fixed, regression tests retain newer edits and external conflicts (live write verification blocked: requesting account has revoked company access)

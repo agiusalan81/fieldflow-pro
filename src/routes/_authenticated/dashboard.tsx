@@ -198,7 +198,7 @@ function UpForGrabs({ profile }: { profile: Profile }) {
               <span className="shrink-0 rounded-md border bg-muted px-2 py-1 text-xs">{j.places_left} of {j.required_team_size} left</span>
             </div>
             {j.problem_summary && <p className="line-clamp-2 text-sm text-foreground">{j.problem_summary}</p>}
-            {!!j.skills?.length && <div className="flex flex-wrap gap-1">{j.skills.map((s) => <span key={s} className="rounded-full border px-2 py-0.5 text-xs">{s}</span>)}</div>}
+            {smart && <div className="flex flex-wrap items-center gap-1"><span className="text-xs text-muted-foreground">Required skills:</span>{!j.skills?.length&&<span className="text-xs">None specified</span>}{(j.skills??[]).map((s) => <span key={s} className="rounded-full border px-2 py-0.5 text-xs">{s}</span>)}</div>}
             <div className="flex gap-2">
               <Button size="sm" className="flex-1" disabled={busy !== null || !clocked.data} onClick={() => claim(j.id)}>{busy === j.id ? "Claiming…" : "Claim job"}</Button>
               <Button size="sm" variant="ghost" onClick={() => setDismissed((s) => new Set([...s, j.id]))}>Dismiss</Button>

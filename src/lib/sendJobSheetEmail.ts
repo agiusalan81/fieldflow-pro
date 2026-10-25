@@ -1,3 +1,4 @@
+import {formatSiteDisplay} from "@/lib/site-display";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { clientPhotos, parsePhotos, labourHours, technicianCount, validateCombinedSheets, dayLabourHours } from "@/lib/jobsheets";
@@ -163,7 +164,7 @@ async function prepareSheet(supabase: AuthClient, sheetId: string, recipients?: 
 
     const { data: sheet, error } = await supabase
       .from("job_sheets")
-      .select("client_id, site_id, company_id, special_notes, special_notes_in_pdf, special_notes_in_email, jobsheet_number, status, reported_fault, repairs_performed, technician_name, client_full_name, client_id_card_no, signature_data, photo_paths, asset_type, asset_type_other, lift_model, serial_number, created_at, is_tech_assistance, is_maintenance, is_installation, job_type_other, assigned_technician_id, clients(name, billing_address, property_name, street_name, location), sites(name, address), assets(reference_number, serial_number), companies(name)")
+      .select("client_id, site_id, company_id, special_notes, special_notes_in_pdf, special_notes_in_email, jobsheet_number, status, reported_fault, repairs_performed, technician_name, client_full_name, client_id_card_no, signature_data, photo_paths, asset_type, asset_type_other, lift_model, serial_number, created_at, is_tech_assistance, is_maintenance, is_installation, job_type_other, assigned_technician_id, clients(name, billing_address, property_name, street_name, location), sites(name, address, store_code), assets(reference_number, serial_number), companies(name)")
       .eq("id", sheetId)
       .single();
     if (error || !sheet) throw new Error("Job sheet not found");
@@ -177,10 +178,10 @@ async function prepareSheet(supabase: AuthClient, sheetId: string, recipients?: 
 
 
     const client = sheet.clients as { name: string; billing_address: string | null } | null;
-    const site = sheet.sites as { name: string; address: string | null } | null;
+    const site = sheet.sites;
     const asset = sheet.assets as { reference_number: string } | null;
     const company = (sheet.companies as { name: string } | null)?.name ?? "";
-    const address = [site?.name, site?.address || client?.billing_address].filter(Boolean).join(", ");
+    const address = site ? formatSiteDisplay({...site,address:site.address||client?.billing_address||null}) : client?.billing_address??"";
     const date = new Date(sheet.created_at).toLocaleDateString("en-GB");
 
     const [{ data: logs }, { data: parts }] = await Promise.all([

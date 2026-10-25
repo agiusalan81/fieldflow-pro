@@ -23,6 +23,7 @@ export function useCompanyRules() {
         rules, renewalDays: data?.renewal_notice_days ?? 30, industry: data?.industry ?? "", exists: !!data,
         trades: (data?.trades ?? []) as string[],
         idleTimeout: data?.idle_timeout_minutes ?? 30,
+        fieldSheetHistoryMonths: data?.field_sheet_history_months ?? 12,
         pingSeconds: data?.location_ping_seconds ?? 30,
         breaks: { enabled: data?.break_enabled ?? true, count: data?.breaks_per_shift ?? 1, minutes: data?.break_minutes ?? 30 },
         standby: { start: data?.standby_start ?? new Date().toISOString().slice(0, 10), rotationDays: data?.standby_rotation_days ?? 7, perShift: data?.standby_per_shift ?? 1, order: data?.standby_order ?? [] },

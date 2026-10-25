@@ -756,6 +756,7 @@ export type Database = {
           equipment_categories: string[]
           equipment_label: string
           estimate_config: Json
+          field_sheet_history_months: number
           holiday_rate: number
           idle_timeout_minutes: number
           industry: string | null
@@ -808,6 +809,7 @@ export type Database = {
           equipment_categories?: string[]
           equipment_label?: string
           estimate_config?: Json
+          field_sheet_history_months?: number
           holiday_rate?: number
           idle_timeout_minutes?: number
           industry?: string | null
@@ -860,6 +862,7 @@ export type Database = {
           equipment_categories?: string[]
           equipment_label?: string
           estimate_config?: Json
+          field_sheet_history_months?: number
           holiday_rate?: number
           idle_timeout_minutes?: number
           industry?: string | null
@@ -1472,27 +1475,36 @@ export type Database = {
       }
       expense_receipts: {
         Row: {
+          amount: number | null
           category_id: string | null
           company_id: string
           created_at: string
+          currency: string
+          expense_date: string | null
           file_path: string
           id: string
           page_count: number
           uploaded_by: string
         }
         Insert: {
+          amount?: number | null
           category_id?: string | null
           company_id?: string
           created_at?: string
+          currency?: string
+          expense_date?: string | null
           file_path: string
           id?: string
           page_count?: number
           uploaded_by?: string
         }
         Update: {
+          amount?: number | null
           category_id?: string | null
           company_id?: string
           created_at?: string
+          currency?: string
+          expense_date?: string | null
           file_path?: string
           id?: string
           page_count?: number
@@ -1920,6 +1932,7 @@ export type Database = {
           status: Database["public"]["Enums"]["job_status"]
           technician_name: string | null
           travel_start_time: string | null
+          unlisted_equipment: string | null
           updated_at: string
           visit_outcome: string
           work_end_time: string | null
@@ -1983,6 +1996,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["job_status"]
           technician_name?: string | null
           travel_start_time?: string | null
+          unlisted_equipment?: string | null
           updated_at?: string
           visit_outcome?: string
           work_end_time?: string | null
@@ -2046,6 +2060,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["job_status"]
           technician_name?: string | null
           travel_start_time?: string | null
+          unlisted_equipment?: string | null
           updated_at?: string
           visit_outcome?: string
           work_end_time?: string | null
@@ -2904,6 +2919,7 @@ export type Database = {
           assigned_by: string | null
           company_id: string
           created_at: string
+          is_primary: boolean
           skill_id: string
           user_id: string
         }
@@ -2911,6 +2927,7 @@ export type Database = {
           assigned_by?: string | null
           company_id?: string
           created_at?: string
+          is_primary?: boolean
           skill_id: string
           user_id: string
         }
@@ -2918,6 +2935,7 @@ export type Database = {
           assigned_by?: string | null
           company_id?: string
           created_at?: string
+          is_primary?: boolean
           skill_id?: string
           user_id?: string
         }
@@ -4804,6 +4822,7 @@ export type Database = {
       }
       standby_swaps: {
         Row: {
+          acceptance_applied: boolean
           approved_at: string | null
           approved_by: string | null
           company_id: string
@@ -4821,6 +4840,7 @@ export type Database = {
           track: string
         }
         Insert: {
+          acceptance_applied?: boolean
           approved_at?: string | null
           approved_by?: string | null
           company_id: string
@@ -4838,6 +4858,7 @@ export type Database = {
           track?: string
         }
         Update: {
+          acceptance_applied?: boolean
           approved_at?: string | null
           approved_by?: string | null
           company_id?: string
@@ -5508,6 +5529,10 @@ export type Database = {
         }
         Returns: string
       }
+      same_standby_primary_skill: {
+        Args: { _a: string; _b: string; _company: string }
+        Returns: boolean
+      }
       save_client_contact: {
         Args: { _client: string; _contact: string; _details: Json }
         Returns: string
@@ -5621,6 +5646,10 @@ export type Database = {
         Args: { _active: boolean; _reason?: string; _user: string }
         Returns: undefined
       }
+      set_member_primary_skill: {
+        Args: { _skill: string; _user: string }
+        Returns: undefined
+      }
       set_subscription_pack: {
         Args: { _enabled: boolean; _pack: string; _subscription: string }
         Returns: undefined
@@ -5640,6 +5669,12 @@ export type Database = {
         Returns: undefined
       }
       snooze_standby_swap: { Args: { _swap: string }; Returns: undefined }
+      standby_swap_candidates: {
+        Args: never
+        Returns: {
+          user_id: string
+        }[]
+      }
       standby_track_ids: {
         Args: { _company: string; _date: string; _track: string }
         Returns: string[]

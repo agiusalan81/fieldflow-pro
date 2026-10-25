@@ -64,9 +64,9 @@ function CompanyPage() {
 function HoursTab({ companyId }: { companyId: string }) {
   const { data } = useCompanyRules();
   const qc = useQueryClient();
-  const [f, setF] = useState<null | { work_days: number[]; work_start: string; work_end: string; after_hours_rate: number; saturday_rate: number; sunday_rate: number; holiday_rate: number; holidays: string; renewal_notice_days: number; idle_timeout_minutes: number; location_ping_seconds: number; break_enabled: boolean; breaks_per_shift: number; break_minutes: number; currency: string; default_country_code: string; equipment_label: string; equipment_categories: string }>(null);
+  const [f, setF] = useState<null | { work_days: number[]; work_start: string; work_end: string; after_hours_rate: number; saturday_rate: number; sunday_rate: number; holiday_rate: number; holidays: string; renewal_notice_days: number; idle_timeout_minutes: number; location_ping_seconds: number; break_enabled: boolean; breaks_per_shift: number; break_minutes: number; currency: string; default_country_code: string; equipment_label: string; equipment_categories: string; field_sheet_history_months:number }>(null);
   useEffect(() => {
-    if (data && !f) setF({ ...data.rules, holidays: data.rules.public_holidays.join(", "), renewal_notice_days: data.renewalDays, idle_timeout_minutes: data.idleTimeout, location_ping_seconds: data.pingSeconds, break_enabled: data.breaks.enabled, breaks_per_shift: data.breaks.count, break_minutes: data.breaks.minutes, currency: data.locale.currency, default_country_code: data.locale.countryCode, equipment_label: data.locale.equipmentLabel, equipment_categories: data.equipmentCategories.join(", ") });
+    if (data && !f) setF({ ...data.rules, holidays: data.rules.public_holidays.join(", "), renewal_notice_days: data.renewalDays, idle_timeout_minutes: data.idleTimeout, location_ping_seconds: data.pingSeconds, break_enabled: data.breaks.enabled, breaks_per_shift: data.breaks.count, break_minutes: data.breaks.minutes, currency: data.locale.currency, default_country_code: data.locale.countryCode, equipment_label: data.locale.equipmentLabel, equipment_categories: data.equipmentCategories.join(", "), field_sheet_history_months:data.fieldSheetHistoryMonths });
   }, [data, f]);
   if (!f) return null;
   const save = async () => {
@@ -158,6 +158,7 @@ function HoursTab({ companyId }: { companyId: string }) {
           </div>
         )}
       </div>
+      <div className="space-y-1.5"><Label>Field staff job-sheet history</Label><Select value={String(f.field_sheet_history_months)} onValueChange={v=>setF({...f,field_sheet_history_months:Number(v)})}><SelectTrigger aria-label="Field staff job-sheet history"><SelectValue/></SelectTrigger><SelectContent>{[[1,'1 month'],[3,'3 months'],[6,'6 months'],[12,'1 year']].map(([v,label])=><SelectItem key={v} value={String(v)}>{label}</SelectItem>)}</SelectContent></Select></div>
       <Button className="h-11" onClick={save}>Save hours & rules</Button>
     </section>
   );
