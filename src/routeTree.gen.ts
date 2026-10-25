@@ -52,6 +52,7 @@ import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as ProblemTokenRouteImport } from './routes/problem.$token'
 import { Route as ReferralCodeRouteImport } from './routes/referral.$code'
 import { Route as ReportTokenRouteImport } from './routes/report.$token'
+import { Route as AuthenticatedAdminApprovalsRouteImport } from './routes/_authenticated/admin.approvals'
 import { Route as AuthenticatedAdminEntitiesRouteImport } from './routes/_authenticated/admin.entities'
 import { Route as AuthenticatedAdminFieldsRouteImport } from './routes/_authenticated/admin.fields'
 import { Route as AuthenticatedAdminInventoryRouteImport } from './routes/_authenticated/admin.inventory'
@@ -290,6 +291,12 @@ const ReportTokenRoute = ReportTokenRouteImport.update({
   path: '/report/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminApprovalsRoute =
+  AuthenticatedAdminApprovalsRouteImport.update({
+    id: '/admin/approvals',
+    path: '/admin/approvals',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminEntitiesRoute =
   AuthenticatedAdminEntitiesRouteImport.update({
     id: '/admin/entities',
@@ -437,6 +444,7 @@ export interface FileRoutesByFullPath {
   '/problem/$token': typeof ProblemTokenRoute
   '/referral/$code': typeof ReferralCodeRoute
   '/report/$token': typeof ReportTokenRoute
+  '/admin/approvals': typeof AuthenticatedAdminApprovalsRoute
   '/admin/entities': typeof AuthenticatedAdminEntitiesRoute
   '/admin/fields': typeof AuthenticatedAdminFieldsRoute
   '/admin/inventory': typeof AuthenticatedAdminInventoryRoute
@@ -499,6 +507,7 @@ export interface FileRoutesByTo {
   '/problem/$token': typeof ProblemTokenRoute
   '/referral/$code': typeof ReferralCodeRoute
   '/report/$token': typeof ReportTokenRoute
+  '/admin/approvals': typeof AuthenticatedAdminApprovalsRoute
   '/admin/entities': typeof AuthenticatedAdminEntitiesRoute
   '/admin/fields': typeof AuthenticatedAdminFieldsRoute
   '/admin/inventory': typeof AuthenticatedAdminInventoryRoute
@@ -563,6 +572,7 @@ export interface FileRoutesById {
   '/problem/$token': typeof ProblemTokenRoute
   '/referral/$code': typeof ReferralCodeRoute
   '/report/$token': typeof ReportTokenRoute
+  '/_authenticated/admin/approvals': typeof AuthenticatedAdminApprovalsRoute
   '/_authenticated/admin/entities': typeof AuthenticatedAdminEntitiesRoute
   '/_authenticated/admin/fields': typeof AuthenticatedAdminFieldsRoute
   '/_authenticated/admin/inventory': typeof AuthenticatedAdminInventoryRoute
@@ -627,6 +637,7 @@ export interface FileRouteTypes {
     | '/problem/$token'
     | '/referral/$code'
     | '/report/$token'
+    | '/admin/approvals'
     | '/admin/entities'
     | '/admin/fields'
     | '/admin/inventory'
@@ -689,6 +700,7 @@ export interface FileRouteTypes {
     | '/problem/$token'
     | '/referral/$code'
     | '/report/$token'
+    | '/admin/approvals'
     | '/admin/entities'
     | '/admin/fields'
     | '/admin/inventory'
@@ -752,6 +764,7 @@ export interface FileRouteTypes {
     | '/problem/$token'
     | '/referral/$code'
     | '/report/$token'
+    | '/_authenticated/admin/approvals'
     | '/_authenticated/admin/entities'
     | '/_authenticated/admin/fields'
     | '/_authenticated/admin/inventory'
@@ -1098,6 +1111,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin/approvals': {
+      id: '/_authenticated/admin/approvals'
+      path: '/admin/approvals'
+      fullPath: '/admin/approvals'
+      preLoaderRoute: typeof AuthenticatedAdminApprovalsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/entities': {
       id: '/_authenticated/admin/entities'
       path: '/admin/entities'
@@ -1271,6 +1291,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
   AuthenticatedTeamInvitesRoute: typeof AuthenticatedTeamInvitesRoute
   AuthenticatedTechnicalLibraryRoute: typeof AuthenticatedTechnicalLibraryRoute
+  AuthenticatedAdminApprovalsRoute: typeof AuthenticatedAdminApprovalsRoute
   AuthenticatedAdminEntitiesRoute: typeof AuthenticatedAdminEntitiesRoute
   AuthenticatedAdminFieldsRoute: typeof AuthenticatedAdminFieldsRoute
   AuthenticatedAdminInventoryRoute: typeof AuthenticatedAdminInventoryRoute
@@ -1312,6 +1333,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTeamRoute: AuthenticatedTeamRoute,
   AuthenticatedTeamInvitesRoute: AuthenticatedTeamInvitesRoute,
   AuthenticatedTechnicalLibraryRoute: AuthenticatedTechnicalLibraryRoute,
+  AuthenticatedAdminApprovalsRoute: AuthenticatedAdminApprovalsRoute,
   AuthenticatedAdminEntitiesRoute: AuthenticatedAdminEntitiesRoute,
   AuthenticatedAdminFieldsRoute: AuthenticatedAdminFieldsRoute,
   AuthenticatedAdminInventoryRoute: AuthenticatedAdminInventoryRoute,

@@ -57,10 +57,10 @@ export function DepartureAlerts({ userId }: { userId: string }) {
         const key = `${n.id}:reply:${n.departure_reply}`;
         if (!seen.has(key)) {
           seen.add(key);
-          const text = `Job sheet- ${n.jobsheet_number} — message from your supervisor: ${n.departure_reply}`;
+          const text = `Job sheet- ${n.jobsheet_number} — office update: ${n.departure_reply}`;
           setMsg({ text, ok: true, sheetId: n.id }); playChime("message", userId);
           qc.invalidateQueries({ queryKey: ["sheet", n.id] });
-          notify("Message from your supervisor", text, n.id);
+          notify("Office update", text, n.id);
         }
         return;
       }
@@ -68,16 +68,16 @@ export function DepartureAlerts({ userId }: { userId: string }) {
       if (o.departure_status === n.departure_status || !["approved", "rejected"].includes(n.departure_status) || seen.has(key)) return;
       seen.add(key);
       const ok = n.departure_status === "approved";
-      const text = ok ? `Job sheet- ${n.jobsheet_number}: you may leave site. The client has been notified.` : `Job sheet- ${n.jobsheet_number}: leaving was declined — please wait for the client.`;
+      const text = ok ? `Job sheet- ${n.jobsheet_number}: client coordination complete — departure confirmed.` : `Job sheet- ${n.jobsheet_number}: please remain on site while the office arranges client access.`;
       setMsg({ text, ok, sheetId: n.id }); playChime("approval", userId);
       qc.invalidateQueries({ queryKey: ["sheet", n.id] });
-      notify(ok ? "Departure approved" : "Departure declined", text, n.id);
+      notify(ok ? "Departure confirmed" : "Client coordination update", text, n.id);
     }).subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [userId, navigate, qc,core]);
   if (!msg||!core) return null;
   return (
-    <div className={`mb-4 rounded-xl border p-4 ${msg.ok ? "border-success bg-success/10" : "border-destructive bg-destructive/10"}`}>
+    <div className={`mb-4 rounded-xl border p-4 ${msg.ok ? "border-success bg-success/10" : "border-warning bg-warning/10"}`}>
       <p className="text-sm font-medium text-foreground">{msg.text}</p>
       <div className="mt-2 flex gap-2">
         <Button size="sm" asChild onClick={() => setMsg(null)}><Link to="/sheets/$sheetId" params={{ sheetId: msg.sheetId }}>Open job sheet</Link></Button>
@@ -180,31 +180,31 @@ export function DepartureRequest({ sheet, manager, onChange, preapproved = false
     if (!note.trim()) throw new Error("Say why you are leaving (e.g. client left, equipment switched off at isolator)");
     await set("requested", { departure_note: note.trim() });
     if (typeof Notification !== "undefined" && Notification.permission === "default") Notification.requestPermission().catch(() => {});
-    toast.success("Approval requested — wait on site for a supervisor or office admin");
+    toast.success("The office is coordinating with the client. Please remain on site for an update.");
   });
   const approve = run(async () => { await set("approved", { return_fee_waived: waive, return_fee_hours: waive ? 0 : RETURN_FEE_MIN_HOURS }); report((await sendClientNotice({ data: { sheetId: sheet.id, event: "unsigned_left" } })).result); });
-  const reject = run(async () => { await set("rejected"); toast.success("Request declined — technician will wait for the client"); });
+  const reject = run(async () => { await set("rejected"); toast.success("Client coordination continues — the field team will remain on site"); });
 
   const s = sheet.departure_status;
   return (
     <div className="mt-4 space-y-2 rounded-lg border border-dashed p-3">
       <p className="flex items-center gap-1.5 text-sm font-medium text-foreground"><LogOut className="h-4 w-4" />Client left before signing?</p>
       {s === "requested" && <>
-        <p className="text-sm text-muted-foreground">Waiting for approval to leave. Reason: {sheet.departure_note}</p>
-        {sheet.departure_reply && <p className="rounded-md border border-warning bg-warning/15 p-2 text-sm text-foreground"><b>Message from your supervisor:</b> “{sheet.departure_reply}”{!manager && <span className="block text-xs text-muted-foreground">Please wait on site until approved.</span>}</p>}
+        <p className="text-sm text-muted-foreground">Office coordinating with the client. Site note: {sheet.departure_note}</p>
+        {sheet.departure_reply && <p className="rounded-md border border-warning bg-warning/15 p-2 text-sm text-foreground"><b>Office update:</b> “{sheet.departure_reply}”{!manager && <span className="block text-xs text-muted-foreground">Please remain on site while client access is arranged.</span>}</p>}
         {manager && <label className="flex items-center gap-2 text-sm text-foreground"><Checkbox checked={waive} onCheckedChange={(b) => setWaive(!!b)} />Waive the 1 h return-visit charge</label>}
         {manager && <div className="flex flex-wrap gap-2">
-          <Button size="sm" disabled={busy} onClick={approve}><Check className="mr-1 h-4 w-4" />Approve & notify client</Button>
-          <Button size="sm" variant="outline" disabled={busy} onClick={reject}><X className="mr-1 h-4 w-4" />Decline — wait on site</Button>
+          <Button size="sm" disabled={busy} onClick={approve}><Check className="mr-1 h-4 w-4" />Confirm departure & notify client</Button>
+          <Button size="sm" variant="outline" disabled={busy} onClick={reject}><X className="mr-1 h-4 w-4" />Continue client coordination</Button>
         </div>}
       </>}
-      {s === "approved" && <p className="text-sm text-success">Departure approved — the client was asked to call to sign and restore service.</p>}
+      {s === "approved" && <p className="text-sm text-success">Departure confirmed — the client was asked to call to sign and restore service.</p>}
       {s === "approved" && <p className="text-xs text-muted-foreground">{sheet.return_fee_waived ? "Return-visit charge waived." : "A 1 h return-visit charge was added for billing."}</p>}
       {(s === "none" || s === "rejected") && <>
-        {s === "rejected" && <p className="text-sm text-destructive">Last request was declined — please wait for the client.</p>}
-        <p className="text-xs text-muted-foreground">A supervisor or office admin must approve before you leave. Once approved, the client gets the "left unsigned" message.</p>
+        {s === "rejected" && <p className="text-sm text-destructive">The office is arranging client access. Please remain on site.</p>}
+        <p className="text-xs text-muted-foreground">The office can contact the client privately to arrange access or coordinate departure.</p>
         <Textarea rows={2} placeholder="What happened? e.g. client left at 14:30, equipment switched off at main isolator" value={note} onChange={(e) => setNote(e.target.value)} />
-        <Button size="sm" variant="outline" disabled={busy} onClick={request}>Ask approval to leave unsigned</Button>
+        <Button size="sm" variant="outline" disabled={busy} onClick={request}>Coordinate departure with office</Button>
       </>}
     </div>
   );
@@ -245,16 +245,16 @@ export function DepartureRequests() {
   const decline = (id: string) => busyRun(id, async () => {
     const { error } = await supabase.from("job_sheets").update({ departure_status: "rejected" }).eq("id", id);
     if (error) throw error;
-    toast.success("Request declined — technician will wait for the client");
+    toast.success("Client coordination continues — the field team will remain on site");
   });
   if (!data.length||!on('core')) return null;
   return (
-    <section className="rounded-xl border-2 border-destructive bg-destructive/10 p-4">
+    <section className="rounded-xl border-2 border-warning bg-warning/10 p-4">
       <h2 className="mb-2 flex items-center gap-2 font-medium text-foreground">
-        <span className="inline-flex animate-pulse items-center rounded-full bg-destructive px-2.5 py-0.5 text-xs font-semibold text-destructive-foreground">Urgent</span>
-        Technicians waiting to leave unsigned ({data.length})
+        <span className="inline-flex animate-pulse items-center rounded-full bg-destructive px-2.5 py-0.5 text-xs font-semibold text-destructive-foreground">Client coordination</span>
+        Field team awaiting client coordination ({data.length})
       </h2>
-      <p className="mb-3 text-xs text-muted-foreground">A technician is standing by on site — approve, decline or send a message right away.</p>
+      <p className="mb-3 text-xs text-muted-foreground">The field team is on site while client access or departure is arranged.</p>
       <ul className="space-y-2">
         {data.map((s) => {
           const waiting = s.departure_requested_at ? Math.max(0, Math.round((Date.now() - new Date(s.departure_requested_at).getTime()) / 60000)) : null;
@@ -269,8 +269,8 @@ export function DepartureRequests() {
             </Link>
             <label className="flex items-center gap-2 text-sm text-foreground"><Checkbox checked={!!waive[s.id]} onCheckedChange={(b) => setWaive((w) => ({ ...w, [s.id]: !!b }))} />Waive the 1 h return-visit charge</label>
             <div className="flex flex-wrap gap-2">
-              <Button size="sm" disabled={busy} onClick={() => void approve(s.id)}><Check className="mr-1 h-4 w-4" />Approve & notify client</Button>
-              <Button size="sm" variant="outline" disabled={busy} onClick={() => void decline(s.id)}><X className="mr-1 h-4 w-4" />Decline — wait on site</Button>
+              <Button size="sm" disabled={busy} onClick={() => void approve(s.id)}><Check className="mr-1 h-4 w-4" />Confirm departure & notify client</Button>
+              <Button size="sm" variant="outline" disabled={busy} onClick={() => void decline(s.id)}><X className="mr-1 h-4 w-4" />Continue client coordination</Button>
             </div>
             <div className="flex gap-2">
               <Input value={reply[s.id] ?? ""} onChange={(e) => setReply((r) => ({ ...r, [s.id]: e.target.value }))}

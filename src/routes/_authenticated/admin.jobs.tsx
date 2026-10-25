@@ -38,7 +38,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/admin/jobs")({ staticData: { sitemap: false },
-  validateSearch: (s: Record<string, unknown>): { new?: boolean | undefined; assetId?: string | undefined; problemId?: string | undefined } => ({ new: s["new"] === true || s["new"] === "true" ? true : undefined, assetId: typeof s["assetId"] === "string" ? s["assetId"] : undefined, problemId: typeof s["problemId"] === "string" ? s["problemId"] : undefined }),
+  validateSearch: (s: Record<string, unknown>): { new?: boolean | undefined; assetId?: string | undefined; problemId?: string | undefined; review?:string } => ({ ...(typeof s["review"]==="string"?{review:s["review"]}:{}), new: s["new"] === true || s["new"] === "true" ? true : undefined, assetId: typeof s["assetId"] === "string" ? s["assetId"] : undefined, problemId: typeof s["problemId"] === "string" ? s["problemId"] : undefined }),
   head: () => ({
     meta: [
       { title: "Job sheets — FieldBridge" },
@@ -130,6 +130,8 @@ function AdminJobs() {
     }
   };
 
+  const {review:focusedReview}=Route.useSearch();
+  useEffect(()=>{if(focusedReview){const found=jobs.find(j=>j.id===focusedReview&&j.requires_admin_approval);if(found)setApproving(found);}},[focusedReview,jobs]);
   const queue = jobs.filter((j) => matchesSheetFilter(j, "admin_queue"));
   const base = jobs.filter((j) => matchesSheetDetails(j, { ...details, initials: staff.find((u) => u.id === details.technician) ? initialsOf(staff.find((u) => u.id === details.technician) ?? { full_name: "" }) : undefined }) && (!mine || j.assigned_technician_id === me?.id) && matchesSheetSearch(j.jobsheet_number, [j.clients?.name, j.users?.full_name, j.assets?.reference_number, j.sites?.name, j.reported_fault], q));
   const list = base.filter((j) => matchesSheetFilter(j, filter));

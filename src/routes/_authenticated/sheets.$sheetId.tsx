@@ -1,3 +1,4 @@
+import {formatSiteDisplay} from "@/lib/site-display";
 import { TravelPicker } from "@/components/travel-picker";
 import { JobsheetInternalNotes, InternalThread } from "@/components/jobsheet-internal-notes";
 import { sheetFingerprint } from "@/lib/sheet-dirty";
@@ -88,7 +89,7 @@ const emptyPart = (): Part => ({ part_description: "", unit: "pcs", quantity: 1,
 const nowHM = () => new Date().toTimeString().slice(0, 5);
 
 const FIELDS = [
-  "client_id", "site_id", "asset_id", "asset_type", "asset_type_other", "lift_model", "serial_number", "requires_admin_approval",
+  "client_id", "site_id", "asset_id", "asset_type", "asset_type_other", "lift_model", "serial_number", "requires_admin_approval", "unlisted_equipment",
   "is_tech_assistance", "is_maintenance", "is_installation", "job_type_other", "maintenance_agreement_type",
   "reported_fault", "repairs_performed", "pending_works_future_jobs", "internal_comments_admin_only",
   "technician_name", "client_full_name", "client_id_card_no", "signature_data",
@@ -148,7 +149,7 @@ function SheetForm() {
     queryFn: async () => {
       const [c, s, a] = await Promise.all([
         supabase.from("clients").select("id, name, billing_address, preapprove_departure, waive_transport").order("name"),
-        supabase.from("sites").select("id, client_id, name, address").order("name"),
+        supabase.from("sites").select("id, client_id, name, address, store_code").order("name"),
         supabase.from("assets").select("id, client_id, site_id, reference_number, asset_category, location_details, custom_attributes, serial_number"),
       ]);
       return { clients: c.data ?? [], sites: s.data ?? [], assets: a.data ?? [] };
@@ -416,8 +417,8 @@ function SheetForm() {
       <JobReceipts userId={profile.id} companyId={profile.company_id} sheetId={sheetId} readOnly={busy} />
       {!form.signature_data && sheet.departure_status !== "none" && (
         <div className={`mx-auto mb-4 max-w-5xl rounded-xl border-2 p-4 text-sm ${sheet.departure_status === "approved" ? "border-success bg-success/10" : sheet.departure_status === "rejected" ? "border-destructive bg-destructive/10" : "border-warning bg-warning/15"}`}>
-          <p className="font-medium text-foreground">{sheet.departure_status === "approved" ? "Approved — you may leave site. The client has been notified." : sheet.departure_status === "rejected" ? "Leaving was declined — please wait on site for the client." : "Waiting for approval to leave unsigned — please wait on site."}</p>
-          {sheet.departure_reply && <p className="mt-1 text-foreground"><b>Message from your supervisor:</b> “{sheet.departure_reply}”</p>}
+          <p className="font-medium text-foreground">{sheet.departure_status === "approved" ? "Client coordination complete — departure confirmed." : sheet.departure_status === "rejected" ? "Please remain on site while the office arranges client access." : "The office is coordinating with the client. Please remain on site for an update."}</p>
+          {sheet.departure_reply && <p className="mt-1 text-foreground"><b>Office update:</b> “{sheet.departure_reply}”</p>}
         </div>
       )}
       <fieldset disabled={readOnly || busy} className="mx-auto max-w-5xl space-y-4 pb-24">
@@ -428,7 +429,7 @@ function SheetForm() {
           <StatusBadge status={sheet.status} />
           {sheet.status === "in_transit" && <Button type="button" className="h-11" disabled={busy || !localReady} onClick={() => arrive()}><MapPin className="mr-1 h-4 w-4" />Arrive on site</Button>}
           {readOnly && <span className="text-sm text-muted-foreground">Completed — read-only view</span>}
-          {form.requires_admin_approval && <span className="inline-flex items-center gap-1 rounded-full bg-warning/25 px-2.5 py-0.5 text-xs text-warning-foreground"><ShieldAlert className="h-3 w-3" />Needs admin approval</span>}
+          {manager && form.requires_admin_approval && <span className="inline-flex items-center gap-1 rounded-full bg-warning/25 px-2.5 py-0.5 text-xs text-warning-foreground"><ShieldAlert className="h-3 w-3" />Needs admin approval</span>}
         </div>
 
         <Section n={1} title="Header & client info">
@@ -443,7 +444,7 @@ function SheetForm() {
             <div className="space-y-1.5">
               <Label>{word("site")}</Label>
               <SearchSelect value={form.site_id as string} placeholder="Choose site" disabled={readOnly}
-                options={sites.map((s) => ({ value: s.id, label: s.name, hint: s.address ?? undefined }))}
+                options={sites.map((s) => ({ value: s.id, label: formatSiteDisplay(s) }))}
                 onChange={pickSite} />
             </div>
             <div className="space-y-1.5">
@@ -452,6 +453,8 @@ function SheetForm() {
                 options={assets.map((a) => ({ value: a.id, label: `${a.reference_number} · ${a.asset_category}`, hint: a.serial_number ?? undefined }))}
                 onChange={pickAsset} />
             </div>
+            {site?.store_code&&<div className="space-y-1.5"><Label>Site / Branch ID</Label><Input readOnly value={site.store_code}/></div>}
+            {!form.asset_id&&<div className="space-y-1.5"><Label>Equipment not listed</Label><Input maxLength={500} placeholder="Please fill in equipment reference and details" value={(form.unlisted_equipment as string)??''} onChange={e=>set({unlisted_equipment:e.target.value,requires_admin_approval:true})}/></div>}
             <div className="space-y-1.5"><Label>{word("technician")}</Label><Input className="h-11" value={(form.technician_name as string) ?? ""} onChange={(e) => set({ technician_name: e.target.value })} /></div>
             <div className="space-y-1.5"><Label>Date</Label><Input className="h-11" readOnly value={new Date(sheet.created_at).toLocaleDateString()} /></div>
           </div>
@@ -480,10 +483,10 @@ function SheetForm() {
               </Select>
             </div>
             {form.asset_type === "Other" && <div className="space-y-1.5"><Label>Specify</Label><Input className="h-11" value={(form.asset_type_other as string) ?? ""} onChange={(e) => set({ asset_type_other: e.target.value })} /></div>}
-            <div className="space-y-1.5"><Label>{word("model")}</Label><Input className="h-11" value={(form.lift_model as string) ?? ""} onChange={(e) => set({ lift_model: e.target.value, requires_admin_approval: true })} /></div>
-            <div className="space-y-1.5"><Label>{word("serial")}</Label><Input className="h-11" value={(form.serial_number as string) ?? ""} onChange={(e) => set({ serial_number: e.target.value, requires_admin_approval: true })} /></div>
+            <div className="space-y-1.5"><Label>{word("model")}</Label><Input placeholder="Please fill in model" className="h-11" value={(form.lift_model as string) ?? ""} onChange={(e) => set({ lift_model: e.target.value, requires_admin_approval: true })} /></div>
+            <div className="space-y-1.5"><Label>{word("serial")}</Label><Input placeholder="Please fill in serial number" className="h-11" value={(form.serial_number as string) ?? ""} onChange={(e) => set({ serial_number: e.target.value, requires_admin_approval: true })} /></div>
           </div>
-          <p className="mt-2 text-xs text-muted-foreground">Filled in automatically from the chosen lift. Changing the model or serial number sends this sheet to an admin for approval.</p>
+          <p className="mt-2 text-xs text-muted-foreground"></p>
         </Section>
 
         <Section n={3} title="Work classification">
