@@ -133,12 +133,15 @@ const isActive = (path: string, to: string) => (to === "/dashboard" ? path === t
 
 function NavLinks({ items, onNavigate, uid }: { items: NavItem[]; onNavigate?: () => void; uid?: string | undefined }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const groups = [...new Set(items.map((i) => i.group))];
-  const activeGroup = items.find((i) => isActive(path, i.to))?.group ?? groups[0];
+  const overview = items.find(i => i.to === "/dashboard");
+  const groupedItems = items.filter(i => i.to !== "/dashboard");
+  const groups = [...new Set(groupedItems.map((i) => i.group))];
+  const activeGroup = groupedItems.find((i) => isActive(path, i.to))?.group ?? groups[0];
   const [openGroup, setOpenGroup] = useState<string | undefined>(activeGroup);
   useEffect(() => { setOpenGroup(activeGroup); }, [activeGroup]);
   return (
     <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+      {overview && <Button asChild variant="ghost" className="shrink-0 justify-start text-sidebar-foreground"><Link to="/dashboard" activeProps={{ className: "bg-sidebar-accent font-medium" }} activeOptions={{ exact: true }} onClick={() => { if (uid) recordUsage(uid, "/dashboard"); onNavigate?.(); }}><LayoutDashboard className="mr-2 h-4 w-4" />{overview.label}</Link></Button>}
       {groups.map((g) => {
         const open = openGroup === g;
         return (
@@ -149,7 +152,7 @@ function NavLinks({ items, onNavigate, uid }: { items: NavItem[]; onNavigate?: (
             </button>
             {open && (
               <div className="mb-1 flex flex-col gap-0.5 pl-1">
-                {items.filter((i) => i.group === g).map((i) => i.locked ? <LockedModule key={i.to} feature={i.feature ?? 'core'} label={i.label} comingSoon={i.soon}><i.icon className="h-4 w-4 shrink-0"/></LockedModule> : (
+                {groupedItems.filter((i) => i.group === g).map((i) => i.locked ? <LockedModule key={i.to} feature={i.feature ?? 'core'} label={i.label} comingSoon={i.soon}><i.icon className="h-4 w-4 shrink-0"/></LockedModule> : (
                   <Link key={i.to} to={i.to}
                     onClick={() => { if (uid) recordUsage(uid, i.to); onNavigate?.(); }}
                     className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
@@ -369,7 +372,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
       </div>
 
       <nav aria-label="Quick navigation" className="fieldbridge-bottom fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 items-end gap-1 border-t lg:hidden">
-        <Link to="/dashboard" className={tab} activeProps={{ className: "text-primary font-medium" }} activeOptions={{ exact: true }}><LayoutDashboard className="h-5 w-5" />Home</Link>
+        <Link to="/dashboard" className={tab} activeProps={{ className: "text-primary font-medium" }} activeOptions={{ exact: true }}><LayoutDashboard className="h-5 w-5" />{isOffice(profile) ? "Overview" : "Today & team"}</Link>
         <Link to={manager ? "/admin/jobs" : "/sheets"} className={tab} activeProps={{ className: "text-primary font-medium" }}><ClipboardList className="h-5 w-5" />Job sheets</Link>
         {preview.active ? <Link to="/hours" className={tab}><Clock className="h-5 w-5" />Hours</Link> : <Link to="/sheets/new" search={{}} aria-label="Create new job sheet" className="mx-auto -mt-5 mb-1.5 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg"><Plus className="h-7 w-7" /></Link>}
         <Link to={second.to} className={tab} activeProps={{ className: "text-primary font-medium" }}><second.icon className="h-5 w-5" />{second.label}</Link>
