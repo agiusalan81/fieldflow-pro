@@ -1,3 +1,4 @@
+import { customerNotes } from "@/lib/service-sheet";
 import {formatSiteDisplay,formatSiteTitle} from "@/lib/site-display";
 import { serviceEquipment } from "@/lib/service-sheet";
 import { createFileRoute } from "@tanstack/react-router";
@@ -36,7 +37,7 @@ function PrintSheet() {
     queryKey: ["print", sheetId],
     queryFn: async () => {
       const [s, l, p] = await Promise.all([
-        supabase.from("job_sheets").select("jobsheet_number, created_at, asset_type, asset_type_other, lift_model, serial_number, is_tech_assistance, is_maintenance, is_installation, job_type_other, maintenance_agreement_type, reported_fault, repairs_performed, technician_name, client_full_name, client_id_card_no, signature_data, assigned_technician_id, special_notes, special_notes_in_pdf, clients(name, billing_address), sites(name, address, store_code), assets(reference_number), companies(name)").eq("id", sheetId).maybeSingle(),
+        supabase.from("job_sheets").select("jobsheet_number, created_at, asset_type, asset_type_other, lift_model, serial_number, is_tech_assistance, is_maintenance, is_installation, job_type_other, maintenance_agreement_type, reported_fault, repairs_performed, technician_name, client_full_name, client_id_card_no, signature_data, assigned_technician_id, special_notes, special_notes_in_pdf, maintenance_notes, clients(name, billing_address), sites(name, address, store_code), assets(reference_number), companies(name)").eq("id", sheetId).maybeSingle(),
         supabase.from("jobsheet_time_logs").select("*").eq("jobsheet_id", sheetId).order("sort_order"),
         supabase.from("jobsheet_parts").select("*").eq("jobsheet_id", sheetId).order("sort_order"),
       ]);
@@ -59,7 +60,7 @@ function PrintSheet() {
         number: s.jobsheet_number, date: new Date(s.created_at).toLocaleDateString("en-GB"), client: s.clients?.name ?? "", address: s.sites?formatSiteDisplay(s.sites):s.clients?.billing_address??"", asset: serviceEquipment(s.asset_type === "Other" ? s.asset_type_other : s.asset_type,s.assets?.reference_number,s.lift_model,s.serial_number), workType: types,
         fault: s.reported_fault ?? "", repairs: s.repairs_performed ?? "", technician: s.technician_name ?? "", technicianSignature: data.technicianSignature, signedBy: s.client_full_name ?? "", idCard: s.client_id_card_no ?? "", signature: s.signature_data,
         logs: data.logs.map(l=>({ date: l.log_date,in:l.time_in?.slice(0,5) ?? "",out:l.time_out?.slice(0,5) ?? "",travel:Number(l.traveling_time_hours),total:dayLabourHours(l.time_in,l.time_out,Number(l.traveling_time_hours),l.technician_count,l.technician_initials),techs:l.technician_initials.join(", "),count:technicianCount(l.technician_count,l.technician_initials) })),
-        parts: data.parts.map(p=>({desc:p.part_description,unit:p.unit ?? "",qty:Number(p.quantity)})),notes:s.special_notes_in_pdf ? s.special_notes : null,terms:termsFor(parseTerms(data.terms),"job_sheet"),template:company.documentTemplate,
+        parts: data.parts.map(p=>({desc:p.part_description,unit:p.unit ?? "",qty:Number(p.quantity)})),notes:customerNotes(s.maintenance_notes, s.special_notes_in_pdf ? s.special_notes : null),terms:termsFor(parseTerms(data.terms),"job_sheet"),template:company.documentTemplate,
       }}/></div> : <article style={company ? documentVariables(company.documentTemplate) : undefined} data-frame={company?.documentTemplate.frame} data-style={company?.documentTemplate.stylePreset} className="document-paper mx-auto max-w-3xl space-y-6 p-10 text-sm shadow print:shadow-none">
         <header className="flex items-start justify-between border-b pb-4">
           <div className="flex items-center gap-3">{company?.logo && <img src={company.logo} alt="" className="h-14 max-w-32 object-contain" />}<div><p className="font-display text-2xl">{s.companies?.name}</p><p className="text-muted-foreground">Job sheet</p></div></div>

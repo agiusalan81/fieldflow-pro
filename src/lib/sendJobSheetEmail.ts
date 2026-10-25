@@ -1,3 +1,4 @@
+import { customerNotes } from "@/lib/service-sheet";
 import {formatSiteDisplay} from "@/lib/site-display";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -164,7 +165,7 @@ async function prepareSheet(supabase: AuthClient, sheetId: string, recipients?: 
 
     const { data: sheet, error } = await supabase
       .from("job_sheets")
-      .select("client_id, site_id, company_id, special_notes, special_notes_in_pdf, special_notes_in_email, jobsheet_number, status, reported_fault, repairs_performed, technician_name, client_full_name, client_id_card_no, signature_data, photo_paths, asset_type, asset_type_other, lift_model, serial_number, created_at, is_tech_assistance, is_maintenance, is_installation, job_type_other, assigned_technician_id, clients(name, billing_address, property_name, street_name, location), sites(name, address, store_code), assets(reference_number, serial_number), companies(name)")
+      .select("client_id, site_id, company_id, special_notes, special_notes_in_pdf, special_notes_in_email, maintenance_notes, jobsheet_number, status, reported_fault, repairs_performed, technician_name, client_full_name, client_id_card_no, signature_data, photo_paths, asset_type, asset_type_other, lift_model, serial_number, created_at, is_tech_assistance, is_maintenance, is_installation, job_type_other, assigned_technician_id, clients(name, billing_address, property_name, street_name, location), sites(name, address, store_code), assets(reference_number, serial_number), companies(name)")
       .eq("id", sheetId)
       .single();
     if (error || !sheet) throw new Error("Job sheet not found");
@@ -204,7 +205,7 @@ async function prepareSheet(supabase: AuthClient, sheetId: string, recipients?: 
         return { date: l.log_date, in: l.time_in?.slice(0, 5) ?? "", out: l.time_out?.slice(0, 5) ?? "", travel, total: dayLabourHours(l.time_in, l.time_out, travel, l.technician_count, l.technician_initials), count: technicianCount(l.technician_count, l.technician_initials), techs: l.technician_initials.join(", ") };
       }),
       parts: (parts ?? []).map((p) => ({ desc: p.part_description, unit: p.unit ?? "", qty: Number(p.quantity) })),
-      notes: sheet.special_notes_in_pdf ? notes : null,
+      notes: customerNotes(sheet.maintenance_notes, sheet.special_notes_in_pdf ? notes : null),
       terms: termsFor(parseTerms(settings?.terms), "job_sheet"),
       template: await resolveDocumentAssets(supabase, parseTemplate(settings?.pdf_template)),
     });
@@ -224,6 +225,7 @@ async function prepareSheet(supabase: AuthClient, sheetId: string, recipients?: 
       `Dear ${client?.name ?? "customer"},`,
       "",
       `Please find attached the completed ${sheetTitle(sheet.jobsheet_number)} for work carried out${address ? ` at ${address}` : ""} on ${date}.`,
+      sheet.maintenance_notes?.trim() ? `\nMaintenance notes:\n${sheet.maintenance_notes.trim()}\n` : null,
       sheet.special_notes_in_email && notes ? `\n${notes}\n` : null,
       photoCount ? `${photoCount} photo${photoCount > 1 ? "s" : ""} of the work are also attached.` : null,
       "",

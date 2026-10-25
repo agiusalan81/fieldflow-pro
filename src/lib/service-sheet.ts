@@ -11,3 +11,9 @@ export type PdfSheetData = {
   notes: string | null; terms: string | null; template: PdfTemplate;
 };
 export function serviceEquipment(type: string | null, reference: string | null | undefined, model: string | null, serial: string | null) { return [type, reference, model && `Model ${model}`, serial && `S/N ${serial}`].filter(Boolean).join(" - ") || "-"; }
+
+/** Customer-visible notes block: technician maintenance notes first, then optional special notes. */
+export function customerNotes(maintenance: string | null | undefined, special: string | null | undefined): string | null {
+  const parts = [maintenance?.trim() ? `Maintenance notes:\n${maintenance.trim()}` : "", special?.trim() ?? ""].filter(Boolean);
+  return parts.length ? parts.join("\n\n") : null;
+}

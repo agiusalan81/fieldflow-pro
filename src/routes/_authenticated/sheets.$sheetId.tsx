@@ -93,7 +93,7 @@ const FIELDS = [
   "is_tech_assistance", "is_maintenance", "is_installation", "job_type_other", "maintenance_agreement_type",
   "reported_fault", "repairs_performed", "pending_works_future_jobs", "internal_comments_admin_only",
   "technician_name", "client_full_name", "client_id_card_no", "signature_data",
-  "special_notes", "special_notes_in_pdf", "special_notes_in_email",
+  "special_notes", "special_notes_in_pdf", "special_notes_in_email", "maintenance_notes",
 ] as const;
 type Form = Record<(typeof FIELDS)[number], string | boolean | null>;
 
@@ -633,6 +633,13 @@ function SheetForm() {
             </div>
           </div>
         </Section>
+
+        <section className="rounded-xl border bg-card p-4 space-y-2">
+          <Label htmlFor="maintenance-notes">Maintenance notes</Label>
+          <p className="text-xs text-muted-foreground">Shown to the customer on the job sheet, PDF and email.</p>
+          <Textarea id="maintenance-notes" rows={3} disabled={readOnly} placeholder="e.g. Ropes lubricated, door gap adjusted, recommend brake inspection next visit." value={(form.maintenance_notes as string) ?? ""} onChange={(e) => set({ maintenance_notes: e.target.value })} />
+          <VoiceDictation label="maintenance notes" disabled={readOnly} value={(form.maintenance_notes as string) ?? ""} onApply={(t) => set({ maintenance_notes: t })} />
+        </section>
 
         <SpecialNotes form={form} set={set} readOnly={readOnly} />
 
