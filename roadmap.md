@@ -42,3 +42,7 @@
 - [ ] Live one-click Zoho/QuickBooks API push (blocked: needs each provider's app connection/OAuth credentials)
 
 - [ ] Full termination-write verification (blocked: rollback test connection cannot execute auth helpers; dialog verified, no real employee revoked)
+- [ ] Approvals: tabs with counts at top; sticky approvals banner on manager overview
+- [ ] HQ: categorise modules (6 groups) and sort alphabetically everywhere
+- [ ] HQ tenants: replace inline pack switches with Packs & Storage pop-up (status, packs, storage breakdown)
+- [ ] HQ: "Under construction" tab, categorised, with release-target toggle

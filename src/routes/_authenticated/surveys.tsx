@@ -49,7 +49,7 @@ function SurveysPage() {
   const navigate = useNavigate();
   const open = (id?: string) => void navigate({ to: "/surveys", search: { survey: id } });
   if (!profile) return <AppShell title="Site surveys"><p className="text-muted-foreground">Loading…</p></AppShell>;
-  if (!on("estimates")) return <AppShell title="Site surveys"><EmptyState>Site surveys are part of the Estimates module. Ask your administrator to enable it.</EmptyState></AppShell>;
+  if (!on("site_surveys")) return <AppShell title="Site surveys"><EmptyState>Site surveys are not included in your plan. Ask your administrator to enable it.</EmptyState></AppShell>;
   return <AppShell title="Site surveys">{survey ? <Editor id={survey} onBack={() => open()} /> : <List onOpen={open} manager={isManager(profile)} superuser={["superuser", "admin"].includes(profile.role)} />}</AppShell>;
 }
 
