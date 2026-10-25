@@ -2,6 +2,11 @@ import { describe, expect, it } from "vitest";
 import { featureOn, resolveAppTitle } from "./plan-features";
 
 describe("Platform HQ feature switches", () => {
+  it("customer quoting inherits Core rather than supplier or QS access", () => {
+    const status = { state: "active", modules: [{ name: "core", enabled: true }, { name: "customer_quotes", enabled: false }, { name: "estimates", enabled: false }, { name: "qs_pricing", enabled: false }] };
+    expect(featureOn(status, "customer_quotes")).toBe(true);
+    expect(featureOn({ ...status, modules: [{ name: "core", enabled: false }] }, "customer_quotes")).toBe(false);
+  });
   it("keeps standby enabled when payroll is disabled", () => {
     const status = { state: "active", modules: [{ name: "standby", enabled: true }, { name: "payroll", enabled: false }] };
     expect(featureOn(status, "standby")).toBe(true);
