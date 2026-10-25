@@ -5645,6 +5645,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      delete_document_master: { Args: { _id: string }; Returns: Json }
       dispatch_pending_work: {
         Args: { _dispatch: Json; _expected: string; _sheet: string }
         Returns: string
