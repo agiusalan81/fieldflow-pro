@@ -13,20 +13,45 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { A4Document } from "@/components/a4-document";
 import { AUDIENCES, TECH_CHECK_OPTIONS, parseAudience, parseSections, sectionsFor, toggleAudience, type Audience, type DocSection } from "@/lib/document-audience";
+import { BILLING_CYCLES, FIELD_CONTROLS, extrasFor, hasCommercial, parseCommercial, parseExtras, parseFieldSpecs, specShows, type BlockAudience, type Commercial, type Extra, type FieldControl, type FieldSpec } from "@/lib/document-blocks";
 
 type Master = Database["public"]["Tables"]["document_masters"]["Row"];
-type PreviewDoc = Pick<Master, "name" | "body" | "items" | "kind"> & Partial<Pick<Master, "sections" | "revision" | "trade">>;
+type PreviewDoc = Pick<Master, "name" | "body" | "items" | "kind"> & Partial<Pick<Master, "sections" | "revision" | "trade" | "field_specs" | "commercial" | "extras">>;
+
+function ChecklistEntry({ item, spec, index }: { item: string; spec: FieldSpec; index: number }) {
+  if (spec.control === "passfail") {
+    return <fieldset className="flex items-center justify-between gap-3 border-b pb-1"><legend className="sr-only">{item}</legend><span className="flex-1">{index + 1}. {item}</span><span className="flex gap-3">{TECH_CHECK_OPTIONS.map((o) => <label key={o} className="flex items-center gap-1 text-[11px]"><input type="radio" name={`chk-${index}`} value={o} />{o}</label>)}</span></fieldset>;
+  }
+  if (spec.control === "reading") {
+    return <div className="flex items-center justify-between gap-3 border-b pb-1"><span className="flex-1">{index + 1}. {item}</span><span className="flex items-center gap-1"><input aria-label={`${item} reading`} className="w-20 border-b bg-transparent text-right text-[12px] outline-none" placeholder="____" />{spec.unit && <span className="text-[11px] opacity-70">{spec.unit}</span>}</span></div>;
+  }
+  return <label className="flex items-center gap-2 border-b pb-1"><span className="flex-1">{index + 1}. {item}</span><input type="checkbox" aria-label={item} /></label>;
+}
 
 export function MasterPreview({ doc, initialView = "client" }: { doc: PreviewDoc; initialView?: Audience }) {
   const [view, setView] = useState<Audience>(initialView);
   const tech = view === "technician";
   const sections = sectionsFor(parseSections(doc.sections), view);
+  const items = doc.items.filter((x) => x.trim());
+  const specs = parseFieldSpecs(doc.field_specs, items.length);
+  const commercial = parseCommercial(doc.commercial);
+  const showCommercial = !tech && commercial.showOnClient && hasCommercial(commercial);
+  const extras = extrasFor(parseExtras(doc.extras), view);
   const blocks = [
     ...doc.body.split(/\n\s*\n/).filter((p) => p.trim()).map((p, i) => <p key={`b${i}`} className="whitespace-pre-wrap">{p}</p>),
     ...sections.map((s, i) => <section key={`s${i}`} className="space-y-1">{s.title && <h3 className="document-label text-xs font-semibold uppercase">{s.title}</h3>}<p className="whitespace-pre-wrap">{s.body}</p></section>),
-    ...(doc.kind === "checklist" ? doc.items.filter((x) => x.trim()).map((item, i) => tech
-      ? <fieldset key={`i${i}`} className="flex items-center justify-between gap-3 border-b pb-1"><legend className="sr-only">{item}</legend><span className="flex-1">{i + 1}. {item}</span><span className="flex gap-3">{TECH_CHECK_OPTIONS.map((o) => <label key={o} className="flex items-center gap-1 text-[11px]"><input type="radio" name={`chk-${i}`} value={o} />{o}</label>)}</span></fieldset>
-      : <p key={`i${i}`} className="pl-4 -indent-3">• {item}</p>) : []),
+    ...(doc.kind === "checklist" ? items.flatMap((item, i) => {
+      const spec = specs[i]!;
+      if (!specShows(spec, view)) return [];
+      return [tech ? <ChecklistEntry key={`i${i}`} item={item} spec={spec} index={i} /> : <p key={`i${i}`} className="pl-4 -indent-3">• {item}</p>];
+    }) : []),
+    ...(extras.length ? [<section key="extras" className="space-y-1"><h3 className="document-label text-xs font-semibold uppercase">Additional details</h3><dl className="space-y-1">{extras.map((e, i) => <div key={i} className="flex gap-2"><dt className="font-medium">{e.label}:</dt><dd className="whitespace-pre-wrap">{e.value}</dd></div>)}</dl></section>] : []),
+    ...(showCommercial ? [<section key="comm" className="space-y-1 rounded border p-3"><h3 className="document-label text-xs font-semibold uppercase">Service summary</h3>
+      {commercial.visitsPerYear !== null && <p>{commercial.visitsPerYear} visits per year</p>}
+      {commercial.basePrice !== null && <p className="font-semibold">€{commercial.basePrice.toFixed(2)} {BILLING_CYCLES.find((c) => c.key === commercial.billingCycle)?.label.toLowerCase()}</p>}
+      {(commercial.labourDiscountPct > 0 || commercial.partsDiscountPct > 0) && <p>Discounts: {commercial.labourDiscountPct > 0 && `${commercial.labourDiscountPct}% labour`}{commercial.labourDiscountPct > 0 && commercial.partsDiscountPct > 0 && " · "}{commercial.partsDiscountPct > 0 && `${commercial.partsDiscountPct}% parts`}</p>}
+      {commercial.terms.trim() && <p className="whitespace-pre-wrap text-[12px] opacity-80">{commercial.terms}</p>}
+    </section>] : []),
   ];
   return <div className="space-y-3">
     <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-semibold">{doc.name}</h3>
@@ -46,6 +71,44 @@ function SectionEditor({ sections, onChange }: { sections: DocSection[]; onChang
     <Button size="sm" variant="outline" onClick={() => onChange([...sections, { title: "", body: "", audience: "both" }])}><Plus className="mr-1 h-4 w-4" />Add section</Button></div>;
 }
 
+const AUDIENCE_OPTS: { key: BlockAudience; label: string }[] = [{ key: "both", label: "Both copies" }, { key: "technician", label: "Technician only" }, { key: "client", label: "Client only" }];
+
+function FieldSpecEditor({ items, specs, onChange }: { items: string[]; specs: FieldSpec[]; onChange: (s: FieldSpec[]) => void }) {
+  const up = (i: number, n: Partial<FieldSpec>) => onChange(specs.map((s, j) => (j === i ? { ...s, ...n } : s)));
+  if (!items.length) return null;
+  return <div className="space-y-2"><Label>Technician controls per step</Label><p className="text-xs text-muted-foreground">Choose what the technician fills in on site for each step, and which copies show the step.</p>
+    {items.map((item, i) => <div key={i} className="grid grid-cols-1 gap-2 rounded-lg border p-2 sm:grid-cols-[1fr_150px_140px]">
+      <p className="self-center text-sm">{i + 1}. {item}</p>
+      <Select value={specs[i]!.control} onValueChange={(v) => up(i, { control: v as FieldControl })}><SelectTrigger aria-label={`Control for ${item}`}><SelectValue /></SelectTrigger><SelectContent>{FIELD_CONTROLS.map((c) => <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>)}</SelectContent></Select>
+      <Select value={specs[i]!.audience} onValueChange={(v) => up(i, { audience: v as BlockAudience })}><SelectTrigger aria-label={`Visibility for ${item}`}><SelectValue /></SelectTrigger><SelectContent>{AUDIENCE_OPTS.map((a) => <SelectItem key={a.key} value={a.key}>{a.label}</SelectItem>)}</SelectContent></Select>
+      {specs[i]!.control === "reading" && <Input placeholder="Unit (bar, °C)" value={specs[i]!.unit} onChange={(e) => up(i, { unit: e.target.value })} aria-label={`Unit for ${item}`} />}
+    </div>)}</div>;
+}
+
+function CommercialEditor({ value, onChange }: { value: Commercial; onChange: (c: Commercial) => void }) {
+  return <div className="space-y-3 rounded-lg border p-3"><div className="flex items-center justify-between"><Label>Commercial block</Label><label className="flex items-center gap-2 text-xs">Show prices on client copy<Switch checked={value.showOnClient} onCheckedChange={(showOnClient) => onChange({ ...value, showOnClient })} /></label></div>
+    <p className="text-xs text-muted-foreground">Optional. Leave price empty for a pure checklist document. Technicians never see this block.</p>
+    <div className="grid grid-cols-2 gap-3">
+      <div><Label>Visits / year</Label><Input min={0} type="number" value={value.visitsPerYear ?? ""} onChange={(e) => onChange({ ...value, visitsPerYear: e.target.value === "" ? null : Number(e.target.value) })} /></div>
+      <div><Label>Base price (€)</Label><Input min={0} step="0.01" type="number" value={value.basePrice ?? ""} onChange={(e) => onChange({ ...value, basePrice: e.target.value === "" ? null : Number(e.target.value) })} /></div>
+      <div><Label>Billing cycle</Label><Select value={value.billingCycle} onValueChange={(v) => onChange({ ...value, billingCycle: v as Commercial["billingCycle"] })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{BILLING_CYCLES.map((c) => <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>)}</SelectContent></Select></div>
+      <div className="grid grid-cols-2 gap-2"><div><Label>Labour disc %</Label><Input min={0} max={100} type="number" value={value.labourDiscountPct} onChange={(e) => onChange({ ...value, labourDiscountPct: Number(e.target.value) })} /></div><div><Label>Parts disc %</Label><Input min={0} max={100} type="number" value={value.partsDiscountPct} onChange={(e) => onChange({ ...value, partsDiscountPct: Number(e.target.value) })} /></div></div>
+    </div>
+    <div><Label>Terms</Label><Textarea rows={3} value={value.terms} onChange={(e) => onChange({ ...value, terms: e.target.value })} placeholder="Payment terms, response times, exclusions…" /></div></div>;
+}
+
+function ExtrasEditor({ extras, onChange }: { extras: Extra[]; onChange: (e: Extra[]) => void }) {
+  const up = (i: number, n: Partial<Extra>) => onChange(extras.map((e, j) => (j === i ? { ...e, ...n } : e)));
+  return <div className="space-y-2"><Label>Trade-specific details</Label><p className="text-xs text-muted-foreground">Extra key/value fields per trade, e.g. “Response time: 4 hours” or “Oil grade: ISO 32”.</p>
+    {extras.map((e, i) => <div key={i} className="grid grid-cols-1 gap-2 rounded-lg border p-2 sm:grid-cols-[1fr_1.4fr_140px_36px]">
+      <Input placeholder="Label" value={e.label} onChange={(ev) => up(i, { label: ev.target.value })} />
+      <Input placeholder="Value" value={e.value} onChange={(ev) => up(i, { value: ev.target.value })} />
+      <Select value={e.audience} onValueChange={(v) => up(i, { audience: v as BlockAudience })}><SelectTrigger aria-label={`Visibility for ${e.label || "detail"}`}><SelectValue /></SelectTrigger><SelectContent>{AUDIENCE_OPTS.map((a) => <SelectItem key={a.key} value={a.key}>{a.label}</SelectItem>)}</SelectContent></Select>
+      <Button size="icon" variant="ghost" aria-label="Remove detail" onClick={() => onChange(extras.filter((_, j) => j !== i))}><Trash2 className="h-4 w-4" /></Button>
+    </div>)}
+    <Button size="sm" variant="outline" onClick={() => onChange([...extras, { label: "", value: "", audience: "both" }])}><Plus className="mr-1 h-4 w-4" />Add detail</Button></div>;
+}
+
 export function AudienceToggles({ value, onChange, disabled }: { value: Audience[]; onChange: (a: Audience[]) => void; disabled?: boolean }) {
   return <div className="space-y-2"><Label>Who can see this document</Label><p className="text-xs text-muted-foreground">Office staff and supervisors always see it.</p>
     {AUDIENCES.map((a) => <label key={a.key} className="flex items-center justify-between text-sm">{a.label}<Switch disabled={disabled} checked={value.includes(a.key)} onCheckedChange={() => onChange(toggleAudience(value, a.key))} /></label>)}</div>;
@@ -59,24 +122,40 @@ export function DocumentMasters({ companyId, clientId }: { companyId: string; cl
   const refresh = () => { void qc.invalidateQueries({ queryKey: ["document-masters"] }); void qc.invalidateQueries({ queryKey: ["master-usage"] }); };
   const act = async (action: () => PromiseLike<{ error: { message: string } | null }>, message: string) => { const r = await action(); if (r.error) { toast.error(r.error.message); return false; } toast.success(message); refresh(); return true; };
   const create = async () => { const r = await supabase.from("document_masters").insert({ company_id: companyId, name: "Untitled document" }).select("*").single(); if (r.error) toast.error(r.error.message); else { setEdit(r.data); refresh(); } };
-  const clone = async (d: Master) => { const r = await supabase.from("document_masters").insert({ company_id: companyId, name: `${d.name} — copy`, kind: d.kind, trade: d.trade, body: d.body, items: d.items, sections: d.sections, audience: d.audience, cloned_from: d.id, revision: d.revision + 1 }).select("*").single(); if (r.error) toast.error(r.error.message); else { setEdit(r.data); refresh(); } };
-  const save = async (state = "draft") => { if (!edit) return; const sections = parseSections(edit.sections).filter((s) => s.title.trim() || s.body.trim()); if (await act(() => supabase.from("document_masters").update({ name: edit.name.trim(), kind: edit.kind, trade: edit.trade, body: edit.body, items: edit.items.map((x) => x.trim()).filter(Boolean), sections: sections as unknown as Json, audience: parseAudience(edit.audience), state }).eq("id", edit.id), state === "active" ? "Document published" : "Draft saved")) setEdit(null); };
+  const clone = async (d: Master) => { const r = await supabase.from("document_masters").insert({ company_id: companyId, name: `${d.name} — copy`, kind: d.kind, trade: d.trade, body: d.body, items: d.items, sections: d.sections, audience: d.audience, cloned_from: d.id, revision: d.revision + 1, field_specs: d.field_specs, commercial: d.commercial, extras: d.extras }).select("*").single(); if (r.error) toast.error(r.error.message); else { setEdit(r.data); refresh(); } };
+  const save = async (state = "draft") => {
+    if (!edit) return;
+    const sections = parseSections(edit.sections).filter((s) => s.title.trim() || s.body.trim());
+    const items = edit.items.map((x) => x.trim()).filter(Boolean);
+    const specs = parseFieldSpecs(edit.field_specs, items.length).slice(0, items.length);
+    const commercial = parseCommercial(edit.commercial);
+    const extras = parseExtras(edit.extras);
+    if (await act(() => supabase.from("document_masters").update({ name: edit.name.trim(), kind: edit.kind, trade: edit.trade, body: edit.body, items, sections: sections as unknown as Json, audience: parseAudience(edit.audience), state, field_specs: specs as unknown as Json, commercial: commercial as unknown as Json, extras: extras as unknown as Json }).eq("id", edit.id), state === "active" ? "Document published" : "Draft saved")) setEdit(null);
+  };
   const setAudience = async (d: Master, audience: Audience[]) => { await act(() => supabase.from("document_masters").update({ audience }).eq("id", d.id), "Visibility updated"); };
   const usersOf = (d: Master) => [...(refs?.attachments ?? []).filter((a) => a.master_id === d.id).map((a) => a.clients?.name ?? "Client"), ...(refs?.tiers ?? []).filter((t) => t.base_document_id === d.id || t.checklist_document_id === d.id).flatMap((t) => [t.name, ...t.maintenance_agreements.map((a) => a.clients?.name ?? "Client")])];
   const attach = async () => { if (!preview || !(clientId || client)) return; if (await act(() => supabase.from("document_attachments").insert({ company_id: companyId, client_id: clientId || client, master_id: preview.id }), "Document attached")) setPreview(null); };
   const list = docs.filter((d) => (!clientId || d.state === "active") && (filter === "all" || d.state === filter));
   const audienceLabel = (d: Master) => { const a = parseAudience(d.audience); return a.length === 2 ? "Technicians & clients" : a.length === 0 ? "Office only" : a[0] === "client" ? "Clients only" : "Technicians only"; };
+  const editItems = edit ? edit.items.map((x) => x.trim()).filter(Boolean) : [];
+  const editSpecs = edit ? parseFieldSpecs(edit.field_specs, editItems.length) : [];
   return <section className="space-y-4"><div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-semibold">Reusable documents</h2><div className="flex gap-2"><Select value={filter} onValueChange={setFilter}><SelectTrigger className="w-32"><SelectValue /></SelectTrigger><SelectContent>{["all", "draft", "active", "archived"].map((s) => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}</SelectContent></Select>{!clientId && <Button onClick={create}><Plus className="mr-1 h-4 w-4" />New draft</Button>}</div></div>
     {list.length === 0 && <p className="py-6 text-sm text-muted-foreground">No documents in this view.</p>}
     <div className="divide-y border-y">{list.map((d) => <div key={d.id} className="flex flex-wrap items-center gap-3 py-3"><div className="min-w-0 flex-1"><p className="font-medium">{d.name}</p><p className="text-xs text-muted-foreground">{d.kind} · {d.state} · Revision {d.revision}{d.trade && ` · ${d.trade}`} · {audienceLabel(d)}</p></div><Button title="Preview" aria-label={`Preview ${d.name}`} size="icon" variant="ghost" onClick={() => { setPreview(d); setClient(clientId ?? ""); }}><Eye className="h-4 w-4" /></Button>{!clientId && <><Button title="Clone" aria-label={`Clone ${d.name}`} size="icon" variant="ghost" onClick={() => clone(d)}><Copy className="h-4 w-4" /></Button>{d.state === "draft" && <Button size="sm" variant="outline" onClick={() => setEdit(d)}>Edit draft</Button>}{d.state === "active" && <Button title="Archive" aria-label={`Archive ${d.name}`} size="icon" variant="ghost" onClick={() => act(() => supabase.from("document_masters").update({ state: "archived" }).eq("id", d.id), "Document archived")}><Archive className="h-4 w-4" /></Button>}<Button title="Delete" aria-label={`Delete ${d.name}`} size="icon" variant="ghost" onClick={() => setDeleting(d)}><Trash2 className="h-4 w-4" /></Button></>}</div>)}</div>
     {clientId && <div className="space-y-2">{refs?.attachments.filter((a) => a.client_id === clientId).map((a) => <div key={a.id} className="flex items-center justify-between border p-3 text-sm"><span>{docs.find((d) => d.id === a.master_id)?.name ?? "Attached document"}</span><Button variant="ghost" size="sm" onClick={() => act(() => supabase.from("document_attachments").delete().eq("id", a.id), "Attachment removed")}>Detach</Button></div>)}</div>}
-    <Dialog open={!!edit} onOpenChange={(o) => !o && setEdit(null)}><DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-5xl"><DialogHeader><DialogTitle>Edit document draft</DialogTitle></DialogHeader>{edit && <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]"><div className="space-y-3"><Label>Name</Label><Input value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} /><Label>Type</Label><Select value={edit.kind} onValueChange={(kind) => setEdit({ ...edit, kind })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{["contract", "checklist", "terms", "other"].map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}</SelectContent></Select><Label>Trade / equipment</Label><Input value={edit.trade} onChange={(e) => setEdit({ ...edit, trade: e.target.value })} />
+    <Dialog open={!!edit} onOpenChange={(o) => !o && setEdit(null)}><DialogContent className="max-h-[92vh] w-[96vw] overflow-y-auto sm:max-w-7xl"><DialogHeader><DialogTitle>Edit document draft</DialogTitle></DialogHeader>{edit && <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]"><div className="space-y-3"><Label>Name</Label><Input value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} /><Label>Type</Label><Select value={edit.kind} onValueChange={(kind) => setEdit({ ...edit, kind })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{["contract", "checklist", "terms", "other"].map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}</SelectContent></Select><Label>Trade / equipment</Label><Input value={edit.trade} onChange={(e) => setEdit({ ...edit, trade: e.target.value })} />
       <AudienceToggles value={parseAudience(edit.audience)} onChange={(audience) => setEdit({ ...edit, audience })} />
       <Label>Text (shown on both copies)</Label><Textarea rows={6} value={edit.body} onChange={(e) => setEdit({ ...edit, body: e.target.value })} />
       <SectionEditor sections={parseSections(edit.sections)} onChange={(s) => setEdit({ ...edit, sections: s as unknown as Json })} />
-      {edit.kind === "checklist" && <><Label>Checklist steps</Label><p className="text-xs text-muted-foreground">One per line. Clients see a list; technicians get Pass / Fail / N/A choices.</p><Textarea rows={8} value={edit.items.join("\n")} onChange={(e) => setEdit({ ...edit, items: e.target.value.split("\n") })} /></>}
-      <div className="flex gap-2"><Button variant="outline" onClick={() => save()}>Save draft</Button><Button onClick={() => save("active")}>Publish</Button></div></div><div className="md:border-l md:pl-5"><MasterPreview doc={edit} /></div></div>}</DialogContent></Dialog>
-    <Dialog open={!!preview} onOpenChange={(o) => !o && setPreview(null)}><DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-3xl"><DialogHeader><DialogTitle>Document preview</DialogTitle></DialogHeader>{preview && <>{!clientId && preview.state !== "archived" && <AudienceToggles value={parseAudience(preview.audience)} onChange={(audience) => { setPreview({ ...preview, audience }); void setAudience(preview, audience); }} />}<MasterPreview doc={preview} />{preview.state === "active" && <div className="flex gap-2 border-t pt-4">{!clientId && <Select value={client} onValueChange={setClient}><SelectTrigger><SelectValue placeholder="Choose client" /></SelectTrigger><SelectContent>{refs?.clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select>}<Button disabled={!(clientId || client)} onClick={attach}><Paperclip className="mr-1 h-4 w-4" />Attach</Button></div>}</>}</DialogContent></Dialog>
+      {edit.kind === "checklist" && <>
+        <Label>Checklist steps</Label><p className="text-xs text-muted-foreground">One per line. Clients see a list; technicians fill in the controls you set below.</p>
+        <Textarea rows={8} value={edit.items.join("\n")} onChange={(e) => setEdit({ ...edit, items: e.target.value.split("\n") })} />
+        <FieldSpecEditor items={editItems} specs={editSpecs} onChange={(s) => setEdit({ ...edit, field_specs: s as unknown as Json })} />
+      </>}
+      <CommercialEditor value={parseCommercial(edit.commercial)} onChange={(c) => setEdit({ ...edit, commercial: c as unknown as Json })} />
+      <ExtrasEditor extras={parseExtras(edit.extras)} onChange={(x) => setEdit({ ...edit, extras: x as unknown as Json })} />
+      <div className="flex gap-2"><Button variant="outline" onClick={() => save()}>Save draft</Button><Button onClick={() => save("active")}>Publish</Button></div></div><div className="lg:border-l lg:pl-5"><MasterPreview doc={edit} /></div></div>}</DialogContent></Dialog>
+    <Dialog open={!!preview} onOpenChange={(o) => !o && setPreview(null)}><DialogContent className="max-h-[92vh] w-[96vw] overflow-y-auto sm:max-w-5xl"><DialogHeader><DialogTitle>Document preview</DialogTitle></DialogHeader>{preview && <>{!clientId && preview.state !== "archived" && <AudienceToggles value={parseAudience(preview.audience)} onChange={(audience) => { setPreview({ ...preview, audience }); void setAudience(preview, audience); }} />}<MasterPreview doc={preview} />{preview.state === "active" && <div className="flex gap-2 border-t pt-4">{!clientId && <Select value={client} onValueChange={setClient}><SelectTrigger><SelectValue placeholder="Choose client" /></SelectTrigger><SelectContent>{refs?.clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select>}<Button disabled={!(clientId || client)} onClick={attach}><Paperclip className="mr-1 h-4 w-4" />Attach</Button></div>}</>}</DialogContent></Dialog>
     <Dialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}><DialogContent><DialogHeader><DialogTitle>Remove document?</DialogTitle></DialogHeader>{deleting && <><p>{deleting.name}</p>{usersOf(deleting).length > 0 && <ul className="list-disc pl-5">{[...new Set(usersOf(deleting))].map((n) => <li key={n}>{n}</li>)}</ul>}<p className="text-sm text-muted-foreground">{deleting.state !== "draft" || usersOf(deleting).length ? "Published or assigned documents are preserved. Archive this document instead." : "This unassigned draft will be permanently removed."}</p><div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setDeleting(null)}>Cancel</Button>{deleting.state !== "draft" || usersOf(deleting).length ? <Button onClick={async () => { if (await act(() => supabase.from("document_masters").update({ state: "archived" }).eq("id", deleting.id), "Document archived")) setDeleting(null); }}>Archive</Button> : <Button variant="destructive" onClick={async () => { if (await act(() => supabase.from("document_masters").delete().eq("id", deleting.id), "Draft deleted")) setDeleting(null); }}>Delete draft</Button>}</div></>}</DialogContent></Dialog>
   </section>;
 }
