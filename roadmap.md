@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Document updates: both-copy row defaults, company-derived trade/equipment options and synonym association, lift calculator in drafts/service tiers, client sample calculation and safe rename; test and verify save/reload
+- [x] Document updates: both-copy defaults, company trade/equipment choices and synonyms, draft/tier lift calculator, client sample PDF and safe rename; signed-in save/reload verified at €765, laptop/phone inspected, fixtures removed, 47 tests passed
 - [x] Document draft rows: add/remove/reorder preserving specs; optional independent lift stops/doors/car-access prices and compound/itemised client display; admin save/reload and technician price exclusion verified, mobile clipping fixed, 21 tests passed, fixtures removed
 - [x] Survey updates: on-site locations, multiple contacts/email, working windows, multi-trade observations/materials and handling; office/technician save/reload/submission verified, supervisor-only and commercial guards checked, fixtures removed
 - [x] Overview / Today & team always visible outside navigation groups; phone labels verified
