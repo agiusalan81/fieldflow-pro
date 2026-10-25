@@ -2,7 +2,7 @@ export const DELIVERY_PURPOSES = [{key:'job_sheet',label:'Job sheets'},{key:'eta
 export type DeliveryPurpose = typeof DELIVERY_PURPOSES[number]['key'];
 export type DeliveryPreferences = Partial<Record<DeliveryPurpose,{email:boolean;whatsapp:boolean}>>;
 export type RoutingContact = {id:string;first_name:string;last_name:string|null;email:string|null;phone:string|null;role_title:string|null;site_id:string|null;site_ids:string[];all_sites:boolean;delivery_preferences:DeliveryPreferences|null;has_whatsapp:boolean;receives_job_sheets:boolean;is_primary_contact?:boolean};
-export type ClientWorkspace = {id:string;name:string;company_id:string;module_on:boolean;scope:{office:boolean;admin:boolean;all_sites:boolean;site_ids:string[];contact?:string};sites:{id:string;name:string;address:string|null}[];contacts:RoutingContact[];sheets:{id:string;jobsheet_number:string;created_at:string;site_id:string|null;reported_fault:string|null;repairs_performed:string|null}[]};
+export type ClientWorkspace = {id:string;name:string;company_id:string;module_on:boolean;scope:{office:boolean;admin:boolean;all_sites:boolean;site_ids:string[];contact?:string};sites:{id:string;name:string;address:string|null;store_code?:string|null}[];contacts:RoutingContact[];sheets:{id:string;jobsheet_number:string;created_at:string;site_id:string|null;reported_fault:string|null;repairs_performed:string|null}[]};
 export const PORTAL_URL='https://fieldbridgeapp.com/client-portal';
 export function preferencesFor(c: RoutingContact): DeliveryPreferences {
   if(c.delivery_preferences)return c.delivery_preferences;

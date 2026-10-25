@@ -813,6 +813,20 @@
       "when": 1792872144059,
       "tag": "0115_validate_hq_setup_product_selections",
       "breakpoints": true
+    },
+    {
+      "idx": 116,
+      "version": "7",
+      "when": 1792907394268,
+      "tag": "0116_site_surveys_and_store_codes",
+      "breakpoints": true
+    },
+    {
+      "idx": 117,
+      "version": "7",
+      "when": 1792907424544,
+      "tag": "0117_client_workspace_store_code",
+      "breakpoints": true
     }
   ]
 }

@@ -1,4 +1,6 @@
 # Roadmap
+- [x] Phase 1 universal site surveys: delegated reviewer, bell alerts, office price generator, per-track Zoho defaults; Branch/Store ID on sites, contacts, previews and portal
+- [ ] Phase 2: lift supplier RFQ dispatch/quarantine/reminders and formal client estimate template from price generator
 - [x] Same-device sheet saves serialized; overlap reproduced then fixed, regression tests retain newer edits and external conflicts (live write verification blocked: requesting account has revoked company access)
 - [x] Internal contact-person table, position/site dropdowns and full delivery checkboxes; signed-in save/read-back and temporary-data cleanup verified
 - [x] Tier switch off/on survives reload; atomic immediate setup saves tier/pack/visibility and rejects invalid core changes; 23 regression tests pass
