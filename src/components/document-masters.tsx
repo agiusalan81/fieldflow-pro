@@ -41,7 +41,7 @@ export function MasterPreview({ doc, initialView = "client" }: { doc: PreviewDoc
   const download = async () => {
     setDownloading(true);
     try {
-      const bytes = await buildMasterDocumentPdf(doc, view, { logo: company?.logo });
+      const bytes = await buildMasterDocumentPdf(doc, view, company?.logo ? { logo: company.logo } : {});
       const url = URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: "application/pdf" }));
       const anchor = document.createElement("a"); anchor.href = url; anchor.download = `${doc.name.replace(/[\\/:*?"<>|]/g, "_")}-${view}.pdf`; anchor.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
