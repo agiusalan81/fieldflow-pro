@@ -11,7 +11,7 @@
 
 ## Rules
 - Analytics: owner-only coarse counts; server-derived tenant. Product-scoped outreach/feedback; saved follow-ups send nothing.
-- HQ uses product-scoped workspaces, owner-only RPCs and separate legal profiles; test resets retain all evidence.
+- HQ: product-scoped workspaces, owner-only RPCs, separate legal profiles.
 - Chrome: neutral surfaces/token controls; phone theme matches neutral bar, never gradients.
 - Travel shares startJobTravel; arrival saves time before on-site status.
 - Invite functions/loaders use timeouts and middleware.
