@@ -1058,6 +1058,250 @@ export type Database = {
           },
         ]
       }
+      customer_quote_deliveries: {
+        Row: {
+          company_id: string
+          contact_id: string
+          created_at: string
+          id: string
+          outcome: string
+          quote_id: string
+        }
+        Insert: {
+          company_id: string
+          contact_id: string
+          created_at?: string
+          id?: string
+          outcome: string
+          quote_id: string
+        }
+        Update: {
+          company_id?: string
+          contact_id?: string
+          created_at?: string
+          id?: string
+          outcome?: string
+          quote_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_quote_deliveries_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_quote_deliveries_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "customer_quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_quote_events: {
+        Row: {
+          action: string
+          actor_id: string | null
+          company_id: string
+          created_at: string
+          details: Json
+          id: string
+          quote_id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          company_id: string
+          created_at?: string
+          details?: Json
+          id?: string
+          quote_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          company_id?: string
+          created_at?: string
+          details?: Json
+          id?: string
+          quote_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_quote_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_quote_events_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "customer_quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_quote_links: {
+        Row: {
+          allow_decision: boolean
+          expires_at: string
+          id: string
+          quote_id: string
+          revoked_at: string | null
+          token_hash: string
+        }
+        Insert: {
+          allow_decision?: boolean
+          expires_at: string
+          id?: string
+          quote_id: string
+          revoked_at?: string | null
+          token_hash: string
+        }
+        Update: {
+          allow_decision?: boolean
+          expires_at?: string
+          id?: string
+          quote_id?: string
+          revoked_at?: string | null
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_quote_links_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "customer_quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_quotes: {
+        Row: {
+          asset_id: string | null
+          client_id: string | null
+          company_id: string
+          created_at: string
+          created_by: string
+          data: Json
+          decided_at: string | null
+          decision_evidence: string | null
+          id: string
+          issued_at: string | null
+          job_id: string | null
+          parent_id: string | null
+          private_notes: string
+          reference: string
+          revision: number
+          signer_name: string | null
+          site_id: string | null
+          snapshot: Json | null
+          source_sheet_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          asset_id?: string | null
+          client_id?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          data?: Json
+          decided_at?: string | null
+          decision_evidence?: string | null
+          id?: string
+          issued_at?: string | null
+          job_id?: string | null
+          parent_id?: string | null
+          private_notes?: string
+          reference?: string
+          revision?: number
+          signer_name?: string | null
+          site_id?: string | null
+          snapshot?: Json | null
+          source_sheet_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          asset_id?: string | null
+          client_id?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          data?: Json
+          decided_at?: string | null
+          decision_evidence?: string | null
+          id?: string
+          issued_at?: string | null
+          job_id?: string | null
+          parent_id?: string | null
+          private_notes?: string
+          reference?: string
+          revision?: number
+          signer_name?: string | null
+          site_id?: string | null
+          snapshot?: Json | null
+          source_sheet_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_quotes_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_quotes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_quotes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_quotes_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_quotes_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "customer_quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_quotes_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_quotes_source_sheet_id_fkey"
+            columns: ["source_sheet_id"]
+            isOneToOne: false
+            referencedRelation: "job_sheets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_work_reports: {
         Row: {
           break_minutes: number
@@ -1905,6 +2149,7 @@ export type Database = {
           company_id: string
           created_at: string
           custom_values: Json
+          customer_quote_id: string | null
           departure_decided_at: string | null
           departure_decided_by: string | null
           departure_note: string | null
@@ -1970,6 +2215,7 @@ export type Database = {
           company_id: string
           created_at?: string
           custom_values?: Json
+          customer_quote_id?: string | null
           departure_decided_at?: string | null
           departure_decided_by?: string | null
           departure_note?: string | null
@@ -2035,6 +2281,7 @@ export type Database = {
           company_id?: string
           created_at?: string
           custom_values?: Json
+          customer_quote_id?: string | null
           departure_decided_at?: string | null
           departure_decided_by?: string | null
           departure_note?: string | null
@@ -2108,6 +2355,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_sheets_customer_quote_id_fkey"
+            columns: ["customer_quote_id"]
+            isOneToOne: false
+            referencedRelation: "customer_quotes"
             referencedColumns: ["id"]
           },
           {
@@ -2198,6 +2452,7 @@ export type Database = {
           client_id: string
           company_id: string
           created_at: string
+          customer_quote_id: string | null
           handover_action: string | null
           handover_at: string | null
           handover_note: string | null
@@ -2223,6 +2478,7 @@ export type Database = {
           client_id: string
           company_id: string
           created_at?: string
+          customer_quote_id?: string | null
           handover_action?: string | null
           handover_at?: string | null
           handover_note?: string | null
@@ -2248,6 +2504,7 @@ export type Database = {
           client_id?: string
           company_id?: string
           created_at?: string
+          customer_quote_id?: string | null
           handover_action?: string | null
           handover_at?: string | null
           handover_note?: string | null
@@ -2293,6 +2550,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_customer_quote_id_fkey"
+            columns: ["customer_quote_id"]
+            isOneToOne: false
+            referencedRelation: "customer_quotes"
             referencedColumns: ["id"]
           },
           {
@@ -5358,6 +5622,20 @@ export type Database = {
         Returns: string
       }
       current_company_id: { Args: never; Returns: string }
+      customer_quote_action: {
+        Args: { _action: string; _data?: Json; _id: string }
+        Returns: Json
+      }
+      customer_quote_totals: { Args: { _lines: Json }; Returns: Json }
+      decide_customer_quote: {
+        Args: {
+          _comment?: string
+          _decision: string
+          _name: string
+          _token: string
+        }
+        Returns: undefined
+      }
       decide_proposal_approval: {
         Args: {
           _comment: string
@@ -5543,6 +5821,7 @@ export type Database = {
         Returns: undefined
       }
       read_client_report: { Args: { _hash: string }; Returns: Json }
+      read_customer_quote: { Args: { _token: string }; Returns: Json }
       read_proposal_approval: { Args: { _token: string }; Returns: Json }
       record_platform_usage: { Args: { _feature: string }; Returns: undefined }
       record_shift_location: {
