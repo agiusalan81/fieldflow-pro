@@ -8,7 +8,7 @@ import type { Json } from "@/integrations/supabase/types";
 import { useProfile, isManager } from "@/lib/profile";
 import { usePlanFeatures } from "@/lib/plan-features";
 import { formatSiteDisplay } from "@/lib/site-display";
-import { clientEstimateView, parsePricing, pricingTotals, type Pricing, type PricingLine } from "@/lib/survey-pricing";
+import { clientEstimateView, parsePricing, pricingTotals, type Pricing, type PricingLine, type RateUnit } from "@/lib/survey-pricing";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -233,7 +233,7 @@ function PriceGenerator({ survey, busy, persist }: { survey: Survey; busy: boole
   const lines = (key: "base" | "logistics" | "site", title: string, rated = false) => <div className="space-y-2"><Label>{title}</Label>
     {p[key].map((l: PricingLine, i) => { const upd = (patch: Partial<PricingLine>) => setP({ ...p, [key]: p[key].map((x, j) => j === i ? { ...x, ...patch } : x) }); const unit = l.unit ?? "fixed"; return <div key={i} className="grid grid-cols-2 items-end gap-2 sm:grid-cols-[1fr_8rem_6rem_7rem_auto]">
       <F label="Description" className="col-span-2 sm:col-span-1"><Input value={l.label} onChange={(e) => upd({ label: e.target.value })} /></F>
-      {rated ? <F label="Charged"><select className={sel} value={unit} onChange={(e) => upd({ unit: e.target.value as PricingLine["unit"], qty: l.qty ?? 1 })}><option value="fixed">Fixed price</option><option value="hour">Per hour</option><option value="day">Per day</option></select></F> : <span className="hidden sm:block" />}
+      {rated ? <F label="Charged"><select className={sel} value={unit} onChange={(e) => upd({ unit: e.target.value as RateUnit, qty: l.qty ?? 1 })}><option value="fixed">Fixed price</option><option value="hour">Per hour</option><option value="day">Per day</option></select></F> : <span className="hidden sm:block" />}
       {rated && unit !== "fixed" ? <F label={unit === "hour" ? "Hours" : "Days"}><Input inputMode="decimal" value={l.qty ?? 1} onChange={(e) => upd({ qty: Number(e.target.value) || 0 })} /></F> : <span className="hidden sm:block" />}
       <F label={unit === "hour" ? "Rate / hr (€)" : unit === "day" ? "Rate / day (€)" : "Amount (€)"}><Input inputMode="decimal" value={l.amount} onChange={(e) => upd({ amount: Number(e.target.value) || 0 })} /></F>
       <Button size="icon" variant="ghost" aria-label={`Remove ${title} ${i + 1}`} onClick={() => setP({ ...p, [key]: p[key].filter((_, j) => j !== i) })}><Trash2 className="h-4 w-4" /></Button></div>; })}
