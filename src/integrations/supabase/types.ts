@@ -1923,6 +1923,7 @@ export type Database = {
           jobsheet_number: string
           lift_model: string | null
           maintenance_agreement_type: string | null
+          maintenance_notes: string | null
           notes: string | null
           overtime_rate: number | null
           pending_job_id: string | null
@@ -1987,6 +1988,7 @@ export type Database = {
           jobsheet_number?: string
           lift_model?: string | null
           maintenance_agreement_type?: string | null
+          maintenance_notes?: string | null
           notes?: string | null
           overtime_rate?: number | null
           pending_job_id?: string | null
@@ -2051,6 +2053,7 @@ export type Database = {
           jobsheet_number?: string
           lift_model?: string | null
           maintenance_agreement_type?: string | null
+          maintenance_notes?: string | null
           notes?: string | null
           overtime_rate?: number | null
           pending_job_id?: string | null

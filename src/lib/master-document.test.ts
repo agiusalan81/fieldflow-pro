@@ -25,3 +25,21 @@ describe("master document export", () => {
     expect(new TextDecoder().decode(pdf.slice(0, 5))).toBe("%PDF-");
   });
 });
+import { rowsFromText, specChoices, parseFieldSpecs as pfs } from "./document-blocks";
+import { customerNotes } from "./service-sheet";
+describe("checklist text and choices", () => {
+  it("each typed line becomes a row and keeps earlier row settings", () => {
+    const r = rowsFromText("A\nB", [{ control: "reading", audience: "both", unit: "bar" }]);
+    expect(r.items).toEqual(["A", "B"]);
+    expect(r.specs[0]!.control).toBe("reading");
+    expect(r.specs[1]!.audience).toBe("both");
+  });
+  it("custom choices default to Done / Satisfactory / N/A and persist", () => {
+    expect(specChoices({ control: "choice", audience: "both", unit: "" })).toEqual(["Done", "Satisfactory", "N/A"]);
+    expect(pfs([{ control: "choice", options: ["Done", "Faulty"] }], 1)[0]!.options).toEqual(["Done", "Faulty"]);
+  });
+  it("maintenance notes always reach the customer copy", () => {
+    expect(customerNotes("Ropes lubricated", null)).toBe("Maintenance notes:\nRopes lubricated");
+    expect(customerNotes("", "")).toBeNull();
+  });
+});

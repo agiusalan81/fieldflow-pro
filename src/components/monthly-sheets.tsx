@@ -57,7 +57,7 @@ function BatchSigning({ session, onClose }: { session: Batch; onClose: () => voi
   const sheetId = session.sheet_ids.find((id) => !signed.includes(id));
   const { data } = useQuery({ queryKey: ["batch-sheet", sheetId], enabled: !!sheetId && !ended, queryFn: async () => {
     const [sheet, logs, parts, settings] = await Promise.all([
-      supabase.from("job_sheets").select("jobsheet_number, created_at, reported_fault, repairs_performed, special_notes, special_notes_in_pdf, asset_type, serial_number, clients(name), sites(name, address), assets(reference_number)").eq("id", sheetId ?? "").single(),
+      supabase.from("job_sheets").select("jobsheet_number, created_at, reported_fault, repairs_performed, special_notes, special_notes_in_pdf, maintenance_notes, asset_type, serial_number, clients(name), sites(name, address), assets(reference_number)").eq("id", sheetId ?? "").single(),
       supabase.from("jobsheet_time_logs").select("log_date, daily_work_description, time_in, time_out").eq("jobsheet_id", sheetId ?? "").order("sort_order"),
       supabase.from("jobsheet_parts").select("quantity, unit, part_description").eq("jobsheet_id", sheetId ?? "").order("sort_order"),
       supabase.from("company_settings").select("terms").maybeSingle(),
@@ -91,6 +91,7 @@ function BatchSigning({ session, onClose }: { session: Batch; onClose: () => voi
         {data.sheet.reported_fault && <div><h3 className="font-medium">Reported fault</h3><p className="whitespace-pre-wrap text-sm">{data.sheet.reported_fault}</p></div>}
         <div><h3 className="font-medium">Work carried out</h3>{data.logs.length ? data.logs.map((l, i) => <p key={i} className="whitespace-pre-wrap text-sm">{l.log_date} {l.time_in?.slice(0, 5)}–{l.time_out?.slice(0, 5)} · {l.daily_work_description}</p>) : <p className="whitespace-pre-wrap text-sm">{data.sheet.repairs_performed || "—"}</p>}</div>
         {data.parts.length > 0 && <div><h3 className="font-medium">Parts replaced</h3>{data.parts.map((p, i) => <p key={i} className="text-sm">{p.quantity} {p.unit} · {p.part_description}</p>)}</div>}
+        {data.sheet.maintenance_notes && <p className="whitespace-pre-wrap text-sm"><span className="font-medium">Maintenance notes: </span>{data.sheet.maintenance_notes}</p>}
         {data.sheet.special_notes_in_pdf && data.sheet.special_notes && <p className="whitespace-pre-wrap text-sm">{data.sheet.special_notes}</p>}
         {data.terms && <details><summary className="cursor-pointer font-medium">Terms & conditions</summary><p className="whitespace-pre-wrap text-sm">{data.terms}</p></details>}
         <div className="grid gap-3 sm:grid-cols-2"><div><Label htmlFor="batch-name">Full name</Label><Input id="batch-name" value={name} onChange={(e) => setName(e.target.value)} /></div><div><Label htmlFor="batch-card">ID card no.</Label><Input id="batch-card" value={card} onChange={(e) => setCard(e.target.value)} /></div></div>
