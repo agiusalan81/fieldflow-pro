@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_COMMERCIAL, DEFAULT_SPEC, extrasFor, hasCommercial, parseCommercial, parseExtras, parseFieldSpecs, specShows } from "./document-blocks";
+import { DEFAULT_COMMERCIAL, DEFAULT_SPEC, DEFAULT_LIFT_PRICING, checklistRows, moveChecklistRow, commercialPriceLines, commercialTotal, extrasFor, hasCommercial, parseCommercial, parseExtras, parseFieldSpecs, specShows } from "./document-blocks";
 
 describe("parseFieldSpecs", () => {
   it("fills defaults so every item has a control", () => {
@@ -44,5 +44,43 @@ describe("parseExtras", () => {
     expect(extras).toHaveLength(2);
     expect(extrasFor(extras, "client").map((e) => e.label)).toEqual(["SLA", "Oil"]);
     expect(extrasFor(extras, "technician").map((e) => e.label)).toEqual(["Oil"]);
+  });
+});
+
+describe("lift pricing", () => {
+  const quote = (overrides: Record<string, unknown> = {}) => parseCommercial({ basePrice: 500, liftPricing: { ...DEFAULT_LIFT_PRICING, extraStopRate: 25, landingDoorRate: 30, extraCarDoorRate: 45, ...overrides } });
+  it("includes two stops in the base and charges each extra stop", () => {
+    expect(commercialPriceLines(quote({ stops: 6 })).find(l => l.key === "stops")?.amount).toBe(100);
+    expect(commercialPriceLines(quote({ stops: 1 })).find(l => l.key === "stops")?.amount).toBe(0);
+  });
+  it("prices six travel stops with only two landing doors independently", () => {
+    expect(commercialTotal(quote({ stops: 6, landingDoors: 2 }))).toBe(660);
+  });
+  it("allows multiple landing doors per floor", () => {
+    expect(commercialPriceLines(quote({ stops: 2, landingDoors: 6 })).find(l => l.key === "landing")?.amount).toBe(180);
+  });
+  it("2 car access adds one cabin door", () => {
+    expect(commercialPriceLines(quote({ carAccess: 2 })).find(l => l.key === "car")?.amount).toBe(45);
+  });
+  it("3 car access adds two cabin doors", () => {
+    expect(commercialPriceLines(quote({ carAccess: 3 })).find(l => l.key === "car")?.amount).toBe(90);
+  });
+  it("client display choice does not change the price", () => {
+    const c = quote({ stops: 6, landingDoors: 4, carAccess: 2 });
+    expect(commercialTotal(c)).toBe(765);
+    expect(commercialTotal({ ...c, clientPriceDisplay: "itemised" })).toBe(765);
+  });
+  it("retains lift settings through a stored JSON roundtrip", () => {
+    const c = { ...quote({ carAccess: 3 }), clientPriceDisplay: "itemised" };
+    expect(parseCommercial(JSON.parse(JSON.stringify(c)))).toEqual(c);
+  });
+});
+
+describe("checklist row identity", () => {
+  it("moves controls and visibility with their descriptions", () => {
+    const rows = checklistRows(["Locks", "Pressure"], [DEFAULT_SPEC, { control: "reading", audience: "both", unit: "bar" }]);
+    const moved = moveChecklistRow(rows, 1, 0);
+    expect(moved[0]).toEqual({ item: "Pressure", spec: { control: "reading", audience: "both", unit: "bar" } });
+    expect(moved.filter((_, i) => i !== 1)).toEqual([rows[1]]);
   });
 });

@@ -12,6 +12,21 @@ export const FIELD_CONTROLS: { key: FieldControl; label: string }[] = [
 export type FieldSpec = { control: FieldControl; audience: BlockAudience; unit: string };
 export const DEFAULT_SPEC: FieldSpec = { control: "checkbox", audience: "technician", unit: "" };
 
+/** Keep descriptions and their controls paired through every row operation. */
+export function checklistRows(items: string[], raw: unknown) {
+  const specs = parseFieldSpecs(raw, items.length);
+  return items.map((item, i) => ({ item, spec: specs[i] ?? { ...DEFAULT_SPEC } }));
+}
+
+export function moveChecklistRow<T>(rows: T[], index: number, destination: number): T[] {
+  if (index < 0 || destination < 0 || index >= rows.length || destination >= rows.length) return rows;
+  const next = [...rows];
+  const [row] = next.splice(index, 1);
+  if (row === undefined) return rows;
+  next.splice(destination, 0, row);
+  return next;
+}
+
 const isControl = (v: unknown): v is FieldControl => FIELD_CONTROLS.some((c) => c.key === v);
 const isAudience = (v: unknown): v is BlockAudience => v === "both" || v === "technician" || v === "client";
 
@@ -42,6 +57,8 @@ export const BILLING_CYCLES: { key: BillingCycle; label: string }[] = [
 ];
 
 export type Commercial = {
+  liftPricing: LiftPricing | null;
+  clientPriceDisplay: "compound" | "itemised";
   visitsPerYear: number | null;
   basePrice: number | null;
   billingCycle: BillingCycle;
@@ -52,6 +69,7 @@ export type Commercial = {
   showOnClient: boolean;
 };
 export const DEFAULT_COMMERCIAL: Commercial = {
+  liftPricing: null, clientPriceDisplay: "compound",
   visitsPerYear: null, basePrice: null, billingCycle: "annually",
   labourDiscountPct: 0, partsDiscountPct: 0, terms: "", showOnClient: true,
 };
@@ -62,9 +80,50 @@ const num = (v: unknown): number | null => {
 };
 const pct = (v: unknown): number => Math.min(100, Math.max(0, num(v) ?? 0));
 
+export type LiftPricing = {
+  stops: number; includedStops: number; extraStopRate: number;
+  landingDoors: number; includedLandingDoors: number; landingDoorRate: number;
+  carAccess: 1 | 2 | 3; extraCarDoorRate: number;
+};
+export const DEFAULT_LIFT_PRICING: LiftPricing = {
+  stops: 2, includedStops: 2, extraStopRate: 0,
+  landingDoors: 2, includedLandingDoors: 0, landingDoorRate: 0,
+  carAccess: 1, extraCarDoorRate: 0,
+};
+export function parseLiftPricing(raw: unknown): LiftPricing | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const r = raw as Record<string, unknown>;
+  const count = (key: keyof LiftPricing) => Math.floor(num(r[key]) ?? DEFAULT_LIFT_PRICING[key]);
+  return {
+    stops: count("stops"), includedStops: count("includedStops"), extraStopRate: num(r.extraStopRate) ?? 0,
+    landingDoors: count("landingDoors"), includedLandingDoors: count("includedLandingDoors"), landingDoorRate: num(r.landingDoorRate) ?? 0,
+    carAccess: r.carAccess === 2 || r.carAccess === 3 ? r.carAccess : 1, extraCarDoorRate: num(r.extraCarDoorRate) ?? 0,
+  };
+}
+const money = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
+export function commercialPriceLines(c: Commercial) {
+  const lines = [{ key: "base", label: "Base service", quantity: 1, rate: c.basePrice ?? 0, amount: c.basePrice ?? 0 }];
+  if (c.liftPricing) {
+    const p = c.liftPricing;
+    lines[0].label = `Base service (includes ${p.includedStops} stops and 1 car access${p.includedLandingDoors ? `, ${p.includedLandingDoors} landing doors` : ""})`;
+    lines.push(
+      { key: "stops", label: `Additional stops (${p.stops} total stops)`, quantity: Math.max(0, p.stops - p.includedStops), rate: p.extraStopRate, amount: 0 },
+      { key: "landing", label: `Landing doors (${p.landingDoors} landing doors)`, quantity: Math.max(0, p.landingDoors - p.includedLandingDoors), rate: p.landingDoorRate, amount: 0 },
+      { key: "car", label: `Extra cabin doors (${p.carAccess} car access)`, quantity: p.carAccess - 1, rate: p.extraCarDoorRate, amount: 0 },
+    );
+  }
+  return lines.map(line => ({ ...line, amount: money(line.quantity * line.rate) }));
+}
+export function commercialTotal(c: Commercial): number | null {
+  if (c.basePrice === null && !c.liftPricing) return null;
+  return money(commercialPriceLines(c).reduce((sum, line) => sum + line.amount, 0));
+}
+
 export function parseCommercial(raw: unknown): Commercial {
   const r = raw && typeof raw === "object" ? raw as Record<string, unknown> : {};
   return {
+    liftPricing: parseLiftPricing(r["liftPricing"]),
+    clientPriceDisplay: r["clientPriceDisplay"] === "itemised" ? "itemised" : "compound",
     visitsPerYear: num(r["visitsPerYear"]),
     basePrice: num(r["basePrice"]),
     billingCycle: BILLING_CYCLES.some((c) => c.key === r["billingCycle"]) ? r["billingCycle"] as BillingCycle : "annually",
@@ -77,7 +136,7 @@ export function parseCommercial(raw: unknown): Commercial {
 
 /** True when the document carries any commercial content worth printing. */
 export function hasCommercial(c: Commercial): boolean {
-  return c.basePrice !== null || c.visitsPerYear !== null || c.labourDiscountPct > 0 || c.partsDiscountPct > 0 || !!c.terms.trim();
+  return c.liftPricing !== null || c.basePrice !== null || c.visitsPerYear !== null || c.labourDiscountPct > 0 || c.partsDiscountPct > 0 || !!c.terms.trim();
 }
 
 export type Extra = { label: string; value: string; audience: BlockAudience };
