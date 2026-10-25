@@ -24,6 +24,7 @@ export function LiftCommercialEditor({ value, onChange }: { value: Commercial; o
       </div>
       <p className="text-sm text-muted-foreground">{p.carAccess} car access · {p.carAccess - 1} extra cabin {p.carAccess === 2 ? "door" : "doors"}</p>
       <div role="group" aria-label="Client price display" className="flex flex-wrap gap-2"><Button type="button" size="sm" variant={value.clientPriceDisplay === "compound" ? "default" : "outline"} onClick={() => onChange({ ...value, clientPriceDisplay: "compound" })}>Compound total</Button><Button type="button" size="sm" variant={value.clientPriceDisplay === "itemised" ? "default" : "outline"} onClick={() => onChange({ ...value, clientPriceDisplay: "itemised" })}>Itemised prices</Button></div>
+      <label className="flex items-center justify-between gap-2 text-sm">Base rates & sample calculation on client copy<Switch aria-label="Sample calculation on client copy" checked={value.showSampleCalculation} onCheckedChange={showSampleCalculation => onChange({ ...value, showSampleCalculation })} /></label>
       <p className="font-semibold">Calculated price: €{commercialTotal(value)?.toFixed(2)}</p>
     </>}
   </div>;
@@ -36,6 +37,7 @@ export function CommercialPriceSummary({ value, cycle }: { value: Commercial; cy
   return <div className="space-y-2">
     {p && <p>{p.stops} stops · {p.landingDoors} landing doors · {p.carAccess} car access</p>}
     {p && value.clientPriceDisplay === "itemised" && <dl className="space-y-1">{commercialPriceLines(value).filter(line => line.key === "base" || line.quantity > 0).map(line => <div key={line.key} className="flex flex-wrap justify-between gap-x-4 gap-y-1 border-b pb-1"><dt className="min-w-0 flex-1">{line.label}{line.key !== "base" && <span className="block text-[11px] opacity-80">{line.quantity} × €{line.rate.toFixed(2)}</span>}</dt><dd className="shrink-0">€{line.amount.toFixed(2)}</dd></div>)}</dl>}
+    {p && value.showSampleCalculation && <section className="space-y-1 border-t pt-2"><h4 className="font-semibold">Base rates & sample calculation</h4><p>Base price: €{(value.basePrice ?? 0).toFixed(2)} · includes {p.includedStops} stops, {p.includedLandingDoors} landing doors and 1 car access</p><p>Additional stop: €{p.extraStopRate.toFixed(2)} · Additional landing door: €{p.landingDoorRate.toFixed(2)} · Extra cabin door: €{p.extraCarDoorRate.toFixed(2)}</p><p>{commercialPriceLines(value).map(line => `${line.quantity} × €${line.rate.toFixed(2)}`).join(" + ")} = €{total.toFixed(2)}</p></section>}
     <p className="font-semibold">{p ? "Total: " : ""}€{total.toFixed(2)} {cycle}</p>
   </div>;
 }

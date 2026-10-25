@@ -952,6 +952,7 @@ export type Database = {
           annual_price: number
           base_document_id: string | null
           checklist_document_id: string | null
+          commercial: Json
           company_id: string
           contract_category: string | null
           created_at: string
@@ -968,6 +969,7 @@ export type Database = {
           annual_price?: number
           base_document_id?: string | null
           checklist_document_id?: string | null
+          commercial?: Json
           company_id: string
           contract_category?: string | null
           created_at?: string
@@ -984,6 +986,7 @@ export type Database = {
           annual_price?: number
           base_document_id?: string | null
           checklist_document_id?: string | null
+          commercial?: Json
           company_id?: string
           contract_category?: string | null
           created_at?: string

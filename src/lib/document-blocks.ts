@@ -10,7 +10,7 @@ export const FIELD_CONTROLS: { key: FieldControl; label: string }[] = [
 ];
 
 export type FieldSpec = { control: FieldControl; audience: BlockAudience; unit: string };
-export const DEFAULT_SPEC: FieldSpec = { control: "checkbox", audience: "technician", unit: "" };
+export const DEFAULT_SPEC: FieldSpec = { control: "checkbox", audience: "both", unit: "" };
 
 /** Keep descriptions and their controls paired through every row operation. */
 export function checklistRows(items: string[], raw: unknown) {
@@ -67,11 +67,12 @@ export type Commercial = {
   terms: string;
   /** Print the price summary on the client copy; technicians never see it. */
   showOnClient: boolean;
+  showSampleCalculation: boolean;
 };
 export const DEFAULT_COMMERCIAL: Commercial = {
   liftPricing: null, clientPriceDisplay: "compound",
   visitsPerYear: null, basePrice: null, billingCycle: "annually",
-  labourDiscountPct: 0, partsDiscountPct: 0, terms: "", showOnClient: true,
+  labourDiscountPct: 0, partsDiscountPct: 0, terms: "", showOnClient: true, showSampleCalculation: false,
 };
 
 const num = (v: unknown): number | null => {
@@ -132,6 +133,7 @@ export function parseCommercial(raw: unknown): Commercial {
     partsDiscountPct: pct(r["partsDiscountPct"]),
     terms: typeof r["terms"] === "string" ? r["terms"] : "",
     showOnClient: r["showOnClient"] !== false,
+    showSampleCalculation: r["showSampleCalculation"] === true,
   };
 }
 

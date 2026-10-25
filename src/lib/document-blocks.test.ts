@@ -2,6 +2,10 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_COMMERCIAL, DEFAULT_SPEC, DEFAULT_LIFT_PRICING, checklistRows, moveChecklistRow, commercialPriceLines, commercialTotal, extrasFor, hasCommercial, parseCommercial, parseExtras, parseFieldSpecs, specShows } from "./document-blocks";
 
 describe("parseFieldSpecs", () => {
+  it("new rows default to both copies while saved technician-only rows stay private", () => {
+    expect(checklistRows(["New step"], [])[0]?.spec.audience).toBe("both");
+    expect(parseFieldSpecs([{ audience: "technician" }], 1)[0]?.audience).toBe("technician");
+  });
   it("fills defaults so every item has a control", () => {
     const specs = parseFieldSpecs(undefined, 3);
     expect(specs).toHaveLength(3);
@@ -22,6 +26,11 @@ describe("parseFieldSpecs", () => {
 describe("parseCommercial", () => {
   it("returns defaults for empty storage", () => {
     expect(parseCommercial(undefined)).toEqual(DEFAULT_COMMERCIAL);
+  });
+  it("retains the optional client sample calculation without changing its total", () => {
+    const c = parseCommercial({ basePrice: 500, showSampleCalculation: true, liftPricing: { ...DEFAULT_LIFT_PRICING, stops: 6, landingDoors: 4, carAccess: 2, extraStopRate: 25, landingDoorRate: 30, extraCarDoorRate: 45 } });
+    expect(parseCommercial(JSON.parse(JSON.stringify(c))).showSampleCalculation).toBe(true);
+    expect(commercialTotal(c)).toBe(765);
   });
   it("rejects negative or non-numeric money and clamps discounts", () => {
     const c = parseCommercial({ basePrice: -5, visitsPerYear: "12", labourDiscountPct: 140, partsDiscountPct: -3, billingCycle: "weekly" });
