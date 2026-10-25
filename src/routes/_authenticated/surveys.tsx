@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useCompanyRules } from "@/lib/company";
-import { WORKING_WINDOWS, canSubmitSurvey, parseSurveyDetails, surveyReviewerOptions, type SurveyDetails, type TradeReview } from "@/lib/survey-details";
+import { WORKING_WINDOWS, canSubmitSurvey, parseSurveyDetails, surveyReviewerOptions, surveyTradeLabel, type SurveyDetails, type TradeReview } from "@/lib/survey-details";
 import { SurveyContacts, SurveyTrades, SurveyObservations, SurveyTradeReview } from "@/components/survey-field-details";
 
 export const Route = createFileRoute("/_authenticated/surveys")({
@@ -36,7 +36,7 @@ const sel = "h-10 w-full rounded-md border bg-background px-3 text-foreground";
 const PURPOSES = [["repair", "Repair / replacement"], ["modernisation", "Modernisation"], ["new_install", "New installation"], ["inspection", "Inspection / audit"], ["other", "Other"]] as const;
 const HAZARDS = ["Working at height", "Live electrics", "Confined space", "Asbestos risk", "Public access area", "Hot works", "Heavy lifting"];
 const STATUS: Record<string, string> = { draft: "Draft", submitted: "Awaiting review", under_review: "Under review", priced: "Priced", converted: "Converted to estimate", rejected: "Rejected" };
-type Item = { label: string; qty: number };
+type Item = { label: string; qty: number; trade?: string };
 type Survey = {
   id: string; client_id: string | null; site_id: string | null; location_ref: string | null; survey_purpose: string; track: "direct" | "supplier_rfq"; status: string;
   access_notes: string | null; working_window: string | null; hazards: string[]; scope_summary: string | null; recommended_action: string | null; urgency: string;
@@ -193,8 +193,8 @@ function Editor({ id, onBack }: { id: string; onBack: () => void }) {
         <div><Label htmlFor="sv-techs">Technicians needed</Label><Input id="sv-techs" inputMode="numeric" value={s.technicians ?? ""} onChange={(e) => set({ technicians: e.target.value === "" ? null : Number(e.target.value) })} /></div>
         <div><Label htmlFor="sv-urg">Urgency</Label><select id="sv-urg" className={sel} value={s.urgency} onChange={(e) => set({ urgency: e.target.value })}><option value="routine">Routine</option><option value="soon">Within 2 weeks</option><option value="urgent">Urgent</option></select></div>
       </div>
-      <ItemList label="Materials & equipment needed" value={items(s.materials)} onChange={(v) => set({ materials: v as unknown as Json })} />
-      <ItemList label="Other materials / equipment" value={items(s.other_items)} onChange={(v) => set({ other_items: v as unknown as Json })} />
+      <ItemList label="Materials & equipment needed" trades={details.trades} value={items(s.materials)} onChange={(v) => set({ materials: v as unknown as Json })} />
+      <ItemList label="Other materials / equipment" trades={details.trades} value={items(s.other_items)} onChange={(v) => set({ other_items: v as unknown as Json })} />
     </fieldset>
     {(editable || office) && <div className="flex flex-wrap items-end gap-2">
       <div className="w-72"><Label htmlFor="sv-rev">Reviewer</Label><select id="sv-rev" className={sel} value={reviewer ?? ""} onChange={(e) => office && s.status !== "draft" ? void persist({ reviewer_id: e.target.value || null }) : set({ reviewer_id: e.target.value || null })}><option value="">{office ? "Company default" : "Choose supervisor…"}</option>{reviewers.map((m) => <option key={m.id} value={m.id}>{m.name} · {roleLabel[m.role]}</option>)}</select></div>
@@ -206,9 +206,9 @@ function Editor({ id, onBack }: { id: string; onBack: () => void }) {
   </div>;
 }
 
-function ItemList({ label, value, onChange }: { label: string; value: Item[]; onChange: (v: Item[]) => void }) {
+function ItemList({ label, value, trades, onChange }: { label: string; value: Item[]; trades: string[]; onChange: (v: Item[]) => void }) {
   return <div className="space-y-2"><Label>{label}</Label>
-    {value.map((it, i) => <div key={i} className="flex gap-2"><Input aria-label={`${label} item ${i + 1}`} value={it.label} onChange={(e) => onChange(value.map((x, j) => j === i ? { ...x, label: e.target.value } : x))} /><Input aria-label={`${label} quantity ${i + 1}`} className="w-24" inputMode="decimal" value={it.qty} onChange={(e) => onChange(value.map((x, j) => j === i ? { ...x, qty: Number(e.target.value) || 0 } : x))} /><Button type="button" size="icon" variant="ghost" aria-label="Remove" onClick={() => onChange(value.filter((_, j) => j !== i))}><Trash2 className="h-4 w-4" /></Button></div>)}
+    {[...new Set(["", ...trades, ...value.map(it => it.trade ?? "")])].map(trade => <div key={trade} className="space-y-2">{value.some(it => (it.trade ?? "") === trade) && <p className="text-xs font-medium text-muted-foreground">{trade ? surveyTradeLabel(trade) : "General"}</p>}{value.map((it, i) => (it.trade ?? "") !== trade ? null : <div key={i} className="grid grid-cols-[1fr_5rem_auto] gap-2 sm:grid-cols-[1fr_10rem_5rem_auto]"><Input aria-label={`${label} item ${i + 1}`} value={it.label} onChange={(e) => onChange(value.map((x, j) => j === i ? { ...x, label: e.target.value } : x))} /><select aria-label={`${label} trade ${i + 1}`} className={`${sel} col-span-3 row-start-2 sm:col-span-1 sm:row-auto`} value={it.trade ?? ""} onChange={e => onChange(value.map((x, j) => j === i ? { ...x, trade: e.target.value } : x))}><option value="">General</option>{trades.map(t => <option key={t} value={t}>{surveyTradeLabel(t)}</option>)}</select><Input aria-label={`${label} quantity ${i + 1}`} inputMode="decimal" value={it.qty} onChange={(e) => onChange(value.map((x, j) => j === i ? { ...x, qty: Number(e.target.value) || 0 } : x))} /><Button type="button" size="icon" variant="ghost" aria-label="Remove" onClick={() => onChange(value.filter((_, j) => j !== i))}><Trash2 className="h-4 w-4" /></Button></div>)}</div>)}
     <Button type="button" variant="outline" size="sm" onClick={() => onChange([...value, { label: "", qty: 1 }])}><Plus className="mr-1 h-4 w-4" />Add item</Button>
   </div>;
 }
