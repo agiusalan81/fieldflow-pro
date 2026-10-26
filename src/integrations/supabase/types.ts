@@ -182,6 +182,7 @@ export type Database = {
       client_contacts: {
         Row: {
           all_sites: boolean
+          can_approve_quotes: boolean
           client_id: string
           company_id: string
           delivery_preferences: Json | null
@@ -199,6 +200,7 @@ export type Database = {
         }
         Insert: {
           all_sites?: boolean
+          can_approve_quotes?: boolean
           client_id: string
           company_id: string
           delivery_preferences?: Json | null
@@ -216,6 +218,7 @@ export type Database = {
         }
         Update: {
           all_sites?: boolean
+          can_approve_quotes?: boolean
           client_id?: string
           company_id?: string
           delivery_preferences?: Json | null
@@ -770,6 +773,7 @@ export type Database = {
           pdf_template: Json
           pe_number: string | null
           public_holidays: string[]
+          quote_acceptance_mode: string
           renewal_notice_days: number
           saturday_rate: number
           standby_order: string[]
@@ -823,6 +827,7 @@ export type Database = {
           pdf_template?: Json
           pe_number?: string | null
           public_holidays?: string[]
+          quote_acceptance_mode?: string
           renewal_notice_days?: number
           saturday_rate?: number
           standby_order?: string[]
@@ -876,6 +881,7 @@ export type Database = {
           pdf_template?: Json
           pe_number?: string | null
           public_holidays?: string[]
+          quote_acceptance_mode?: string
           renewal_notice_days?: number
           saturday_rate?: number
           standby_order?: string[]
@@ -1193,6 +1199,7 @@ export type Database = {
           id: string
           issued_at: string | null
           job_id: string | null
+          office_seen_at: string | null
           parent_id: string | null
           private_notes: string
           reference: string
@@ -1216,6 +1223,7 @@ export type Database = {
           id?: string
           issued_at?: string | null
           job_id?: string | null
+          office_seen_at?: string | null
           parent_id?: string | null
           private_notes?: string
           reference?: string
@@ -1239,6 +1247,7 @@ export type Database = {
           id?: string
           issued_at?: string | null
           job_id?: string | null
+          office_seen_at?: string | null
           parent_id?: string | null
           private_notes?: string
           reference?: string
@@ -5645,6 +5654,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      delete_client_contact: {
+        Args: { _client: string; _contact: string }
+        Returns: undefined
+      }
       delete_document_master: { Args: { _id: string }; Returns: Json }
       dispatch_pending_work: {
         Args: { _dispatch: Json; _expected: string; _sheet: string }
@@ -5725,6 +5738,7 @@ export type Database = {
         Returns: boolean
       }
       is_platform_owner: { Args: never; Returns: boolean }
+      mark_customer_quote_seen: { Args: { _quote: string }; Returns: undefined }
       member_handover_preview: { Args: { _user: string }; Returns: Json }
       member_is_active: { Args: { _user: string }; Returns: boolean }
       my_commercial_status: { Args: never; Returns: Json }
@@ -5816,6 +5830,20 @@ export type Database = {
       platform_subscription_module_access: {
         Args: { _module: string; _subscription: string }
         Returns: boolean
+      }
+      portal_decide_quote: {
+        Args: {
+          _client: string
+          _comment?: string
+          _decision: string
+          _name: string
+          _quote: string
+        }
+        Returns: Json
+      }
+      portal_report_issue: {
+        Args: { _asset: string; _client: string; _problem: string }
+        Returns: string
       }
       portal_set_site_store_code: {
         Args: { _code: string; _site: string }
