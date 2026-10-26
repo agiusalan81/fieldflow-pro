@@ -1,6 +1,7 @@
 import { TRADES } from "@/lib/price-list";
 import { settingsSectionPatch } from "@/lib/settings-sections";
 import { TechnicalStructure } from "@/components/technical-structure";
+import { CrmSettings } from "@/components/crm-settings";
 import { EstimateSettings } from "@/components/estimate-settings";
 import { QuoteAcceptanceSetting } from "@/components/quote-acceptance-setting";
 import { PriceListSettings } from "@/components/price-list-settings";
@@ -57,7 +58,7 @@ function CompanyPage() {
   if (!office) return <AppShell title="Company settings"><EmptyState>Company settings are available to office staff.</EmptyState></AppShell>;
   return (
     <AppShell title="Company settings">
-      <SettingsSections superuser={superuser} companyId={profile.company_id} userId={profile.id} />
+      <SettingsSections superuser={superuser} companyId={profile.company_id} userId={profile.id} role={profile.role} />
     </AppShell>
   );
 }
@@ -396,7 +397,7 @@ function AccessTab({ companyId }: { companyId: string }) {
 }
 
 type SectionItem = { key: string; label: string; render: () => React.ReactNode };
-function SettingsSections({ superuser, companyId, userId }: { superuser: boolean; companyId: string; userId: string }) {
+function SettingsSections({ superuser, companyId, userId, role }: { superuser: boolean; companyId: string; userId: string; role: Role }) {
   const libraryName = useCompanyTitle("document library");
   const [active, setActive] = useState("profile");
   const [visited, setVisited] = useState(["profile"]);
@@ -432,6 +433,7 @@ function SettingsSections({ superuser, companyId, userId }: { superuser: boolean
     ] },
     { title: "Commercial & integrations", items: [
       { key: "estimates", label: "Estimates & suppliers", render: () => <div className="space-y-4">{superuser&&<Button asChild variant="outline"><Link to="/subscription" hash="custom-requests">Request a custom module / template</Link></Button>}<QuoteAcceptanceSetting companyId={companyId} /><EstimateSettings companyId={companyId} /></div> },
+      { key: "crm", label: "CRM settings", render: () => <CrmSettings companyId={companyId} actorRole={superuser ? "superuser" : role} /> },
       { key: "pricelist", label: "Price list", render: () => <PriceListSettings companyId={companyId} /> },
       { key: "integrations", label: "Accounting", render: () => <IntegrationsSettings part="accounting" companyId={companyId} /> },
     ] },
