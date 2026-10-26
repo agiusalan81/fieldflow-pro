@@ -2,6 +2,7 @@ import { TRADES } from "@/lib/price-list";
 import { settingsSectionPatch } from "@/lib/settings-sections";
 import { TechnicalStructure } from "@/components/technical-structure";
 import { EstimateSettings } from "@/components/estimate-settings";
+import { QuoteAcceptanceSetting } from "@/components/quote-acceptance-setting";
 import { PriceListSettings } from "@/components/price-list-settings";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
@@ -430,7 +431,7 @@ function SettingsSections({ superuser, companyId, userId }: { superuser: boolean
       { key: "library", label: libraryName, render: () => <div className="space-y-4">{superuser&&<Button asChild variant="outline"><Link to="/subscription" hash="custom-requests">Request a custom module / template</Link></Button>}<DocumentLibrary companyId={companyId} userId={userId} /></div> },
     ] },
     { title: "Commercial & integrations", items: [
-      { key: "estimates", label: "Estimates & suppliers", render: () => <div className="space-y-4">{superuser&&<Button asChild variant="outline"><Link to="/subscription" hash="custom-requests">Request a custom module / template</Link></Button>}<EstimateSettings companyId={companyId} /></div> },
+      { key: "estimates", label: "Estimates & suppliers", render: () => <div className="space-y-4">{superuser&&<Button asChild variant="outline"><Link to="/subscription" hash="custom-requests">Request a custom module / template</Link></Button>}<QuoteAcceptanceSetting companyId={companyId} /><EstimateSettings companyId={companyId} /></div> },
       { key: "pricelist", label: "Price list", render: () => <PriceListSettings companyId={companyId} /> },
       { key: "integrations", label: "Accounting", render: () => <IntegrationsSettings part="accounting" companyId={companyId} /> },
     ] },
