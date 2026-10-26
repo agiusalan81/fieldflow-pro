@@ -1,5 +1,5 @@
 import { usePlanFeatures } from "@/lib/plan-features";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Camera, Copy, Eye, Archive, Plus, Trash2, Paperclip, Pencil, Download, RotateCcw } from "lucide-react";
@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { A4Document } from "@/components/a4-document";
 import { AUDIENCES, TECH_CHECK_OPTIONS, parseAudience, parseSections, sectionsFor, toggleAudience, type Audience, type DocSection } from "@/lib/document-audience";
-import { BILLING_CYCLES, DEFAULT_LIFT_PRICING, audienceCopyRows, stepPrice, specChoices, checklistRows, extrasFor, hasCommercial, parseCommercial, parseExtras, parseFieldSpecs, specShows, type BlockAudience, type Commercial, type Extra, type FieldSpec } from "@/lib/document-blocks";
+import { BILLING_CYCLES, DEFAULT_LIFT_PRICING, audienceCopyRows, stepPrice, specChoices, checklistRows, extrasFor, hasCommercial, summaryItemsFromText, summaryItemsToText, type SummaryItem, parseCommercial, parseExtras, parseFieldSpecs, specShows, type BlockAudience, type Commercial, type Extra, type FieldSpec } from "@/lib/document-blocks";
 import { ChecklistRowEditor } from "@/components/checklist-row-editor";
 import { RichText } from "@/components/rich-text";
 import { useCompanyRules } from "@/lib/company";
