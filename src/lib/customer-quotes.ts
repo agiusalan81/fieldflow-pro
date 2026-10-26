@@ -48,9 +48,9 @@ export function quoteDraftForEditor(raw: unknown): QuoteDocument {
   const data = raw as Record<string, unknown>;
   return {
     ...defaults,
-    kind: data.kind === 'proposal' ? 'proposal' : 'estimate',
+    kind: data['kind'] === 'proposal' ? 'proposal' : 'estimate',
     ...Object.fromEntries(['title', 'issue_date', 'valid_until', 'scope', 'exclusions', 'payment', 'timeframe', 'notes'].map(key => [key, typeof data[key] === 'string' ? data[key] : defaults[key as keyof QuoteDocument]])),
-    lines: Array.isArray(data.lines) ? data.lines as QuoteLine[] : [],
+    lines: Array.isArray(data['lines']) ? data['lines'] as QuoteLine[] : [],
   };
 }
 export function newQuoteLine(vat = 18): QuoteLine { return { id: crypto.randomUUID(), description: '', category: 'service', unit: 'each', quantity: 1, rate: 0, discount: 0, vat }; }
