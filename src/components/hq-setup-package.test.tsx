@@ -11,8 +11,9 @@ it('immediate package saves include selections, overrides and visibility in one 
   render(<HQSetupPackage subscription={sub} catalog={[]} modules={['core', 'client_management', 'client_portal', 'job_profitability']} overrides={[]} companyName="Test" money={String} onSaved={saved}/>);
   fireEvent.click(screen.getByRole('button', { name: 'Setup package' }));
   fireEvent.change(screen.getByRole('combobox', { name: 'client_portal access' }), { target: { value: 'on' } });
+  fireEvent.click(screen.getByRole('switch', { name: 'Force FieldBridge email branding' }));
   fireEvent.click(screen.getByRole('button', { name: 'Save setup package' }));
   await waitFor(() => expect(saved).toHaveBeenCalled());
   expect(rpc).toHaveBeenCalledTimes(1);
-  expect(rpc).toHaveBeenCalledWith('hq_save_setup_options', { _subscription: 'sub', _options: expect.objectContaining({ immediate: true, plan: 'tier', packs: ['portal'], hide_locked: true, coming_soon: ['job_profitability'], modes: expect.objectContaining({ client_portal: 'on', client_management: 'package' }) }) });
+  expect(rpc).toHaveBeenCalledWith('hq_save_setup_options', { _subscription: 'sub', _options: expect.objectContaining({ immediate: true, email_branding_mode: 'off', plan: 'tier', packs: ['portal'], hide_locked: true, coming_soon: ['job_profitability'], modes: expect.objectContaining({ client_portal: 'on', client_management: 'package' }) }) });
 });

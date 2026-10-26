@@ -29,7 +29,8 @@ export function rawEmail(to: string[], subject: string, body: string, attachment
   const boundary = `b_${crypto.randomUUID()}`;
   const parts = [
     `To: ${to.join(", ")}`,
-    ...(identity ? [`From: ${header(identity.name)} <noreply@notify.fieldbridgeapp.com>`, ...(identity.replyTo ? [`Reply-To: ${identity.replyTo}`] : [])] : []),
+    // Gmail owns the authenticated From address; never spoof the managed sender domain.
+    ...(identity?.replyTo ? [`Reply-To: ${identity.replyTo}`] : []),
     `Subject: ${header(subject)}`,
     "MIME-Version: 1.0",
     `Content-Type: multipart/mixed; boundary="${boundary}"`,
