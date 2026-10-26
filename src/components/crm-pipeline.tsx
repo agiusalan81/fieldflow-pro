@@ -190,7 +190,7 @@ function LeadPanel({ lead, company, level, onDeleted }: { lead: Lead; company?: 
   </div>;
 }
 
-function ActionTypesEditor({ company }: { company?: string | undefined }) {
+export function ActionTypesEditor({ company }: { company?: string | undefined }) {
   const qc = useQueryClient(); const types = useActionTypes(company);
   const [label, setLabel] = useState(""); const [hours, setHours] = useState("24"); const [busy, setBusy] = useState(false);
   const all = mergeActions(types.data ?? []);
