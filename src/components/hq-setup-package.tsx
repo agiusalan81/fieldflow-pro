@@ -43,7 +43,7 @@ export function HQSetupPackage({ subscription, catalog, modules, overrides, comp
 
   const start = () => {
     setImmediate(subscription.trial_package_only);
-    setEmailMode(subscription.email_branding_mode ?? 'package');
+    setEmailMode(subscription.email_branding_mode === 'off' ? 'off' : subscription.email_branding_mode === 'on' ? 'on' : 'package');
     setHideLocked(!!subscription.hide_locked_modules); setSoon(subscription.coming_soon_modules ?? []);
     setPlan(subscription.plan_id); setPacks(subscription.pack_ids ?? []); setUsers(subscription.seats); setCadence(subscription.cadence); setPrice(Number(subscription.agreed_price));
     setModes(Object.fromEntries(modules.map((m) => { const o = setup.find((x) => x.module === m); return [m, o ? (o.enabled ? "on" : "off") : "package"]; })));
