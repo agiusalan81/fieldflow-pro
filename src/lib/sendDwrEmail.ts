@@ -12,8 +12,10 @@ export const sendDwrEmail = createServerFn({ method: "POST" })
     return d;
   })
   .handler(async ({ data, context }) => {
-    const { data: me } = await context.supabase.from("users").select("email, full_name").eq("id", context.userId).single();
+    const { data: me } = await context.supabase.from("users").select("email, full_name, company_id").eq("id", context.userId).single();
     if (!me?.email) return { sent: false as const };
+    const { resolveEmailIdentity } = await import("./email-identity.server");
+    const identity = await resolveEmailIdentity(context.supabase, me.company_id);
     const lovableKey = process.env["LOVABLE_API_KEY"];
     const gmailKey = process.env["GOOGLE_MAIL_API_KEY"];
     if (!lovableKey || !gmailKey) return { sent: false as const };
@@ -23,7 +25,7 @@ export const sendDwrEmail = createServerFn({ method: "POST" })
     const res = await fetch("https://connector-gateway.lovable.dev/google_mail/gmail/v1/users/me/messages/send", {
       method: "POST",
       headers: { Authorization: `Bearer ${lovableKey}`, "X-Connection-Api-Key": gmailKey, "Content-Type": "application/json" },
-      body: JSON.stringify({ raw: rawEmail([me.email], `Daily works report — ${data.date}`, body, [{ filename: data.filename, mime: "application/pdf", data: bytes }]) }),
+      body: JSON.stringify({ raw: rawEmail([me.email], `Daily works report — ${data.date}`, body, [{ filename: data.filename, mime: "application/pdf", data: bytes }], identity) }),
     });
     if (!res.ok) { console.error(`DWR email failed [${res.status}]: ${await res.text()}`); return { sent: false as const }; }
     return { sent: true as const };

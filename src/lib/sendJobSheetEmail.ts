@@ -25,10 +25,11 @@ function bytesB64(bytes: Uint8Array) {
 
 export type Attachment = { filename: string; mime: string; data: Uint8Array };
 
-export function rawEmail(to: string[], subject: string, body: string, attachments: Attachment[]) {
+export function rawEmail(to: string[], subject: string, body: string, attachments: Attachment[], identity?: import("./email-identity").EmailIdentity) {
   const boundary = `b_${crypto.randomUUID()}`;
   const parts = [
     `To: ${to.join(", ")}`,
+    ...(identity ? [`From: ${header(identity.name)} <noreply@notify.fieldbridgeapp.com>`, ...(identity.replyTo ? [`Reply-To: ${identity.replyTo}`] : [])] : []),
     `Subject: ${header(subject)}`,
     "MIME-Version: 1.0",
     `Content-Type: multipart/mixed; boundary="${boundary}"`,
@@ -235,13 +236,15 @@ async function prepareSheet(supabase: AuthClient, sheetId: string, recipients?: 
       companySignature({ name: company, address: formatOfficeAddress(parseOfficeAddress(settings?.office_address, settings?.company_address ?? "")), phone: settings?.office_phone, email: settings?.company_email, website: settings?.website, vat: settings?.vat_number }),
     ].filter((l): l is string => l != null).join("\n");
 
-    return { sheet, emails, attachments, body, clientName: client?.name ?? "customer" };
+    const { resolveEmailIdentity } = await import("./email-identity.server");
+    const identity = await resolveEmailIdentity(supabase, sheet.company_id);
+    return { identity, sheet, emails, attachments, body, clientName: client?.name ?? "customer" };
 }
 
 function validateRecipients(recipients?: string[]) {
   if (recipients?.some((e) => typeof e !== "string" || e.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))) throw new Error("Invalid email address");
 }
-async function sendMail(emails: string[], subject: string, body: string, attachments: Attachment[]) {
+async function sendMail(emails: string[], subject: string, body: string, attachments: Attachment[], identity: import("./email-identity").EmailIdentity) {
     const lovableKey = process.env["LOVABLE_API_KEY"];
     const gmailKey = process.env["GOOGLE_MAIL_API_KEY"];
     if (!lovableKey || !gmailKey) throw new Error("Email connection is not configured");
@@ -249,7 +252,7 @@ async function sendMail(emails: string[], subject: string, body: string, attachm
     const res = await fetch("https://connector-gateway.lovable.dev/google_mail/gmail/v1/users/me/messages/send", {
       method: "POST",
       headers: { Authorization: `Bearer ${lovableKey}`, "X-Connection-Api-Key": gmailKey, "Content-Type": "application/json" },
-      body: JSON.stringify({ raw: rawEmail(emails, subject, body, attachments) }),
+      body: JSON.stringify({ raw: rawEmail(emails, subject, body, attachments, identity) }),
     });
     if (!res.ok) {
       const t = await res.text();
@@ -263,7 +266,7 @@ export const sendJobSheetEmail = createServerFn({ method: "POST" }).middleware([
   .handler(async ({ data, context }) => {
     const pack = await prepareSheet(context.supabase, data.sheetId, data.recipients);
     if (!pack.emails.length) return { sent: false as const, recipients: [] as string[] };
-    await sendMail(pack.emails, `${sheetTitle(pack.sheet.jobsheet_number)} — ${pack.clientName}`, pack.body, pack.attachments);
+    await sendMail(pack.emails, `${sheetTitle(pack.sheet.jobsheet_number)} — ${pack.clientName}`, pack.body, pack.attachments, pack.identity);
     return { sent: true as const, recipients: pack.emails };
   });
 
@@ -281,10 +284,10 @@ export const combinedJobSheets = createServerFn({ method: "POST" }).middleware([
     validateCombinedSheets(rows);
     const { PDFDocument } = await import("pdf-lib");
     const doc = await PDFDocument.create();
-    let clientName = "customer"; let emails: string[] = [];
+    let clientName = "customer"; let emails: string[] = []; let identity: import("./email-identity").EmailIdentity = { name: "FieldBridge" };
     for (const row of rows) {
       const pack = await prepareSheet(context.supabase, row.id, data.recipients);
-      clientName = pack.clientName; emails = pack.emails;
+      clientName = pack.clientName; emails = pack.emails; identity = pack.identity;
       for (const a of pack.attachments) {
         if (a.mime === "application/pdf") {
           const source = await PDFDocument.load(a.data);
@@ -301,7 +304,7 @@ export const combinedJobSheets = createServerFn({ method: "POST" }).middleware([
     const filename = `Job sheets - ${rows[0]?.created_at.slice(0, 10)} to ${rows[rows.length - 1]?.created_at.slice(0, 10)}.pdf`;
     if (data.email) {
       if (!data.recipients?.length) throw new Error("Pick at least one recipient");
-      await sendMail(emails, `Job sheets — ${clientName}`, `Dear ${clientName},\n\nPlease find your ${rows.length} completed job sheets attached as one PDF.\n\nThank you.`, [{ filename, mime: "application/pdf", data: pdf }]);
+      await sendMail(emails, `Job sheets — ${clientName}`, `Dear ${clientName},\n\nPlease find your ${rows.length} completed job sheets attached as one PDF.\n\nThank you.`, [{ filename, mime: "application/pdf", data: pdf }], identity);
       return { filename, base64: "", sent: true, recipients: emails };
     }
     return { filename, base64: bytesB64(pdf).replace(/\s/g, ""), sent: false, recipients: [] as string[] };
@@ -353,10 +356,10 @@ export const finishMonthlySigning = createServerFn({ method: "POST" }).middlewar
       if (rows.some((r) => !r.signature_data || r.created_at.slice(0, 7) !== batch.month || r.client_id !== batch.client_id)) throw new Error("Monthly selection is no longer valid");
       const { PDFDocument } = await import("pdf-lib");
       const doc = await PDFDocument.create();
-      const groups:string[][]=[]; let clientName = "customer";
+      const groups:string[][]=[]; let clientName = "customer"; let identity: import("./email-identity").EmailIdentity = { name: "FieldBridge" };
       for (const row of rows) {
         const pack = await prepareSheet(sb, row.id);
-        groups.push(pack.emails); clientName = pack.clientName;
+        groups.push(pack.emails); clientName = pack.clientName; identity = pack.identity;
         for (const attachment of pack.attachments) {
           if (attachment.mime === "application/pdf") {
             const source = await PDFDocument.load(attachment.data);
@@ -372,7 +375,7 @@ export const finishMonthlySigning = createServerFn({ method: "POST" }).middlewar
       const recipients = commonRecipients(groups);
       validateRecipients(recipients);
       if (!recipients.length) throw new Error("No job-sheet email recipients selected for this client");
-      await sendMail(recipients, `Monthly job sheets — ${batch.month} — ${clientName}`, `Dear ${clientName},\n\nYour ${rows.length} signed job sheets for ${batch.month} are attached as one continuous PDF.\n\nThank you.`, [{ filename: `Job sheets - ${batch.month}.pdf`, mime: "application/pdf", data: await doc.save() }]);
+      await sendMail(recipients, `Monthly job sheets — ${batch.month} — ${clientName}`, `Dear ${clientName},\n\nYour ${rows.length} signed job sheets for ${batch.month} are attached as one continuous PDF.\n\nThank you.`, [{ filename: `Job sheets - ${batch.month}.pdf`, mime: "application/pdf", data: await doc.save() }], identity);
       delivered = true;
       const { error: recordError } = await sb.from("signing_batches").update({ status: "sent", recipients, sent_at: new Date().toISOString() }).eq("id", batch.id);
       if (recordError) throw new Error("Email sent, but delivery status could not be saved. Do not resend without checking.");
