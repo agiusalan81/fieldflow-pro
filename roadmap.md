@@ -1,4 +1,6 @@
 # Roadmap
+- [x] Troubleshoot batch: MINAKEL Technical library Coming soon cleared; pack-level Coming soon in HQ; brand colour on estimate/proposal preview; Company Settings document numbering (estimates, proposals, job sheets, invoices saved); delete any estimate not linked to a job; phone decision accept/decline with pre-filled client name and client email
+- [ ] Live check of new numbering, delete and phone-decision email while signed in
 - [x] Estimate polish: library terms, common/custom units, historical suggestions, private captioned photos in preview/PDF/customer links; superadmin save/reload and photo preview verified; 30 focused tests pass.
 - [x] Managed email identity: HQ-only package/on/off override independent of document branding, enforced before full-trial entitlement; customer quote sender/reply-to uses server resolution.
 - [ ] Email verification: real received-mail checks and HQ live toggle/read-back remain; Gmail-delivered sheets/notices/invites/DWR keep their authorized mailbox From (reply-to audited), so forcing their actual From to FieldBridge requires a supported sending-provider change.
