@@ -5724,6 +5724,8 @@ export type Database = {
       }
       user_roles: {
         Row: {
+          can_commercial_access: boolean
+          can_field_dispatch: boolean
           company_id: string
           created_at: string
           id: string
@@ -5736,6 +5738,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          can_commercial_access?: boolean
+          can_field_dispatch?: boolean
           company_id: string
           created_at?: string
           id?: string
@@ -5748,6 +5752,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          can_commercial_access?: boolean
+          can_field_dispatch?: boolean
           company_id?: string
           created_at?: string
           id?: string
@@ -5990,6 +5996,10 @@ export type Database = {
         Returns: string
       }
       is_company_manager: { Args: never; Returns: boolean }
+      is_dispatchable_member: {
+        Args: { _company: string; _user: string }
+        Returns: boolean
+      }
       is_on_standby: {
         Args: { _date: string; _user: string }
         Returns: boolean
@@ -6266,6 +6276,10 @@ export type Database = {
       }
       set_member_access: {
         Args: { _active: boolean; _reason?: string; _user: string }
+        Returns: undefined
+      }
+      set_member_capabilities: {
+        Args: { _commercial: boolean; _field: boolean; _user: string }
         Returns: undefined
       }
       set_member_primary_skill: {

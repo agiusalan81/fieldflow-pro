@@ -953,6 +953,13 @@
       "when": 1793005726420,
       "tag": "0135_crm_pipeline",
       "breakpoints": true
+    },
+    {
+      "idx": 136,
+      "version": "7",
+      "when": 1793018186989,
+      "tag": "0136_member_capabilities",
+      "breakpoints": true
     }
   ]
 }
