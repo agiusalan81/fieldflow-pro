@@ -238,7 +238,7 @@ function TechToday({ profile, readOnly, switcher }: { profile: Profile; readOnly
         <Button asChild variant="outline" className="h-12 w-full"><Link to="/technical-library"><ClipboardList className="mr-2 h-5 w-5" />Technical library</Link></Button>
         <ScanQr />
         {!readOnly && <NoAccessButton profile={profile} jobs={jobs} />}
-        <section>
+        <section data-tour="today-jobs">
           <h2 className="mb-3 font-medium text-foreground">Today's jobs ({jobs.length})</h2>
           {jobs.length === 0 ? (
             <EmptyState>No jobs scheduled for you today.</EmptyState>
