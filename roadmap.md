@@ -60,3 +60,5 @@
 - [x] HQ tenants: replace inline pack switches with Packs & Storage pop-up (status, packs, storage breakdown)
 - [x] HQ: "Under construction" tab, categorised, with release-target toggle
 - [ ] Commercial & CRM access toggle for field staff (column stored; needs CRM/quotes access rules)
+- [x] Consolidated build: quote-totals guard; supervisor All team sheets (no history cutoff); CRM settings tab with per-member levels (none/viewer/contributor/closer/manager, DB-enforced); header New lead; company phone prefix; TBD lead value; permanent lead delete; spotlight guided tour for tech/supervisor/office. Verified live as superadmin
+- [ ] Lift vertical CRM fields; Document Studio upload wizard (parked by user)
