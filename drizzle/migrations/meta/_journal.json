@@ -939,6 +939,13 @@
       "when": 1792994493857,
       "tag": "0133_portal_contact_site_rule_office_exempt",
       "breakpoints": true
+    },
+    {
+      "idx": 134,
+      "version": "7",
+      "when": 1792995200461,
+      "tag": "0134_quote_awaiting_client_confirmation",
+      "breakpoints": true
     }
   ]
 }

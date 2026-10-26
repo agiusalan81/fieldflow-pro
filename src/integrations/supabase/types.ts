@@ -1199,6 +1199,7 @@ export type Database = {
           id: string
           issued_at: string | null
           job_id: string | null
+          office_recorded: Json | null
           office_seen_at: string | null
           parent_id: string | null
           private_notes: string
@@ -1223,6 +1224,7 @@ export type Database = {
           id?: string
           issued_at?: string | null
           job_id?: string | null
+          office_recorded?: Json | null
           office_seen_at?: string | null
           parent_id?: string | null
           private_notes?: string
@@ -1247,6 +1249,7 @@ export type Database = {
           id?: string
           issued_at?: string | null
           job_id?: string | null
+          office_recorded?: Json | null
           office_seen_at?: string | null
           parent_id?: string | null
           private_notes?: string
