@@ -457,7 +457,7 @@ function SettingsSections({ superuser, companyId, userId, role }: { superuser: b
   </>;
   return (
     <div className="mx-auto max-w-6xl space-y-5">
-      <Tabs value={groups.find(g => g.items.some(i => i.key === active))?.title ?? groups[0]?.title} onValueChange={value => { const next = groups.find(g => g.title === value)?.items[0]; if (next) selectSection(next.key); }}>
+      <Tabs value={groups.find(g => g.items.some(i => i.key === active))?.title ?? 'General & trade'} onValueChange={value => { const next = groups.find(g => g.title === value)?.items[0]; if (next) selectSection(next.key); }}>
         <TabsList className="grid h-auto w-full grid-cols-2 gap-1 lg:grid-cols-4">{groups.map(g => <TabsTrigger key={g.title} value={g.title} className="min-w-0 whitespace-normal py-3">{g.title}</TabsTrigger>)}</TabsList>
       </Tabs>
       <nav aria-label="Company settings sections" className="flex flex-wrap gap-2 border-b pb-4">

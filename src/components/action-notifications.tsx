@@ -47,7 +47,7 @@ function useUnreadThreads(uid?: string) {
   return Object.entries(counts).map(([key, n]) => ({ key, n, name: q.data.names[key] ?? 'Conversation' }));
 }
 
-const Row = ({ icon: Icon, children }: { icon: typeof Bell; children: React.ReactNode }) => <span className="flex w-full items-center gap-2 text-left"><Icon className="h-4 w-4 shrink-0 text-primary" /><span className="min-w-0 flex-1 truncate">{children}</span></span>;
+const Row = ({ icon: Icon, children }: { icon: typeof Bell; children: React.ReactNode }) => <span className="flex w-full items-center gap-2 text-left"><Icon className="h-4 w-4 shrink-0 text-primary" /><span className="min-w-0 flex-1 break-words">{children}</span></span>;
 
 export function useActionQueues() {
   const { data:p }=useProfile();
@@ -62,7 +62,7 @@ export function useActionQueues() {
   const crmLevel=useCrmAccess(!!p).data;const crmOn=crmAllows(crmLevel,'viewer')&&on('crm_pipeline');
   const crm=useQuery({queryKey:['action-notifications','crm',p?.id,crmOn],enabled:crmOn,refetchInterval:30000,queryFn:async()=>{const end=new Date();end.setHours(23,59,59,999);const r=await supabase.from('crm_followups').select('id,opportunity_id,action_label,due_at').is('done_at',null).lte('due_at',end.toISOString()).or(`assignee_id.eq.${p?.id},assignee_id.is.null`).order('due_at').limit(20);if(r.error)throw r.error;return r.data;}}).data??[];
   const quotesOn=core&&manager;
-  const decided=useQuery({queryKey:['action-notifications','quote-decisions',p?.id,quotesOn],enabled:quotesOn,refetchInterval:15000,queryFn:async()=>{const r=await supabase.from('customer_quotes').select('id,reference,status').in('status',['accepted','declined']).is('office_seen_at',null).order('decided_at',{ascending:false}).limit(20);if(r.error)throw r.error;return r.data;}}).data??[];
+  const decided=useQuery({queryKey:['action-notifications','quote-decisions',p?.id,quotesOn],enabled:quotesOn,refetchInterval:15000,queryFn:async()=>{const r=await supabase.from('customer_quotes').select('id,reference,status').or('status.eq.awaiting_confirmation,and(status.in.(accepted,declined),office_seen_at.is.null)').order('decided_at',{ascending:false}).limit(20);if(r.error)throw r.error;return r.data;}}).data??[];
   const {data}=useQuery({queryKey:['action-notifications',p?.id,core,standby,leaveOn,problemsOn,catsOn],enabled:!!p,refetchInterval:15000,queryFn:async()=>{
     if(!p)return {categories:[] as {id:string;name:string}[],incoming:[] as {id:string}[],approval:[] as {id:string}[],leave:[] as {id:string}[],responses:[] as {id:string}[],problems:[] as {id:string;asset_id:string;problem:string}[]};
     const zero=Promise.resolve({count:0,data:[],error:null});
@@ -92,7 +92,15 @@ export function QueueBadge({ path }: { path: string }) {
     '/admin/approvals': q.data?.categories.length ?? 0,
   };
   const count = counts[path] ?? 0;
-  return count > 0 ? <span aria-label={`${count} pending actions`} className="ml-auto rounded-full bg-destructive px-1.5 text-xs text-destructive-foreground">{count}</span> : null;
+  const cls = 'shrink-0 rounded-full bg-destructive px-1.5 text-xs text-destructive-foreground';
+  if (!count) return null;
+  if (path === '/crm' && q.crm[0]) return <Link className={cls} aria-label={`${count} follow-ups — open next`} to="/crm" search={{ lead: q.crm[0].opportunity_id }}>{count}</Link>;
+  if (path === '/estimates' && q.decided[0]) return <Link className={cls} aria-label={`${count} decisions — open next`} to="/estimates" search={{ quote: q.decided[0].id }}>{count}</Link>;
+  if (path === '/admin/jobs' && q.problems[0]) return <Link className={cls} aria-label={`${count} equipment reports — open next`} to="/admin/jobs" search={{ new: true, assetId: q.problems[0].asset_id, problemId: q.problems[0].id }}>{count}</Link>;
+  const leave = q.data?.leave[0] ?? q.data?.responses[0];
+  if (path === '/admin/leave' && leave) return <Link className={cls} aria-label={`${count} leave actions — open next`} to="/admin/leave" search={{ request: leave.id }}>{count}</Link>;
+  if (path === '/admin/approvals' && q.data?.categories[0]) return <Link className={cls} aria-label={`${count} expense categories — open next`} to="/admin/approvals" search={{ category: 'expenses', item: q.data.categories[0].id }}>{count}</Link>;
+  return null;
 }
 
 export function ActionNotifications() {
@@ -118,7 +126,7 @@ export function ActionNotifications() {
         </TabsContent>
         <TabsContent value="commercial" className="space-y-2 pt-3">{!commercialCount && empty}
           {crm.map(f=><Button key={f.id} asChild variant="outline" className={item}><Link to="/crm" search={{lead:f.opportunity_id}}><Row icon={CalendarClock}>{new Date(f.due_at)<new Date()?'Overdue':'Due today'}: {f.action_label}</Row></Link></Button>)}
-          {decided.map(v=><Button key={v.id} asChild variant="outline" className={item}><Link to="/estimates" search={{quote:v.id}}><Row icon={AlertTriangle}>Client {v.status} quote {v.reference}</Row></Link></Button>)}
+          {decided.map(v=><Button key={v.id} asChild variant="outline" className={item}><Link to="/estimates" search={{quote:v.id}}><Row icon={AlertTriangle}>{v.status === 'awaiting_confirmation' ? `Awaiting client confirmation · ${v.reference}` : `Client ${v.status} quote ${v.reference}`}</Row></Link></Button>)}
         </TabsContent>
         <TabsContent value="field" className="space-y-2 pt-3">{!fieldCount && empty}
           {problems.map(r=><Button key={r.id} asChild variant="outline" className={item}><Link to="/admin/jobs" search={{new:true,assetId:r.asset_id,problemId:r.id}}><Row icon={AlertTriangle}>Equipment problem: {r.problem}</Row></Link></Button>)}

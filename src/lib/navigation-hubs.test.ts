@@ -10,4 +10,9 @@ describe('role navigation', () => {
     expect(navigationHub('supervisor', '/sheets')).toBe('My field work');
     expect(navigationHub('supervisor', '/admin/jobs')).toBe('Team supervision');
   });
+  it('moves enabled skills into Team but retains the Coming soon entry', () => {
+    const skills = { to: '/skills', label: 'Skills', group: 'Team' };
+    expect(organizeNavigation('admin', [skills])).toEqual([]);
+    expect(organizeNavigation('admin', [{ ...skills, locked: true }]).map(i => i.to)).toEqual(['/skills']);
+  });
 });

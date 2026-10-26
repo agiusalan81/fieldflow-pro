@@ -121,7 +121,7 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
   };
 
   return (
-    <section className="flex flex-wrap items-center gap-2 rounded-xl border bg-card p-2.5">
+    <section id="shift-tracker" className="scroll-mt-32 flex flex-wrap items-center gap-2 rounded-xl border bg-card p-2.5">
       <span className={`inline-flex h-7 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium ${shift ? "bg-success/20 text-foreground" : "bg-muted text-muted-foreground"}`}>
         <span className={`h-2 w-2 rounded-full ${shift ? "bg-success" : "bg-muted-foreground"}`} />
         {shift ? "On shift" : "Off shift"}

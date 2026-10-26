@@ -38,7 +38,7 @@ export async function quoteAction(id: string, action: string, data: Record<strin
   if (r.error) throw r.error;
   return r.data as { id: string; job_id?: string | null; token?: string };
 }
-export function CustomerQuotes({ fromSheet, focusQuote, clearSource, createNew }: { createNew?: boolean; fromSheet?: string; focusQuote?: string; clearSource: () => void }) {
+export function CustomerQuotes({ fromSheet, focusQuote, clearSource, createNew }: { createNew?: boolean | undefined; fromSheet?: string; focusQuote?: string; clearSource: () => void }) {
   const qc = useQueryClient(); const { data: profile } = useProfile(); const { data: company } = useCompanyRules(); const lock = useNavLock();
   const send = useServerFn(sendCustomerQuote); const notifyPhone = useServerFn(notifyClientPhoneDecision); const extractTerms = useServerFn(extractDocumentText);
   const q = useQuery({ queryKey: ['customer-quotes', profile?.company_id], enabled: !!profile, queryFn: async () => { const r = await supabase.from('customer_quotes').select('*').order('updated_at', { ascending: false }); if (r.error) throw r.error; return r.data; } });
