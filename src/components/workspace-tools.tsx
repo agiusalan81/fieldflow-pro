@@ -55,7 +55,7 @@ export function WorkspaceSearch({ items, userId }: { items: Destination[]; userI
   </>;
 }
 
-export function WorkspaceCreate({ manager, field, estimates, crm, company, mobile = false }: { manager: boolean; field: boolean; estimates: boolean; crm: boolean; company?: string; mobile?: boolean }) {
+export function WorkspaceCreate({ manager, field, estimates, crm, company, mobile = false }: { manager: boolean; field: boolean; estimates: boolean; crm: boolean; company?: string | undefined; mobile?: boolean }) {
   const [leadOpen, setLeadOpen] = useState(false);
   const navigate = useNavigate();
   return <>

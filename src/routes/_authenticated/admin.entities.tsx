@@ -32,7 +32,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/admin/entities")({ staticData: { sitemap: false },
-  validateSearch: (search: Record<string, unknown>): { client?: string } => ({ client: typeof search.client === 'string' ? search.client : undefined }),
+  validateSearch: (search: Record<string, unknown>): { client?: string } => (typeof search['client'] === 'string' ? { client: search['client'] } : {}),
   head: () => ({
     meta: [
       { title: "Clients, contacts & assets — FieldBridge" },
