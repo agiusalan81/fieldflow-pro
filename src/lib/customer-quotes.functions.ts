@@ -60,3 +60,24 @@ export const notifyQuoteDecision = createServerFn({ method: 'POST' })
     }
     return { sent };
   });
+/** Emails the client after the office records a phone decision; accepted decisions include a written-confirmation link. */
+export const notifyClientPhoneDecision = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ quoteId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: quote, error } = await context.supabase.from('customer_quotes').select('*').eq('id', data.quoteId).single();
+    if (error || !quote?.snapshot || !quote.client_id || !['awaiting_confirmation', 'declined'].includes(quote.status)) throw new Error('No recorded decision to send');
+    const s = quote.snapshot as unknown as QuoteSnapshot; const document = customerQuoteDocument(s.document);
+    const contacts = await clientRecipients(context.supabase, quote.client_id, quote.site_id, document.kind, 'email');
+    const recorded = ((quote.office_recorded ?? {}) as { name?: string }).name?.trim().toLowerCase() ?? '';
+    const contact = contacts.find(c => `${c.first_name} ${(c as { last_name?: string }).last_name ?? ''}`.trim().toLowerCase() === recorded || c.first_name.toLowerCase() === recorded) ?? contacts[0];
+    if (!contact?.email) return { sent: false, reason: 'no_contact' };
+    const accepted = quote.status === 'awaiting_confirmation';
+    let documentUrl = '';
+    const link = await context.supabase.rpc('customer_quote_action', { _id: quote.id, _action: 'link', _data: { approval: accepted } });
+    if (!link.error) { const token = (link.data as { token?: string } | null)?.token; if (token) documentUrl = `https://fieldbridgeapp.com/quote/${token}`; }
+    const { sendTemplateEmail } = await import('./email-templates/send-email');
+    const { resolveEmailIdentity } = await import('./email-identity.server');
+    const identity = await resolveEmailIdentity(context.supabase, quote.company_id);
+    return sendTemplateEmail('quote-phone-decision', contact.email, { identity, idempotencyKey: `quote-phone-decision-${quote.id}-${quote.decided_at}`, templateData: { company: s.company.name, name: contact.first_name, reference: s.reference, title: document.title, decision: accepted ? 'accepted' : 'declined', documentUrl } });
+  });
