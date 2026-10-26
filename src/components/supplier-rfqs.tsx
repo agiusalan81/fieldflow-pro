@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CommercialRecipients } from '@/components/commercial-recipients';
+import { ClientSitePicker } from "@/components/client-site-picker";
 
 const STEPS = [
   { key: "draft", label: "Draft" },
@@ -199,8 +200,7 @@ function EstimateForm({ form, setForm, cfg, companyId, sender, onSaved }: { form
         <div className="space-y-4">
           <div className="space-y-1.5"><Label>Title</Label><Input className="h-11" placeholder="e.g. 8-person MRL lift, 5 stops" value={f.title} onChange={(e) => set({ title: e.target.value })} /></div>
           <div className="grid gap-2 sm:grid-cols-2">
-            <div className="space-y-1.5"><Label>Client</Label><Select value={f.client_id} onValueChange={(v) => set({ client_id: v, site_id: "none" })}><SelectTrigger className="h-11"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">No client yet</SelectItem>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select></div>
-            <div className="space-y-1.5"><Label>Site</Label><Select value={f.site_id} onValueChange={(v) => set({ site_id: v })}><SelectTrigger className="h-11"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">No site yet</SelectItem>{sites.filter((s) => f.client_id === "none" || s.client_id === f.client_id).map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select></div>
+            <ClientSitePicker clientId={f.client_id === "none" ? null : f.client_id} siteId={f.site_id === "none" ? null : f.site_id} noneClientLabel="No client yet" noneSiteLabel="No site yet" onChange={(client, site) => set({ client_id: client ?? "none", site_id: site ?? "none" })} />
           </div>
           <div className="grid gap-2 sm:grid-cols-2">
             <div className="space-y-1.5"><Label>Supplier</Label><Select value={f.supplier_name || "none"} onValueChange={(v) => { const s = cfg.suppliers.find((x) => x.name === v); set({ supplier_name: v === "none" ? "" : v, supplier_email: s?.email || f.supplier_email, values: v === "none" ? f.values : alignToSupplier(f.values, cfg, v) }); }}><SelectTrigger className="h-11"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">Choose later</SelectItem>{cfg.suppliers.filter((s) => s.name).map((s) => <SelectItem key={s.name} value={s.name}>{s.name}{s.package ? " (package)" : ""}</SelectItem>)}</SelectContent></Select></div>
