@@ -9,6 +9,7 @@ import { WelcomeGuide } from "@/components/welcome-guide";
 import { QuickLeadButton } from "@/components/quick-lead";
 import { useCrmAccess } from "@/lib/crm-access";
 import { crmAllows } from "@/lib/crm";
+import { showRoleMenuItem } from "@/lib/role-menu";
 import { setTenantLocale } from "@/lib/locale";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
@@ -277,7 +278,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   const appearance = company?.appearance ?? DEFAULT_APPEARANCE;
   const coName = profile?.companies?.name?.trim();
   const personal: Record<string, string> = coName ? { "Team": `${coName} Team`, "Team chat": `${coName} Chat`, "Technical library": `${coName} Technical library` } : {};
-  const items = baseItems.map(i => ({ ...i, label: personal[i.label] ?? industrySheetLabel(appearance.industryPreset, i.label) }));
+  const items = baseItems.filter(i => showRoleMenuItem(profile?.role, i.to)).map(i => ({ ...i, label: personal[i.label] ?? industrySheetLabel(appearance.industryPreset, i.label) }));
   const appTitle = resolveAppTitle(company?.appTitle, planOn("custom_app_title"));
   useEffect(() => { applyTypography(company?.theme); return () => applyTypography(undefined); }, [company?.theme]);
   useEffect(() => {

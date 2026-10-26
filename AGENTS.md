@@ -10,6 +10,7 @@
 <!-- LOVABLE:END -->
 
 ## Rules
+- Navigation-only role exclusions use role-menu.ts for sidebar/mobile shortcuts; they never change page authorization. Legacy quote drafts default missing editor fields on read, leaving issued snapshots and write validation unchanged.
 - Analytics: owner-only coarse counts; server-derived tenant. Product-scoped outreach/feedback; saved follow-ups send nothing.
 - HQ: product-scoped workspaces, owner-only RPCs, separate legal profiles.
 - Chrome: neutral surfaces/token controls; phone theme matches neutral bar, never gradients.

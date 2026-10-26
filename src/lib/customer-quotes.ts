@@ -41,6 +41,18 @@ export function emptyQuoteDocument(kind: 'estimate' | 'proposal' = 'estimate'): 
   const now = new Date(); const expiry = new Date(now); expiry.setUTCDate(expiry.getUTCDate() + 30);
   return { kind, title: '', issue_date: now.toISOString().slice(0, 10), valid_until: expiry.toISOString().slice(0, 10), scope: '', exclusions: '', payment: '', timeframe: '', notes: '', lines: [] };
 }
+/** Older CRM drafts omit empty editor fields; default them without changing issued snapshots or write validation. */
+export function quoteDraftForEditor(raw: unknown): QuoteDocument {
+  const defaults = emptyQuoteDocument();
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return defaults;
+  const data = raw as Record<string, unknown>;
+  return {
+    ...defaults,
+    kind: data.kind === 'proposal' ? 'proposal' : 'estimate',
+    ...Object.fromEntries(['title', 'issue_date', 'valid_until', 'scope', 'exclusions', 'payment', 'timeframe', 'notes'].map(key => [key, typeof data[key] === 'string' ? data[key] : defaults[key as keyof QuoteDocument]])),
+    lines: Array.isArray(data.lines) ? data.lines as QuoteLine[] : [],
+  };
+}
 export function newQuoteLine(vat = 18): QuoteLine { return { id: crypto.randomUUID(), description: '', category: 'service', unit: 'each', quantity: 1, rate: 0, discount: 0, vat }; }
 export function quoteExpired(d: Pick<QuoteDocument, 'valid_until'>, today = new Date().toISOString().slice(0, 10)) { return d.valid_until < today; }
 export function quoteBillingLines(d: QuoteDocument) {

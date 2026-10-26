@@ -15,7 +15,7 @@ import { formatSiteDisplay } from '@/lib/site-display';
 import { clientRecipients } from '@/lib/client-recipients';
 import { buildCustomerQuotePdf } from '@/lib/customer-quote-pdf';
 import { sendCustomerQuote } from '@/lib/customer-quotes.functions';
-import { customerQuoteDocument, emptyQuoteDocument, newQuoteLine, quoteExpired, quoteTotals, type QuoteDocument, type QuoteLine, type QuoteSnapshot } from '@/lib/customer-quotes';
+import { customerQuoteDocument, emptyQuoteDocument, quoteDraftForEditor, newQuoteLine, quoteExpired, quoteTotals, type QuoteDocument, type QuoteLine, type QuoteSnapshot } from '@/lib/customer-quotes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -48,7 +48,7 @@ export function CustomerQuotes({ fromSheet, focusQuote, clearSource }: { fromShe
   const recipients = useQuery({ queryKey: ['quote-recipients', selected], enabled: emailOpen && !!row?.client_id, queryFn: async () => { if (!row?.client_id) return []; return clientRecipients(supabase, row.client_id, row.site_id, (row.data as unknown as QuoteDocument).kind, 'email'); } });
   const refresh = async () => { await Promise.all([q.refetch(), qc.invalidateQueries({ queryKey: ['customer-quote-events'] }), qc.invalidateQueries({ queryKey: ['quote-deliveries'] })]); };
   const run = async (fn: () => Promise<unknown>) => { setBusy(true); try { await fn(); await refresh(); } catch (e) { toast.error((e as { message?: string }).message ?? 'Could not complete quote action'); } finally { setBusy(false); } };
-  const openRow = (r: Row) => { setSelected(r.id); setForm({ id: r.id, client_id: r.client_id, site_id: r.site_id, asset_id: r.asset_id, source_sheet_id: r.source_sheet_id, private_notes: r.private_notes, data: r.data as unknown as QuoteDocument }); };
+  const openRow = (r: Row) => { setSelected(r.id); setForm({ id: r.id, client_id: r.client_id, site_id: r.site_id, asset_id: r.asset_id, source_sheet_id: r.source_sheet_id, private_notes: r.private_notes, data: quoteDraftForEditor(r.data) }); };
   const newForm = (): Form => ({ id: crypto.randomUUID(), client_id: null, site_id: null, asset_id: null, source_sheet_id: null, private_notes: '', data: { ...emptyQuoteDocument(), lines: [newQuoteLine()] } });
   useEffect(() => {
     if (!fromSheet) return;
