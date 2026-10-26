@@ -80,3 +80,19 @@ export function pipelineTotals(leads: { stage: string; value: number | null }[])
     return [s.key, { count: rows.length, value: rows.reduce((a, l) => a + (Number(l.value) || 0), 0) }];
   })) as Record<CrmStage, { count: number; value: number }>;
 }
+
+/** Per-member CRM access levels (mirrors DB crm_rank / crm_default_level). */
+export const CRM_LEVELS = [
+  { key: "none", label: "No access", detail: "CRM hidden" },
+  { key: "viewer", label: "View only", detail: "See leads and follow-ups" },
+  { key: "contributor", label: "Contributor", detail: "Add leads, notes and follow-ups" },
+  { key: "closer", label: "Closer", detail: "Move stages, win/lose and convert" },
+  { key: "manager", label: "CRM manager", detail: "Delete leads and manage follow-up types" },
+] as const;
+export type CrmLevel = (typeof CRM_LEVELS)[number]["key"];
+export const crmRank = (l: string | null | undefined) => ({ viewer: 1, contributor: 2, closer: 3, manager: 4 } as Record<string, number>)[l ?? ""] ?? 0;
+export const crmDefaultLevel = (role: string): CrmLevel => role === "superuser" || role === "admin" ? "manager" : role === "supervisor" ? "closer" : "none";
+export const crmEffective = (role: string, explicit: string | null | undefined): CrmLevel => role === "superuser" ? "manager" : ((explicit as CrmLevel | null | undefined) ?? crmDefaultLevel(role));
+export const crmAllows = (level: string | null | undefined, min: CrmLevel) => crmRank(level) >= crmRank(min);
+/** Lead value display: unknown values read "TBD" rather than zero. */
+export const leadValueLabel = (v: number | null | undefined, fmt: (n: number) => string) => v == null ? "TBD" : fmt(Number(v));
