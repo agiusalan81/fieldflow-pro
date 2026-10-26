@@ -19,12 +19,12 @@ export function navigationHub(role: string | undefined, path: string): string {
   return 'Operations & field';
 }
 
-export function organizeNavigation<T extends { to: string; label: string; group: string }>(role: string | undefined, items: T[]): T[] {
+export function organizeNavigation<T extends { to: string; label: string; group: string; locked?: boolean }>(role: string | undefined, items: T[]): T[] {
   const seen = new Set<string>();
   return items.filter(item => {
     if (seen.has(item.to)) return false;
     seen.add(item.to);
     // Existing screens remain available from their owning workspace.
-    return !['/team-invites', '/admin/fields'].includes(item.to);
+    return !['/team-invites', '/admin/fields'].includes(item.to) && (item.to !== '/skills' || !!item.locked);
   }).map(item => ({ ...item, group: navigationHub(role, item.to), label: item.to === '/admin/jobs' ? 'Dispatch & jobs' : item.to === '/as-built' ? 'As-built measurements' : item.label }));
 }

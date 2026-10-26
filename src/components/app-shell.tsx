@@ -162,13 +162,13 @@ function NavLinks({ items, onNavigate, uid }: { items: NavItem[]; onNavigate?: (
             {open && (
               <div className="mb-1 flex flex-col gap-0.5 pl-1">
                 {groupedItems.filter((i) => i.group === g).map((i) => i.locked ? <LockedModule key={i.to} feature={i.feature ?? 'core'} label={i.label} comingSoon={i.soon}><i.icon className="h-4 w-4 shrink-0"/></LockedModule> : (
-                  <Link key={i.to} to={i.to}
+                  <div key={i.to} className="flex items-center gap-1 pr-2"><Link to={i.to}
                     onClick={() => { if (uid) recordUsage(uid, i.to); onNavigate?.(); }}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                    className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
                     activeProps={{ className: "bg-sidebar-accent text-sidebar-foreground font-medium" }}
                     activeOptions={{ exact: i.to === "/dashboard" }}>
-                    <i.icon className="h-4 w-4 shrink-0" /><span className="min-w-0 break-words">{i.label}</span>{["/crm","/estimates","/admin/jobs","/admin/leave","/admin/approvals"].includes(i.to) && <QueueBadge path={i.to} />}{i.to === "/standby" && <OnCallBadge userId={uid}/>}{i.to === "/messages" && <ChatBadge userId={uid}/>}
-                  </Link>
+                    <i.icon className="h-4 w-4 shrink-0" /><span className="min-w-0 break-words">{i.label}</span>{i.to === "/standby" && <OnCallBadge userId={uid}/>}{i.to === "/messages" && <ChatBadge userId={uid}/>}
+                  </Link>{["/crm","/estimates","/admin/jobs","/admin/leave","/admin/approvals"].includes(i.to) && <QueueBadge path={i.to} />}</div>
                 ))}
               </div>
             )}
