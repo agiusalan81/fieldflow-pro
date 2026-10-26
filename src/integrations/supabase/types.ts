@@ -671,6 +671,32 @@ export type Database = {
           },
         ]
       }
+      company_number_counters: {
+        Row: {
+          company_id: string
+          kind: string
+          next_value: number
+        }
+        Insert: {
+          company_id: string
+          kind: string
+          next_value: number
+        }
+        Update: {
+          company_id?: string
+          kind?: string
+          next_value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_number_counters_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_price_list_items: {
         Row: {
           archived_at: string | null
@@ -767,6 +793,7 @@ export type Database = {
           location_ping_seconds: number
           logo_data: string | null
           note_presets: Json
+          numbering: Json
           office_address: Json
           office_phone: string | null
           payroll_mode: string
@@ -821,6 +848,7 @@ export type Database = {
           location_ping_seconds?: number
           logo_data?: string | null
           note_presets?: Json
+          numbering?: Json
           office_address?: Json
           office_phone?: string | null
           payroll_mode?: string
@@ -875,6 +903,7 @@ export type Database = {
           location_ping_seconds?: number
           logo_data?: string | null
           note_presets?: Json
+          numbering?: Json
           office_address?: Json
           office_phone?: string | null
           payroll_mode?: string
@@ -5967,6 +5996,7 @@ export type Database = {
         Args: { _client: string; _contact: string }
         Returns: undefined
       }
+      delete_customer_quote: { Args: { _id: string }; Returns: undefined }
       delete_document_master: { Args: { _id: string }; Returns: Json }
       dispatch_pending_work: {
         Args: { _dispatch: Json; _expected: string; _sheet: string }
@@ -6058,6 +6088,10 @@ export type Database = {
       my_crm_access: { Args: never; Returns: string }
       my_registration_status: { Args: never; Returns: string }
       my_role: { Args: never; Returns: Database["public"]["Enums"]["app_role"] }
+      next_document_number: {
+        Args: { _company: string; _kind: string }
+        Returns: string
+      }
       open_jobs_for_me: {
         Args: never
         Returns: {
@@ -6216,6 +6250,7 @@ export type Database = {
         Args: { _client: string; _contact: string; _details: Json }
         Returns: string
       }
+      save_document_numbering: { Args: { _config: Json }; Returns: undefined }
       save_employee_payroll_setup: {
         Args: {
           _config: Json
