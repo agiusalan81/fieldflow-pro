@@ -1,6 +1,8 @@
 # Roadmap
 - [x] Batch 1: shared searchable client/site picker with inline new client (address + contact) and new site (or same as client) in estimates, dispatch, contracts, lift RFQs and surveys; document Summary items with subtags in brand colour (client copy only); Lift supplier RFQs moved out of Core estimates to their own Lift pack page. Tests pass; live signed-in check pending
-- [ ] Batch 2: Horizontal CRM module (crm_pipeline) — pipeline, voice intake, custom follow-up actions, conversion
+- [x] Batch 2: Horizontal CRM module (crm_pipeline) — board/list, voice intake, custom follow-up types, bell alerts, won→estimate/job/contract, lost reasons; 13 tests pass, Plus/Pro/Enterprise only
+- [ ] CRM signed-in end-to-end check (blocked: requesting account company access revoked; sandbox cannot run rollback SQL as a user)
+- [ ] Lift vertical CRM fields (competitor expiry, equipment specs, tender categories)
 - [x] Document Studio editor: bold/italic/underline/colour toolbar, step client prices, per-step photos, technician notes/photo box, N/A default rule, standalone tech/client copies and Bronze–Platinum duplicates, scroll-following preview; 21 tests pass
 - [ ] Document Studio 3-step upload wizard redesign and Source Uploads tab; carry step photos/notes into live job sheets
 - [x] HQ layer/domain tabs and side-by-side tier/pack matrix plus grouped editor; separate Core customer_quotes display/access alias and vertical lift RFQ write guard; 32 tests pass, build OK, live schema verified
