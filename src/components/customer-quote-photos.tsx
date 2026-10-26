@@ -13,8 +13,9 @@ import { Label } from '@/components/ui/label';
 
 export type QuotePhotoAccess = { quoteId: string; photoIds?: string[] } | { token: string } | { clientId: string; quoteId: string };
 export function useQuotePhotoUrls(access: QuotePhotoAccess | undefined, enabled: boolean) {
+  const { data: profile } = useProfile();
   const office = useServerFn(resolveQuotePhotos); const shared = useServerFn(resolveSharedQuotePhotos); const portal = useServerFn(resolvePortalQuotePhotos);
-  return useQuery({ queryKey: ['quote-photo-urls', access], enabled: !!access && enabled, staleTime: 240_000, refetchInterval: 240_000,
+  return useQuery({ queryKey: ['quote-photo-urls', profile?.id, profile?.company_id, access], enabled: !!access && enabled, staleTime: 240_000, refetchInterval: 240_000,
     queryFn: async () => { if (!access) return {}; if ('token' in access) return shared({ data: access }); if ('clientId' in access) return portal({ data: access }); return office({ data: access }); },
   });
 }

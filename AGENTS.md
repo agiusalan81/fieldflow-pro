@@ -10,6 +10,8 @@
 <!-- LOVABLE:END -->
 
 ## Rules
+- App email identity is resolved server-side through company_email_branding and an HQ-owned override independent of document branding; managed sends retain the verified From domain, while Gmail retains its authorized mailbox From — why: trials must not bypass forced platform identity or spoof sending domains.
+- Quote photos use private immutable storage metadata and frozen snapshot IDs/captions, with customer URLs resolved only after token or portal authorization — why: previews and PDFs must share evidence without exposing unrelated file paths.
 - Navigation-only role exclusions use role-menu.ts for sidebar/mobile shortcuts; they never change page authorization. Legacy quote drafts default missing editor fields on read, leaving issued snapshots and write validation unchanged.
 - Analytics: owner-only coarse counts; server-derived tenant. Product-scoped outreach/feedback; saved follow-ups send nothing.
 - HQ: product-scoped workspaces, owner-only RPCs, separate legal profiles.
