@@ -74,7 +74,8 @@ export const notifyClientPhoneDecision = createServerFn({ method: 'POST' })
     if (!contact?.email) return { sent: false, reason: 'no_contact' };
     const accepted = quote.status === 'awaiting_confirmation';
     let documentUrl = '';
-    const link = await context.supabase.rpc('customer_quote_action', { _id: quote.id, _action: 'link', _data: { approval: accepted } });
+    let link = await context.supabase.rpc('customer_quote_action', { _id: quote.id, _action: 'link', _data: { approval: accepted } });
+    if (link.error && accepted) link = await context.supabase.rpc('customer_quote_action', { _id: quote.id, _action: 'link', _data: { approval: false } });
     if (!link.error) { const token = (link.data as { token?: string } | null)?.token; if (token) documentUrl = `https://fieldbridgeapp.com/quote/${token}`; }
     const { sendTemplateEmail } = await import('./email-templates/send-email');
     const { resolveEmailIdentity } = await import('./email-identity.server');
