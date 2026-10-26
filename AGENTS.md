@@ -10,6 +10,8 @@
 <!-- LOVABLE:END -->
 
 ## Rules
+- Workspace navigation hubs operate only on already authorized menu items; shared action queues power the drawer and menu counts, while existing page guards/RLS remain authoritative — why: presentation changes must not grant access or diverge from tenant Coming soon restrictions.
+- Company settings use four workspace tabs and retain visited editors mounted; related client records are bounded, RLS-scoped read-only lists with existing detail links — why: reorganization preserves unsaved edits and record history.
 - App email identity is resolved server-side through company_email_branding and an HQ-owned override independent of document branding; managed sends retain the verified From domain, while Gmail retains its authorized mailbox From — why: trials must not bypass forced platform identity or spoof sending domains.
 - Quote photos use private immutable storage metadata and frozen snapshot IDs/captions, with customer URLs resolved only after token or portal authorization — why: previews and PDFs must share evidence without exposing unrelated file paths.
 - Navigation-only role exclusions use role-menu.ts for sidebar/mobile shortcuts; they never change page authorization. Legacy quote drafts default missing editor fields on read, leaving issued snapshots and write validation unchanged.
