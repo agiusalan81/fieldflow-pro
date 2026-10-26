@@ -56,7 +56,7 @@ export function SupplierRfqs() {
     void (async () => {
       const { data: sh, error } = await supabase.from("job_sheets").select("id, jobsheet_number, client_id, site_id, pending_works_future_jobs, reported_fault, photo_paths, assets(reference_number)").eq("id", fromSheet).maybeSingle();
       if (!active) return;
-      void navigate({ to: "/estimates", search: {}, replace: true });
+      void navigate({ to: "/lift-rfq", replace: true });
       if (error || !sh) { toast.error("Could not load that job sheet for the estimate"); return; }
       const pending = (sh.pending_works_future_jobs ?? "").trim();
       const ref = sh.assets?.reference_number;
