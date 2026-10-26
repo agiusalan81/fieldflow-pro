@@ -19,6 +19,7 @@ import { useCompanyRules } from "@/lib/company";
 import { SuggestedTextarea } from "@/components/suggested-textarea";
 import { ACCESS_SUGGESTIONS, WORKING_WINDOWS, canSubmitSurvey, surveyItemsPending, parseSurveyDetails, surveyReviewerOptions, surveyTradeLabel, type SurveyDetails, type TradeReview } from "@/lib/survey-details";
 import { SurveyContacts, SurveyTrades, SurveyObservations, SurveyTradeReview } from "@/components/survey-field-details";
+import { ClientSitePicker } from "@/components/client-site-picker";
 
 export const Route = createFileRoute("/_authenticated/surveys")({
   staticData: { sitemap: false },
@@ -172,8 +173,7 @@ function Editor({ id, onBack }: { id: string; onBack: () => void }) {
     <fieldset disabled={!editable} className="min-w-0 space-y-4 border-b pb-5">
       <legend className="px-1 font-medium">Survey details</legend>
       <div className="grid gap-3 sm:grid-cols-2">
-        <div><Label htmlFor="sv-client">Client</Label><select id="sv-client" className={sel} value={s.client_id ?? ""} onChange={(e) => set({ client_id: e.target.value || null, site_id: null })}><option value="">New client / enter on site</option>{clients.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
-        <div><Label htmlFor="sv-site">Site / Location</Label><select id="sv-site" className={sel} value={s.site_id ?? ""} onChange={(e) => set({ site_id: e.target.value || null })} disabled={!s.client_id}><option value="">New site / enter on site</option>{sites.data?.map((x) => <option key={x.id} value={x.id}>{formatSiteDisplay(x)}</option>)}</select></div>
+        <ClientSitePicker clientId={s.client_id} siteId={s.site_id} siteLabel="Site / Location" noneClientLabel="New client / enter on site" noneSiteLabel="New site / enter on site" onChange={(client_id, site_id) => set({ client_id, site_id })} />
         {!s.client_id && <div><Label htmlFor="sv-new-client">Client name</Label><Input id="sv-new-client" value={details.clientName} onChange={e => setDetails({ ...details, clientName: e.target.value })} /></div>}
         {!s.site_id && <><div><Label htmlFor="sv-new-site">Site name / door</Label><Input id="sv-new-site" value={details.siteName} onChange={e => setDetails({ ...details, siteName: e.target.value })} /></div><div><Label htmlFor="sv-new-address">Street / location</Label><Input id="sv-new-address" value={details.address} onChange={e => setDetails({ ...details, address: e.target.value })} /></div><div><Label htmlFor="sv-new-code">Branch / Store ID (optional)</Label><Input id="sv-new-code" value={details.storeCode} onChange={e => setDetails({ ...details, storeCode: e.target.value })} /></div></>}
         <div><Label htmlFor="sv-loc">Equipment / location reference</Label><Input id="sv-loc" placeholder="e.g. Lift 2, Plant room B" value={s.location_ref ?? ""} onChange={(e) => set({ location_ref: e.target.value })} /></div>

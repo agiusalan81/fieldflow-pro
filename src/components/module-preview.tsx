@@ -7,7 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-export const MODULE_ROUTE: Record<string, string> = { '/fleet':'fleet_management', '/live-map':'tracking', '/standby':'standby', '/technical-library':'technical_library', '/expenses':'receipts', '/estimates':'core', '/surveys':'site_surveys', '/contracts':'contracts', '/proposals':'qs_pricing', '/as-built':'qs_pricing', '/skills':'skills_dispatch', '/available-jobs':'skills_dispatch', '/payroll':'payroll', '/payroll/wages':'payroll', '/payroll/hours':'payroll', '/payroll/payslips':'payroll' };
+export const MODULE_ROUTE: Record<string, string> = { '/fleet':'fleet_management', '/live-map':'tracking', '/standby':'standby', '/technical-library':'technical_library', '/expenses':'receipts', '/estimates':'core', '/surveys':'site_surveys', '/contracts':'contracts', '/lift-rfq':'lift_pack', '/proposals':'qs_pricing', '/as-built':'qs_pricing', '/skills':'skills_dispatch', '/available-jobs':'skills_dispatch', '/payroll':'payroll', '/payroll/wages':'payroll', '/payroll/hours':'payroll', '/payroll/payslips':'payroll' };
 export function ModulePreview({ feature, title, comingSoon }: { feature: string; title?: string | undefined; comingSoon?: boolean | undefined }) {
   const { data: profile } = useProfile();
   if (comingSoon) return <ComingSoon feature={feature} title={title}/>;

@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ClientSitePicker } from "@/components/client-site-picker";
 
 export const Route = createFileRoute("/_authenticated/contracts")({ staticData: { sitemap: false },
   head: () => ({
@@ -97,10 +98,7 @@ function Agreements({ office, companyId }: { office: boolean; companyId?: string
     <div className="space-y-4">
       {office && (
         <section className="grid gap-2 rounded-xl border bg-card p-4 md:grid-cols-6 md:items-end">
-          <div className="space-y-1.5 md:col-span-2"><Label>Client</Label>
-            <Select value={f.client_id} onValueChange={(v) => setF({ ...f, client_id: v })}><SelectTrigger className="h-11"><SelectValue placeholder="Choose client" /></SelectTrigger>
-              <SelectContent>{opts?.clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select>
-          </div>
+          <div className="md:col-span-2"><ClientSitePicker showSite={false} clientId={f.client_id || null} siteId={null} onChange={(client) => setF({ ...f, client_id: client ?? "" })} /></div>
           <div className="space-y-1.5"><Label>Contract type</Label>
             <Select value={f.contract_type_id} onValueChange={(v) => setF({ ...f, contract_type_id: v, annual_price: f.annual_price || String(opts?.types.find((t) => t.id === v)?.annual_price ?? "") })}><SelectTrigger className="h-11"><SelectValue placeholder="Type" /></SelectTrigger>
               <SelectContent>{opts?.types.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select>

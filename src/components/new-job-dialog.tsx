@@ -36,6 +36,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ClientSitePicker } from "@/components/client-site-picker";
 
 export type PendingDispatch = {id:string;pending_status:string;client_id:string;site_id:string|null;asset_id:string|null;pending_works_future_jobs:string|null;jobsheet_number:string};
 export function NewJobDialog({pending,onClose}:{pending?:PendingDispatch;onClose?:()=>void}) {
@@ -134,15 +135,8 @@ export function NewJobDialog({pending,onClose}:{pending?:PendingDispatch;onClose
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{pending?`Dispatch pending work — #${pending.jobsheet_number}`:"Team dispatch — New job"}</DialogTitle></DialogHeader>
         <form onSubmit={save} className="space-y-3">
-          <Select disabled={!!pending} value={f.client_id} onValueChange={(v) => { if (v && v !== f.client_id) setF((cur) => ({ ...cur, client_id: v, site_id: "none", asset_id: "none" })); }}>
-            <SelectTrigger><SelectValue placeholder={clients.length ? "Client" : "Add a client first"} /></SelectTrigger>
-            <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-          </Select>
           <div className="grid gap-3 sm:grid-cols-2">
-            <Select disabled={!!pending} value={f.site_id} onValueChange={(v) => { if (v) setF((cur) => ({ ...cur, site_id: v })); }}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="none">No site</SelectItem>{sites.filter((s) => s.client_id === f.client_id).map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
-            </Select>
+            <ClientSitePicker disabled={!!pending} clientId={f.client_id || null} siteId={f.site_id === "none" ? null : f.site_id} onChange={(client, site) => setF((cur) => ({ ...cur, client_id: client ?? "", site_id: site ?? "none", asset_id: client === cur.client_id ? cur.asset_id : "none" }))} />
             <Select disabled={!!pending} value={f.asset_id} onValueChange={(v) => { if (v) setF((cur) => ({ ...cur, asset_id: v })); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent><SelectItem value="none">No lift</SelectItem>{assets.filter((a) => a.client_id === f.client_id).map((a) => <SelectItem key={a.id} value={a.id}>{a.reference_number} · {a.asset_category}</SelectItem>)}</SelectContent>

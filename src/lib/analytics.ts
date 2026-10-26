@@ -27,6 +27,6 @@ export function tenantAlerts(t: HealthTenant, now = Date.now()) {
 /** Only coarse feature keys leave the browser; never route parameters or query strings. */
 export function analyticsFeature(path: string): typeof ANALYTICS_FEATURES[number] | null {
   if (/^\/(sheets|print)(\/|$)/.test(path)) return "job_sheets";
-  const paths: Record<string, typeof ANALYTICS_FEATURES[number]> = { "/admin/jobs": "dispatch", "/schedule": "dispatch", "/available-jobs": "dispatch", "/dwr": "daily_reports", "/admin/inventory": "inventory", "/contracts": "contracts", "/estimates": "estimates", "/proposals": "estimates", "/technical-library": "technical_library", "/standby": "standby", "/messages": "team_chat", "/company": "company_settings", "/subscription": "subscription" };
+  const paths: Record<string, typeof ANALYTICS_FEATURES[number]> = { "/admin/jobs": "dispatch", "/schedule": "dispatch", "/available-jobs": "dispatch", "/dwr": "daily_reports", "/admin/inventory": "inventory", "/contracts": "contracts", "/estimates": "estimates", "/lift-rfq": "estimates", "/proposals": "estimates", "/technical-library": "technical_library", "/standby": "standby", "/messages": "team_chat", "/company": "company_settings", "/subscription": "subscription" };
   return paths[path] ?? null;
 }

@@ -1,5 +1,5 @@
 import { usePlanFeatures } from "@/lib/plan-features";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Camera, Copy, Eye, Archive, Plus, Trash2, Paperclip, Pencil, Download, RotateCcw } from "lucide-react";
@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { A4Document } from "@/components/a4-document";
 import { AUDIENCES, TECH_CHECK_OPTIONS, parseAudience, parseSections, sectionsFor, toggleAudience, type Audience, type DocSection } from "@/lib/document-audience";
-import { BILLING_CYCLES, DEFAULT_LIFT_PRICING, audienceCopyRows, stepPrice, specChoices, checklistRows, extrasFor, hasCommercial, parseCommercial, parseExtras, parseFieldSpecs, specShows, type BlockAudience, type Commercial, type Extra, type FieldSpec } from "@/lib/document-blocks";
+import { BILLING_CYCLES, DEFAULT_LIFT_PRICING, audienceCopyRows, stepPrice, specChoices, checklistRows, extrasFor, hasCommercial, summaryItemsFromText, summaryItemsToText, type SummaryItem, parseCommercial, parseExtras, parseFieldSpecs, specShows, type BlockAudience, type Commercial, type Extra, type FieldSpec } from "@/lib/document-blocks";
 import { ChecklistRowEditor } from "@/components/checklist-row-editor";
 import { RichText } from "@/components/rich-text";
 import { useCompanyRules } from "@/lib/company";
@@ -80,6 +80,7 @@ export function MasterPreview({ doc, initialView = "client" }: { doc: PreviewDoc
       {commercial.visitsPerYear !== null && <p>{commercial.visitsPerYear} visits per year</p>}
       <CommercialPriceSummary value={commercial} cycle={BILLING_CYCLES.find((c) => c.key === commercial.billingCycle)?.label.toLowerCase()} />
       {(commercial.labourDiscountPct > 0 || commercial.partsDiscountPct > 0) && <p>Discounts: {commercial.labourDiscountPct > 0 && `${commercial.labourDiscountPct}% labour`}{commercial.labourDiscountPct > 0 && commercial.partsDiscountPct > 0 && " · "}{commercial.partsDiscountPct > 0 && `${commercial.partsDiscountPct}% parts`}</p>}
+      {commercial.summaryItems.length > 0 && <div className="space-y-1 pt-1"><h4 className="document-label text-[11px] font-semibold uppercase">Summary items</h4><ul className="space-y-1">{commercial.summaryItems.map((it, i) => <li key={i} className="flex items-start gap-2">{it.tag && <span className="shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold" style={{ color: "var(--document-primary)", borderColor: "var(--document-primary)" }}>{it.tag}</span>}<span className="flex-1"><RichText text={it.text} /></span></li>)}</ul></div>}
       {commercial.terms.trim() && <p className="whitespace-pre-wrap text-[12px] opacity-80">{commercial.terms}</p>}
     </section>] : []),
   ];
@@ -113,7 +114,24 @@ function CommercialEditor({ value, onChange, liftEnabled }: { value: Commercial;
       <div className="grid grid-cols-2 gap-2"><div><Label>Labour disc %</Label><Input min={0} max={100} type="number" value={value.labourDiscountPct} onChange={(e) => onChange({ ...value, labourDiscountPct: Number(e.target.value) })} /></div><div><Label>Parts disc %</Label><Input min={0} max={100} type="number" value={value.partsDiscountPct} onChange={(e) => onChange({ ...value, partsDiscountPct: Number(e.target.value) })} /></div></div>
     </div>
     {liftEnabled && <LiftCommercialEditor alwaysOn value={value.liftPricing ? value : { ...value, liftPricing: { ...DEFAULT_LIFT_PRICING } }} onChange={onChange} />}
+    <SummaryItemsEditor items={value.summaryItems} onChange={(summaryItems) => onChange({ ...value, summaryItems })} />
     <div><Label>Terms</Label><Textarea rows={3} value={value.terms} onChange={(e) => onChange({ ...value, terms: e.target.value })} placeholder="Payment terms, response times, exclusions…" /></div></div>;
+}
+
+function SummaryItemsEditor({ items, onChange }: { items: SummaryItem[]; onChange: (items: SummaryItem[]) => void }) {
+  const [text, setText] = useState(() => summaryItemsToText(items));
+  const [focused, setFocused] = useState(false);
+  useEffect(() => { if (!focused) setText(summaryItemsToText(items)); }, [items, focused]);
+  const up = (i: number, n: Partial<SummaryItem>) => onChange(items.map((it, j) => (j === i ? { ...it, ...n } : it)));
+  return <div className="space-y-2"><Label>Summary items (client copy)</Label>
+    <p className="text-xs text-muted-foreground">One item per line. Add a subtag with <code>[Included] Annual safety certification</code> or <code>24/7 callout :: Coverage</code>. Grouped under “Summary items” in your brand colour; technicians never see these.</p>
+    <Textarea aria-label="Summary items" rows={4} value={text} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} onChange={(e) => { setText(e.target.value); onChange(summaryItemsFromText(e.target.value)); }} placeholder={"[Included] Annual safety certification\n[Optional] Weekend callouts\nRemote monitoring :: SLA"} />
+    {items.length > 0 && <div className="space-y-1">{items.map((it, i) => <div key={i} className="grid grid-cols-[110px_1fr_36px] gap-2">
+      <Input aria-label={`Subtag ${i + 1}`} placeholder="Subtag" value={it.tag} onChange={(e) => up(i, { tag: e.target.value.slice(0, 40) })} />
+      <Input aria-label={`Summary item ${i + 1}`} value={it.text} onChange={(e) => up(i, { text: e.target.value })} />
+      <Button size="icon" variant="ghost" aria-label="Remove summary item" onClick={() => onChange(items.filter((_, j) => j !== i))}><Trash2 className="h-4 w-4" /></Button>
+    </div>)}</div>}
+  </div>;
 }
 
 function ExtrasEditor({ extras, onChange }: { extras: Extra[]; onChange: (e: Extra[]) => void }) {

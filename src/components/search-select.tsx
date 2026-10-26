@@ -8,10 +8,13 @@ import { cn } from "@/lib/utils";
 export type SearchOption = { value: string; label: string; hint?: string | undefined };
 
 /** Type-to-filter dropdown: start typing to see matching suggestions. Optional free-text entry via onAddFreeText. */
-export function SearchSelect({ value, options, onChange, placeholder = "Choose…", disabled, freeText, onFreeText, onAddFreeText }: {
+export function SearchSelect({ value, options, onChange, placeholder = "Choose…", disabled, freeText, onFreeText, onAddFreeText, onCreate, createLabel = "Add new" }: {
   value: string | null | undefined; options: SearchOption[]; onChange: (v: string) => void; placeholder?: string; disabled?: boolean;
   freeText?: string; onFreeText?: (v: string) => void; onAddFreeText?: (text: string) => void;
+  /** Adds a "+ Add new…" row; receives the typed search text. */
+  onCreate?: (typed: string) => void; createLabel?: string;
 }) {
+  const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const current = options.find((o) => o.value === value);
   const typed = (freeText ?? "").trim();
@@ -25,10 +28,10 @@ export function SearchSelect({ value, options, onChange, placeholder = "Choose�
       </PopoverTrigger>
       <PopoverContent className="w-(--radix-popover-trigger-width) max-w-[calc(100vw-2rem)] p-0" align="start">
         <Command>
-          <CommandInput placeholder="Type to search…" {...(freeText !== undefined ? { value: freeText } : {})} {...(onFreeText ? { onValueChange: onFreeText } : {})}
+          <CommandInput placeholder="Type to search…" {...(freeText !== undefined ? { value: freeText } : {})} {...(onFreeText ? { onValueChange: onFreeText } : { value: query, onValueChange: setQuery })}
             onKeyDown={(e) => { if (e.key === "Enter" && typed && onAddFreeText) { e.preventDefault(); onAddFreeText(typed); setOpen(false); } }} />
           <CommandList>
-            <CommandEmpty>{onAddFreeText ? "No matches — press Enter to add as initials." : "No matches."}</CommandEmpty>
+            <CommandEmpty>{onAddFreeText ? "No matches — press Enter to add as initials." : onCreate ? <button type="button" className="w-full px-2 text-left text-sm font-medium" onClick={() => { onCreate(query.trim()); setOpen(false); }}>+ {createLabel}{query.trim() ? ` “${query.trim()}”` : ""}</button> : "No matches."}</CommandEmpty>
             <CommandGroup>
               {options.map((o) => (
                 <CommandItem key={o.value} value={`${o.label} ${o.hint ?? ""}`} onSelect={() => { onChange(o.value); setOpen(false); }}>
@@ -37,6 +40,7 @@ export function SearchSelect({ value, options, onChange, placeholder = "Choose�
                   {o.hint && <span className="ml-auto truncate pl-2 text-xs text-muted-foreground">{o.hint}</span>}
                 </CommandItem>
               ))}
+              {onCreate && <CommandItem value={`__create ${query}`} onSelect={() => { onCreate(query.trim()); setOpen(false); }}><span className="truncate font-medium">+ {createLabel}{query.trim() ? ` “${query.trim()}”` : ""}</span></CommandItem>}
               {onAddFreeText && typed && (
                 <CommandItem value={`add-${typed}`} onSelect={() => { onAddFreeText(typed); setOpen(false); }}>
                   <span className="truncate">+ Add “{typed.toUpperCase()}” as initials</span>
