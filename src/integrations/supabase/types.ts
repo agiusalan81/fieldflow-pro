@@ -1029,6 +1029,251 @@ export type Database = {
           },
         ]
       }
+      crm_action_types: {
+        Row: {
+          archived: boolean
+          company_id: string
+          created_at: string
+          due_hours: number
+          icon: string
+          id: string
+          label: string
+        }
+        Insert: {
+          archived?: boolean
+          company_id?: string
+          created_at?: string
+          due_hours?: number
+          icon?: string
+          id?: string
+          label: string
+        }
+        Update: {
+          archived?: boolean
+          company_id?: string
+          created_at?: string
+          due_hours?: number
+          icon?: string
+          id?: string
+          label?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_action_types_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_activities: {
+        Row: {
+          body: string
+          company_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: string
+          opportunity_id: string
+        }
+        Insert: {
+          body: string
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          opportunity_id: string
+        }
+        Update: {
+          body?: string
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          opportunity_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_activities_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_activities_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "crm_opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_followups: {
+        Row: {
+          action_key: string
+          action_label: string
+          assignee_id: string | null
+          company_id: string
+          created_at: string
+          created_by: string
+          done_at: string | null
+          due_at: string
+          id: string
+          notes: string
+          opportunity_id: string
+        }
+        Insert: {
+          action_key: string
+          action_label: string
+          assignee_id?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          done_at?: string | null
+          due_at: string
+          id?: string
+          notes?: string
+          opportunity_id: string
+        }
+        Update: {
+          action_key?: string
+          action_label?: string
+          assignee_id?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          done_at?: string | null
+          due_at?: string
+          id?: string
+          notes?: string
+          opportunity_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_followups_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_followups_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "crm_opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_opportunities: {
+        Row: {
+          client_id: string | null
+          closed_at: string | null
+          company_id: string
+          contact_email: string
+          contact_name: string
+          contact_phone: string
+          created_at: string
+          created_by: string
+          deal_type: string
+          id: string
+          job_id: string | null
+          lost_reason: string | null
+          owner_id: string | null
+          quote_id: string | null
+          site_id: string | null
+          source: string
+          stage: string
+          title: string
+          updated_at: string
+          value: number | null
+        }
+        Insert: {
+          client_id?: string | null
+          closed_at?: string | null
+          company_id?: string
+          contact_email?: string
+          contact_name?: string
+          contact_phone?: string
+          created_at?: string
+          created_by?: string
+          deal_type?: string
+          id?: string
+          job_id?: string | null
+          lost_reason?: string | null
+          owner_id?: string | null
+          quote_id?: string | null
+          site_id?: string | null
+          source?: string
+          stage?: string
+          title: string
+          updated_at?: string
+          value?: number | null
+        }
+        Update: {
+          client_id?: string | null
+          closed_at?: string | null
+          company_id?: string
+          contact_email?: string
+          contact_name?: string
+          contact_phone?: string
+          created_at?: string
+          created_by?: string
+          deal_type?: string
+          id?: string
+          job_id?: string | null
+          lost_reason?: string | null
+          owner_id?: string | null
+          quote_id?: string | null
+          site_id?: string | null
+          source?: string
+          stage?: string
+          title?: string
+          updated_at?: string
+          value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_opportunities_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_opportunities_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_opportunities_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_opportunities_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "customer_quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_opportunities_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       custom_field_definitions: {
         Row: {
           company_id: string
@@ -5633,6 +5878,15 @@ export type Database = {
         Args: { _proposal: string }
         Returns: string
       }
+      crm_create_lead: {
+        Args: { _followup?: Json; _lead: Json; _note?: string }
+        Returns: string
+      }
+      crm_mark_lost: {
+        Args: { _id: string; _reason: string; _recontact_at?: string }
+        Returns: undefined
+      }
+      crm_mark_won: { Args: { _id: string; _target: string }; Returns: Json }
       current_company_id: { Args: never; Returns: string }
       customer_quote_action: {
         Args: { _action: string; _data?: Json; _id: string }
