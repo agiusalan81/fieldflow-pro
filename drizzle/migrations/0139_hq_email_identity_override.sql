@@ -1,0 +1,9 @@
+ALTER TABLE public.platform_subscriptions ADD COLUMN email_branding_mode text NOT NULL DEFAULT 'package' CHECK(email_branding_mode IN ('package','on','off'));
+DO $$ DECLARE definition text; BEGIN SELECT pg_get_functiondef('public.hq_save_setup_options(uuid,jsonb)'::regprocedure) INTO definition; definition:=replace(definition,'modes:=_options->''modes''; immediate:=(_options->>''immediate'')::boolean;', 'IF _options ? ''email_branding_mode'' AND coalesce(_options->>''email_branding_mode'','''') NOT IN (''package'',''on'',''off'') THEN RAISE EXCEPTION ''Invalid email branding mode''; END IF; UPDATE public.platform_subscriptions SET email_branding_mode=coalesce(_options->>''email_branding_mode'',email_branding_mode) WHERE id=s.id; modes:=_options->''modes''; immediate:=(_options->>''immediate'')::boolean;'); EXECUTE definition; END $$;
+CREATE FUNCTION public.company_email_branding(_company uuid) RETURNS boolean LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=public AS $$ DECLARE mode text; BEGIN
+ IF auth.uid() IS NULL OR _company IS DISTINCT FROM public.current_company_id() OR NOT public.member_is_active(auth.uid()) THEN RAISE EXCEPTION 'Active company membership required'; END IF;
+ SELECT email_branding_mode INTO mode FROM public.platform_subscriptions WHERE company_id=_company AND product_id=public.company_app_product_id() LIMIT 1;
+ IF mode='off' THEN RETURN false; END IF;
+ IF mode='on' THEN RETURN true; END IF;
+ RETURN public.company_module_access(_company,'client_presentation'); END $$;
+REVOKE ALL ON FUNCTION public.company_email_branding(uuid) FROM PUBLIC,anon; GRANT EXECUTE ON FUNCTION public.company_email_branding(uuid) TO authenticated;

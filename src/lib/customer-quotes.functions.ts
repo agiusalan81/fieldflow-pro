@@ -25,7 +25,9 @@ export const sendCustomerQuote = createServerFn({ method: 'POST' })
     const token = (link.data as { token?: string } | null)?.token;
     if (!token) throw new Error('Document link unavailable');
     const { sendTemplateEmail } = await import('./email-templates/send-email');
-    const result = await sendTemplateEmail('customer-quote', contact.email, { idempotencyKey: `customer-quote-${quote.id}-${contact.id}`, templateData: { company: s.company.name, name: contact.first_name, reference: s.reference, title: document.title, total: new Intl.NumberFormat('en-GB', { style: 'currency', currency: s.currency }).format(s.totals.total), validUntil: document.valid_until, documentUrl: `https://fieldbridgeapp.com/quote/${token}` } });
+    const { resolveEmailIdentity } = await import('./email-identity.server');
+    const identity = await resolveEmailIdentity(context.supabase, quote.company_id);
+    const result = await sendTemplateEmail('customer-quote', contact.email, { identity, idempotencyKey: `customer-quote-${quote.id}-${contact.id}`, templateData: { company: s.company.name, name: contact.first_name, reference: s.reference, title: document.title, total: new Intl.NumberFormat('en-GB', { style: 'currency', currency: s.currency }).format(s.totals.total), validUntil: document.valid_until, documentUrl: `https://fieldbridgeapp.com/quote/${token}` } });
     const saved = await supabaseAdmin.from('customer_quote_deliveries').upsert({ quote_id: quote.id, company_id: quote.company_id, contact_id: contact.id, outcome: result.sent ? 'sent' : result.reason }, { onConflict: 'quote_id,contact_id' });
     if (saved.error) throw new Error('Email processed, but delivery history could not be recorded. Retry safely.');
     return result;

@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Email/estimate polish: tier-aware tenant email identity and reply-to across app sends; HQ force FieldBridge override including trials; library payment terms, common/custom units, historical autocomplete and captioned customer quote photos; tests and signed-in verification.
 - [x] Repair Estimates & proposals page-load failure: legacy CRM draft editor defaults missing fields/lines; hide As-built/Site surveys from admin navigation. Existing estimate opened successfully as superadmin, proposals loaded, 13 regression tests pass and build OK.
 - [x] Batch 1: shared searchable client/site picker with inline new client (address + contact) and new site (or same as client) in estimates, dispatch, contracts, lift RFQs and surveys; document Summary items with subtags in brand colour (client copy only); Lift supplier RFQs moved out of Core estimates to their own Lift pack page. Tests pass; live signed-in check pending
 - [x] Batch 2: Horizontal CRM module (crm_pipeline) — board/list, voice intake, custom follow-up types, bell alerts, won→estimate/job/contract, lost reasons; 13 tests pass, Plus/Pro/Enterprise only

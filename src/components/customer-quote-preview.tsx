@@ -1,8 +1,9 @@
 import type { QuoteSnapshot } from '@/lib/customer-quotes';
 import { quoteLineTotals } from '@/lib/customer-quotes';
 import { formatMoney } from '@/lib/locale';
+import { QuotePhotoGallery, type QuotePhotoAccess } from './customer-quote-photos';
 
-export function CustomerQuotePreview({ snapshot: s }: { snapshot: QuoteSnapshot }) {
+export function CustomerQuotePreview({ snapshot: s, photoAccess }: { snapshot: QuoteSnapshot; photoAccess?: QuotePhotoAccess }) {
   const d = s.document; const money = (v: number) => formatMoney(v, s.currency);
   return <article className="space-y-5 bg-background text-foreground p-5 sm:p-8">
     <header className="flex flex-wrap justify-between gap-4 border-b pb-4">
@@ -13,6 +14,7 @@ export function CustomerQuotePreview({ snapshot: s }: { snapshot: QuoteSnapshot 
     <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Item</th><th className="px-2">Qty</th><th className="px-2">Rate</th><th className="px-2">Disc.</th><th className="px-2">VAT</th><th className="text-right">Net</th></tr></thead><tbody>{d.lines.map(l => <tr key={l.id} className="border-b align-top"><td className="py-3 min-w-40 whitespace-pre-wrap">{l.description}</td><td className="px-2 py-3 whitespace-nowrap">{l.quantity} {l.unit}</td><td className="px-2 py-3 whitespace-nowrap">{money(l.rate)}</td><td className="px-2 py-3">{l.discount}%</td><td className="px-2 py-3">{l.vat}%</td><td className="py-3 text-right whitespace-nowrap">{money(quoteLineTotals(l).net)}</td></tr>)}</tbody></table></div>
     <dl className="ml-auto max-w-xs space-y-1 text-sm">{[['Subtotal', s.totals.subtotal], ['Discount', s.totals.discount], ['Net', s.totals.net], ['VAT', s.totals.vat], ['Total', s.totals.total]].map(([label, value]) => <div key={label} className="flex justify-between gap-4"><dt>{label}</dt><dd className="font-semibold tabular-nums">{money(Number(value))}</dd></div>)}</dl>
     {([['Payment terms', d.payment], ['Expected work timeframe', d.timeframe], ['Exclusions', d.exclusions], ['Customer notes', d.notes]] as const).filter(([, text]) => text).map(([title, text]) => <section key={title}><h3 className="font-semibold text-sm">{title}</h3><p className="whitespace-pre-wrap text-sm">{text}</p></section>)}
+    <QuotePhotoGallery photos={d.photos ?? []} {...(photoAccess ? { access: photoAccess } : {})} />
     {s.company.footer && <footer className="border-t pt-3 text-xs text-muted-foreground">{s.company.footer}</footer>}
   </article>;
 }

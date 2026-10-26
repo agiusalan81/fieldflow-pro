@@ -11,6 +11,7 @@ export const quoteDocumentSchema = z.object({
   issue_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), valid_until: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   scope: z.string().max(10000), exclusions: z.string().max(10000), payment: z.string().max(5000),
   timeframe: z.string().max(2000), notes: z.string().max(10000), lines: z.array(quoteLineSchema).max(100),
+  photos: z.array(z.object({ id: z.string().uuid(), caption: z.string().max(500) })).max(10).default([]),
 }).refine(d => d.valid_until >= d.issue_date, { message: 'Validity must not be before issue date' });
 export type QuoteLine = z.infer<typeof quoteLineSchema>;
 export type QuoteDocument = z.infer<typeof quoteDocumentSchema>;
@@ -39,7 +40,7 @@ export function quoteTotals(lines: QuoteLine[] | null | undefined): QuoteTotals 
 export function customerQuoteDocument(raw: unknown) { return quoteDocumentSchema.parse(raw); }
 export function emptyQuoteDocument(kind: 'estimate' | 'proposal' = 'estimate'): QuoteDocument {
   const now = new Date(); const expiry = new Date(now); expiry.setUTCDate(expiry.getUTCDate() + 30);
-  return { kind, title: '', issue_date: now.toISOString().slice(0, 10), valid_until: expiry.toISOString().slice(0, 10), scope: '', exclusions: '', payment: '', timeframe: '', notes: '', lines: [] };
+  return { kind, title: '', issue_date: now.toISOString().slice(0, 10), valid_until: expiry.toISOString().slice(0, 10), scope: '', exclusions: '', payment: '', timeframe: '', notes: '', lines: [], photos: [] };
 }
 /** Older CRM drafts omit empty editor fields; default them without changing issued snapshots or write validation. */
 export function quoteDraftForEditor(raw: unknown): QuoteDocument {
@@ -51,6 +52,7 @@ export function quoteDraftForEditor(raw: unknown): QuoteDocument {
     kind: data['kind'] === 'proposal' ? 'proposal' : 'estimate',
     ...Object.fromEntries(['title', 'issue_date', 'valid_until', 'scope', 'exclusions', 'payment', 'timeframe', 'notes'].map(key => [key, typeof data[key] === 'string' ? data[key] : defaults[key as keyof QuoteDocument]])),
     lines: Array.isArray(data['lines']) ? data['lines'] as QuoteLine[] : [],
+    photos: Array.isArray(data['photos']) ? data['photos'] as QuoteDocument['photos'] : [],
   };
 }
 export function newQuoteLine(vat = 18): QuoteLine { return { id: crypto.randomUUID(), description: '', category: 'service', unit: 'each', quantity: 1, rate: 0, discount: 0, vat }; }

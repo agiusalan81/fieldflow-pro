@@ -47,6 +47,8 @@ export const sendClientNotice = createServerFn({ method: "POST" })
     const result: { channel: string; to: string; ok: boolean; error?: string }[] = [];
 
     if (tpl.channels.includes("email")) {
+      const { resolveEmailIdentity } = await import("./email-identity.server");
+      const identity = await resolveEmailIdentity(sb, sheet.company_id);
       const recipients=await clientRecipients(sb,sheet.client_id,sheet.site_id,purpose,'email');
       const emails=recipients.map(c=>c.email).filter((email):email is string=>!!email);
       const a = process.env["LOVABLE_API_KEY"], g = process.env["GOOGLE_MAIL_API_KEY"];
@@ -54,7 +56,7 @@ export const sendClientNotice = createServerFn({ method: "POST" })
         const subject = data.event === "no_access" ? `Visit attempted — ${values.site_name}` : data.event === "on_my_way" ? `Technician on the way — ${values.site_name}` : `Signature needed — Job sheet- ${sheet.jobsheet_number}`;
         const res = await fetch("https://connector-gateway.lovable.dev/google_mail/gmail/v1/users/me/messages/send", {
           method: "POST", headers: { Authorization: `Bearer ${a}`, "X-Connection-Api-Key": g, "Content-Type": "application/json" },
-          body: JSON.stringify({ raw: rawEmail(emails, subject, `${text}\n\n${companySignature({ name: company?.name, address: formatOfficeAddress(parseOfficeAddress(settings?.office_address, settings?.company_address ?? "")), phone: settings?.office_phone, email: settings?.company_email, website: settings?.website, vat: settings?.vat_number })}`, []) }),
+          body: JSON.stringify({ raw: rawEmail(emails, subject, `${text}\n\n${companySignature({ name: company?.name, address: formatOfficeAddress(parseOfficeAddress(settings?.office_address, settings?.company_address ?? "")), phone: settings?.office_phone, email: settings?.company_email, website: settings?.website, vat: settings?.vat_number })}`, [], identity) }),
         });
         if (!res.ok) console.error(`Notice email failed [${res.status}]: ${await res.text()}`);
         result.push({ channel: "email", to: emails.join(", "), ok: res.ok, ...(res.ok ? {} : { error: "Email could not be sent" }) });

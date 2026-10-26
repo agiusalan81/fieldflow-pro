@@ -1431,6 +1431,38 @@ export type Database = {
           },
         ]
       }
+      customer_quote_photos: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string
+          id: string
+          storage_path: string
+        }
+        Insert: {
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          storage_path: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_quote_photos_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_quotes: {
         Row: {
           asset_id: string | null
@@ -4564,6 +4596,7 @@ export type Database = {
           coming_soon_modules: string[]
           company_id: string | null
           created_at: string
+          email_branding_mode: string
           external_tenant_id: string | null
           hidden_modules: string[]
           hide_locked_modules: boolean
@@ -4587,6 +4620,7 @@ export type Database = {
           coming_soon_modules?: string[]
           company_id?: string | null
           created_at?: string
+          email_branding_mode?: string
           external_tenant_id?: string | null
           hidden_modules?: string[]
           hide_locked_modules?: boolean
@@ -4610,6 +4644,7 @@ export type Database = {
           coming_soon_modules?: string[]
           company_id?: string | null
           created_at?: string
+          email_branding_mode?: string
           external_tenant_id?: string | null
           hidden_modules?: string[]
           hide_locked_modules?: boolean
@@ -5869,6 +5904,7 @@ export type Database = {
       client_workspace_scope: { Args: { _client: string }; Returns: Json }
       company_app_product_id: { Args: never; Returns: string }
       company_asset_limit: { Args: { _company: string }; Returns: number }
+      company_email_branding: { Args: { _company: string }; Returns: boolean }
       company_invoice_lapsed: {
         Args: { _subscription: string }
         Returns: boolean

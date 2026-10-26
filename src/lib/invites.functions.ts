@@ -42,14 +42,16 @@ export const sendInviteEmail = createServerFn({ method: "POST" })
     if (error || !inv || inv.used_at) throw new Error("Invitation not found");
     if (!inv.email) throw new Error("This invitation has no recipient email");
     if (!new URL(data.link).pathname.endsWith(`/join/${data.token}`)) throw new Error("Invalid invitation link");
-    const { company, replyTo } = await companySender(context.supabase, inv.company_id);
+    const { company } = await companySender(context.supabase, inv.company_id);
+    const { resolveEmailIdentity } = await import("./email-identity.server");
+    const identity = await resolveEmailIdentity(context.supabase, inv.company_id);
     const role = ROLE_NAMES[inv.role] ?? inv.role;
     const expires = new Date(inv.expires_at).toLocaleDateString("en-GB");
     const greet = inv.full_name ? `Hi ${inv.full_name},` : "Hello,";
     const subject = `${company} invited you to join FieldBridge`;
     const text = `${greet}\n\n${company} has invited you to join their team on FieldBridge as ${role}.\n\nRegister using this email address (${inv.email}) with Google, Microsoft or email sign-in:\n${data.link}\n\nThis link works once and expires on ${expires}.`;
     const html = `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#1b2a3d"><h2 style="color:#1b2a3d">Join ${esc(company)} on FieldBridge</h2><p>${esc(greet)}</p><p>${esc(company)} has invited you to join their team as <b>${esc(role)}</b>.</p><p>Register using <b>${esc(inv.email)}</b>.</p><p style="margin:28px 0"><a href="${esc(data.link)}" style="background:#d97706;color:#ffffff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:bold">Accept invitation &amp; join</a></p><p style="font-size:13px;color:#5b6b7f">This link works once and expires on ${esc(expires)}.<br>${esc(data.link)}</p></div>`;
-    await sendMail({ to: inv.email, subject, text, html, fromName: company, replyTo }, "The invitation email could not be sent. Copy the link instead.");
+    await sendMail({ to: inv.email, subject, text, html, fromName: identity.name, replyTo: identity.replyTo ?? "" }, "The invitation email could not be sent. Copy the link instead.");
     return { sent: true, to: inv.email };
   });
 
@@ -65,7 +67,7 @@ async function companySender(sb: Sb, companyId: string) {
 
 async function sendMail(m: { to: string; subject: string; text: string; html: string; fromName: string; replyTo: string }, failMsg: string) {
   const boundary = `b_${crypto.randomUUID()}`;
-  const raw = [`To: ${m.to}`, ...(m.replyTo ? [`Reply-To: ${m.replyTo}`] : []), `Subject: ${hdr(m.subject)}`, "MIME-Version: 1.0", `Content-Type: multipart/alternative; boundary="${boundary}"`, "",
+  const raw = [`To: ${m.to}`, `From: ${hdr(m.fromName)} <noreply@notify.fieldbridgeapp.com>`, ...(m.replyTo ? [`Reply-To: ${m.replyTo}`] : []), `Subject: ${hdr(m.subject)}`, "MIME-Version: 1.0", `Content-Type: multipart/alternative; boundary="${boundary}"`, "",
     `--${boundary}`, 'Content-Type: text/plain; charset="UTF-8"', "Content-Transfer-Encoding: base64", "", b64(m.text),
     `--${boundary}`, 'Content-Type: text/html; charset="UTF-8"', "Content-Transfer-Encoding: base64", "", b64(m.html), `--${boundary}--`].join("\r\n");
   const lovableKey = process.env["LOVABLE_API_KEY"]; const gmailKey = process.env["GOOGLE_MAIL_API_KEY"];
@@ -87,9 +89,11 @@ export const sendTestEmail = createServerFn({ method: "POST" })
     if (!to) throw new Error("Your account has no email address");
     const { data: ok } = await context.supabase.from("company_settings").select("company_id").eq("company_id", data.companyId).maybeSingle();
     if (!ok) throw new Error("Company not found");
-    const { company, replyTo } = await companySender(context.supabase, data.companyId);
+    const { company } = await companySender(context.supabase, data.companyId);
+    const { resolveEmailIdentity } = await import("./email-identity.server");
+    const identity = await resolveEmailIdentity(context.supabase, data.companyId); const replyTo = identity.replyTo ?? "";
     const text = `This is a test from FieldBridge.\n\nEmail delivery for ${company} is working. Replies from clients go to ${replyTo || "your company email (not set yet — add it in Company info)"}.`;
     const html = `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#1b2a3d"><h2>Email delivery is working ✅</h2><p>This is a test from FieldBridge for <b>${esc(company)}</b>.</p><p>Client replies go to <b>${esc(replyTo || "your company email (not set yet)")}</b>.</p></div>`;
-    await sendMail({ to, subject: `FieldBridge test email for ${company}`, text, html, fromName: company, replyTo }, "The test email could not be sent. Please try again.");
+    await sendMail({ to, subject: `FieldBridge test email for ${company}`, text, html, fromName: identity.name, replyTo }, "The test email could not be sent. Please try again.");
     return { to };
   });
