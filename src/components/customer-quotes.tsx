@@ -38,7 +38,7 @@ export async function quoteAction(id: string, action: string, data: Record<strin
   if (r.error) throw r.error;
   return r.data as { id: string; job_id?: string | null; token?: string };
 }
-export function CustomerQuotes({ fromSheet, focusQuote, clearSource }: { fromSheet?: string; focusQuote?: string; clearSource: () => void }) {
+export function CustomerQuotes({ fromSheet, focusQuote, clearSource, createNew }: { createNew?: boolean; fromSheet?: string; focusQuote?: string; clearSource: () => void }) {
   const qc = useQueryClient(); const { data: profile } = useProfile(); const { data: company } = useCompanyRules(); const lock = useNavLock();
   const send = useServerFn(sendCustomerQuote); const notifyPhone = useServerFn(notifyClientPhoneDecision); const extractTerms = useServerFn(extractDocumentText);
   const q = useQuery({ queryKey: ['customer-quotes', profile?.company_id], enabled: !!profile, queryFn: async () => { const r = await supabase.from('customer_quotes').select('*').order('updated_at', { ascending: false }); if (r.error) throw r.error; return r.data; } });
@@ -59,6 +59,7 @@ export function CustomerQuotes({ fromSheet, focusQuote, clearSource }: { fromShe
   const run = async (fn: () => Promise<unknown>) => { setBusy(true); try { await fn(); await refresh(); } catch (e) { toast.error((e as { message?: string }).message ?? 'Could not complete quote action'); } finally { setBusy(false); } };
   const openRow = (r: Row) => { setSelected(r.id); setForm({ id: r.id, client_id: r.client_id, site_id: r.site_id, asset_id: r.asset_id, source_sheet_id: r.source_sheet_id, private_notes: r.private_notes, data: quoteDraftForEditor(r.data) }); };
   const newForm = (): Form => ({ id: crypto.randomUUID(), client_id: null, site_id: null, asset_id: null, source_sheet_id: null, private_notes: '', data: { ...emptyQuoteDocument(), lines: [newQuoteLine()] } });
+  useEffect(() => { if (createNew) { setSelected(null); setForm(newForm()); clearSource(); } }, [createNew]);
   useEffect(() => {
     if (!fromSheet) return;
     let active = true;

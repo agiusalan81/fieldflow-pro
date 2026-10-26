@@ -1,3 +1,6 @@
+import { FieldsEditor } from "@/components/fields-editor";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useCan } from "@/lib/permissions";
 import { NumberingSettings } from "@/components/numbering-settings";
 import { TRADES } from "@/lib/price-list";
 import { settingsSectionPatch } from "@/lib/settings-sections";
@@ -400,6 +403,8 @@ function AccessTab({ companyId }: { companyId: string }) {
 type SectionItem = { key: string; label: string; render: () => React.ReactNode };
 function SettingsSections({ superuser, companyId, userId, role }: { superuser: boolean; companyId: string; userId: string; role: Role }) {
   const libraryName = useCompanyTitle("document library");
+  const { data: profile } = useProfile();
+  const can = useCan(profile);
   const [active, setActive] = useState("profile");
   const [visited, setVisited] = useState(["profile"]);
   const heading = useRef<HTMLHeadingElement>(null);
@@ -417,29 +422,30 @@ function SettingsSections({ superuser, companyId, userId, role }: { superuser: b
     heading.current?.focus({ preventScroll: true });
   }, [active]);
   const groups: { title: string; items: SectionItem[] }[] = [
-    { title: "Company & brand", items: [
+    { title: "General & trade", items: [
       { key: "profile", label: "Profile & details", render: () => <ProfileTab companyId={companyId} part="details" navigation={navigation} /> },
       { key: "industry", label: "Industry & trades", render: () => <IndustryTab companyId={companyId} /> },
+      { key: "hours", label: "Hours & overtime", render: () => <HoursTab companyId={companyId} /> },
+    ] },
+    { title: "Branding & appearance", items: [
       { key: "branding", label: "Branding & PDF styling", render: () => <div className="space-y-6"><AppearanceSettings companyId={companyId} /><ProfileTab companyId={companyId} part="fonts" /><DocumentSettings companyId={companyId} part="branding" /></div> },
-      { key: "messaging", label: "Messages & emails", render: () => <IntegrationsSettings part="messaging" companyId={companyId} /> },
     ] },
-    { title: "Operations & hours", items: [{ key: "hours", label: "Hours & overtime", render: () => <HoursTab companyId={companyId} /> }] },
-    { title: "Field & safety", items: [
-      { key: "technical", label: "Technical data structure", render: () => <TechnicalStructure companyId={companyId} /> },
-      { key: "safety", label: "Safety & faults", render: () => <SafetySettings companyId={companyId} /> },
-    ] },
-    { title: "Documents & legal", items: [
-      { key: "terms", label: "Terms & conditions", render: () => <DocumentSettings companyId={companyId} part="terms" /> },
-      { key: "library", label: libraryName, render: () => <div className="space-y-4">{superuser&&<Button asChild variant="outline"><Link to="/subscription" hash="custom-requests">Request a custom module / template</Link></Button>}<DocumentLibrary companyId={companyId} userId={userId} /></div> },
-    ] },
-    { title: "Commercial & integrations", items: [
+    { title: "Commercial & numbering", items: [
       { key: "estimates", label: "Estimates & suppliers", render: () => <div className="space-y-4">{superuser&&<Button asChild variant="outline"><Link to="/subscription" hash="custom-requests">Request a custom module / template</Link></Button>}<QuoteAcceptanceSetting companyId={companyId} /><EstimateSettings companyId={companyId} /></div> },
       { key: "numbering", label: "Document numbering", render: () => <NumberingSettings companyId={companyId} /> },
-      { key: "crm", label: "CRM settings", render: () => <CrmSettings companyId={companyId} actorRole={superuser ? "superuser" : role} /> },
+      { key: "terms", label: "Terms & conditions", render: () => <DocumentSettings companyId={companyId} part="terms" /> },
+      { key: "library", label: libraryName, render: () => <div className="space-y-4">{superuser&&<Button asChild variant="outline"><Link to="/subscription" hash="custom-requests">Request a custom module / template</Link></Button>}<DocumentLibrary companyId={companyId} userId={userId} /></div> },
       { key: "pricelist", label: "Price list", render: () => <PriceListSettings companyId={companyId} /> },
-      { key: "integrations", label: "Accounting", render: () => <IntegrationsSettings part="accounting" companyId={companyId} /> },
     ] },
-    ...(superuser ? [{ title: "Security & access", items: [{ key: "access", label: "Role access", render: () => <AccessTab companyId={companyId} /> }] }] : []),
+    { title: "Integrations & access", items: [
+      { key: "crm", label: "CRM settings", render: () => <CrmSettings companyId={companyId} actorRole={superuser ? "superuser" : role} /> },
+      ...(superuser ? [{ key: "access", label: "Role access", render: () => <AccessTab companyId={companyId} /> }] : []),
+      { key: "messaging", label: "Messages & emails", render: () => <IntegrationsSettings part="messaging" companyId={companyId} /> },
+      { key: "integrations", label: "Accounting", render: () => <IntegrationsSettings part="accounting" companyId={companyId} /> },
+      { key: "technical", label: "Technical data structure", render: () => <TechnicalStructure companyId={companyId} /> },
+      { key: "safety", label: "Safety & faults", render: () => <SafetySettings companyId={companyId} /> },
+      ...(can("fields") ? [{ key: "fields", label: "Fields & lookups", render: () => <FieldsEditor /> }] : []),
+    ] },
   ];
   const all = groups.flatMap((g) => g.items);
   const activeIndex = Math.max(0, all.findIndex((i) => i.key === active));
@@ -450,25 +456,12 @@ function SettingsSections({ superuser, companyId, userId, role }: { superuser: b
     <Button type="button" variant="outline" className="h-11" disabled={activeIndex === all.length - 1} onClick={() => { const next = all[activeIndex + 1]; if (next) selectSection(next.key); }}>Next<ArrowRight className="ml-2 h-4 w-4" /></Button>
   </>;
   return (
-    <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-[220px_minmax(0,1fr)]">
-      <div className="md:hidden">
-        <Label className="mb-1.5 block">Section</Label>
-        <select aria-label="Settings section" className="h-11 w-full rounded-md border bg-background px-3 text-sm" value={current.key} onChange={(e) => selectSection(e.target.value)}>
-          {groups.map((g) => <optgroup key={g.title} label={g.title}>{g.items.map((i) => <option key={i.key} value={i.key}>{i.label}</option>)}</optgroup>)}
-        </select>
-      </div>
-      <nav aria-label="Company settings sections" className="hidden space-y-5 md:block">
-        {groups.map((g) => (
-          <div key={g.title}>
-            <p className="mb-1.5 px-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">{g.title}</p>
-            {g.items.map((i) => (
-              <Button key={i.key} type="button" variant="ghost" onClick={() => selectSection(i.key)} aria-current={i.key === current.key ? "page" : undefined}
-                className={`h-auto w-full justify-start whitespace-normal px-2 py-1.5 text-left text-sm ${i.key === current.key ? "bg-primary/10 font-medium text-primary" : "text-foreground hover:bg-muted"}`}>
-                {i.label}
-              </Button>
-            ))}
-          </div>
-        ))}
+    <div className="mx-auto max-w-6xl space-y-5">
+      <Tabs value={groups.find(g => g.items.some(i => i.key === active))?.title ?? groups[0]?.title} onValueChange={value => { const next = groups.find(g => g.title === value)?.items[0]; if (next) selectSection(next.key); }}>
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 lg:grid-cols-4">{groups.map(g => <TabsTrigger key={g.title} value={g.title} className="min-w-0 whitespace-normal py-3">{g.title}</TabsTrigger>)}</TabsList>
+      </Tabs>
+      <nav aria-label="Company settings sections" className="flex flex-wrap gap-2 border-b pb-4">
+        {groups.find(g => g.items.some(i => i.key === active))?.items.map(i => <Button key={i.key} variant={i.key === active ? 'secondary' : 'ghost'} size="sm" aria-current={i.key === active ? 'page' : undefined} onClick={() => selectSection(i.key)} className="h-auto max-w-full whitespace-normal text-left">{i.label}</Button>)}
       </nav>
       <section className="min-w-0">
         <h2 ref={heading} tabIndex={-1} className="mb-4 scroll-mt-24 text-lg font-semibold text-foreground outline-none">{current.label}</h2>
