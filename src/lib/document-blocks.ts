@@ -106,11 +106,40 @@ export type Commercial = {
   /** Print the price summary on the client copy; technicians never see it. */
   showOnClient: boolean;
   showSampleCalculation: boolean;
+  /** Client-only summary rows with an optional subtag, e.g. "[Included] Annual safety certification". */
+  summaryItems: SummaryItem[];
 };
+export type SummaryItem = { tag: string; text: string };
+/** One line per item: "[Tag] text" or "text :: Tag"; blank lines are dropped. */
+export function parseSummaryLine(line: string): SummaryItem | null {
+  const raw = line.trim().replace(/^[-•]\s*/, "");
+  if (!raw) return null;
+  const pre = /^\[([^\]]{1,40})\]\s*(.*)$/.exec(raw);
+  if (pre) return { tag: pre[1]!.trim(), text: (pre[2] ?? "").trim() };
+  const idx = raw.lastIndexOf("::");
+  if (idx > 0) return { tag: raw.slice(idx + 2).trim().slice(0, 40), text: raw.slice(0, idx).trim() };
+  return { tag: "", text: raw };
+}
+export function summaryItemsFromText(text: string): SummaryItem[] {
+  return text.split("\n").flatMap((l) => { const i = parseSummaryLine(l); return i && (i.text || i.tag) ? [i] : []; });
+}
+export function summaryItemsToText(items: SummaryItem[]): string {
+  return items.map((i) => (i.tag ? `[${i.tag}] ${i.text}` : i.text)).join("\n");
+}
+function parseSummaryItems(raw: unknown): SummaryItem[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((r) => {
+    if (!r || typeof r !== "object") return [];
+    const o = r as Record<string, unknown>;
+    const tag = typeof o["tag"] === "string" ? o["tag"].trim().slice(0, 40) : "";
+    const text = typeof o["text"] === "string" ? o["text"].trim() : "";
+    return tag || text ? [{ tag, text }] : [];
+  });
+}
 export const DEFAULT_COMMERCIAL: Commercial = {
   liftPricing: null, clientPriceDisplay: "compound",
   visitsPerYear: null, basePrice: null, billingCycle: "annually",
-  labourDiscountPct: 0, partsDiscountPct: 0, terms: "", showOnClient: true, showSampleCalculation: false,
+  labourDiscountPct: 0, partsDiscountPct: 0, terms: "", showOnClient: true, showSampleCalculation: false, summaryItems: [],
 };
 
 const num = (v: unknown): number | null => {
@@ -172,12 +201,13 @@ export function parseCommercial(raw: unknown): Commercial {
     terms: typeof r["terms"] === "string" ? r["terms"] : "",
     showOnClient: r["showOnClient"] !== false,
     showSampleCalculation: r["showSampleCalculation"] === true,
+    summaryItems: parseSummaryItems(r["summaryItems"]),
   };
 }
 
 /** True when the document carries any commercial content worth printing. */
 export function hasCommercial(c: Commercial): boolean {
-  return c.liftPricing !== null || c.basePrice !== null || c.visitsPerYear !== null || c.labourDiscountPct > 0 || c.partsDiscountPct > 0 || !!c.terms.trim();
+  return c.liftPricing !== null || c.basePrice !== null || c.visitsPerYear !== null || c.labourDiscountPct > 0 || c.partsDiscountPct > 0 || !!c.terms.trim() || c.summaryItems.length > 0;
 }
 
 export type Extra = { label: string; value: string; audience: BlockAudience };

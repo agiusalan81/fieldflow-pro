@@ -28,6 +28,7 @@ export function masterDocumentLines(doc: MasterDocumentContent, view: Audience):
     if (total !== null) lines.push(`Total: ${money(total)} ${BILLING_CYCLES.find(cycle => cycle.key === c.billingCycle)?.label.toLowerCase()}`);
     if (c.labourDiscountPct) lines.push(`Labour discount: ${c.labourDiscountPct}%`);
     if (c.partsDiscountPct) lines.push(`Parts discount: ${c.partsDiscountPct}%`);
+    if (c.summaryItems.length) { lines.push("Summary items"); for (const i of c.summaryItems) lines.push(`• ${i.tag ? `[${i.tag}] ` : ""}${i.text}`); }
     if (c.terms.trim()) lines.push(c.terms);
   }
   return lines.filter(line => line.trim());
