@@ -121,7 +121,7 @@ function SheetsPage() {
   return (
     <AppShell title="Past & draft job sheets">
       <div className="mx-auto max-w-5xl space-y-4">
-        {supervisor && !isPreview && <div role="group" aria-label="Whose sheets" className="inline-flex rounded-md border p-1">
+        {supervisor && !isPreview && <div data-tour="team-sheets" role="group" aria-label="Whose sheets" className="inline-flex rounded-md border p-1">
           <Button size="sm" variant={scope === "mine" ? "default" : "ghost"} aria-pressed={scope === "mine"} onClick={() => setScope("mine")}>My sheets</Button>
           <Button size="sm" variant={scope === "team" ? "default" : "ghost"} aria-pressed={scope === "team"} onClick={() => setScope("team")}>All team sheets</Button>
         </div>}
