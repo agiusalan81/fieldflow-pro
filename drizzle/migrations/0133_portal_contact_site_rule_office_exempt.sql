@@ -1,0 +1,1 @@
+DO $$ DECLARE d text; BEGIN SELECT pg_get_functiondef('public.save_client_contact(uuid,uuid,jsonb)'::regprocedure) INTO d; d:=replace(d,'IF NOT allsites AND cardinality(ids)=0 THEN','IF NOT (scope->>''office'')::boolean AND NOT allsites AND cardinality(ids)=0 THEN'); EXECUTE d; END $$;
