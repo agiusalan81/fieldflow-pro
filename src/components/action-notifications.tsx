@@ -8,7 +8,9 @@ import { useProfile, isManager, isOffice } from '@/lib/profile';
 import { usePlanFeatures } from '@/lib/plan-features';
 import { useCan } from '@/lib/permissions';
 import { useUnreadChatTotal, useChatReads, unreadByThread, type ChatMsg } from '@/lib/chat-unread';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useNavLock } from '@/lib/plan-features';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 export function OnCallBadge({ userId }: { userId?: string | undefined }) {
@@ -47,9 +49,10 @@ function useUnreadThreads(uid?: string) {
 
 const Row = ({ icon: Icon, children }: { icon: typeof Bell; children: React.ReactNode }) => <span className="flex w-full items-center gap-2 text-left"><Icon className="h-4 w-4 shrink-0 text-primary" /><span className="min-w-0 flex-1 truncate">{children}</span></span>;
 
-export function ActionNotifications() {
+export function useActionQueues() {
   const { data:p }=useProfile();
-  const on=usePlanFeatures(!!p),can=useCan(p);
+  const plan=usePlanFeatures(!!p),lock=useNavLock(!!p),can=useCan(p);
+  const on=(key:string)=>plan(key)&&!lock(key).locked;
   const core=on('core'),standby=on('standby');
   const threads=useUnreadThreads(core?p?.id:undefined);
   const manager=!!p&&isManager(p);
@@ -76,18 +79,53 @@ export function ActionNotifications() {
   const chat=threads.reduce((a,t)=>a+t.n,0);
   const problems=data?.problems??[];
   const count=crm.length+decided.length+surveys.length+chat+(data?.incoming.length??0)+(data?.approval.length??0)+(data?.leave.length??0)+(data?.responses.length??0)+problems.length+(data?.categories.length??0);
-  const [open,setOpen]=useState(false);
-  const item="h-auto w-full justify-start py-2";
-  return <Popover open={open} onOpenChange={setOpen}><PopoverTrigger asChild><Button variant="ghost" size="icon" className="relative" aria-label={`Pending actions: ${count}`}><Bell className="h-5 w-5"/>{count>0&&<span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] text-destructive-foreground">{count}</span>}</Button></PopoverTrigger><PopoverContent align="end" className="max-h-[70vh] w-80 space-y-2 overflow-y-auto" onClick={(e)=>{if((e.target as HTMLElement).closest('a'))setOpen(false);}}><h2 className="font-medium">Pending actions</h2>{!count?<p className="text-sm text-muted-foreground">Nothing awaiting your attention.</p>:<>
-    {threads.map(t=><Button key={t.key} asChild variant="outline" className={item}><Link to="/messages" search={{thread:t.key}}><Row icon={MessageSquare}>{t.name} · {t.n} new</Row></Link></Button>)}
-    {crm.map(f=><Button key={f.id} asChild variant="outline" className={item}><Link to="/crm" search={{lead:f.opportunity_id}}><Row icon={CalendarClock}>{new Date(f.due_at)<new Date()?'Overdue':'Due today'}: {f.action_label}</Row></Link></Button>)}
-    {decided.map(v=><Button key={v.id} asChild variant="outline" className={item}><Link to="/estimates" search={{quote:v.id}}><Row icon={AlertTriangle}>Client {v.status} quote {v.reference}</Row></Link></Button>)}
-    {surveys.map(v=><Button key={v.id} asChild variant="outline" className={item}><Link to="/surveys" search={{survey:v.id}}><Row icon={AlertTriangle}>Site survey to review{v.location_ref?`: ${v.location_ref}`:''}{v.reviewer_id?' (assigned to you)':''}</Row></Link></Button>)}
-    {problems.map(r=><Button key={r.id} asChild variant="outline" className={item}><Link to="/admin/jobs" search={{new:true,assetId:r.asset_id,problemId:r.id}}><Row icon={AlertTriangle}>Equipment problem: {r.problem}</Row></Link></Button>)}
-    {data?.categories.map(c=><Button key={c.id} asChild variant="outline" className={item}><Link to="/admin/approvals" search={{category:"expenses",item:c.id}}><Row icon={AlertTriangle}>Expense category to approve: {c.name}</Row></Link></Button>)}
-    {data?.incoming.map(s=><Button key={s.id} asChild variant="outline" className={item}><Link to="/standby" search={{swap:s.id}}><Row icon={CalendarClock}>On-call swap — Accept, Decline or Snooze</Row></Link></Button>)}
-    {data?.approval.map(s=><Button key={s.id} asChild variant="outline" className={item}><Link to="/standby" search={{swap:s.id}}><Row icon={CalendarClock}>On-call swap — review approval</Row></Link></Button>)}
-    {data?.leave.map(r=><Button key={r.id} asChild variant="outline" className={item}><Link to="/admin/leave" search={{request:r.id}}><Row icon={CalendarDays}>Leave consultation — respond</Row></Link></Button>)}
-    {data?.responses.map(r=><Button key={r.id} asChild variant="outline" className={item}><Link to="/admin/leave" search={{request:r.id}}><Row icon={CalendarDays}>Supervisor replied — review leave</Row></Link></Button>)}
-  </>}</PopoverContent></Popover>;
+  return { threads, crm, decided, surveys, problems, data, count, chat };
+}
+
+export function QueueBadge({ path }: { path: string }) {
+  const q = useActionQueues();
+  const counts: Record<string, number> = {
+    '/crm': q.crm.length,
+    '/estimates': q.decided.length,
+    '/admin/jobs': q.problems.length,
+    '/admin/leave': (q.data?.leave.length ?? 0) + (q.data?.responses.length ?? 0),
+    '/admin/approvals': q.data?.categories.length ?? 0,
+  };
+  const count = counts[path] ?? 0;
+  return count > 0 ? <span aria-label={`${count} pending actions`} className="ml-auto rounded-full bg-destructive px-1.5 text-xs text-destructive-foreground">{count}</span> : null;
+}
+
+export function ActionNotifications() {
+  const { threads, crm, decided, surveys, problems, data, count } = useActionQueues();
+  const [open, setOpen] = useState(false);
+  const approvalCount = (data?.incoming.length ?? 0) + (data?.approval.length ?? 0) + (data?.leave.length ?? 0) + (data?.responses.length ?? 0) + (data?.categories.length ?? 0);
+  const commercialCount = crm.length + decided.length;
+  const fieldCount = problems.length + surveys.length + threads.reduce((n, t) => n + t.n, 0);
+  const item="h-auto w-full justify-start whitespace-normal py-3 [&_span]:whitespace-normal [&_span]:break-words [&_span]:text-wrap";
+  const empty = <p className="py-6 text-sm text-muted-foreground">Nothing awaiting your attention here.</p>;
+  return <Sheet open={open} onOpenChange={setOpen}>
+    <SheetTrigger asChild><Button variant="ghost" size="icon" className="relative" aria-label={`Pending actions: ${count}`}><Bell className="h-5 w-5" />{count > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] text-destructive-foreground">{count}</span>}</Button></SheetTrigger>
+    <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-lg">
+      <SheetHeader><SheetTitle>Attention · {count}</SheetTitle><SheetDescription>Pending actions and unread conversations</SheetDescription></SheetHeader>
+      <Tabs defaultValue={fieldCount && !approvalCount && !commercialCount ? 'field' : approvalCount ? 'approvals' : 'commercial'} className="min-w-0 px-4 pb-6" onClick={e => { if ((e.target as HTMLElement).closest('a')) setOpen(false); }}>
+        <TabsList className="grid h-auto w-full grid-cols-3"><TabsTrigger value="approvals" className="min-w-0 whitespace-normal text-xs">Approvals · {approvalCount}</TabsTrigger><TabsTrigger value="commercial" className="min-w-0 whitespace-normal text-xs">Commercial · {commercialCount}</TabsTrigger><TabsTrigger value="field" className="min-w-0 whitespace-normal text-xs">Field & chat · {fieldCount}</TabsTrigger></TabsList>
+        <TabsContent value="approvals" className="space-y-2 pt-3">{!approvalCount && empty}
+          {data?.categories.map(c=><Button key={c.id} asChild variant="outline" className={item}><Link to="/admin/approvals" search={{category:"expenses",item:c.id}}><Row icon={AlertTriangle}>Expense category to approve: {c.name}</Row></Link></Button>)}
+          {data?.incoming.map(s=><Button key={s.id} asChild variant="outline" className={item}><Link to="/standby" search={{swap:s.id}}><Row icon={CalendarClock}>On-call swap — Accept, Decline or Snooze</Row></Link></Button>)}
+          {data?.approval.map(s=><Button key={s.id} asChild variant="outline" className={item}><Link to="/standby" search={{swap:s.id}}><Row icon={CalendarClock}>On-call swap — review approval</Row></Link></Button>)}
+          {data?.leave.map(r=><Button key={r.id} asChild variant="outline" className={item}><Link to="/admin/leave" search={{request:r.id}}><Row icon={CalendarDays}>Leave consultation — respond</Row></Link></Button>)}
+          {data?.responses.map(r=><Button key={r.id} asChild variant="outline" className={item}><Link to="/admin/leave" search={{request:r.id}}><Row icon={CalendarDays}>Supervisor replied — review leave</Row></Link></Button>)}
+        </TabsContent>
+        <TabsContent value="commercial" className="space-y-2 pt-3">{!commercialCount && empty}
+          {crm.map(f=><Button key={f.id} asChild variant="outline" className={item}><Link to="/crm" search={{lead:f.opportunity_id}}><Row icon={CalendarClock}>{new Date(f.due_at)<new Date()?'Overdue':'Due today'}: {f.action_label}</Row></Link></Button>)}
+          {decided.map(v=><Button key={v.id} asChild variant="outline" className={item}><Link to="/estimates" search={{quote:v.id}}><Row icon={AlertTriangle}>Client {v.status} quote {v.reference}</Row></Link></Button>)}
+        </TabsContent>
+        <TabsContent value="field" className="space-y-2 pt-3">{!fieldCount && empty}
+          {problems.map(r=><Button key={r.id} asChild variant="outline" className={item}><Link to="/admin/jobs" search={{new:true,assetId:r.asset_id,problemId:r.id}}><Row icon={AlertTriangle}>Equipment problem: {r.problem}</Row></Link></Button>)}
+          {surveys.map(v=><Button key={v.id} asChild variant="outline" className={item}><Link to="/surveys" search={{survey:v.id}}><Row icon={AlertTriangle}>Site survey to review{v.location_ref?`: ${v.location_ref}`:''}{v.reviewer_id?' (assigned to you)':''}</Row></Link></Button>)}
+          {threads.map(t=><Button key={t.key} asChild variant="outline" className={item}><Link to="/messages" search={{thread:t.key}}><Row icon={MessageSquare}>{t.name} · {t.n} new</Row></Link></Button>)}
+        </TabsContent>
+      </Tabs>
+    </SheetContent>
+  </Sheet>;
 }
