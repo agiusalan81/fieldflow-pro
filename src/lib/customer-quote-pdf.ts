@@ -1,7 +1,7 @@
 import { customerQuoteDocument, quoteLineTotals, quoteTotals, type QuoteSnapshot } from './customer-quotes';
 
 /** Same safe document projection as preview and delivery; no internal fields accepted. */
-export async function buildCustomerQuotePdf(s: QuoteSnapshot): Promise<Uint8Array> {
+export async function buildCustomerQuotePdf(s: QuoteSnapshot, photoUrls: Record<string, string> = {}): Promise<Uint8Array> {
   const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib');
   const d = customerQuoteDocument(s.document); const t = quoteTotals(d.lines);
   const doc = await PDFDocument.create(); doc.setTitle(`${s.reference} ${d.title}`);
@@ -39,6 +39,16 @@ export async function buildCustomerQuotePdf(s: QuoteSnapshot): Promise<Uint8Arra
   for (const l of d.lines) { write(l.description, 10, true); write(`${l.quantity} ${l.unit} x ${money(l.rate)} | Discount ${l.discount}% | VAT ${l.vat}% | Net ${money(quoteLineTotals(l).net)}`, 9); }
   write(`Subtotal ${money(t.subtotal)} | Discount ${money(t.discount)}`, 10); write(`Net ${money(t.net)} | VAT ${money(t.vat)} | Total ${money(t.total)}`, 12, true);
   for (const [title, text] of [['Payment terms', d.payment], ['Expected work timeframe', d.timeframe], ['Exclusions', d.exclusions], ['Customer notes', d.notes]] as const) { if (text) { write(title, 11, true); write(text); } }
+  for (const photo of d.photos) {
+    const url = photoUrls[photo.id]; if (!url) throw new Error('Load quote photos before downloading the PDF');
+    const response = await fetch(url); if (!response.ok) throw new Error('Quote photo could not be loaded');
+    const image = await doc.embedJpg(await response.arrayBuffer());
+    page = doc.addPage([595, 842]); y = 732; header();
+    const scale = Math.min(511 / image.width, 520 / image.height);
+    const height = image.height * scale;
+    page.drawImage(image, { x: 42 + (511 - image.width * scale) / 2, y: y - height, width: image.width * scale, height });
+    y -= height + 22; if (photo.caption) write(photo.caption);
+  }
   doc.getPages().forEach((p, i) => { p.drawText(safe(s.company.footer ?? '').slice(0, 100), { x: 42, y: 40, size: 8, font, color: grey }); p.drawText(`${i + 1} / ${doc.getPageCount()}`, { x: 515, y: 40, size: 8, font, color: grey }); });
   return doc.save();
 }
