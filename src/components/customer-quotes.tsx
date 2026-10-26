@@ -31,7 +31,7 @@ export async function quoteAction(id: string, action: string, data: Record<strin
   if (r.error) throw r.error;
   return r.data as { id: string; job_id?: string | null; token?: string };
 }
-export function CustomerQuotes({ fromSheet, clearSource }: { fromSheet?: string; clearSource: () => void }) {
+export function CustomerQuotes({ fromSheet, focusQuote, clearSource }: { fromSheet?: string; focusQuote?: string; clearSource: () => void }) {
   const qc = useQueryClient(); const { data: profile } = useProfile(); const { data: company } = useCompanyRules(); const lock = useNavLock();
   const send = useServerFn(sendCustomerQuote);
   const q = useQuery({ queryKey: ['customer-quotes', profile?.company_id], enabled: !!profile, queryFn: async () => { const r = await supabase.from('customer_quotes').select('*').order('updated_at', { ascending: false }); if (r.error) throw r.error; return r.data; } });
@@ -55,6 +55,12 @@ export function CustomerQuotes({ fromSheet, clearSource }: { fromSheet?: string;
     void (async () => { const r = await supabase.from('job_sheets').select('id,client_id,site_id,asset_id,jobsheet_number,pending_works_future_jobs').eq('id', fromSheet).maybeSingle(); if (!active) return; clearSource(); if (r.error || !r.data) { toast.error('Could not load source job sheet'); return; } const s = r.data; setSelected(null); setForm({ ...newForm(), client_id: s.client_id, site_id: s.site_id, asset_id: s.asset_id, source_sheet_id: s.id, data: { ...emptyQuoteDocument(), title: s.pending_works_future_jobs?.split('\n')[0]?.slice(0, 200) || 'Follow-up work', lines: [newQuoteLine()], scope: '' } }); })();
     return () => { active = false; };
   }, [fromSheet]);
+  useEffect(() => {
+    if (!focusQuote || !q.data) return;
+    const r = q.data.find(x => x.id === focusQuote); clearSource();
+    if (!r) { toast.error('That quote is no longer available'); return; }
+    openRow(r); void supabase.rpc('mark_customer_quote_seen', { _quote: r.id }).then(() => qc.invalidateQueries({ queryKey: ['action-notifications'] }));
+  }, [focusQuote, q.data]);
   const draft = !row || row.status === 'draft';
   const snapshot: QuoteSnapshot | null = form ? row?.snapshot ? row.snapshot as unknown as QuoteSnapshot : { reference: row?.reference ?? 'Draft', revision: row?.revision ?? 1, document: form.data, totals: quoteTotals(form.data.lines), currency: company?.locale.currency ?? 'EUR', client: clients.data?.find(c => c.id === form.client_id)?.name ?? '', site: (() => { const s = sites.data?.find(s => s.id === form.site_id); return s ? formatSiteDisplay(s) : ''; })(), equipment: assets.data?.find(a => a.id === form.asset_id)?.reference_number, company: { name: profile?.companies?.name ?? '', logo: company?.logo, address: company ? formatOfficeAddress(company.officeAddress) : '', vat: company?.vatNumber, primary: company?.documentTemplate.primaryColor, footer: company?.documentTemplate.footer } } : null;
   const save = async () => { if (!form) return; const document = customerQuoteDocument(form.data); const r = await quoteAction(form.id, 'save', { ...form, data: document }); setSelected(r.id); toast.success('Draft saved'); };

@@ -925,6 +925,20 @@
       "when": 1792992685863,
       "tag": "0131_save_sheet_maintenance_notes",
       "breakpoints": true
+    },
+    {
+      "idx": 132,
+      "version": "7",
+      "when": 1792994367727,
+      "tag": "0132_client_portal_suite",
+      "breakpoints": true
+    },
+    {
+      "idx": 133,
+      "version": "7",
+      "when": 1792994493857,
+      "tag": "0133_portal_contact_site_rule_office_exempt",
+      "breakpoints": true
     }
   ]
 }
