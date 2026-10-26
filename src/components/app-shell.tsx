@@ -1,12 +1,13 @@
 import { QrCode } from "lucide-react";
-import { ActionNotifications, ChatBadge, OnCallBadge } from "@/components/action-notifications";
+import { ActionNotifications, ChatBadge, OnCallBadge, QueueBadge } from "@/components/action-notifications";
 import { usePlanFeatures, useLockedVisibility, useNavLock, resolveAppTitle } from "@/lib/plan-features";
 import { DepartureAlerts } from "@/components/client-notices";
 import { LocationSharing } from "@/components/location-sharing";
 import { PayrollSetupAlert } from "@/components/payroll-setup-alert";
 import { syncReceipts } from "@/lib/receipt-queue";
 import { WelcomeGuide } from "@/components/welcome-guide";
-import { QuickLeadButton } from "@/components/quick-lead";
+import { WorkspaceCreate, WorkspaceSearch } from "@/components/workspace-tools";
+import { organizeNavigation } from "@/lib/navigation-hubs";
 import { useCrmAccess } from "@/lib/crm-access";
 import { crmAllows } from "@/lib/crm";
 import { showRoleMenuItem } from "@/lib/role-menu";
@@ -154,10 +155,10 @@ function NavLinks({ items, onNavigate, uid }: { items: NavItem[]; onNavigate?: (
         const open = openGroup === g;
         return (
           <div key={g}>
-            <button type="button" aria-expanded={open} onClick={() => setOpenGroup(open ? undefined : g)}
+            <Button variant="ghost" type="button" aria-expanded={open} onClick={() => setOpenGroup(open ? undefined : g)}
               className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground">
-              {g}<ChevronDown className={`h-4 w-4 transition-transform ${open ? "" : "-rotate-90"}`} />
-            </button>
+              <span className="min-w-0 text-left">{g}</span><ChevronDown className={`h-4 w-4 transition-transform ${open ? "" : "-rotate-90"}`} />
+            </Button>
             {open && (
               <div className="mb-1 flex flex-col gap-0.5 pl-1">
                 {groupedItems.filter((i) => i.group === g).map((i) => i.locked ? <LockedModule key={i.to} feature={i.feature ?? 'core'} label={i.label} comingSoon={i.soon}><i.icon className="h-4 w-4 shrink-0"/></LockedModule> : (
@@ -166,7 +167,7 @@ function NavLinks({ items, onNavigate, uid }: { items: NavItem[]; onNavigate?: (
                     className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
                     activeProps={{ className: "bg-sidebar-accent text-sidebar-foreground font-medium" }}
                     activeOptions={{ exact: i.to === "/dashboard" }}>
-                    <i.icon className="h-4 w-4 shrink-0" />{i.label}{i.to === "/standby" && <OnCallBadge userId={uid}/>}{i.to === "/messages" && <ChatBadge userId={uid}/>}
+                    <i.icon className="h-4 w-4 shrink-0" /><span className="min-w-0 break-words">{i.label}</span>{["/crm","/estimates","/admin/jobs","/admin/leave","/admin/approvals"].includes(i.to) && <QueueBadge path={i.to} />}{i.to === "/standby" && <OnCallBadge userId={uid}/>}{i.to === "/messages" && <ChatBadge userId={uid}/>}
                   </Link>
                 ))}
               </div>
@@ -278,7 +279,8 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   const appearance = company?.appearance ?? DEFAULT_APPEARANCE;
   const coName = profile?.companies?.name?.trim();
   const personal: Record<string, string> = coName ? { "Team": `${coName} Team`, "Team chat": `${coName} Chat`, "Technical library": `${coName} Technical library` } : {};
-  const items = baseItems.filter(i => showRoleMenuItem(profile?.role, i.to)).map(i => ({ ...i, label: personal[i.label] ?? industrySheetLabel(appearance.industryPreset, i.label) }));
+  const items = organizeNavigation(profile?.role, baseItems.filter(i => showRoleMenuItem(profile?.role, i.to))).map(i => ({ ...i, label: personal[i.label] ?? industrySheetLabel(appearance.industryPreset, i.label) }));
+  const createProps = { manager: manager && !!items.find(i => i.to === "/admin/jobs" && !i.locked), field: (!manager || profile?.role === "supervisor" || !!actor?.can_field_dispatch) && !navLock("core").locked, estimates: manager && !!items.find(i => i.to === "/estimates" && !i.locked), crm: crmAllows(crmLevel, "contributor") && !navLock("crm_pipeline").locked, company: profile?.company_id };
   const appTitle = resolveAppTitle(company?.appTitle, planOn("custom_app_title"));
   useEffect(() => { applyTypography(company?.theme); return () => applyTypography(undefined); }, [company?.theme]);
   useEffect(() => {
@@ -353,6 +355,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
           <h1 className="min-w-0 flex-1 basis-[calc(100%-3.5rem)] break-words font-display sm:basis-auto sm:truncate text-xl text-foreground sm:text-2xl">{title}</h1>
           <div className="fieldbridge-header-tools flex w-full flex-wrap items-center justify-end gap-2 rounded-md px-2 py-1 sm:ml-auto sm:w-auto">
             {!preview.active && <span data-tour="alerts" className="inline-flex"><ActionNotifications /></span>}
+            {profile && !preview.active && <WorkspaceSearch items={items} userId={profile.id} />}
             <HelpButton />
             <PlatformFeedback />
             <AnalyticsTracker />
@@ -369,16 +372,13 @@ export function AppShell({ title, actions, children }: { title: string; actions?
                 </SelectContent>
               </Select>
             )}
-            {!preview.active && crmAllows(crmLevel, "contributor") && planOn("crm_pipeline") && !navLock("crm_pipeline").locked && <QuickLeadButton company={profile?.company_id} />}
             {!preview.active && actions}
-            {!preview.active && <Button asChild size="sm" variant={actions ? "outline" : "default"} className="hidden sm:inline-flex" data-tour="new-sheet">
-              <Link to="/sheets/new" search={{}}><Plus className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Create New Job Sheet</span></Link>
-            </Button>}
+            {!preview.active && <span className="hidden sm:inline-flex"><WorkspaceCreate {...createProps} /></span>}
           </div>
         </header>
         <UserPreviewBanner />
         {actor && !preview.active && <ProfileCompletionGate profile={actor} />}
-        <main className="tenant-workspace flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
+        <main className="tenant-workspace flex-1 px-4 pt-5 pb-24 sm:px-6 lg:px-8 lg:py-8">
           {actor && !preview.active && <DepartureAlerts userId={actor.id} />}
           {profile && path === "/dashboard" && !preview.active && <QuickActions items={items.filter(i => !i.locked)} uid={profile.id} role={profile.role} manager={manager} />}
           {!preview.active && <LocationSharing />}
@@ -390,7 +390,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
       <nav aria-label="Quick navigation" className="fieldbridge-bottom fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 items-end gap-1 border-t lg:hidden">
         <Link to="/dashboard" className={tab} activeProps={{ className: "text-primary font-medium" }} activeOptions={{ exact: true }}><LayoutDashboard className="h-5 w-5" />{isOffice(profile) ? "Overview" : "Today & team"}</Link>
         <Link to={manager ? "/admin/jobs" : "/sheets"} className={tab} activeProps={{ className: "text-primary font-medium" }}><ClipboardList className="h-5 w-5" />Job sheets</Link>
-        {preview.active ? <Link to="/hours" className={tab}><Clock className="h-5 w-5" />Hours</Link> : <Link to="/sheets/new" search={{}} aria-label="Create new job sheet" className="mx-auto -mt-5 mb-1.5 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg"><Plus className="h-7 w-7" /></Link>}
+        {preview.active ? <Link to="/hours" className={tab}><Clock className="h-5 w-5" />Hours</Link> : <WorkspaceCreate {...createProps} mobile />}
         <Link to={second.to} className={tab} activeProps={{ className: "text-primary font-medium" }}><second.icon className="h-5 w-5" />{second.label}</Link>
         <Button type="button" variant="ghost" className={`${tab} h-auto hover:bg-card`} onClick={() => setMenuOpen(true)}><MoreHorizontal className="h-5 w-5" />More</Button>
       </nav>

@@ -1,3 +1,5 @@
+import { SkillsWorkspace } from "@/components/skills-workspace";
+import { useNavLock } from "@/lib/plan-features";
 import { MemberSkills } from "@/components/member-skills";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TeamManagement } from "@/components/team-management";
@@ -81,8 +83,9 @@ function LiveAvailability() {
 }
 
 function TeamPage() {
+ const lock = useNavLock();
  const { data: profile } = useProfile();
  if (!profile) return <AppShell title="Team"><p className="text-muted-foreground">Loading…</p></AppShell>;
  if (!isManager(profile)) return <AppShell title="Team"><EmptyState>Team management is available to supervisors and office staff.</EmptyState></AppShell>;
-  return <AppShell title="Team"><Tabs defaultValue="availability" className="mx-auto max-w-5xl"><TabsList className="h-auto flex-wrap"><TabsTrigger value="availability">Live Availability</TabsTrigger><TabsTrigger value="registered">Team members</TabsTrigger><TabsTrigger value="invites">Invites</TabsTrigger></TabsList><TabsContent value="availability" className="mt-4"><LiveAvailability /></TabsContent><TabsContent value="registered" className="mt-4"><RegisteredMembers role={profile.role} meId={profile.id}/></TabsContent>{(["invites"] as const).map(tab=><TabsContent key={tab} value={tab} className="mt-4"><TeamManagement role={profile.role} companyId={profile.company_id} meId={profile.id} tab={tab}/></TabsContent>)}</Tabs></AppShell>;
+  return <AppShell title="Team"><Tabs defaultValue="availability" className="mx-auto max-w-5xl"><TabsList className="h-auto flex-wrap"><TabsTrigger value="availability">Live Availability</TabsTrigger><TabsTrigger value="registered">Team members</TabsTrigger><TabsTrigger value="invites">Invites</TabsTrigger>{!lock("skills_dispatch").locked && <TabsTrigger value="skills">Skills & specialties</TabsTrigger>}</TabsList><TabsContent value="availability" className="mt-4"><LiveAvailability /></TabsContent><TabsContent value="registered" className="mt-4"><RegisteredMembers role={profile.role} meId={profile.id}/></TabsContent>{(["invites"] as const).map(tab=><TabsContent key={tab} value={tab} className="mt-4"><TeamManagement role={profile.role} companyId={profile.company_id} meId={profile.id} tab={tab}/></TabsContent>)}{!lock("skills_dispatch").locked && <TabsContent value="skills" className="mt-4"><SkillsWorkspace embedded /></TabsContent>}</Tabs></AppShell>;
 }

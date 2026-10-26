@@ -9,7 +9,10 @@ import { ClientPreapproval } from "@/components/client-preapproval";
 import { DocumentMasters } from "@/components/document-masters";
 import { useTerminology } from "@/lib/company";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavLock } from '@/lib/plan-features';
+import { ClientRecords } from '@/components/client-records';
+import { StaffContacts } from '@/components/staff-contacts';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, Trash2 } from "lucide-react";
@@ -29,6 +32,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/admin/entities")({ staticData: { sitemap: false },
+  validateSearch: (search: Record<string, unknown>): { client?: string } => ({ client: typeof search.client === 'string' ? search.client : undefined }),
   head: () => ({
     meta: [
       { title: "Clients, contacts & assets — FieldBridge" },
@@ -57,9 +61,13 @@ type TabProps = { q: string; onOpen: (c: Open, tab: RecordTab) => void };
 
 function Entities() {
   const word = useTerminology();
+  const lock = useNavLock();
+  const { client: focusClient } = Route.useSearch();
+  const clients = useClients();
   const [q, setQ] = useState("");
   const [manage, setManage] = useState<(Open & { tab: RecordTab }) | null>(null);
   const { data: profile } = useProfile();
+  useEffect(() => { const client = clients.data?.find(c => c.id === focusClient); if (client) setManage({ id: client.id, name: client.name, tab: 'sites' }); }, [focusClient, clients.data]);
   const onOpen = (c: Open, tab: RecordTab) => setManage({ ...c, tab });
   return (
     <AppShell title="Clients, sites & assets">
@@ -69,15 +77,23 @@ function Entities() {
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
           <DialogHeader><DialogTitle>{manage?.name}</DialogTitle></DialogHeader>
           {manage && profile && (
-            <Tabs defaultValue={manage.tab === "equipment" ? "equipment" : "sites"}>
-              <TabsList className="mb-3">
-                <TabsTrigger value="sites">Sites & contacts</TabsTrigger>
+            <Tabs key={manage.id} defaultValue={manage.tab === "equipment" ? "equipment" : manage.tab === 'contacts' ? 'contacts' : "sites"}>
+              <TabsList className="mb-3 flex h-auto flex-wrap justify-start gap-1">
+                <TabsTrigger value="sites">Sites</TabsTrigger>
+                <TabsTrigger value="contacts">Contacts & portal</TabsTrigger>
                 <TabsTrigger value="equipment">{word("equipment")}</TabsTrigger>
+                {!lock('core').locked && (isOffice(profile) || profile.role === 'supervisor') && <TabsTrigger value="quotes">Quotes & proposals</TabsTrigger>}
+                {!lock('core').locked && <TabsTrigger value="sheets">Job sheets</TabsTrigger>}
+                {!lock('contracts').locked && <TabsTrigger value="contracts">Contracts</TabsTrigger>}
                 {isOffice(profile) && <TabsTrigger value="documents">Documents</TabsTrigger>}
                 {isOffice(profile) && <TabsTrigger value="rates">Labour rates</TabsTrigger>}
               </TabsList>
               <TabsContent value="sites">{isOffice(profile) || profile.role === "supervisor" ? <ClientPreapproval clientId={manage.id} /> : null}<SiteHierarchy clientId={manage.id} companyId={profile.company_id} /></TabsContent>
+              <TabsContent value="contacts"><StaffContacts clientId={manage.id} companyId={profile.company_id} /></TabsContent>
               <TabsContent value="equipment"><EquipmentManager clientId={manage.id} companyId={profile.company_id} /></TabsContent>
+              {!lock('core').locked && (isOffice(profile) || profile.role === 'supervisor') && <TabsContent value="quotes"><ClientRecords clientId={manage.id} kind="quotes" /></TabsContent>}
+              {!lock('core').locked && <TabsContent value="sheets"><ClientRecords clientId={manage.id} kind="sheets" /></TabsContent>}
+              {!lock('contracts').locked && <TabsContent value="contracts"><ClientRecords clientId={manage.id} kind="contracts" /></TabsContent>}
               {isOffice(profile) && <TabsContent value="documents"><DocumentMasters companyId={profile.company_id} clientId={manage.id} /></TabsContent>}
               {isOffice(profile) && <TabsContent value="rates"><ClientRates clientId={manage.id} /></TabsContent>}
             </Tabs>
