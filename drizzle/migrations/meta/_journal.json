@@ -967,6 +967,13 @@
       "when": 1793037295362,
       "tag": "0137_crm_member_access",
       "breakpoints": true
+    },
+    {
+      "idx": 138,
+      "version": "7",
+      "when": 1793043022723,
+      "tag": "0138_customer_quote_photo_evidence",
+      "breakpoints": true
     }
   ]
 }

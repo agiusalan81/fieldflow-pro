@@ -1431,6 +1431,38 @@ export type Database = {
           },
         ]
       }
+      customer_quote_photos: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string
+          id: string
+          storage_path: string
+        }
+        Insert: {
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          storage_path: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_quote_photos_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_quotes: {
         Row: {
           asset_id: string | null
