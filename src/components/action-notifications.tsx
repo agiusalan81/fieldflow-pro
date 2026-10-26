@@ -54,6 +54,8 @@ export function ActionNotifications() {
   const catsOn=!!p&&on('receipts')&&['admin','superuser','supervisor'].includes(p.role),leaveOn=core&&can('leave_approvals'),problemsOn=core&&manager&&can('pending_works');
   const surveysOn=!!p&&on('site_surveys')&&manager;
   const surveys=useQuery({queryKey:['action-notifications','surveys',p?.id,surveysOn],enabled:surveysOn,refetchInterval:15000,queryFn:async()=>{if(!p)return [];const r=await supabase.from('site_surveys').select('id,location_ref,reviewer_id').in('status',['submitted','under_review']).or(`reviewer_id.eq.${p.id},reviewer_id.is.null`).order('submitted_at',{ascending:true}).limit(20);if(r.error)throw r.error;return r.data;}}).data??[];
+  const crmOn=manager&&on('crm_pipeline');
+  const crm=useQuery({queryKey:['action-notifications','crm',p?.id,crmOn],enabled:crmOn,refetchInterval:30000,queryFn:async()=>{const end=new Date();end.setHours(23,59,59,999);const r=await supabase.from('crm_followups').select('id,opportunity_id,action_label,due_at').is('done_at',null).lte('due_at',end.toISOString()).or(`assignee_id.eq.${p?.id},assignee_id.is.null`).order('due_at').limit(20);if(r.error)throw r.error;return r.data;}}).data??[];
   const quotesOn=core&&manager;
   const decided=useQuery({queryKey:['action-notifications','quote-decisions',p?.id,quotesOn],enabled:quotesOn,refetchInterval:15000,queryFn:async()=>{const r=await supabase.from('customer_quotes').select('id,reference,status').in('status',['accepted','declined']).is('office_seen_at',null).order('decided_at',{ascending:false}).limit(20);if(r.error)throw r.error;return r.data;}}).data??[];
   const {data}=useQuery({queryKey:['action-notifications',p?.id,core,standby,leaveOn,problemsOn,catsOn],enabled:!!p,refetchInterval:15000,queryFn:async()=>{
@@ -71,11 +73,12 @@ export function ActionNotifications() {
   }});
   const chat=threads.reduce((a,t)=>a+t.n,0);
   const problems=data?.problems??[];
-  const count=decided.length+surveys.length+chat+(data?.incoming.length??0)+(data?.approval.length??0)+(data?.leave.length??0)+(data?.responses.length??0)+problems.length+(data?.categories.length??0);
+  const count=crm.length+decided.length+surveys.length+chat+(data?.incoming.length??0)+(data?.approval.length??0)+(data?.leave.length??0)+(data?.responses.length??0)+problems.length+(data?.categories.length??0);
   const [open,setOpen]=useState(false);
   const item="h-auto w-full justify-start py-2";
   return <Popover open={open} onOpenChange={setOpen}><PopoverTrigger asChild><Button variant="ghost" size="icon" className="relative" aria-label={`Pending actions: ${count}`}><Bell className="h-5 w-5"/>{count>0&&<span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] text-destructive-foreground">{count}</span>}</Button></PopoverTrigger><PopoverContent align="end" className="max-h-[70vh] w-80 space-y-2 overflow-y-auto" onClick={(e)=>{if((e.target as HTMLElement).closest('a'))setOpen(false);}}><h2 className="font-medium">Pending actions</h2>{!count?<p className="text-sm text-muted-foreground">Nothing awaiting your attention.</p>:<>
     {threads.map(t=><Button key={t.key} asChild variant="outline" className={item}><Link to="/messages" search={{thread:t.key}}><Row icon={MessageSquare}>{t.name} · {t.n} new</Row></Link></Button>)}
+    {crm.map(f=><Button key={f.id} asChild variant="outline" className={item}><Link to="/crm" search={{lead:f.opportunity_id}}><Row icon={CalendarClock}>{new Date(f.due_at)<new Date()?'Overdue':'Due today'}: {f.action_label}</Row></Link></Button>)}
     {decided.map(v=><Button key={v.id} asChild variant="outline" className={item}><Link to="/estimates" search={{quote:v.id}}><Row icon={AlertTriangle}>Client {v.status} quote {v.reference}</Row></Link></Button>)}
     {surveys.map(v=><Button key={v.id} asChild variant="outline" className={item}><Link to="/surveys" search={{survey:v.id}}><Row icon={AlertTriangle}>Site survey to review{v.location_ref?`: ${v.location_ref}`:''}{v.reviewer_id?' (assigned to you)':''}</Row></Link></Button>)}
     {problems.map(r=><Button key={r.id} asChild variant="outline" className={item}><Link to="/admin/jobs" search={{new:true,assetId:r.asset_id,problemId:r.id}}><Row icon={AlertTriangle}>Equipment problem: {r.problem}</Row></Link></Button>)}

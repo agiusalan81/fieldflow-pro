@@ -23,6 +23,7 @@ import { Route as AuthenticatedAsBuiltRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAvailableJobsRouteImport } from './routes/_authenticated/available-jobs'
 import { Route as AuthenticatedCompanyRouteImport } from './routes/_authenticated/company'
 import { Route as AuthenticatedContractsRouteImport } from './routes/_authenticated/contracts'
+import { Route as AuthenticatedCrmRouteImport } from './routes/_authenticated/crm'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedDwrRouteImport } from './routes/_authenticated/dwr'
 import { Route as AuthenticatedEstimatesRouteImport } from './routes/_authenticated/estimates'
@@ -142,6 +143,11 @@ const AuthenticatedCompanyRoute = AuthenticatedCompanyRouteImport.update({
 const AuthenticatedContractsRoute = AuthenticatedContractsRouteImport.update({
   id: '/contracts',
   path: '/contracts',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCrmRoute = AuthenticatedCrmRouteImport.update({
+  id: '/crm',
+  path: '/crm',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -427,6 +433,7 @@ export interface FileRoutesByFullPath {
   '/available-jobs': typeof AuthenticatedAvailableJobsRoute
   '/company': typeof AuthenticatedCompanyRoute
   '/contracts': typeof AuthenticatedContractsRoute
+  '/crm': typeof AuthenticatedCrmRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/dwr': typeof AuthenticatedDwrRoute
   '/estimates': typeof AuthenticatedEstimatesRoute
@@ -492,6 +499,7 @@ export interface FileRoutesByTo {
   '/available-jobs': typeof AuthenticatedAvailableJobsRoute
   '/company': typeof AuthenticatedCompanyRoute
   '/contracts': typeof AuthenticatedContractsRoute
+  '/crm': typeof AuthenticatedCrmRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/dwr': typeof AuthenticatedDwrRoute
   '/estimates': typeof AuthenticatedEstimatesRoute
@@ -559,6 +567,7 @@ export interface FileRoutesById {
   '/_authenticated/available-jobs': typeof AuthenticatedAvailableJobsRoute
   '/_authenticated/company': typeof AuthenticatedCompanyRoute
   '/_authenticated/contracts': typeof AuthenticatedContractsRoute
+  '/_authenticated/crm': typeof AuthenticatedCrmRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/dwr': typeof AuthenticatedDwrRoute
   '/_authenticated/estimates': typeof AuthenticatedEstimatesRoute
@@ -626,6 +635,7 @@ export interface FileRouteTypes {
     | '/available-jobs'
     | '/company'
     | '/contracts'
+    | '/crm'
     | '/dashboard'
     | '/dwr'
     | '/estimates'
@@ -691,6 +701,7 @@ export interface FileRouteTypes {
     | '/available-jobs'
     | '/company'
     | '/contracts'
+    | '/crm'
     | '/dashboard'
     | '/dwr'
     | '/estimates'
@@ -757,6 +768,7 @@ export interface FileRouteTypes {
     | '/_authenticated/available-jobs'
     | '/_authenticated/company'
     | '/_authenticated/contracts'
+    | '/_authenticated/crm'
     | '/_authenticated/dashboard'
     | '/_authenticated/dwr'
     | '/_authenticated/estimates'
@@ -931,6 +943,13 @@ declare module '@tanstack/react-router' {
       path: '/contracts'
       fullPath: '/contracts'
       preLoaderRoute: typeof AuthenticatedContractsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/crm': {
+      id: '/_authenticated/crm'
+      path: '/crm'
+      fullPath: '/crm'
+      preLoaderRoute: typeof AuthenticatedCrmRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -1306,6 +1325,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAvailableJobsRoute: typeof AuthenticatedAvailableJobsRoute
   AuthenticatedCompanyRoute: typeof AuthenticatedCompanyRoute
   AuthenticatedContractsRoute: typeof AuthenticatedContractsRoute
+  AuthenticatedCrmRoute: typeof AuthenticatedCrmRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDwrRoute: typeof AuthenticatedDwrRoute
   AuthenticatedEstimatesRoute: typeof AuthenticatedEstimatesRoute
@@ -1349,6 +1369,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAvailableJobsRoute: AuthenticatedAvailableJobsRoute,
   AuthenticatedCompanyRoute: AuthenticatedCompanyRoute,
   AuthenticatedContractsRoute: AuthenticatedContractsRoute,
+  AuthenticatedCrmRoute: AuthenticatedCrmRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDwrRoute: AuthenticatedDwrRoute,
   AuthenticatedEstimatesRoute: AuthenticatedEstimatesRoute,

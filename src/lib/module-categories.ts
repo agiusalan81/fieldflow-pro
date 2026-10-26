@@ -5,7 +5,7 @@ export const MODULE_CATEGORIES = [
   { key: "field", label: "Field & Operations", modules: ["core", "digitization", "safety", "technical_library"] },
   { key: "team", label: "Team & Roster", modules: ["skills_dispatch", "standby"] },
   { key: "fleet", label: "Fleet & Location", modules: ["fleet_management", "tracking"] },
-  { key: "clients", label: "Clients & Commercial", modules: ["customer_quotes", "client_management", "client_portal", "contracts", "estimates", "qs_pricing", "reports", "site_surveys", "supplier_email"] },
+  { key: "clients", label: "Clients & Commercial", modules: ["customer_quotes", "client_management", "client_portal", "contracts", "crm_pipeline", "estimates", "qs_pricing", "reports", "site_surveys", "supplier_email"] },
   { key: "finance", label: "Finance & Payroll", modules: ["job_profitability", "payroll", "payroll_statutory_mt", "receipts"] },
   { key: "assets", label: "Asset Intelligence", modules: ["ppm_automation"] },
   { key: "brand", label: "Brand Studio & White-Label", modules: ["branding_advanced", "branding_basic", "branding_custom_fonts", "branding_documents", "branding_fonts", "branding_industry", "client_presentation", "custom_app_title"] },
