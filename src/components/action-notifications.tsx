@@ -62,7 +62,7 @@ export function useActionQueues() {
   const crmLevel=useCrmAccess(!!p).data;const crmOn=crmAllows(crmLevel,'viewer')&&on('crm_pipeline');
   const crm=useQuery({queryKey:['action-notifications','crm',p?.id,crmOn],enabled:crmOn,refetchInterval:30000,queryFn:async()=>{const end=new Date();end.setHours(23,59,59,999);const r=await supabase.from('crm_followups').select('id,opportunity_id,action_label,due_at').is('done_at',null).lte('due_at',end.toISOString()).or(`assignee_id.eq.${p?.id},assignee_id.is.null`).order('due_at').limit(20);if(r.error)throw r.error;return r.data;}}).data??[];
   const quotesOn=core&&manager;
-  const decided=useQuery({queryKey:['action-notifications','quote-decisions',p?.id,quotesOn],enabled:quotesOn,refetchInterval:15000,queryFn:async()=>{const r=await supabase.from('customer_quotes').select('id,reference,status').in('status',['accepted','declined']).is('office_seen_at',null).order('decided_at',{ascending:false}).limit(20);if(r.error)throw r.error;return r.data;}}).data??[];
+  const decided=useQuery({queryKey:['action-notifications','quote-decisions',p?.id,quotesOn],enabled:quotesOn,refetchInterval:15000,queryFn:async()=>{const r=await supabase.from('customer_quotes').select('id,reference,status').or('status.eq.awaiting_confirmation,and(status.in.(accepted,declined),office_seen_at.is.null)').order('decided_at',{ascending:false}).limit(20);if(r.error)throw r.error;return r.data;}}).data??[];
   const {data}=useQuery({queryKey:['action-notifications',p?.id,core,standby,leaveOn,problemsOn,catsOn],enabled:!!p,refetchInterval:15000,queryFn:async()=>{
     if(!p)return {categories:[] as {id:string;name:string}[],incoming:[] as {id:string}[],approval:[] as {id:string}[],leave:[] as {id:string}[],responses:[] as {id:string}[],problems:[] as {id:string;asset_id:string;problem:string}[]};
     const zero=Promise.resolve({count:0,data:[],error:null});
@@ -126,7 +126,7 @@ export function ActionNotifications() {
         </TabsContent>
         <TabsContent value="commercial" className="space-y-2 pt-3">{!commercialCount && empty}
           {crm.map(f=><Button key={f.id} asChild variant="outline" className={item}><Link to="/crm" search={{lead:f.opportunity_id}}><Row icon={CalendarClock}>{new Date(f.due_at)<new Date()?'Overdue':'Due today'}: {f.action_label}</Row></Link></Button>)}
-          {decided.map(v=><Button key={v.id} asChild variant="outline" className={item}><Link to="/estimates" search={{quote:v.id}}><Row icon={AlertTriangle}>Client {v.status} quote {v.reference}</Row></Link></Button>)}
+          {decided.map(v=><Button key={v.id} asChild variant="outline" className={item}><Link to="/estimates" search={{quote:v.id}}><Row icon={AlertTriangle}>{v.status === 'awaiting_confirmation' ? `Awaiting client confirmation · ${v.reference}` : `Client ${v.status} quote ${v.reference}`}</Row></Link></Button>)}
         </TabsContent>
         <TabsContent value="field" className="space-y-2 pt-3">{!fieldCount && empty}
           {problems.map(r=><Button key={r.id} asChild variant="outline" className={item}><Link to="/admin/jobs" search={{new:true,assetId:r.asset_id,problemId:r.id}}><Row icon={AlertTriangle}>Equipment problem: {r.problem}</Row></Link></Button>)}

@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Unified usability pass: role-aware menu hubs, categorized alert drawer/counts, four settings workspaces, global New/search and Client 360; preserve permissions, gates and data.
+- [x] Unified usability pass: role-aware menu hubs, categorized alert drawer/object-linked counts, four settings workspaces with mounted editors, global New/search, embedded Team skills and Client 360. Superadmin existing client/quote search, new estimate, desktop/406px layout and technician View As verified; no data/permission migrations. Real technician session and live approval actions not exercised.
 - [x] Troubleshoot batch: MINAKEL Technical library Coming soon cleared; pack-level Coming soon in HQ; brand colour on estimate/proposal preview; Company Settings document numbering (estimates, proposals, job sheets, invoices saved); delete any estimate not linked to a job; phone decision accept/decline with pre-filled client name and client email
 - [ ] Live check of new numbering, delete and phone-decision email while signed in
 - [x] Estimate polish: library terms, common/custom units, historical suggestions, private captioned photos in preview/PDF/customer links; superadmin save/reload and photo preview verified; 30 focused tests pass.
