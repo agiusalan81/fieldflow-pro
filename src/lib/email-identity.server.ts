@@ -7,7 +7,7 @@ export async function resolveEmailIdentity(sb: SupabaseClient<Database>, company
   const [company, settings, access] = await Promise.all([
     sb.from('companies').select('name').eq('id', companyId).maybeSingle(),
     sb.from('company_settings').select('company_email').eq('company_id', companyId).maybeSingle(),
-    sb.rpc('company_module_access', { _company: companyId, _module: 'client_presentation' }),
+    sb.rpc('company_email_branding', { _company: companyId }),
   ]);
   if (company.error || settings.error || access.error) throw new Error('Could not verify company email branding');
   return emailIdentity(company.data?.name, settings.data?.company_email, access.data === true);
