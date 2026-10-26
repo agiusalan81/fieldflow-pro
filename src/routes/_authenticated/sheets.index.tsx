@@ -121,6 +121,10 @@ function SheetsPage() {
   return (
     <AppShell title="Past & draft job sheets">
       <div className="mx-auto max-w-5xl space-y-4">
+        {supervisor && !isPreview && <div role="group" aria-label="Whose sheets" className="inline-flex rounded-md border p-1">
+          <Button size="sm" variant={scope === "mine" ? "default" : "ghost"} aria-pressed={scope === "mine"} onClick={() => setScope("mine")}>My sheets</Button>
+          <Button size="sm" variant={scope === "team" ? "default" : "ghost"} aria-pressed={scope === "team"} onClick={() => setScope("team")}>All team sheets</Button>
+        </div>}
         <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_200px_190px_150px_150px]">
           <Input className="h-11" placeholder="Search number, client, site, fault…" value={q} onChange={(e) => setQ(e.target.value)} />
           <Select value={client} onValueChange={setClient}>
