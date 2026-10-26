@@ -1,7 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { customerQuoteDocument, emptyQuoteDocument, quoteBillingLines, quoteExpired, quoteLineSchema, quoteTotals, type QuoteLine } from './customer-quotes';
+import { customerQuoteDocument, emptyQuoteDocument, quoteDraftForEditor, quoteBillingLines, quoteExpired, quoteLineSchema, quoteTotals, type QuoteLine } from './customer-quotes';
 const line: QuoteLine = { id: '12345678-1234-4234-8234-123456789abc', description: 'Work', category: 'labour', unit: 'hour', quantity: 2, rate: 100, discount: 10, vat: 18 };
 describe('Core customer quotes', () => {
+  it('opens a legacy CRM draft without lines or editor fields', () => {
+    const draft = quoteDraftForEditor({ title: 'Lift Modernisation Tender' });
+    expect(draft.title).toBe('Lift Modernisation Tender');
+    expect(draft.kind).toBe('estimate');
+    expect(draft.lines).toEqual([]);
+    expect(draft.scope).toBe('');
+    expect(quoteTotals(draft.lines).total).toBe(0);
+    expect(customerQuoteDocument(draft).title).toBe('Lift Modernisation Tender');
+  });
+  it('defaults null lines while preserving existing priced lines', () => {
+    expect(quoteDraftForEditor({ lines: null }).lines).toEqual([]);
+    expect(quoteDraftForEditor({ lines: [line] }).lines).toEqual([line]);
+  });
   it('multiplies quantities and applies line discounts before VAT', () => expect(quoteTotals([line])).toEqual({ subtotal: 200, discount: 20, net: 180, vat: 32.4, total: 212.4 }));
   it('calculates VAT separately for differently taxed items', () => expect(quoteTotals([line, { ...line, quantity: 1, rate: 50, discount: 0, vat: 0 }]).total).toBe(262.4));
   it('rejects non-positive quantities', () => expect(quoteLineSchema.safeParse({ ...line, quantity: 0 }).success).toBe(false));
