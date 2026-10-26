@@ -130,7 +130,7 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
       </span>
       {travel && <span className="inline-flex h-7 items-center gap-1 rounded-full bg-warning/20 px-2.5 text-xs tabular-nums text-foreground"><Car className="h-3 w-3" />{formatDuration(Date.now() - new Date(travel.started_at).getTime())}</span>}
       <div className="ml-auto flex gap-2">
-        <Button size="sm" variant={shift ? "outline" : "default"} disabled={readOnly} onClick={() => (shift ? setCloseOpen(true) : setPlateOpen(true))}>
+        <Button data-tour="clock-in" size="sm" variant={shift ? "outline" : "default"} disabled={readOnly} onClick={() => (shift ? setCloseOpen(true) : setPlateOpen(true))}>
           {shift ? <Square className="mr-1 h-4 w-4" /> : <Play className="mr-1 h-4 w-4" />}{shift ? "Clock out" : "Clock in"}
         </Button>
       </div>
@@ -238,7 +238,7 @@ function TechToday({ profile, readOnly, switcher }: { profile: Profile; readOnly
         <Button asChild variant="outline" className="h-12 w-full"><Link to="/technical-library"><ClipboardList className="mr-2 h-5 w-5" />Technical library</Link></Button>
         <ScanQr />
         {!readOnly && <NoAccessButton profile={profile} jobs={jobs} />}
-        <section>
+        <section data-tour="today-jobs">
           <h2 className="mb-3 font-medium text-foreground">Today's jobs ({jobs.length})</h2>
           {jobs.length === 0 ? (
             <EmptyState>No jobs scheduled for you today.</EmptyState>

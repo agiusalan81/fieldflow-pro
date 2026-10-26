@@ -45,9 +45,12 @@ function SheetsPage() {
   const [jobType, setJobType] = useState<SheetTypeFilter>("all");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const supervisor = profile?.role === "supervisor";
+  const [scope, setScope] = useState<"mine" | "team">("mine");
+  const teamView = supervisor && scope === "team";
 
   const { data: sheets = [] } = useQuery({
-    queryKey: ["sheets", profile?.id,company?.fieldSheetHistoryMonths],
+    queryKey: ["sheets", profile?.id,company?.fieldSheetHistoryMonths, teamView],
     enabled: !!profile,
     queryFn: async () => {
       if (!profile) return [];
@@ -56,9 +59,9 @@ function SheetsPage() {
       const assistingJobs = (assignments.data ?? []).map(j => j.id);
       let query = supabase
         .from("job_sheets")
-        .select("id, jobsheet_number, status, signature_data, created_at, updated_at, reported_fault, is_installation, is_tech_assistance, is_maintenance, assigned_technician_id, client_id, clients(name), sites(name,address,store_code), assets(reference_number)")
+        .select("id, jobsheet_number, status, signature_data, created_at, updated_at, reported_fault, is_installation, is_tech_assistance, is_maintenance, assigned_technician_id, client_id, clients(name), sites(name,address,store_code), assets(reference_number), technician:users!job_sheets_assigned_technician_id_fkey(full_name)")
         .order("updated_at", { ascending: false });
-      query = assistingJobs.length ? query.or(`assigned_technician_id.eq.${profile.id},job_id.in.(${assistingJobs.join(",")})`) : query.eq("assigned_technician_id", profile.id);
+      if (!teamView) query = assistingJobs.length ? query.or(`assigned_technician_id.eq.${profile.id},job_id.in.(${assistingJobs.join(",")})`) : query.eq("assigned_technician_id", profile.id);
       const { data, error } = await query;
       if (error) throw error;
       return data;
@@ -67,7 +70,7 @@ function SheetsPage() {
   const clients = Array.from(new Map(sheets.map((s) => [s.client_id, s.clients?.name ?? ""])).entries());
   const filtered = sheets.filter((s) => {
     const d = s.created_at.slice(0, 10);
-    return (s.status!=="completed"||sheetWithinHistory(s.created_at,company?.fieldSheetHistoryMonths??12)) && (client === "all" || s.client_id === client) && (!from || d >= from) && (!to || d <= to) && matchesSheetType(s, jobType)
+    return (teamView||s.status!=="completed"||sheetWithinHistory(s.created_at,company?.fieldSheetHistoryMonths??12)) && (client === "all" || s.client_id === client) && (!from || d >= from) && (!to || d <= to) && matchesSheetType(s, jobType)
       && matchesSheetSearch(s.jobsheet_number, [s.clients?.name, s.sites?formatSiteTitle(s.sites):undefined, s.assets?.reference_number, s.reported_fault], q);
   });
   const open = filtered.filter((s) => s.status !== "completed");
@@ -89,7 +92,7 @@ function SheetsPage() {
           <StatusBadge status={s.status} />
         </div>
         <p className="mt-1 truncate font-medium text-foreground">{s.clients?.name}{s.sites?.name ? ` · ${formatSiteTitle(s.sites)}` : ""}</p>
-        <p className="truncate text-xs text-muted-foreground">{s.assets?.reference_number ?? "No lift"} · {s.reported_fault || "No fault noted"} · {new Date(s.created_at).toLocaleDateString()}</p>
+        <p className="truncate text-xs text-muted-foreground">{teamView && s.technician?.full_name ? `${s.technician.full_name} · ` : ""}{s.assets?.reference_number ?? "No lift"} · {s.reported_fault || "No fault noted"} · {new Date(s.created_at).toLocaleDateString()}</p>
       </div>
       <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
         {isPreview ? <span className="text-xs text-muted-foreground">Read-only preview</span> : completed ? (
@@ -118,6 +121,10 @@ function SheetsPage() {
   return (
     <AppShell title="Past & draft job sheets">
       <div className="mx-auto max-w-5xl space-y-4">
+        {supervisor && !isPreview && <div data-tour="team-sheets" role="group" aria-label="Whose sheets" className="inline-flex rounded-md border p-1">
+          <Button size="sm" variant={scope === "mine" ? "default" : "ghost"} aria-pressed={scope === "mine"} onClick={() => setScope("mine")}>My sheets</Button>
+          <Button size="sm" variant={scope === "team" ? "default" : "ghost"} aria-pressed={scope === "team"} onClick={() => setScope("team")}>All team sheets</Button>
+        </div>}
         <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_200px_190px_150px_150px]">
           <Input className="h-11" placeholder="Search number, client, site, fault…" value={q} onChange={(e) => setQ(e.target.value)} />
           <Select value={client} onValueChange={setClient}>

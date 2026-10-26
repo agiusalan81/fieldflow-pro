@@ -133,7 +133,7 @@ export function NewJobDialog({pending,onClose}:{pending?:PendingDispatch;onClose
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button size="sm" className={pending?"hidden":"h-11"}><Plus className="mr-1 h-4 w-4" />Team dispatch</Button></DialogTrigger>
+      <DialogTrigger asChild><Button data-tour="dispatch" size="sm" className={pending?"hidden":"h-11"}><Plus className="mr-1 h-4 w-4" />Team dispatch</Button></DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{pending?`Dispatch pending work — #${pending.jobsheet_number}`:"Team dispatch — New job"}</DialogTitle></DialogHeader>
         <form onSubmit={save} className="space-y-3">

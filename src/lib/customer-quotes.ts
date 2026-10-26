@@ -29,8 +29,8 @@ export function quoteLineTotals(l: QuoteLine) {
   const vat = round(net * l.vat / 100);
   return { subtotal, discount, net, vat, total: round(net + vat) };
 }
-export function quoteTotals(lines: QuoteLine[]): QuoteTotals {
-  return lines.reduce((a, l) => {
+export function quoteTotals(lines: QuoteLine[] | null | undefined): QuoteTotals {
+  return (lines ?? []).reduce((a, l) => {
     const b = quoteLineTotals(l);
     return { subtotal: round(a.subtotal + b.subtotal), discount: round(a.discount + b.discount), net: round(a.net + b.net), vat: round(a.vat + b.vat), total: round(a.total + b.total) };
   }, { subtotal: 0, discount: 0, net: 0, vat: 0, total: 0 });

@@ -6,6 +6,9 @@ import { LocationSharing } from "@/components/location-sharing";
 import { PayrollSetupAlert } from "@/components/payroll-setup-alert";
 import { syncReceipts } from "@/lib/receipt-queue";
 import { WelcomeGuide } from "@/components/welcome-guide";
+import { QuickLeadButton } from "@/components/quick-lead";
+import { useCrmAccess } from "@/lib/crm-access";
+import { crmAllows } from "@/lib/crm";
 import { setTenantLocale } from "@/lib/locale";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
@@ -257,12 +260,15 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   const lockVis = useLockedVisibility();
   const navLock = useNavLock(!!actor);
   const office = isOffice(profile);
+  const crmLevel = useCrmAccess(!!actor).data ?? "none";
   // Office members with the field-dispatch capability also get their own field screens.
   const extraNav: NavItem[] = manager && profile?.role !== "supervisor" && actor?.can_field_dispatch && !preview.member ? [
     { group: "My workspace", to: "/sheets", label: "My job sheets", icon: ClipboardList },
     { group: "My workspace", to: "/schedule", label: "My schedule", icon: CalendarClock },
   ] : [];
-  const baseItems = [...(profile?.role === "supervisor" ? supervisorNav : manager ? adminNav : techNav), ...extraNav].filter((i) => (i.to !== "/subscription" || profile?.role === "superuser") && (i.to !== "/company" || office) && (!i.office || office) && (!i.module || can(i.module) || (i.to === "/company" && office))).map(i => { const feature = i.feature ?? MODULE_ROUTE[i.to] ?? (['/admin/jobs','/pending-works','/admin/inventory','/admin/entities','/qr-codes','/sheets','/schedule','/team','/team-invites','/dwr','/admin/leave','/leave'].includes(i.to) ? 'core' : undefined); const lock = feature ? navLock(feature) : { locked: false, soon: false, hidden: false }; return { ...i, feature, locked: lock.locked, soon: lock.soon, hidden: lock.hidden }; }).filter(i => !i.locked || !i.hidden);
+  // Field staff granted CRM access in Company settings get the pipeline too.
+  if (!manager && crmAllows(crmLevel, "viewer") && !preview.member) extraNav.push({ group: "Clients", to: "/crm", label: "CRM pipeline", icon: Users, feature: "crm_pipeline" });
+  const baseItems = [...(profile?.role === "supervisor" ? supervisorNav : manager ? adminNav : techNav), ...extraNav].filter((i) => (i.to !== "/crm" || crmAllows(crmLevel, "viewer")) && (i.to !== "/subscription" || profile?.role === "superuser") && (i.to !== "/company" || office) && (!i.office || office) && (!i.module || can(i.module) || (i.to === "/company" && office))).map(i => { const feature = i.feature ?? MODULE_ROUTE[i.to] ?? (['/admin/jobs','/pending-works','/admin/inventory','/admin/entities','/qr-codes','/sheets','/schedule','/team','/team-invites','/dwr','/admin/leave','/leave'].includes(i.to) ? 'core' : undefined); const lock = feature ? navLock(feature) : { locked: false, soon: false, hidden: false }; return { ...i, feature, locked: lock.locked, soon: lock.soon, hidden: lock.hidden }; }).filter(i => !i.locked || !i.hidden);
   const lockedFeature = MODULE_ROUTE[path] ?? baseItems.find(i => i.to === path)?.feature;
   const lockedSoon = lockedFeature ? navLock(lockedFeature).soon : false;
   const canSwitch = profile && canViewAsRoles(profile.real_role) && !preview.active;
@@ -322,7 +328,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
     <div style={appearanceVariables(appearance)} data-icons={appearance.iconPreset} data-company-font={company?.theme.customFontData ? "on" : undefined} className="tenant-experience min-h-screen bg-background lg:grid lg:grid-cols-[240px_minmax(0,1fr)]">
       {actor && !preview.active && <NotificationSounds profile={actor} />}
       {profile && company && <IdleLogout userId={profile.id} realRole={profile.real_role} timeoutMin={company.idleTimeout} />}
-      <aside className="tenant-menu sticky top-0 hidden h-screen flex-col gap-6 border-r border-sidebar-border bg-sidebar py-6 px-3 lg:flex">
+      <aside data-tour="menu" className="tenant-menu sticky top-0 hidden h-screen flex-col gap-6 border-r border-sidebar-border bg-sidebar py-6 px-3 lg:flex">
         {brand}
         <NavLinks items={items} uid={profile?.id} />
         {footer}
@@ -332,7 +338,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
         <header className="fieldbridge-header sticky top-0 z-20 flex flex-wrap items-center gap-3 border-b px-4 py-3 sm:px-6">
           <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="bg-card text-card-foreground hover:bg-muted lg:hidden" aria-label="Open menu">
+              <Button variant="ghost" size="icon" className="bg-card text-card-foreground hover:bg-muted lg:hidden" aria-label="Open menu" data-tour="menu">
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
@@ -345,7 +351,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
           </Sheet>
           <h1 className="min-w-0 flex-1 basis-[calc(100%-3.5rem)] break-words font-display sm:basis-auto sm:truncate text-xl text-foreground sm:text-2xl">{title}</h1>
           <div className="fieldbridge-header-tools flex w-full flex-wrap items-center justify-end gap-2 rounded-md px-2 py-1 sm:ml-auto sm:w-auto">
-            {!preview.active && <ActionNotifications />}
+            {!preview.active && <span data-tour="alerts" className="inline-flex"><ActionNotifications /></span>}
             <HelpButton />
             <PlatformFeedback />
             <AnalyticsTracker />
@@ -362,8 +368,9 @@ export function AppShell({ title, actions, children }: { title: string; actions?
                 </SelectContent>
               </Select>
             )}
+            {!preview.active && crmAllows(crmLevel, "contributor") && planOn("crm_pipeline") && !navLock("crm_pipeline").locked && <QuickLeadButton company={profile?.company_id} />}
             {!preview.active && actions}
-            {!preview.active && <Button asChild size="sm" variant={actions ? "outline" : "default"} className="hidden sm:inline-flex">
+            {!preview.active && <Button asChild size="sm" variant={actions ? "outline" : "default"} className="hidden sm:inline-flex" data-tour="new-sheet">
               <Link to="/sheets/new" search={{}}><Plus className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Create New Job Sheet</span></Link>
             </Button>}
           </div>
