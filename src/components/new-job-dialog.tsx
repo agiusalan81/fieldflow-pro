@@ -37,14 +37,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ClientSitePicker } from "@/components/client-site-picker";
+import { isDispatchable, useFieldDispatchIds } from "@/lib/member-capabilities";
 
 export type PendingDispatch = {id:string;pending_status:string;client_id:string;site_id:string|null;asset_id:string|null;pending_works_future_jobs:string|null;jobsheet_number:string};
 export function NewJobDialog({pending,onClose}:{pending?:PendingDispatch;onClose?:()=>void}) {
   const { data: profile } = useProfile();
   const { data: suggestions } = useEntrySuggestions();
   const { data: allUsers = [] } = useCompanyUsers();
-  // Field crew are supervisors and technicians only; office staff dispatch but are not crew.
-  const users = allUsers.filter(u => ['technician','supervisor','maintenance'].includes(u.role) && u.registration_status === 'active');
+  const { data: fieldIds } = useFieldDispatchIds();
+  // Field crew: field roles, plus office members granted the field-dispatch capability.
+  const users = allUsers.filter(u => isDispatchable(u.role, u.registration_status === 'active', !!fieldIds?.has(u.id)));
   const qc = useQueryClient();
   const search = useSearch({strict:false}) as {new?:boolean;assetId?:string;problemId?:string};
   const navigate = useNavigate();

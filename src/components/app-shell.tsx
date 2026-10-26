@@ -257,7 +257,11 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   const lockVis = useLockedVisibility();
   const navLock = useNavLock(!!actor);
   const office = isOffice(profile);
-  const extraNav: NavItem[] = [];
+  // Office members with the field-dispatch capability also get their own field screens.
+  const extraNav: NavItem[] = manager && profile?.role !== "supervisor" && actor?.can_field_dispatch && !preview.member ? [
+    { group: "My workspace", to: "/sheets", label: "My job sheets", icon: ClipboardList },
+    { group: "My workspace", to: "/schedule", label: "My schedule", icon: CalendarClock },
+  ] : [];
   const baseItems = [...(profile?.role === "supervisor" ? supervisorNav : manager ? adminNav : techNav), ...extraNav].filter((i) => (i.to !== "/subscription" || profile?.role === "superuser") && (i.to !== "/company" || office) && (!i.office || office) && (!i.module || can(i.module) || (i.to === "/company" && office))).map(i => { const feature = i.feature ?? MODULE_ROUTE[i.to] ?? (['/admin/jobs','/pending-works','/admin/inventory','/admin/entities','/qr-codes','/sheets','/schedule','/team','/team-invites','/dwr','/admin/leave','/leave'].includes(i.to) ? 'core' : undefined); const lock = feature ? navLock(feature) : { locked: false, soon: false, hidden: false }; return { ...i, feature, locked: lock.locked, soon: lock.soon, hidden: lock.hidden }; }).filter(i => !i.locked || !i.hidden);
   const lockedFeature = MODULE_ROUTE[path] ?? baseItems.find(i => i.to === path)?.feature;
   const lockedSoon = lockedFeature ? navLock(lockedFeature).soon : false;
