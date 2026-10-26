@@ -59,3 +59,4 @@
 - [x] HQ: categorise modules (6 groups) and sort alphabetically everywhere
 - [x] HQ tenants: replace inline pack switches with Packs & Storage pop-up (status, packs, storage breakdown)
 - [x] HQ: "Under construction" tab, categorised, with release-target toggle
+- [ ] Commercial & CRM access toggle for field staff (column stored; needs CRM/quotes access rules)

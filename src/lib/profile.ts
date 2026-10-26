@@ -40,6 +40,8 @@ export type Profile = {
   signature_on_file: string | null;
   /** The account's real role; `role` reflects the active View As mode. */
   real_role: Role;
+  /** Secondary capability: an office member who can also be dispatched and work job sheets. */
+  can_field_dispatch?: boolean;
 };
 export type Kin = { name?: string; relationship?: string; phone?: string; email?: string };
 
@@ -63,9 +65,9 @@ function useRealProfile() {
         .maybeSingle();
       if (error) throw error;
       if (!data) return null;
-      const { data: r } = await supabase.from("user_roles").select("role").eq("user_id", auth.user.id).maybeSingle();
+      const { data: r } = await supabase.from("user_roles").select("role, can_field_dispatch").eq("user_id", auth.user.id).maybeSingle();
       const real = (r?.role ?? "technician") as Role;
-      return { ...data, role: real, real_role: real } as unknown as Profile;
+      return { ...data, role: real, real_role: real, can_field_dispatch: !!r?.can_field_dispatch } as unknown as Profile;
     },
     staleTime: 60_000,
   });

@@ -7,6 +7,7 @@ import { useCompanyUsers, useProfile } from "@/lib/profile";
 import { usePlanFeatures } from "@/lib/plan-features";
 import { groupSkills, skillMatchScore } from "@/lib/skills";
 import { RECORD_DELETE_REFRESH_KEYS } from "@/lib/record-deletion";
+import { isDispatchable, useFieldDispatchIds } from "@/lib/member-capabilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +18,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 type Visit = { id: string; job_number: number };
 type Draft = { scheduled_date: string; window_start: string; window_end: string; priority: string; problem_summary: string; tech: string; assistant: string; teamSize: number; open: boolean; skills: string[] };
-const FIELD = ["technician", "supervisor", "maintenance"];
 
 /** Edits an existing dispatched visit: date, time window, priority, instructions, lead/assistant and (with Smart Dispatch) skills, team size and open-to-claim. */
 export function EditVisit({ visit }: { visit: Visit }) {
@@ -26,7 +26,8 @@ export function EditVisit({ visit }: { visit: Visit }) {
   const feature = usePlanFeatures(!!profile);
   const smart = feature("skills_dispatch");
   const { data: users = [] } = useCompanyUsers();
-  const staff = users.filter(u => FIELD.includes(u.role) && u.registration_status === "active");
+  const { data: fieldIds } = useFieldDispatchIds();
+  const staff = users.filter(u => isDispatchable(u.role, u.registration_status === "active", !!fieldIds?.has(u.id)));
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [d, setD] = useState<Draft | null>(null);

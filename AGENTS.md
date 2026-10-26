@@ -75,3 +75,4 @@
 - Customer quoting uses separate customer_quotes, safe shared projections, immutable issued snapshots and atomic quote RPCs; Core quoting must not inherit supplier/QS pack gates.
 - HQ module composition uses shared layer/domain taxonomy and one tier-or-pack matrix; customer_quotes inherits Core entitlement so the display split never creates a new paid gate.
 - CRM pipeline rules live in tested src/lib/crm.ts; leads/follow-ups/timeline are manager-only RLS tables guarded by guard_module_write_additional('crm_pipeline'); conversions go through crm_mark_won/crm_mark_lost RPCs so stage, links and follow-up closure stay atomic.
+- Secondary member capabilities live as flags on user_roles (can_field_dispatch); dispatch eligibility goes through is_dispatchable_member / isDispatchable so primary role still drives payroll and rota.
