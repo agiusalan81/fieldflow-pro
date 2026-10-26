@@ -10,6 +10,7 @@ import { notifyQuoteDecision } from '@/lib/customer-quotes.functions';
 import { formatSiteTitle } from '@/lib/site-display';
 import { ClientRouting, PortalSiteCodes } from '@/components/client-routing';
 import { CustomerQuotePreview } from '@/components/customer-quote-preview';
+import { useQuotePhotoUrls } from '@/components/customer-quote-photos';
 import { ModulePreview } from '@/components/module-preview';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,7 @@ export function ClientPortalWorkspace({ clientId }: { clientId: string }) {
   const [open, setOpen] = useState<PortalQuote | null>(null); const [decision, setDecision] = useState<'accepted' | 'declined' | null>(null); const [name, setName] = useState(''); const [comment, setComment] = useState(''); const [busy, setBusy] = useState(false);
   const [report, setReport] = useState<{ asset: string; label: string } | null>(null); const [problem, setProblem] = useState('');
   const data = q.data;
+  const photos = useQuotePhotoUrls(open ? { clientId, quoteId: open.id } : undefined, !!open?.snapshot.document.photos?.length);
   const siteName = useMemo(() => (id: string | null) => { const s = data?.sites.find(x => x.id === id); return s ? formatSiteTitle(s) : 'Client-wide'; }, [data]);
   if (q.isPending) return <p role="status">Loading your portal…</p>;
   if (q.error || !data) return <p role="alert" className="text-destructive">Client access is unavailable. Ask the contractor to check your invitation or module access.</p>;
@@ -41,7 +43,7 @@ export function ClientPortalWorkspace({ clientId }: { clientId: string }) {
   const term = search.trim().toLowerCase();
   const sheets = data.sheets.filter(s => !term || [s.jobsheet_number, s.reported_fault, s.repairs_performed, s.maintenance_notes, siteName(s.site_id)].some(v => v?.toLowerCase().includes(term)));
   const shownQuotes = quoteFilter === 'pending' ? pending : quotes;
-  const download = async (x: PortalQuote) => { try { const bytes = await buildCustomerQuotePdf(x.snapshot); const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: 'application/pdf' })); const a = document.createElement('a'); a.href = url; a.download = `${x.reference}.pdf`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 10000); } catch { toast.error('Could not create the PDF'); } };
+  const download = async (x: PortalQuote) => { try { const bytes = await buildCustomerQuotePdf(x.snapshot, photos.data ?? {}); const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: 'application/pdf' })); const a = document.createElement('a'); a.href = url; a.download = `${x.reference}.pdf`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 10000); } catch { toast.error('Could not create the PDF'); } };
   const decide = async () => {
     if (!open || !decision) return; setBusy(true);
     const r = await supabase.rpc('portal_decide_quote', { _client: clientId, _quote: open.id, _decision: decision, _name: name, _comment: comment });
@@ -101,7 +103,7 @@ export function ClientPortalWorkspace({ clientId }: { clientId: string }) {
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader><DialogTitle>{open?.reference} · {open?.snapshot.document.title}</DialogTitle></DialogHeader>
         {open && <div className="space-y-4">
-          <CustomerQuotePreview snapshot={open.snapshot} />
+          <CustomerQuotePreview snapshot={open.snapshot} photoAccess={{ clientId, quoteId: open.id }} />
           <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => void download(open)}><Download className="mr-1 h-4 w-4" />Download PDF</Button>
             {canDecidePortalQuote(open, canApprove) && <><Button onClick={() => setDecision('accepted')}>{open.status === 'awaiting_confirmation' ? 'Confirm acceptance' : 'Accept quote'}</Button><Button variant="outline" onClick={() => setDecision('declined')}>Decline</Button></>}</div>
           {open.status === 'awaiting_confirmation' && open.office_recorded && <p role="status" className="rounded-md border border-destructive p-3 text-sm">Your contractor recorded a phone acceptance from {open.office_recorded.name} on {day(open.office_recorded.at)}. Please confirm in writing — work cannot be scheduled until you do.</p>}
