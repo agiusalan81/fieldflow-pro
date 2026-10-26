@@ -30,3 +30,31 @@ export const sendCustomerQuote = createServerFn({ method: 'POST' })
     if (saved.error) throw new Error('Email processed, but delivery history could not be recorded. Retry safely.');
     return result;
   });
+/** Emails the contractor office after a portal contact accepts/declines a quote. Only the deciding contact can trigger it. */
+export const notifyQuoteDecision = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ quoteId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+    const ev = await supabaseAdmin.from('customer_quote_events').select('action,details,created_at').eq('quote_id', data.quoteId).eq('actor_id', context.userId).in('action', ['portal_accepted', 'portal_declined']).gte('created_at', new Date(Date.now() - 15 * 60_000).toISOString()).order('created_at', { ascending: false }).limit(1).maybeSingle();
+    if (ev.error || !ev.data) throw new Error('No recent decision to report');
+    const q = await supabaseAdmin.from('customer_quotes').select('id,company_id,reference,snapshot,job_id,client_id').eq('id', data.quoteId).single();
+    if (q.error || !q.data) throw new Error('Quote unavailable');
+    const s = q.data.snapshot as unknown as QuoteSnapshot | null;
+    const roles = await supabaseAdmin.from('user_roles').select('user_id').eq('company_id', q.data.company_id).in('role', ['superuser', 'admin']);
+    const ids = [...new Set((roles.data ?? []).map(r => r.user_id))];
+    if (!ids.length) return { sent: 0 };
+    const users = await supabaseAdmin.from('users').select('id,email').in('id', ids);
+    const details = (ev.data.details ?? {}) as { name?: string; comment?: string };
+    const accepted = ev.data.action === 'portal_accepted';
+    const { sendTemplateEmail } = await import('./email-templates/send-email');
+    let sent = 0;
+    for (const u of users.data ?? []) {
+      if (!u.email) continue;
+      try {
+        const r = await sendTemplateEmail('quote-decision', u.email, { idempotencyKey: `quote-decision-${q.data.id}-${ev.data.created_at}-${u.id}`, templateData: { company: s?.company.name ?? 'FieldBridge', client: s?.client ?? 'Client', reference: q.data.reference, title: s ? customerQuoteDocument(s.document).title : '', decision: accepted ? 'accepted' : 'declined', signer: details.name ?? '', comment: details.comment ?? '', nextStep: accepted ? (q.data.job_id ? 'An unassigned job was created automatically — assign a technician and date.' : 'Ready to schedule — convert it to a job when convenient.') : '', url: `https://fieldbridgeapp.com/estimates?quote=${q.data.id}` } });
+        if (r.sent) sent++;
+      } catch (e) { console.error('quote-decision email failed', e); }
+    }
+    return { sent };
+  });
