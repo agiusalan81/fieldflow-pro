@@ -1,3 +1,4 @@
+import { NumberingSettings } from "@/components/numbering-settings";
 import { TRADES } from "@/lib/price-list";
 import { settingsSectionPatch } from "@/lib/settings-sections";
 import { TechnicalStructure } from "@/components/technical-structure";
@@ -433,6 +434,7 @@ function SettingsSections({ superuser, companyId, userId, role }: { superuser: b
     ] },
     { title: "Commercial & integrations", items: [
       { key: "estimates", label: "Estimates & suppliers", render: () => <div className="space-y-4">{superuser&&<Button asChild variant="outline"><Link to="/subscription" hash="custom-requests">Request a custom module / template</Link></Button>}<QuoteAcceptanceSetting companyId={companyId} /><EstimateSettings companyId={companyId} /></div> },
+      { key: "numbering", label: "Document numbering", render: () => <NumberingSettings companyId={companyId} /> },
       { key: "crm", label: "CRM settings", render: () => <CrmSettings companyId={companyId} actorRole={superuser ? "superuser" : role} /> },
       { key: "pricelist", label: "Price list", render: () => <PriceListSettings companyId={companyId} /> },
       { key: "integrations", label: "Accounting", render: () => <IntegrationsSettings part="accounting" companyId={companyId} /> },
