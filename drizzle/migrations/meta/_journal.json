@@ -960,6 +960,13 @@
       "when": 1793018186989,
       "tag": "0136_member_capabilities",
       "breakpoints": true
+    },
+    {
+      "idx": 137,
+      "version": "7",
+      "when": 1793037295362,
+      "tag": "0137_crm_member_access",
+      "breakpoints": true
     }
   ]
 }

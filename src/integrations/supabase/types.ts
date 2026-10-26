@@ -5728,6 +5728,7 @@ export type Database = {
           can_field_dispatch: boolean
           company_id: string
           created_at: string
+          crm_access: string | null
           id: string
           platform_owner: boolean
           registration_status: string
@@ -5742,6 +5743,7 @@ export type Database = {
           can_field_dispatch?: boolean
           company_id: string
           created_at?: string
+          crm_access?: string | null
           id?: string
           platform_owner?: boolean
           registration_status?: string
@@ -5756,6 +5758,7 @@ export type Database = {
           can_field_dispatch?: boolean
           company_id?: string
           created_at?: string
+          crm_access?: string | null
           id?: string
           platform_owner?: boolean
           registration_status?: string
@@ -5884,15 +5887,22 @@ export type Database = {
         Args: { _proposal: string }
         Returns: string
       }
+      crm_can: { Args: { _min: string }; Returns: boolean }
       crm_create_lead: {
         Args: { _followup?: Json; _lead: Json; _note?: string }
         Returns: string
       }
+      crm_default_level: {
+        Args: { _role: Database["public"]["Enums"]["app_role"] }
+        Returns: string
+      }
+      crm_delete_lead: { Args: { _id: string }; Returns: undefined }
       crm_mark_lost: {
         Args: { _id: string; _reason: string; _recontact_at?: string }
         Returns: undefined
       }
       crm_mark_won: { Args: { _id: string; _target: string }; Returns: Json }
+      crm_rank: { Args: { _level: string }; Returns: number }
       current_company_id: { Args: never; Returns: string }
       customer_quote_action: {
         Args: { _action: string; _data?: Json; _id: string }
@@ -6009,6 +6019,7 @@ export type Database = {
       member_handover_preview: { Args: { _user: string }; Returns: Json }
       member_is_active: { Args: { _user: string }; Returns: boolean }
       my_commercial_status: { Args: never; Returns: Json }
+      my_crm_access: { Args: never; Returns: string }
       my_registration_status: { Args: never; Returns: string }
       my_role: { Args: never; Returns: Database["public"]["Enums"]["app_role"] }
       open_jobs_for_me: {
@@ -6280,6 +6291,10 @@ export type Database = {
       }
       set_member_capabilities: {
         Args: { _commercial: boolean; _field: boolean; _user: string }
+        Returns: undefined
+      }
+      set_member_crm_access: {
+        Args: { _level: string; _user: string }
         Returns: undefined
       }
       set_member_primary_skill: {
