@@ -95,12 +95,12 @@ function NewLeadDialog({ open, onOpenChange, company, onCreated }: { open: boole
   const [f, setF] = useState(blank); const [busy, setBusy] = useState(false);
   const set = (p: Partial<typeof blank>) => setF((x) => ({ ...x, ...p }));
   const save = async () => {
-    if (!f.title.trim()) return toast.error("Give the lead a short title");
+    if (!f.title.trim()) { toast.error("Give the lead a short title"); return; }
     const a = actions.find((x) => x.key === f.action);
     setBusy(true);
     const r = await supabase.rpc("crm_create_lead", { _lead: { title: f.title, client_id: f.client_id, site_id: f.site_id, contact_name: f.contact_name, contact_phone: f.contact_phone, contact_email: f.contact_email, deal_type: f.deal_type, source: f.source, value: f.value.trim() ? f.value.replace(",", ".") : null }, _note: f.note, _followup: a && f.due ? { action_key: a.key, action_label: a.label, due_at: new Date(f.due).toISOString() } : null });
     setBusy(false);
-    if (r.error) return toast.error(errMsg(r.error));
+    if (r.error) { toast.error(errMsg(r.error)); return; }
     toast.success("Lead saved"); setF(blank); onOpenChange(false);
     await qc.invalidateQueries({ queryKey: ["crm-leads"] }); await qc.invalidateQueries({ queryKey: ["crm-followups"] });
     onCreated(r.data as string);
@@ -140,7 +140,7 @@ function LeadPanel({ lead, company }: { lead: Lead; company?: string | undefined
   const closed = isClosed(lead.stage);
   const markWon = async () => {
     setBusy(true); const r = await supabase.rpc("crm_mark_won", { _id: lead.id, _target: won }); setBusy(false);
-    if (r.error) return toast.error(errMsg(r.error));
+    if (r.error) { toast.error(errMsg(r.error)); return; }
     await refresh(); toast.success("Lead won");
     const out = r.data as { quote_id?: string; job_id?: string };
     if (won === "quote" && out.quote_id) navigate({ to: "/estimates", search: { quote: out.quote_id } });
@@ -182,11 +182,11 @@ function ActionTypesEditor({ company }: { company?: string | undefined }) {
   const [label, setLabel] = useState(""); const [hours, setHours] = useState("24"); const [busy, setBusy] = useState(false);
   const all = mergeActions(types.data ?? []);
   const add = async () => {
-    const h = Math.round(Number(hours)); if (!label.trim() || !Number.isFinite(h) || h < 0) return toast.error("Enter a name and a due time in hours");
+    const h = Math.round(Number(hours)); if (!label.trim() || !Number.isFinite(h) || h < 0) { toast.error("Enter a name and a due time in hours"); return; }
     setBusy(true); const r = await supabase.from("crm_action_types").insert({ label: label.trim(), due_hours: h }); setBusy(false);
-    if (r.error) return toast.error(errMsg(r.error)); setLabel(""); await qc.invalidateQueries({ queryKey: ["crm-action-types"] });
+    if (r.error) { toast.error(errMsg(r.error)); return; } setLabel(""); await qc.invalidateQueries({ queryKey: ["crm-action-types"] });
   };
-  const archive = async (id: string) => { const r = await supabase.from("crm_action_types").update({ archived: true }).eq("id", id); if (r.error) return toast.error(errMsg(r.error)); await qc.invalidateQueries({ queryKey: ["crm-action-types"] }); };
+  const archive = async (id: string) => { const r = await supabase.from("crm_action_types").update({ archived: true }).eq("id", id); if (r.error) { toast.error(errMsg(r.error)); return; } await qc.invalidateQueries({ queryKey: ["crm-action-types"] }); };
   return <div className="max-w-xl space-y-3">
     <p className="text-sm text-muted-foreground">Built-in actions are always available. Add your own with a default due time.</p>
     <ul className="divide-y rounded-lg border">{all.map((a) => <li key={a.key} className="flex items-center gap-2 p-2 text-sm"><span className="flex-1">{a.label}</span><span className="text-muted-foreground">due in {a.dueHours} h</span>{a.custom ? <Button size="icon" variant="ghost" aria-label={`Remove ${a.label}`} onClick={() => void archive(a.key.slice(7))}><Trash2 className="h-4 w-4" /></Button> : <Badge variant="outline">Default</Badge>}</li>)}</ul>
