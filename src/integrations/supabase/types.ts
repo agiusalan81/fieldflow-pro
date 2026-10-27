@@ -3605,6 +3605,78 @@ export type Database = {
           },
         ]
       }
+      lift_inspections: {
+        Row: {
+          asset_id: string
+          certificate_no: string
+          company_id: string
+          created_at: string
+          created_by: string | null
+          defects: string
+          defects_closed: boolean
+          id: string
+          inspected_on: string
+          inspection_body: string
+          inspection_type: string
+          inspector_name: string
+          next_due: string | null
+          notes: string
+          result: string
+          updated_at: string
+        }
+        Insert: {
+          asset_id: string
+          certificate_no?: string
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          defects?: string
+          defects_closed?: boolean
+          id?: string
+          inspected_on?: string
+          inspection_body?: string
+          inspection_type?: string
+          inspector_name?: string
+          next_due?: string | null
+          notes?: string
+          result?: string
+          updated_at?: string
+        }
+        Update: {
+          asset_id?: string
+          certificate_no?: string
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          defects?: string
+          defects_closed?: boolean
+          id?: string
+          inspected_on?: string
+          inspection_body?: string
+          inspection_type?: string
+          inspector_name?: string
+          next_due?: string | null
+          notes?: string
+          result?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lift_inspections_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lift_inspections_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lift_maintenance_logs: {
         Row: {
           ard_check: Json
