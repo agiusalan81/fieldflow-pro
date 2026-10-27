@@ -183,7 +183,10 @@ function Messages() {
                       <span className="block truncate text-sm font-medium text-foreground">{t.label}{t.kind === "user" && roleOf(t.id) && <span className="ml-2 rounded bg-muted px-1.5 text-xs font-normal text-muted-foreground">{roleOf(t.id)}</span>}</span>
                       <span className={`block truncate text-xs ${unread[keyOf(t)] ? "font-semibold text-foreground" : "text-muted-foreground"}`}>{last?.message_text || (last?.contact_card ? "Contact" : parseChatFiles(last?.attachments).length ? "Attachment" : "No messages yet")}</span>
                     </span>
-                    {!!unread[keyOf(t)] && <span aria-label={`${unread[keyOf(t)]} unread`} className="col-start-3 row-start-1 rounded-full bg-destructive px-1.5 text-xs text-destructive-foreground">{unread[keyOf(t)]}</span>}
+                    <span className="col-start-3 row-start-1 flex flex-col items-end gap-1">
+                      {last && <time dateTime={last.created_at} title={chatFullStamp(last.created_at)} className="text-[11px] text-muted-foreground">{chatListStamp(last.created_at)}</time>}
+                      {!!unread[keyOf(t)] && <span aria-label={`${unread[keyOf(t)]} unread`} className="rounded-full bg-destructive px-1.5 text-xs text-destructive-foreground">{unread[keyOf(t)]}</span>}
+                    </span>
                   </Button>
                 </li>
               );
@@ -200,17 +203,22 @@ function Messages() {
                 <p className="truncate font-medium text-foreground">{active.label}{active.kind === "user" && roleOf(active.id) && <span className="ml-2 rounded bg-muted px-1.5 text-xs font-normal text-muted-foreground">{roleOf(active.id)}</span>}</p>
               </header>
               <div className="min-h-0 flex-1 space-y-2 overflow-y-auto bg-muted/40 p-4">
-                {current.map((m) => {
+                {current.map((m, i) => {
                   const mine = m.sender_id === profile?.id;
+                  const prev = current[i - 1]?.created_at;
                   return (
-                    <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+                    <div key={m.id}>
+                    {needsDayDivider(prev, m.created_at) && <div className="my-3 flex justify-center"><span className="rounded-full bg-card px-3 py-0.5 text-xs font-medium text-muted-foreground shadow-sm">{chatDayLabel(m.created_at)}</span></div>}
+                    {needsGapMarker(prev, m.created_at) && <p className="my-2 text-center text-[11px] text-muted-foreground">{chatClock(m.created_at)}</p>}
+                    <div className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                       <div className={`min-w-0 max-w-[85%] rounded-lg px-3.5 py-2 text-sm shadow-sm ${mine ? "rounded-br-sm bg-primary text-primary-foreground" : "rounded-bl-sm bg-card text-foreground"}`}>
                         {!mine && active.kind === "job" && <p className="mb-0.5 text-xs font-medium text-primary">{nameOf(m.sender_id)}</p>}
                         <p className="whitespace-pre-wrap break-words">{m.message_text}</p><ChatAttachments files={m.attachments} contact={m.contact_card}/>
-                        <p className={`mt-0.5 text-right text-[10px] ${mine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
-                          {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        <p title={chatFullStamp(m.created_at)} className={`mt-0.5 text-right text-[10px] ${mine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                          <time dateTime={m.created_at}>{chatClock(m.created_at)}</time>
                         </p>
                       </div>
+                    </div>
                     </div>
                   );
                 })}
