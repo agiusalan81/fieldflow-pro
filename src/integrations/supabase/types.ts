@@ -2783,7 +2783,7 @@ export type Database = {
           priority: string
           problem_summary: string | null
           required_team_size: number
-          scheduled_date: string
+          scheduled_date: string | null
           secondary_technician_id: string | null
           site_id: string | null
           window_end: string | null
@@ -2809,7 +2809,7 @@ export type Database = {
           priority?: string
           problem_summary?: string | null
           required_team_size?: number
-          scheduled_date?: string
+          scheduled_date?: string | null
           secondary_technician_id?: string | null
           site_id?: string | null
           window_end?: string | null
@@ -2835,7 +2835,7 @@ export type Database = {
           priority?: string
           problem_summary?: string | null
           required_team_size?: number
-          scheduled_date?: string
+          scheduled_date?: string | null
           secondary_technician_id?: string | null
           site_id?: string | null
           window_end?: string | null
