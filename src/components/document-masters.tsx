@@ -22,6 +22,8 @@ import { companyHasLiftTrade, isLiftTrade } from "@/lib/trade-association";
 import { CompanyTradeSelect } from "@/components/company-trade-select";
 import { buildMasterDocumentPdf } from "@/lib/master-document-pdf";
 import { CommercialPriceSummary, LiftCommercialEditor } from "@/components/lift-commercial";
+import { Link } from "@tanstack/react-router";
+import { CONTRACT_TYPE_PRESETS, DOC_TYPE_PRESETS, SECTORS, copyAudience, defaultCopyView, docTypeLabel, fitsAttachment, learnedOptions, missingTags, normalizeDocType, sectorLabel } from "@/lib/document-library-tags";
 
 type Master = Database["public"]["Tables"]["document_masters"]["Row"];
 type PreviewDoc = Pick<Master, "name" | "body" | "items" | "kind"> & Partial<Pick<Master, "sections" | "revision" | "trade" | "field_specs" | "commercial" | "extras">>;
@@ -80,7 +82,7 @@ export function MasterPreview({ doc, initialView = "client" }: { doc: PreviewDoc
       {commercial.visitsPerYear !== null && <p>{commercial.visitsPerYear} visits per year</p>}
       <CommercialPriceSummary value={commercial} cycle={BILLING_CYCLES.find((c) => c.key === commercial.billingCycle)?.label.toLowerCase()} />
       {(commercial.labourDiscountPct > 0 || commercial.partsDiscountPct > 0) && <p>Discounts: {commercial.labourDiscountPct > 0 && `${commercial.labourDiscountPct}% labour`}{commercial.labourDiscountPct > 0 && commercial.partsDiscountPct > 0 && " · "}{commercial.partsDiscountPct > 0 && `${commercial.partsDiscountPct}% parts`}</p>}
-      {commercial.summaryItems.length > 0 && <div className="space-y-1 pt-1"><h4 className="document-label text-[11px] font-semibold uppercase">Summary items</h4><ul className="space-y-1">{commercial.summaryItems.map((it, i) => <li key={i} className="flex items-start gap-2">{it.tag && <span className="shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold" style={{ color: "var(--document-primary)", borderColor: "var(--document-primary)" }}>{it.tag}</span>}<span className="flex-1"><RichText text={it.text} /></span></li>)}</ul></div>}
+      {commercial.summaryItems.length > 0 && <div className="space-y-1 pt-1"><ul className="space-y-1">{commercial.summaryItems.map((it, i) => <li key={i} className="flex items-start gap-2">{it.tag && <span className="shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold" style={{ color: "var(--document-primary)", borderColor: "var(--document-primary)" }}>{it.tag}</span>}<span className="flex-1"><RichText text={it.text} /></span></li>)}</ul></div>}
       {commercial.terms.trim() && <p className="whitespace-pre-wrap text-[12px] opacity-80">{commercial.terms}</p>}
     </section>] : []),
   ];
@@ -124,7 +126,7 @@ function SummaryItemsEditor({ items, onChange }: { items: SummaryItem[]; onChang
   useEffect(() => { if (!focused) setText(summaryItemsToText(items)); }, [items, focused]);
   const up = (i: number, n: Partial<SummaryItem>) => onChange(items.map((it, j) => (j === i ? { ...it, ...n } : it)));
   return <div className="space-y-2"><Label>Summary items (client copy)</Label>
-    <p className="text-xs text-muted-foreground">One item per line. Add a subtag with <code>[Included] Annual safety certification</code> or <code>24/7 callout :: Coverage</code>. Grouped under “Summary items” in your brand colour; technicians never see these.</p>
+    <p className="text-xs text-muted-foreground">One item per line. Add a subtag with <code>[Included] Annual safety certification</code> or <code>24/7 callout :: Coverage</code>. Shown under Service summary in your brand colour; technicians never see these.</p>
     <Textarea aria-label="Summary items" rows={4} value={text} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} onChange={(e) => { setText(e.target.value); onChange(summaryItemsFromText(e.target.value)); }} placeholder={"[Included] Annual safety certification\n[Optional] Weekend callouts\nRemote monitoring :: SLA"} />
     {items.length > 0 && <div className="space-y-1">{items.map((it, i) => <div key={i} className="grid grid-cols-[110px_1fr_36px] gap-2">
       <Input aria-label={`Subtag ${i + 1}`} placeholder="Subtag" value={it.tag} onChange={(e) => up(i, { tag: e.target.value.slice(0, 40) })} />
@@ -160,16 +162,23 @@ export function DocumentMasters({ companyId, clientId }: { companyId: string; cl
   const editLift = liftEnabled && (!edit?.trade || isLiftTrade(edit.trade));
   const [renaming, setRenaming] = useState<Master | null>(null);
   const [renameName, setRenameName] = useState("");
-  const [filter, setFilter] = useState("all"); const [preview, setPreview] = useState<Master | null>(null); const [deleting, setDeleting] = useState<Master | null>(null); const [client, setClient] = useState(clientId ?? "");
+  const [filter, setFilter] = useState("all"); const [preview, setPreview] = useState<Master | null>(null); const [deleting, setDeleting] = useState<Master | null>(null); const [client, setClient] = useState(clientId ?? ""); const [audienceFilter, setAudienceFilter] = useState<"all" | "technician" | "client">("all"); const [site, setSite] = useState(""); const [asset, setAsset] = useState("");
   const { data: docs = [] } = useQuery({ queryKey: ["document-masters"], queryFn: async () => { const r = await supabase.from("document_masters").select("*").order("created_at", { ascending: false }); if (r.error) throw r.error; return r.data; } });
-  const { data: refs } = useQuery({ queryKey: ["master-usage"], queryFn: async () => { const [a, t, c] = await Promise.all([supabase.from("document_attachments").select("*, clients(name)"), supabase.from("contract_types").select("id,name,base_document_id,checklist_document_id,maintenance_agreements(clients(name))"), supabase.from("clients").select("id,name").order("name")]); if (a.error || t.error || c.error) throw a.error || t.error || c.error; return { attachments: a.data, tiers: t.data, clients: c.data }; } });
+  const { data: refs } = useQuery({ queryKey: ["master-usage"], queryFn: async () => { const [a, t, c] = await Promise.all([supabase.from("document_attachments").select("*, clients(name), sites(name), assets(reference_number, asset_category)"), supabase.from("contract_types").select("id,name,lifecycle,base_document_id,checklist_document_id,maintenance_agreements(clients(name))"), supabase.from("clients").select("id,name").order("name")]); if (a.error || t.error || c.error) throw a.error || t.error || c.error; return { attachments: a.data, tiers: t.data, clients: c.data }; } });
+  const attachClient = clientId || client;
+  const { data: siteAssets } = useQuery({ queryKey: ["attach-site-assets", attachClient], enabled: !!attachClient, queryFn: async () => { const [si, as] = await Promise.all([supabase.from("sites").select("id,name").eq("client_id", attachClient).order("name"), supabase.from("assets").select("id,site_id,reference_number,asset_category").eq("client_id", attachClient).order("reference_number")]); if (si.error || as.error) throw si.error || as.error; return { sites: si.data, assets: as.data }; } });
+  const typeOptions = learnedOptions(DOC_TYPE_PRESETS, docs.map((d) => d.kind === "other" ? "reference" : d.kind));
+  const contractTypeOptions = learnedOptions(CONTRACT_TYPE_PRESETS, docs.map((d) => d.contract_type));
+  const tierOptions = (refs?.tiers ?? []).filter((t) => t.lifecycle !== "archived");
+  const tagError = (d: { kind: string; contract_type?: string | null; sector?: string | null }) => { const m = missingTags(d); if (m.length) toast.error(`Choose ${m.join(", ")} before saving`); return m.length > 0; };
   const refresh = () => { void qc.invalidateQueries({ queryKey: ["document-masters"] }); void qc.invalidateQueries({ queryKey: ["master-usage"] }); };
   const act = async (action: () => PromiseLike<{ error: { message: string } | null }>, message: string) => { const r = await action(); if (r.error) { toast.error(r.error.message); return false; } toast.success(message); refresh(); return true; };
   const create = async () => { const r = await supabase.from("document_masters").insert({ company_id: companyId, name: "Untitled document" }).select("*").single(); if (r.error) toast.error(r.error.message); else { setEdit(r.data); refresh(); } };
-  const clone = async (d: Master) => { const r = await supabase.from("document_masters").insert({ company_id: companyId, name: `${d.name} — copy`, kind: d.kind, trade: d.trade, body: d.body, items: d.items, sections: d.sections, audience: d.audience, cloned_from: d.id, revision: d.revision + 1, field_specs: d.field_specs, commercial: d.commercial, extras: d.extras }).select("*").single(); if (r.error) toast.error(r.error.message); else { setEdit(r.data); refresh(); } };
+  const clone = async (d: Master) => { const r = await supabase.from("document_masters").insert({ company_id: companyId, name: `${d.name} — copy`, kind: d.kind, trade: d.trade, body: d.body, items: d.items, sections: d.sections, audience: d.audience, cloned_from: d.id, revision: d.revision + 1, field_specs: d.field_specs, commercial: d.commercial, extras: d.extras, contract_type: d.contract_type, sector: d.sector, tier_id: d.tier_id }).select("*").single(); if (r.error) toast.error(r.error.message); else { setEdit(r.data); refresh(); } };
   const save = async (state = "draft") => {
     if (!edit) return;
     if (!edit.name.trim()) { toast.error("Enter a document name"); return; }
+    if (state === "active" && tagError(edit)) return;
     const sections = parseSections(edit.sections).filter((s) => s.title.trim() || s.body.trim());
     const rows = checklistRows(edit.items, edit.field_specs).filter(row => row.item.trim());
     const items = rows.map(row => row.item.trim());
@@ -177,25 +186,28 @@ export function DocumentMasters({ companyId, clientId }: { companyId: string; cl
     const parsedCommercial = parseCommercial(edit.commercial);
     const commercial = editLift && !parsedCommercial.liftPricing ? { ...parsedCommercial, liftPricing: { ...DEFAULT_LIFT_PRICING } } : parsedCommercial;
     const extras = parseExtras(edit.extras);
-    if (await act(() => supabase.from("document_masters").update({ name: edit.name.trim(), kind: edit.kind, trade: edit.trade, body: edit.body, items, sections: sections as unknown as Json, audience: parseAudience(edit.audience), state, field_specs: specs as unknown as Json, commercial: commercial as unknown as Json, extras: extras as unknown as Json }).eq("id", edit.id), state === "active" ? "Document published" : "Draft saved")) setEdit(null);
+    if (await act(() => supabase.from("document_masters").update({ name: edit.name.trim(), kind: edit.kind, trade: edit.trade, body: edit.body, items, sections: sections as unknown as Json, audience: parseAudience(edit.audience), state, field_specs: specs as unknown as Json, commercial: commercial as unknown as Json, extras: extras as unknown as Json, contract_type: edit.contract_type, sector: edit.sector, tier_id: edit.tier_id }).eq("id", edit.id), state === "active" ? "Document published" : "Draft saved")) setEdit(null);
   };
-  const saveCopy = async (view: "technician" | "client" | null, tier?: string) => {
+  const saveCopy = async (view: "technician" | "client" | null, tier?: { id: string; name: string }) => {
     if (!edit) return;
+    if (!edit.name.trim()) { toast.error("Enter a document name"); return; }
+    if (tagError(edit)) return;
     const rows = view ? audienceCopyRows(edit.items, edit.field_specs, view) : { items: edit.items.filter(i => i.trim()), specs: checklistRows(edit.items, edit.field_specs).filter(r => r.item.trim()).map(r => r.spec) };
     const base = edit.name.trim() || "Untitled document";
-    const name = view ? `${base} — ${view === "technician" ? "Tech" : "Client"} Copy` : `${base} — ${tier}`;
+    const name = view ? `${base} — ${view === "technician" ? "Technician copy" : "Client copy"}` : `${base} — ${tier?.name ?? "copy"}`;
     const sections = view ? parseSections(edit.sections).filter(s => s.audience === "both" || s.audience === view).map(s => ({ ...s, audience: view })) : parseSections(edit.sections);
     const extras = view ? extrasFor(parseExtras(edit.extras), view) : parseExtras(edit.extras);
     const commercial = view === "technician" ? null : edit.commercial;
-    const r = await supabase.from("document_masters").insert({ company_id: companyId, name, kind: edit.kind, trade: edit.trade, body: edit.body, items: rows.items, field_specs: rows.specs as unknown as Json, sections: sections as unknown as Json, extras: extras as unknown as Json, ...(commercial ? { commercial } : {}), audience: view ? [view] : parseAudience(edit.audience), cloned_from: edit.id }).select("id").single();
-    if (r.error) toast.error(r.error.message); else { toast.success(`Saved “${name}” as a new draft`); refresh(); }
+    const r = await supabase.from("document_masters").insert({ company_id: companyId, name, kind: edit.kind, trade: edit.trade, body: edit.body, items: rows.items, field_specs: rows.specs as unknown as Json, sections: sections as unknown as Json, extras: extras as unknown as Json, ...(commercial ? { commercial } : {}), audience: view ? [view] : parseAudience(edit.audience), cloned_from: edit.id, contract_type: edit.contract_type, sector: edit.sector, tier_id: tier?.id ?? edit.tier_id, state: view ? "active" : "draft" }).select("id").single();
+    if (r.error) { toast.error(r.error.message); return false; }
+    toast.success(view ? `“${name}” saved to the library` : `Saved “${name}” as a new draft`); refresh(); return true;
   };
   const setAudience = async (d: Master, audience: Audience[]) => { await act(() => supabase.from("document_masters").update({ audience }).eq("id", d.id), "Visibility updated"); };
   const usageOf = (d: Master) => { const tiers = (refs?.tiers ?? []).filter((t) => t.base_document_id === d.id || t.checklist_document_id === d.id); const clients = [...(refs?.attachments ?? []).filter((a) => a.master_id === d.id).map((a) => a.clients?.name ?? "Client"), ...tiers.flatMap((t) => t.maintenance_agreements.map((a) => a.clients?.name ?? "Client"))]; return { clients: [...new Set(clients)].sort(), tiers: [...new Set(tiers.map((t) => t.name))] }; };
   const [confirmText, setConfirmText] = useState("");
   const counts = { all: docs.length, active: docs.filter((d) => d.state === "active").length, draft: docs.filter((d) => d.state === "draft").length, archived: docs.filter((d) => d.state === "archived").length } as Record<string, number>;
-  const attach = async () => { if (!preview || !(clientId || client)) return; if (await act(() => supabase.from("document_attachments").insert({ company_id: companyId, client_id: clientId || client, master_id: preview.id }), "Document attached")) setPreview(null); };
-  const list = docs.filter((d) => (!clientId || d.state === "active") && (filter === "all" || d.state === filter));
+  const attach = async () => { if (!preview || !(clientId || client)) return; if (await act(() => supabase.from("document_attachments").insert({ company_id: companyId, client_id: clientId || client, master_id: preview.id, site_id: site || null, asset_id: asset || null }), "Document attached")) { setPreview(null); setSite(""); setAsset(""); } };
+  const list = docs.filter((d) => (!clientId || d.state === "active") && (filter === "all" || d.state === filter) && (audienceFilter === "all" || copyAudience(d.audience) === audienceFilter || copyAudience(d.audience) === "both"));
   const audienceLabel = (d: Master) => { const a = parseAudience(d.audience); return a.length === 2 ? "Technicians & clients" : a.length === 0 ? "Office only" : a[0] === "client" ? "Clients only" : "Technicians only"; };
   const editItems = edit?.items ?? [];
   const editSpecs = edit ? parseFieldSpecs(edit.field_specs, editItems.length) : [];
