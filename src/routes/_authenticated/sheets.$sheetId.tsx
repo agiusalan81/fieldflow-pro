@@ -125,6 +125,7 @@ function SheetForm() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { data: profile } = useProfile();
+  const liftFeatures = usePlanFeatures();
   const { data: company } = useCompanyRules();
   const { data: users = [] } = useCompanyUsers();
   const { data: suggestions } = useEntrySuggestions();
