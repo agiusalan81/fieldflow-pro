@@ -71,7 +71,7 @@ export function parseEstimateConfig(v: unknown): EstimateConfig {
   const o = (v && typeof v === "object" ? v : {}) as Partial<EstimateConfig>;
   const r = o.reminders ?? ({} as Partial<EstimateConfig["reminders"]>);
   return {
-    suppliers: Array.isArray(o.suppliers) ? o.suppliers : DEFAULT_SUPPLIERS,
+    suppliers: Array.isArray(o.suppliers) ? o.suppliers : [],
     options: o.options ?? {},
     defaults: o.defaults ?? {},
     reminders: { first_days: Math.max(1, Number(r.first_days) || 5), every_days: Math.max(1, Number(r.every_days) || 3), max: Math.max(0, Number(r.max ?? 3)) },

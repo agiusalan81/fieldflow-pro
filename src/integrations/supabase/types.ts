@@ -5895,6 +5895,7 @@ export type Database = {
           other_items: Json
           pricing: Json
           recommended_action: string | null
+          reference: string | null
           reviewed_at: string | null
           reviewer_id: string | null
           scope_summary: string | null
@@ -5925,6 +5926,7 @@ export type Database = {
           other_items?: Json
           pricing?: Json
           recommended_action?: string | null
+          reference?: string | null
           reviewed_at?: string | null
           reviewer_id?: string | null
           scope_summary?: string | null
@@ -5955,6 +5957,7 @@ export type Database = {
           other_items?: Json
           pricing?: Json
           recommended_action?: string | null
+          reference?: string | null
           reviewed_at?: string | null
           reviewer_id?: string | null
           scope_summary?: string | null
