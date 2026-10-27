@@ -1,3 +1,4 @@
+import { customerQuoteDocument, quoteBillingLines, type QuoteSnapshot } from "@/lib/customer-quotes";
 import { tenantLocale } from "@/lib/locale";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -25,15 +26,18 @@ export function BillingReview({ sheetId, onClose }: { sheetId: string | null; on
     enabled: !!sheetId,
     queryFn: async () => {
       if (!sheetId) throw new Error("Select a job sheet");
-      const { data: s, error } = await supabase.from("job_sheets").select("id, jobsheet_number, client_id, site_id, estimate_id, billing_status, billing_source, billing_data, created_at, clients(name, labor_rates), return_fee_hours, jobsheet_time_logs(log_date, time_in, time_out, traveling_time_hours, technician_initials, technician_count), jobsheet_parts(part_description, quantity, unit)").eq("id", sheetId).single();
+      const { data: s, error } = await supabase.from("job_sheets").select("id, jobsheet_number, client_id, site_id, estimate_id, customer_quote_id, billing_status, billing_source, billing_data, created_at, clients(name, labor_rates), return_fee_hours, jobsheet_time_logs(log_date, time_in, time_out, traveling_time_hours, technician_initials, technician_count), jobsheet_parts(part_description, quantity, unit)").eq("id", sheetId).single();
       if (error) throw error;
       const today = new Date().toISOString().slice(0, 10);
-      const [est, ag, cs] = await Promise.all([
+      const [est, ag, cs, coreQuote] = await Promise.all([
         supabase.from("lift_estimates").select("id, title, client_price, quoted_amount, fixed_labor, status").eq("client_id", s.client_id).in("status", ["client_ready", "won"]),
         supabase.from("maintenance_agreements").select("id, contract_types(name, labour_discount_pct, parts_discount_pct)").eq("client_id", s.client_id).lte("start_date", today).gte("end_date", today).limit(1),
         supabase.from("company_settings").select("default_rates, integrations").maybeSingle(),
+        s.customer_quote_id ? supabase.from("customer_quotes").select("reference,snapshot").eq("id", s.customer_quote_id).single() : Promise.resolve({ data: null, error: null }),
       ]);
-      return { s, estimates: est.data ?? [], agreement: ag.data?.[0] ?? null, company: parseRates(cs.data?.default_rates) ?? ZERO_RATES, integ: parseIntegrations(cs.data?.integrations) };
+      if (coreQuote.error) throw coreQuote.error;
+      const coreSnapshot = coreQuote.data?.snapshot as unknown as QuoteSnapshot | null;
+      return { coreSnapshot, coreReference: coreQuote.data?.reference, s, estimates: est.data ?? [], agreement: ag.data?.[0] ?? null, company: parseRates(cs.data?.default_rates) ?? ZERO_RATES, integ: parseIntegrations(cs.data?.integrations) };
     },
   });
   const [estimateId, setEstimateId] = useState<string>("none");
@@ -53,6 +57,7 @@ export function BillingReview({ sheetId, onClose }: { sheetId: string | null; on
 
   const build = (src: PriceSource, estId: string) => {
     if (!data) return [];
+    if (data.coreSnapshot && src === "estimate") return quoteBillingLines(customerQuoteDocument(data.coreSnapshot.document));
     const e = data.estimates.find((x) => x.id === estId);
     const base = draftLines({ source: src, hours, company: data.company, client: clientRates, contractDiscountPct: discount, estimate: e ? { title: e.title, price: Number(e.client_price ?? e.quoted_amount ?? 0), fixedLabor: e.fixed_labor } : null });
     const parts: Line[] = src === "estimate" ? [] : data.s.jobsheet_parts.map((p) => ({ description: p.part_description, qty: Number(p.quantity), unit_price: 0, kind: "parts" }));
@@ -64,7 +69,7 @@ export function BillingReview({ sheetId, onClose }: { sheetId: string | null; on
     if (!data || ready) return;
     const saved = data.s.billing_data as { lines?: Line[] } | null;
     const est = data.s.estimate_id ?? "none";
-    const src = (data.s.billing_source as PriceSource) ?? pickSource({ estimate: est !== "none", contract: !!data.agreement, clientRates: !!clientRates });
+    const src = (data.s.billing_source as PriceSource) ?? pickSource({ estimate: !!data.coreSnapshot || est !== "none", contract: !!data.agreement, clientRates: !!clientRates });
     setEstimateId(est); setSource(src);
     setLines(saved?.lines?.length ? saved.lines : build(src, est));
     setReady(true);
@@ -96,18 +101,19 @@ export function BillingReview({ sheetId, onClose }: { sheetId: string | null; on
         {!data ? <p className="text-sm text-muted-foreground">Loading…</p> : (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">{data.s.clients?.name} · status: <span className="font-medium text-foreground">{data.s.billing_status}</span></p>
+            {data.coreSnapshot && <p className="text-sm font-medium">Accepted {data.coreSnapshot.document.kind} · {data.coreReference}</p>}
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5"><Label>Price from</Label>
                 <Select value={source} onValueChange={(v) => change(v as PriceSource)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {(Object.keys(SOURCES) as PriceSource[]).map((k) => (
-                      <SelectItem key={k} value={k} disabled={(k === "estimate" && !data.estimates.length) || (k === "contract" && !data.agreement) || (k === "client" && !clientRates)}>{SOURCES[k]}</SelectItem>
+                      <SelectItem key={k} value={k} disabled={(!!data.coreSnapshot && k !== "estimate") || (k === "estimate" && !data.coreSnapshot && !data.estimates.length) || (k === "contract" && !data.agreement) || (k === "client" && !clientRates)}>{SOURCES[k]}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-              {source === "estimate" && (
+              {source === "estimate" && !data.coreSnapshot && (
                 <div className="space-y-1.5"><Label>Estimate</Label>
                   <Select value={estimateId} onValueChange={(v) => change("estimate", v)}>
                     <SelectTrigger><SelectValue placeholder="Choose estimate" /></SelectTrigger>

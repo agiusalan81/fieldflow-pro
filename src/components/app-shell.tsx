@@ -9,6 +9,7 @@ import { WelcomeGuide } from "@/components/welcome-guide";
 import { WorkspaceCreate, WorkspaceSearch } from "@/components/workspace-tools";
 import { WorkspaceNavigation } from "@/components/workspace-navigation";
 import { organizeNavigation } from "@/lib/navigation-hubs";
+import { useMemberWorkspaces } from "@/lib/member-workspaces";
 import { useCrmAccess } from "@/lib/crm-access";
 import { crmAllows } from "@/lib/crm";
 import { showRoleMenuItem } from "@/lib/role-menu";
@@ -81,7 +82,7 @@ const adminNav: NavItem[] = [
   { group: "Clients & commercial", to: "/qr-codes", label: "QR code generator", icon: QrCode, module: "clients" },
   { group: "Clients & commercial", to: "/contracts", label: "Contracts", icon: FileSignature, module: "contracts", feature: "contracts" },
   { group: "Clients & commercial", to: "/crm", label: "CRM pipeline", icon: Users, module: "clients", feature: "crm_pipeline" },
-  { group: "Clients & commercial", to: "/estimates", label: "Estimates & proposals", icon: Calculator, feature: "core" },
+  { group: "Clients & commercial", to: "/estimates", label: "Estimates, quotes & proposals", icon: Calculator, feature: "core" },
   { group: "Clients & commercial", to: "/lift-rfq", label: "Lift supplier RFQs", icon: Calculator, module: "estimates", feature: "lift_pack" },
   { group: "Clients & commercial", to: "/proposals", label: "Advanced proposals", icon: FileText, module: "estimates", feature: "qs_pricing" },
   { group: "Clients & commercial", to: "/surveys", label: "Site surveys", icon: ClipboardList, feature: "site_surveys" },
@@ -121,7 +122,7 @@ const supervisorNav: NavItem[] = [
   { group: "Clients & estimates", to: "/admin/entities", label: "Clients & assets", icon: Users, module: "clients" },
   { group: "Clients & estimates", to: "/qr-codes", label: "QR code generator", icon: QrCode, module: "clients" },
   { group: "Clients & estimates", to: "/crm", label: "CRM pipeline", icon: Users, module: "clients", feature: "crm_pipeline" },
-  { group: "Clients & estimates", to: "/estimates", label: "Estimates & proposals", icon: Calculator, feature: "core" },
+  { group: "Clients & estimates", to: "/estimates", label: "Estimates, quotes & proposals", icon: Calculator, feature: "core" },
   { group: "Clients & estimates", to: "/lift-rfq", label: "Lift supplier RFQs", icon: Calculator, module: "estimates", feature: "lift_pack" },
   { group: "Clients & estimates", to: "/proposals", label: "Advanced proposals", icon: FileText, module: "estimates", feature: "qs_pricing" },
   { group: "Clients & estimates", to: "/surveys", label: "Site surveys", icon: ClipboardList, feature: "site_surveys" },
@@ -225,6 +226,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   const navLock = useNavLock(!!actor);
   const office = isOffice(profile);
   const crmLevel = useCrmAccess(!!actor).data ?? "none";
+  const workspaces = useMemberWorkspaces().data;
   // Office members with the field-dispatch capability also get their own field screens.
   const extraNav: NavItem[] = manager && profile?.role !== "supervisor" && actor?.can_field_dispatch && !preview.member ? [
     { group: "My workspace", to: "/sheets", label: "My job sheets", icon: ClipboardList },
@@ -232,7 +234,9 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   ] : [];
   // Field staff granted CRM access in Company settings get the pipeline too.
   if (!manager && crmAllows(crmLevel, "viewer") && !preview.member) extraNav.push({ group: "Clients", to: "/crm", label: "CRM pipeline", icon: Users, feature: "crm_pipeline" });
-  const baseItems = [...(profile?.role === "supervisor" ? supervisorNav : manager ? adminNav : techNav), ...extraNav].filter((i) => (i.to !== "/crm" || crmAllows(crmLevel, "viewer")) && (i.to !== "/subscription" || profile?.role === "superuser") && (i.to !== "/company" || office) && (!i.office || office) && (!i.module || can(i.module) || (i.to === "/company" && office))).map(i => { const feature = i.feature ?? MODULE_ROUTE[i.to] ?? (['/admin/jobs','/pending-works','/admin/inventory','/admin/entities','/qr-codes','/sheets','/schedule','/team','/team-invites','/dwr','/admin/leave','/leave'].includes(i.to) ? 'core' : undefined); const lock = feature ? navLock(feature) : { locked: false, soon: false, hidden: false }; return { ...i, feature, locked: lock.locked, soon: lock.soon, hidden: lock.hidden }; }).filter(i => !i.locked || !i.hidden);
+  if (!manager && workspaces?.estimates && !preview.member) extraNav.push({ group: "Clients", to: "/estimates", label: "Estimates, quotes & proposals", icon: Calculator, feature: "core" });
+  if (workspaces?.contracts && !office && !preview.member) extraNav.push({ group: "Clients", to: "/contracts", label: "Contracts", icon: FileSignature, feature: "contracts" });
+  const baseItems = [...(profile?.role === "supervisor" ? supervisorNav : manager ? adminNav : techNav), ...extraNav].filter((i) => (i.to !== "/estimates" || !!workspaces?.estimates) && (i.to !== "/contracts" || !!workspaces?.contracts) && (i.to !== "/crm" || crmAllows(crmLevel, "viewer")) && (i.to !== "/subscription" || profile?.role === "superuser") && (i.to !== "/company" || office) && (!i.office || office) && (!i.module || can(i.module) || (i.to === "/company" && office))).map(i => { const feature = i.feature ?? MODULE_ROUTE[i.to] ?? (['/admin/jobs','/pending-works','/admin/inventory','/admin/entities','/qr-codes','/sheets','/schedule','/team','/team-invites','/dwr','/admin/leave','/leave'].includes(i.to) ? 'core' : undefined); const lock = feature ? navLock(feature) : { locked: false, soon: false, hidden: false }; return { ...i, feature, locked: lock.locked, soon: lock.soon, hidden: lock.hidden }; }).filter(i => !i.locked || !i.hidden);
   const lockedFeature = MODULE_ROUTE[path] ?? baseItems.find(i => i.to === path)?.feature;
   const lockedSoon = lockedFeature ? navLock(lockedFeature).soon : false;
   const canSwitch = profile && canViewAsRoles(profile.real_role) && !preview.active;
@@ -241,8 +245,8 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   const appearance = company?.appearance ?? DEFAULT_APPEARANCE;
   const coName = profile?.companies?.name?.trim();
   const personal: Record<string, string> = coName ? { "Team": `${coName} Team`, "Team chat": `${coName} Chat`, "Technical library": `${coName} Technical library` } : {};
-  const items = organizeNavigation(profile?.role, baseItems.filter(i => showRoleMenuItem(profile?.role, i.to))).map(i => ({ ...i, label: personal[i.label] ?? industrySheetLabel(appearance.industryPreset, i.label) }));
-  const createProps = { manager: manager && !!items.find(i => i.to === "/admin/jobs" && !i.locked), field: (!manager || profile?.role === "supervisor" || !!actor?.can_field_dispatch) && !navLock("core").locked, estimates: manager && !!items.find(i => i.to === "/estimates" && !i.locked), crm: crmAllows(crmLevel, "contributor") && !navLock("crm_pipeline").locked, company: profile?.company_id };
+  const items = organizeNavigation(profile?.role, baseItems.filter(i => (i.to === "/contracts" && workspaces?.contracts && !preview.member || showRoleMenuItem(profile?.role, i.to)))).map(i => ({ ...i, label: personal[i.label] ?? industrySheetLabel(appearance.industryPreset, i.label) }));
+  const createProps = { manager: manager && !!items.find(i => i.to === "/admin/jobs" && !i.locked), field: (!manager || profile?.role === "supervisor" || !!actor?.can_field_dispatch) && !navLock("core").locked, estimates: !!workspaces?.estimates && !!items.find(i => i.to === "/estimates" && !i.locked), crm: crmAllows(crmLevel, "contributor") && !navLock("crm_pipeline").locked, company: profile?.company_id };
   const appTitle = resolveAppTitle(company?.appTitle, planOn("custom_app_title"));
   useEffect(() => { applyTypography(company?.theme); return () => applyTypography(undefined); }, [company?.theme]);
   useEffect(() => {

@@ -89,8 +89,8 @@ export function PpmVisits({
           {rows.map((j) => {
             const completed = j.job_sheets.some((s) => s.status === "completed");
             const state = ppmStatus(
-              j.ppm_due_date ?? j.scheduled_date,
-              j.ppm_deadline ?? j.scheduled_date,
+              j.ppm_due_date ?? j.scheduled_date ?? today,
+              j.ppm_deadline ?? j.scheduled_date ?? today,
               completed,
               today,
             );

@@ -4,6 +4,7 @@ import { checklistRows, DEFAULT_CHOICES, DEFAULT_SPEC, rowsFromText, FIELD_CONTR
 import { RICH_COLORS, wrapSelection } from "@/lib/rich-text";
 import { RichText } from "@/components/rich-text";
 import { Button } from "@/components/ui/button";
+import { UnitSelect } from "@/components/unit-select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -45,7 +46,7 @@ export function ChecklistRowEditor({ items, specs, onChange }: { items: string[]
         <Input className="w-32" type="number" min={0} step="0.01" aria-label={`Client price for step ${i + 1}`} placeholder="Client price €" value={row.spec.price ?? ""} onChange={e => { const n = Number(e.target.value); const { price: _p, ...rest } = row.spec; update(i, row.item, e.target.value && n > 0 ? { ...rest, price: n } : rest); }} />
         <label className="flex items-center gap-1 text-xs"><Camera className="h-3.5 w-3.5" />Photos<Switch aria-label={`Allow photos for step ${i + 1}`} checked={!!row.spec.photo} onCheckedChange={on => { const { photo: _ph, ...rest } = row.spec; update(i, row.item, on ? { ...rest, photo: true } : rest); }} /></label>
       </div>
-      <div className="flex items-center justify-end gap-1">{row.spec.control === "choice" && <Input className="mr-auto min-w-0 flex-1" aria-label={`Choices for step ${i + 1}`} placeholder="Done, Satisfactory, N/A" value={(row.spec.options ?? DEFAULT_CHOICES).join(", ")} onChange={e => update(i, row.item, { ...row.spec, options: e.target.value.split(",").map(o => o.trimStart()) })} />}{row.spec.control === "reading" && <Input className="mr-auto max-w-40" aria-label={`Unit for step ${i + 1}`} placeholder="Unit (bar, °C)" maxLength={20} value={row.spec.unit} onChange={e => update(i, row.item, { ...row.spec, unit: e.target.value })} />}
+      <div className="flex items-center justify-end gap-1">{row.spec.control === "choice" && <Input className="mr-auto min-w-0 flex-1" aria-label={`Choices for step ${i + 1}`} placeholder="Done, Satisfactory, N/A" value={(row.spec.options ?? DEFAULT_CHOICES).join(", ")} onChange={e => update(i, row.item, { ...row.spec, options: e.target.value.split(",").map(o => o.trimStart()) })} />}{row.spec.control === "reading" && <div className="mr-auto w-40"><UnitSelect label={`Unit for step ${i + 1}`} maxLength={20} value={row.spec.unit ?? ""} onChange={unit => update(i, row.item, { ...row.spec, unit })} /></div>}
         <Button type="button" size="icon" variant="ghost" title="Move up" aria-label={`Move step ${i + 1} up`} disabled={i === 0} onClick={() => setRows(moveChecklistRow(rows, i, i - 1))}><ArrowUp className="h-4 w-4" /></Button>
         <Button type="button" size="icon" variant="ghost" title="Move down" aria-label={`Move step ${i + 1} down`} disabled={i === rows.length - 1} onClick={() => setRows(moveChecklistRow(rows, i, i + 1))}><ArrowDown className="h-4 w-4" /></Button>
         <Button type="button" size="icon" variant="ghost" title="Remove step" aria-label={`Remove step ${i + 1}`} onClick={() => setRows(rows.filter((_, index) => index !== i))}><Trash2 className="h-4 w-4" /></Button>

@@ -8,7 +8,7 @@ export function workspaceShortcuts(path: string, role?: string, view?: string): 
     case '/team': return tabs([['availability', 'Live availability'], ['registered', 'Team members'], ['invites', 'Invites']]);
     case '/company': return tabs([['profile', 'General & trade'], ['branding', 'Branding & appearance'], ['estimates', 'Commercial & numbering'], ['integrations', 'Integrations & access']], 'section');
     case '/sheets': return tabs([['open', 'Drafts & in progress'], ['done', 'Completed history']]);
-    case '/admin/jobs': return view === 'dispatch' ? [{ label: 'Dispatched jobs', to: path, search: { view: 'dispatch' } }] : ['all', 'draft', 'completed', 'archive'].map(tab => ({ label: ({ all: 'Draft & completed sheets', draft: 'Drafts', completed: 'Completed for review', archive: 'Monthly archive & combined PDF' })[tab] ?? tab, to: path, search: { view: 'sheets', tab } }));
+    case '/admin/jobs': return view === 'dispatch' ? [{ label: 'Scheduled visits', to: path, search: { view: 'dispatch', tab: 'scheduled' } }, { label: 'Unscheduled / TBD', to: path, search: { view: 'dispatch', tab: 'unscheduled' } }] : ['all', 'draft', 'completed', 'archive'].map(tab => ({ label: ({ all: 'Draft & completed sheets', draft: 'Drafts', completed: 'Completed for review', archive: 'Monthly archive & combined PDF' })[tab] ?? tab, to: path, search: { view: 'sheets', tab } }));
     case '/admin/approvals': return tabs([['leave', 'Leave requests'], ['expenses', 'Expense categories'], ['equipment', 'Equipment & assets']], 'category');
     case '/payroll/wages':
     case '/payroll/hours':

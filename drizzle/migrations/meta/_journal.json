@@ -988,6 +988,34 @@
       "when": 1793045823052,
       "tag": "0140_quote_delete_and_document_numbering",
       "breakpoints": true
+    },
+    {
+      "idx": 141,
+      "version": "7",
+      "when": 1793078212590,
+      "tag": "0141_optional_job_schedule",
+      "breakpoints": true
+    },
+    {
+      "idx": 142,
+      "version": "7",
+      "when": 1793078243813,
+      "tag": "0142_granular_member_commercial_access",
+      "breakpoints": true
+    },
+    {
+      "idx": 143,
+      "version": "7",
+      "when": 1793078270373,
+      "tag": "0143_quote_types_and_tbd_conversion",
+      "breakpoints": true
+    },
+    {
+      "idx": 144,
+      "version": "7",
+      "when": 1793078404846,
+      "tag": "0144_commercial_evidence_capability_access",
+      "breakpoints": true
     }
   ]
 }

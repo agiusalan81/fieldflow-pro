@@ -41,7 +41,7 @@ export function EditVisit({ visit }: { visit: Visit }) {
       smart ? supabase.from("job_skills").select("skill_id").eq("job_id", visit.id) : Promise.resolve({ data: [] as { skill_id: string }[] }),
     ]);
     if (error || !data) { toast.error("Visit could not be loaded."); setOpen(false); return; }
-    setD({ scheduled_date: data.scheduled_date, window_start: data.window_start?.slice(0, 5) ?? "", window_end: data.window_end?.slice(0, 5) ?? "", priority: data.priority, problem_summary: data.problem_summary ?? "", tech: data.assigned_technician_id ?? "none", assistant: data.secondary_technician_id ?? "none", teamSize: data.required_team_size ?? 1, open: data.open_to_claim ?? false, skills: (js ?? []).map(x => x.skill_id) });
+    setD({ scheduled_date: data.scheduled_date ?? "", window_start: data.window_start?.slice(0, 5) ?? "", window_end: data.window_end?.slice(0, 5) ?? "", priority: data.priority, problem_summary: data.problem_summary ?? "", tech: data.assigned_technician_id ?? "none", assistant: data.secondary_technician_id ?? "none", teamSize: data.required_team_size ?? 1, open: data.open_to_claim ?? false, skills: (js ?? []).map(x => x.skill_id) });
   };
   const set = (patch: Partial<Draft>) => setD(v => v ? { ...v, ...patch } : v);
   const save = async () => {

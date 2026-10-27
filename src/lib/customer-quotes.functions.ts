@@ -13,7 +13,7 @@ export const sendCustomerQuote = createServerFn({ method: 'POST' })
     const access = await context.supabase.rpc('company_module_access', { _company: quote.company_id, _module: 'core' });
     if (access.error || !access.data) throw new Error('Core editing access required');
     const s = quote.snapshot as unknown as QuoteSnapshot; const document = customerQuoteDocument(s.document);
-    const contacts = await clientRecipients(context.supabase, quote.client_id, quote.site_id, document.kind, 'email');
+    const contacts = await clientRecipients(context.supabase, quote.client_id, quote.site_id, document.kind === 'proposal' ? 'proposal' : 'estimate', 'email');
     const contact = contacts.find(c => c.id === data.contactId);
     if (!contact?.email) throw new Error('Choose an authorised customer contact');
     const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
@@ -68,7 +68,7 @@ export const notifyClientPhoneDecision = createServerFn({ method: 'POST' })
     const { data: quote, error } = await context.supabase.from('customer_quotes').select('*').eq('id', data.quoteId).single();
     if (error || !quote?.snapshot || !quote.client_id || !['awaiting_confirmation', 'declined'].includes(quote.status)) throw new Error('No recorded decision to send');
     const s = quote.snapshot as unknown as QuoteSnapshot; const document = customerQuoteDocument(s.document);
-    const contacts = await clientRecipients(context.supabase, quote.client_id, quote.site_id, document.kind, 'email');
+    const contacts = await clientRecipients(context.supabase, quote.client_id, quote.site_id, document.kind === 'proposal' ? 'proposal' : 'estimate', 'email');
     const recorded = ((quote.office_recorded ?? {}) as { name?: string }).name?.trim().toLowerCase() ?? '';
     const contact = contacts.find(c => `${c.first_name} ${(c as { last_name?: string }).last_name ?? ''}`.trim().toLowerCase() === recorded || c.first_name.toLowerCase() === recorded) ?? contacts[0];
     if (!contact?.email) return { sent: false, reason: 'no_contact' };

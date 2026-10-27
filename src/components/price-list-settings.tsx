@@ -3,11 +3,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, Trash2, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { UNITS, defaultTrade, missingStarter, type TradeKey } from "@/lib/price-list";
+import { defaultTrade, missingStarter, type TradeKey } from "@/lib/price-list";
 import { usePlanFeatures } from "@/lib/plan-features";
 import { useCompanyRules } from "@/lib/company";
 import { operatingTrades } from "@/lib/price-list";
 import { Button } from "@/components/ui/button";
+import { UnitSelect } from "@/components/unit-select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -75,7 +76,7 @@ export function PriceListSettings({ companyId }: { companyId: string }) {
           {items.filter((i) => i.category === g).map((i) => (
             <div key={i.id} className="grid grid-cols-2 gap-2 border-b pb-2 md:grid-cols-[minmax(0,2fr)_90px_minmax(0,1fr)_100px_100px_70px_60px_40px] md:items-center">
               <Input aria-label="Item name" className="col-span-2 md:col-span-1" defaultValue={i.name} onBlur={(e) => e.target.value.trim() && e.target.value !== i.name && update(i.id, { name: e.target.value.trim() })} />
-              <select aria-label="Unit" className={sel} defaultValue={i.unit} onChange={(e) => update(i.id, { unit: e.target.value })}>{[...new Set([...UNITS, i.unit])].map((u) => <option key={u}>{u}</option>)}</select>
+              <UnitSelect value={i.unit} onChange={unit => update(i.id, { unit })} />
               <Input aria-label="Installation method" placeholder="e.g. Concealed" defaultValue={i.installation_method ?? ""} onBlur={(e) => e.target.value !== (i.installation_method ?? "") && update(i.id, { installation_method: e.target.value.trim() || null })} />
               <Input aria-label="Cost price" type="number" min={0} step="0.01" defaultValue={i.cost_price} onBlur={(e) => Number(e.target.value) !== Number(i.cost_price) && update(i.id, { cost_price: Number(e.target.value || 0) })} />
               <Input aria-label="Client rate" type="number" min={0} step="0.01" defaultValue={i.unit_rate} onBlur={(e) => Number(e.target.value) !== Number(i.unit_rate) && update(i.id, { unit_rate: Number(e.target.value || 0) })} />
@@ -92,7 +93,7 @@ export function PriceListSettings({ companyId }: { companyId: string }) {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-1"><Label htmlFor="pl-cat">Category</Label><Input id="pl-cat" list="pl-cats" value={draft.category} onChange={(e) => setDraft({ ...draft, category: e.target.value })} /><datalist id="pl-cats">{groups.map((g) => <option key={g} value={g} />)}</datalist></div>
           <div className="space-y-1 lg:col-span-2"><Label htmlFor="pl-name">Item</Label><Input id="pl-name" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} /></div>
-          <div className="space-y-1"><Label htmlFor="pl-unit">Unit</Label><select id="pl-unit" className={sel} value={draft.unit} onChange={(e) => setDraft({ ...draft, unit: e.target.value })}>{UNITS.map((u) => <option key={u}>{u}</option>)}</select></div>
+          <div className="space-y-1"><Label htmlFor="pl-unit">Unit</Label><UnitSelect label="New item unit" value={draft.unit} onChange={unit => setDraft({ ...draft, unit })} /></div>
           <div className="space-y-1"><Label htmlFor="pl-method">Installation method</Label><Input id="pl-method" placeholder="e.g. Surface trunking" value={draft.installation_method} onChange={(e) => setDraft({ ...draft, installation_method: e.target.value })} /></div>
           <div className="space-y-1"><Label htmlFor="pl-cost">Cost price</Label><Input id="pl-cost" type="number" min={0} step="0.01" value={draft.cost_price} onChange={(e) => setDraft({ ...draft, cost_price: e.target.value })} /></div>
           <div className="space-y-1"><Label htmlFor="pl-rate">Client rate</Label><Input id="pl-rate" type="number" min={0} step="0.01" value={draft.unit_rate} onChange={(e) => setDraft({ ...draft, unit_rate: e.target.value })} /></div>
