@@ -28,6 +28,19 @@ export type CostingDraft = {
   contingency_pct: number;
   stages: StagePayment[];
   status: string;
+  template_id: string | null;
+  equipment_type: string;
+  output_style: OutputStyle;
+  turnkey_description: string;
+  spec_groups: string[];
+  specs: Record<string, string>;
+  custom_specs: string[];
+  inclusions: string[];
+  exclusions: string[];
+  options: ProposalOption[];
+  photos: { id: string; caption: string }[];
+  notes: string;
+  vat_pct: number;
 };
 
 export const emptyCosting = (): CostingDraft => ({
@@ -36,6 +49,9 @@ export const emptyCosting = (): CostingDraft => ({
   mechanical_hours: 0, mechanical_rate: 0, electrical_hours: 0, electrical_rate: 0, certification_cost: 0,
   equipment_markup_pct: 25, labour_markup_pct: 25, subcontractor_markup_pct: 15, contingency_pct: 5,
   stages: [], status: "draft",
+  template_id: null, equipment_type: "passenger_lift", output_style: "itemised", turnkey_description: "",
+  spec_groups: ["shaft", "entrances", "platform", "drive", "cabin"], specs: {}, custom_specs: [],
+  inclusions: [], exclusions: [], options: [], photos: [], notes: "", vat_pct: 18,
 });
 
 const num = (v: unknown): number => { const n = Number(v); return Number.isFinite(n) && n >= 0 ? n : 0; };
@@ -69,6 +85,7 @@ export function normalizeCosting(row: Record<string, unknown> | null | undefined
     contingency_pct: num(row?.["contingency_pct"]) || 5,
     stages: Array.isArray(st) ? st.filter((s) => s && typeof s === "object").map((s) => ({ label: String((s as Record<string, unknown>)["label"] ?? ""), pct: num((s as Record<string, unknown>)["pct"]) })) : [],
     status: String(row?.["status"] ?? "draft"),
+    ...(row?.["id"] ? readProposalExtras(row) : {}),
   };
 }
 
@@ -304,7 +321,6 @@ export type ProposalSummary = {
 
 /** Client-facing lines for the chosen output style. Selected options are added on top of the costed price. */
 export function proposalSummary(d: CostingDraft): ProposalSummary {
-  const c = costBreakdown(d);
   const cont = 1 + d.contingency_pct / 100;
   const price = priceWith(d, d.equipment_markup_pct, d.labour_markup_pct, d.subcontractor_markup_pct).price;
   const vatR = d.vat_pct / 100;
@@ -320,7 +336,6 @@ export function proposalSummary(d: CostingDraft): ProposalSummary {
     if (shippingNet > 0) lines.push({ description: "Shipping, freight & customs (estimate — varies monthly)", amount: shippingNet, kind: "shipping" });
   } else {
     lines = reconcileClientLines(d).map((l) => ({ ...l, kind: "main" as const }));
-    void c;
   }
   const opts = d.options.filter((o) => o.selected && o.label.trim() && o.amount > 0);
   for (const o of opts) lines.push({ description: `Option: ${o.label.trim()}`, amount: round(o.amount), kind: "option" });
