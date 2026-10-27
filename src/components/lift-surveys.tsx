@@ -73,7 +73,7 @@ export function LiftSurveys() {
     ].filter(Boolean).join("\n");
     const { error } = await supabase.from("lift_estimates").insert({
       title,
-      company_id: profile?.company_id,
+      company_id: profile.company_id,
       client_id: s.client_id,
       site_id: s.site_id,
       rfq: { values: rfqPrefillFromSurvey(d), notes } as unknown as Json,
