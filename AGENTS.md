@@ -77,7 +77,7 @@
 - Surveys: guard_site_survey protects manager pricing/trade_review; field_details snapshots contacts/sites atomically; supplier quotes stay internal.
 - Sites render via site-display.ts; portal edits only store_code. Approvals use category/object links; completed field-sheet history is company-controlled restrictive RLS.
 - Asset limits: platform_catalog.asset_limit (plan NULL=unlimited, pack=extra) enforced by assets_guard_limit trigger; trials/legacy unlimited.
-- Customer quoting uses separate customer_quotes, safe shared projections, immutable issued snapshots and atomic quote RPCs; Core quoting must not inherit supplier/QS pack gates.
+- Core quotes use safe frozen snapshots and atomic RPCs; phone acceptance permits token confirmation without portal access — why: require written confirmation without blocking Core jobs.
 - HQ module composition uses shared layer/domain taxonomy and one tier-or-pack matrix; customer_quotes inherits Core entitlement so the display split never creates a new paid gate.
 - CRM pipeline rules live in tested src/lib/crm.ts; leads/follow-ups/timeline are manager-only RLS tables guarded by guard_module_write_additional('crm_pipeline'); conversions go through crm_mark_won/crm_mark_lost RPCs so stage, links and follow-up closure stay atomic.
 - Protected per-member RPCs/RLS govern estimates, contracts and dispatch; field eligibility is separate, CRM levels persist — why: primary roles still drive payroll/rota.
