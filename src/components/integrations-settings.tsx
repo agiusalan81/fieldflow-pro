@@ -195,7 +195,7 @@ export function IntegrationsSettings({ companyId, part }: { companyId: string; p
           <div className="space-y-1.5"><Label>Connected software</Label>
             <Select value={acc.provider || "none"} onValueChange={(v) => setAcc({ provider: v === "none" ? "" : (v as typeof acc.provider) })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="none">None</SelectItem>{ACCOUNTING.filter((a) => a.key === "zoho" || a.key === provider).map((a) => <SelectItem key={a.key} value={a.key}>{a.label}</SelectItem>)}</SelectContent>
+              <SelectContent><SelectItem value="none">None</SelectItem>{ACCOUNTING.filter((a) => a.key === "zoho" || a.key === acc.provider).map((a) => <SelectItem key={a.key} value={a.key}>{a.label}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <label className="flex items-center gap-2 self-end pb-2 text-sm"><Switch checked={acc.require_review} onCheckedChange={(b) => setAcc({ require_review: b })} />Office admin reviews every job sheet before export</label>
