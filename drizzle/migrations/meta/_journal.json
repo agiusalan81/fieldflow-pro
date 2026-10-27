@@ -1030,6 +1030,13 @@
       "when": 1793079003089,
       "tag": "0146_individual_dispatch_workspace",
       "breakpoints": true
+    },
+    {
+      "idx": 147,
+      "version": "7",
+      "when": 1793079059241,
+      "tag": "0147_preserve_claim_flow_with_dispatch_capabilities",
+      "breakpoints": true
     }
   ]
 }
