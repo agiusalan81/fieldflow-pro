@@ -1,10 +1,14 @@
+import { useNavigate } from "@tanstack/react-router";
+import { useProfile, isManager } from "@/lib/profile";
+import { quoteAction } from "@/components/customer-quotes";
+import { emptyQuoteDocument, newQuoteLine } from "@/lib/customer-quotes";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  ardFor, checksFor, collectDefects, evaluate, measurementsFor, missingChecks,
+  ardFor, checksFor, collectDefects, defectQuoteLines, evaluate, measurementsFor, missingChecks,
   type CheckResult, type Frequency, type Protocol,
 } from "@/lib/lift-maintenance";
 import { Button } from "@/components/ui/button";
@@ -76,6 +80,22 @@ export function LiftMaintenanceChecklist({ sheetId, assetId, defaultProtocol, re
     qc.invalidateQueries({ queryKey: key });
   };
 
+  const { data: profile } = useProfile(); const navigate = useNavigate();
+  const office = !!profile && isManager(profile);
+  const [quoting, setQuoting] = useState(false);
+  const quoteDefects = async () => {
+    setQuoting(true);
+    try {
+      const sh = await supabase.from("job_sheets").select("client_id,site_id,jobsheet_number").eq("id", sheetId).single();
+      if (sh.error || !sh.data?.client_id) throw new Error("This job sheet has no client to quote");
+      const quoteId = crypto.randomUUID();
+      const doc = { ...emptyQuoteDocument("estimate"), title: `Corrective works after maintenance #${sh.data.jobsheet_number ?? ""}`.trim(), lines: defectQuoteLines(defects).map((description) => ({ ...newQuoteLine(), description })) };
+      await quoteAction(quoteId, "save", { id: quoteId, client_id: sh.data.client_id, site_id: sh.data.site_id, asset_id: assetId, source_sheet_id: sheetId, private_notes: "Created from maintenance checklist defects", data: doc });
+      toast.success("Draft estimate created — add prices and issue it");
+      void navigate({ to: "/estimates", search: { quote: quoteId } });
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Could not create the estimate"); }
+    finally { setQuoting(false); }
+  };
   const disabled = readOnly || saving;
   const items = checksFor(protocol, frequency);
   const ardItems = ardFor(protocol, frequency);
@@ -142,6 +162,7 @@ export function LiftMaintenanceChecklist({ sheetId, assetId, defaultProtocol, re
         <div className="rounded-md border border-destructive bg-destructive/10 p-3 text-sm">
           <p className="flex items-center gap-1.5 font-medium text-destructive"><AlertTriangle className="h-4 w-4" />{defects.length} defect{defects.length > 1 ? "s" : ""} found</p>
           <ul className="mt-1 list-disc pl-5">{defects.map((d, i) => <li key={i}>{d.label}{d.detail ? ` — ${d.detail}` : ""}</li>)}</ul>
+          {office && q.data && <Button type="button" size="sm" variant="outline" className="mt-2" disabled={quoting} onClick={() => void quoteDefects()}>{quoting ? "Creating…" : "Quote these defects"}</Button>}
         </div>
       )}
 
