@@ -10,9 +10,9 @@
 <!-- LOVABLE:END -->
 
 ## Rules
-- Workspace navigation consumes authorized menu items; desktop hover flyouts and touch inline shortcuts share workspace-shortcuts.ts, with URL-selected existing tabs and separate dispatch/ledger views — why: direct parent navigation, record alerts and tier/Coming soon guards must remain authoritative without duplicating screens.
+- Navigation consumes authorized menu items; flyouts/touch shortcuts share workspace-shortcuts.ts with URL-selected tabs — why: tier/Coming soon guards stay authoritative without duplicate screens.
 - Company settings use four workspace tabs and retain visited editors mounted; related client records are bounded, RLS-scoped read-only lists with existing detail links — why: reorganization preserves unsaved edits and record history.
-- App email identity is resolved server-side through company_email_branding and an HQ-owned override independent of document branding; managed sends retain the verified From domain, while Gmail retains its authorized mailbox From — why: trials must not bypass forced platform identity or spoof sending domains.
+- Email identity resolves server-side via company_email_branding plus HQ override; managed sends keep verified From, Gmail keeps its mailbox From — why: no forced-identity bypass or spoofing.
 - Quote photos use private immutable storage metadata and frozen snapshot IDs/captions, with customer URLs resolved only after token or portal authorization — why: previews and PDFs must share evidence without exposing unrelated file paths.
 - Navigation-only role exclusions use role-menu.ts for sidebar/mobile shortcuts; they never change page authorization. Legacy quote drafts default missing editor fields on read, leaving issued snapshots and write validation unchanged.
 - Analytics: owner-only coarse counts; server-derived tenant. Product-scoped outreach/feedback; saved follow-ups send nothing.
@@ -79,6 +79,6 @@
 - Asset limits: platform_catalog.asset_limit (plan NULL=unlimited, pack=extra) enforced by assets_guard_limit trigger; trials/legacy unlimited.
 - Core quotes use safe frozen snapshots and atomic RPCs; phone acceptance permits token confirmation without portal access — why: require written confirmation without blocking Core jobs.
 - HQ module composition uses shared layer/domain taxonomy and one tier-or-pack matrix; customer_quotes inherits Core entitlement so the display split never creates a new paid gate.
-- CRM pipeline rules live in tested src/lib/crm.ts; leads/follow-ups/timeline are manager-only RLS tables guarded by guard_module_write_additional('crm_pipeline'); conversions go through crm_mark_won/crm_mark_lost RPCs so stage, links and follow-up closure stay atomic.
+- Per-member CRM access: user_roles.crm_access (null = role default) via my_crm_access()/crm_can(), enforced by RLS/RPCs, mirrored in crm.ts — why: CRM powers vary without changing primary role.
 - Protected per-member RPCs/RLS govern estimates, contracts and dispatch; field eligibility is separate, CRM levels persist — why: primary roles still drive payroll/rota.
-- CRM access is per member: user_roles.crm_access (null = role default) resolved by DB my_crm_access()/crm_can(); RLS, crm_mark_won and crm_delete_lead enforce it, UI mirrors via src/lib/crm.ts — why: different staff need different CRM powers without changing their primary role.
+- CRM rules in tested src/lib/crm.ts; manager-only RLS guarded by guard_module_write_additional('crm_pipeline'); crm_mark_won/lost RPCs keep conversions atomic.
