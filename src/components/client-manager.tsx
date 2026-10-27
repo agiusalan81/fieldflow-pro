@@ -12,7 +12,9 @@ import { toast } from "sonner";
 import { Pencil, Plus, Trash2, Check, X, Copy, ChevronDown } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
-import { useProfile } from "@/lib/profile";
+import { isOffice, useProfile } from "@/lib/profile";
+import { DocumentMasters } from "@/components/document-masters";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { RoleCombobox, learnContactRole, LookupInput, learnLookup, useLookup, EQUIPMENT_TYPE } from "@/components/role-combobox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -78,6 +80,8 @@ const emptyEq: EqDraft = { asset_category: "", reference_number: "", serial_numb
 /** siteId: undefined = all client equipment, string = equipment at that site. */
 export function EquipmentManager({ clientId, companyId, siteId }: { clientId: string; companyId: string; siteId?: string }) {
   const qc = useQueryClient();
+  const { data: profile } = useProfile();
+  const [documentEquipment, setDocumentEquipment] = useState<{ id: string; site_id: string | null; reference_number: string } | null>(null);
   const key = ["client-assets", clientId];
   const { data: allAssets = [] } = useQuery({ queryKey: key, queryFn: async () => (await supabase.from("assets").select("*").eq("client_id", clientId).order("reference_number")).data ?? [] });
   const assets = siteId === undefined ? allAssets : allAssets.filter((a) => a.site_id === siteId);
@@ -134,16 +138,23 @@ export function EquipmentManager({ clientId, companyId, siteId }: { clientId: st
       {editing === "new" && form}
       {assets.length === 0 && editing !== "new" && <p className="text-sm text-muted-foreground">No equipment yet.</p>}
       {assets.map((a) => editing === a.id ? <div key={a.id}>{form}</div> : (
-        <div key={a.id} className="flex items-center gap-3 rounded-lg border p-2 text-sm">
+        <div key={a.id} className="flex flex-wrap items-center gap-2 rounded-lg border p-2 text-sm">
           <div className="min-w-0 flex-1">
             <div className="font-medium">{a.asset_category}</div>
             <div className="text-muted-foreground">Ref {a.reference_number} · S/N {a.serial_number ?? "—"}</div>
           </div>
           <EquipmentQr assetId={a.id} reference={a.reference_number}/>
+          {isOffice(profile) && <Button size="sm" variant="outline" aria-label={`Add document to equipment ${a.reference_number}`} onClick={() => setDocumentEquipment(a)}><Plus className="mr-1 h-4 w-4" />Add document</Button>}
           <Button size="icon" variant="ghost" aria-label="Edit" onClick={() => { const canonical = types.find(t=>labelKey(t)===labelKey(a.asset_category)); const known = !!canonical; setOther(known ? "" : a.asset_category); setF({ asset_category: canonical ?? "Other", reference_number: a.reference_number, serial_number: a.serial_number ?? "" }); setEditing(a.id); }}><Pencil className="h-4 w-4" /></Button>
           <Button size="icon" variant="ghost" aria-label="Delete" onClick={() => remove(a.id)}><Trash2 className="h-4 w-4" /></Button>
         </div>
       ))}
+      <Dialog open={!!documentEquipment} onOpenChange={(open) => { if (!open) setDocumentEquipment(null); }}>
+        <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-4xl">
+          <DialogHeader><DialogTitle>Equipment documents · {documentEquipment?.reference_number}</DialogTitle></DialogHeader>
+          {documentEquipment && <DocumentMasters key={documentEquipment.id} companyId={companyId} clientId={clientId} siteId={documentEquipment.site_id ?? undefined} assetId={documentEquipment.id} />}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
