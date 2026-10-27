@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { usePlanFeatures } from '@/lib/plan-features';
 import { useClientPortalAccess } from '@/lib/client-portal-access';
 import { sendPortalInvite } from '@/lib/portal-invite.functions';
-import { DELIVERY_PURPOSES, PORTAL_URL, preferencesFor, recipientPreview, type RoutingContact, type DeliveryPurpose } from '@/lib/client-routing';
+import { DELIVERY_PURPOSES, preferencesFor, recipientPreview, type RoutingContact, type DeliveryPurpose } from '@/lib/client-routing';
 import { CONTACT_POSITIONS, contactScopeMatches, contactWrite } from '@/lib/contact-editor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
