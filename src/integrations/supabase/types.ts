@@ -5789,6 +5789,8 @@ export type Database = {
       user_roles: {
         Row: {
           can_commercial_access: boolean
+          can_contracts: boolean | null
+          can_estimates: boolean | null
           can_field_dispatch: boolean
           company_id: string
           created_at: string
@@ -5804,6 +5806,8 @@ export type Database = {
         }
         Insert: {
           can_commercial_access?: boolean
+          can_contracts?: boolean | null
+          can_estimates?: boolean | null
           can_field_dispatch?: boolean
           company_id: string
           created_at?: string
@@ -5819,6 +5823,8 @@ export type Database = {
         }
         Update: {
           can_commercial_access?: boolean
+          can_contracts?: boolean | null
+          can_estimates?: boolean | null
           can_field_dispatch?: boolean
           company_id?: string
           created_at?: string
@@ -6082,10 +6088,12 @@ export type Database = {
       }
       is_platform_owner: { Args: never; Returns: boolean }
       mark_customer_quote_seen: { Args: { _quote: string }; Returns: undefined }
+      member_commercial_can: { Args: { _area: string }; Returns: boolean }
       member_handover_preview: { Args: { _user: string }; Returns: Json }
       member_is_active: { Args: { _user: string }; Returns: boolean }
       my_commercial_status: { Args: never; Returns: Json }
       my_crm_access: { Args: never; Returns: string }
+      my_member_capabilities: { Args: never; Returns: Json }
       my_registration_status: { Args: never; Returns: string }
       my_role: { Args: never; Returns: Database["public"]["Enums"]["app_role"] }
       next_document_number: {
@@ -6370,6 +6378,16 @@ export type Database = {
       }
       set_member_primary_skill: {
         Args: { _skill: string; _user: string }
+        Returns: undefined
+      }
+      set_member_workspaces: {
+        Args: {
+          _contracts: boolean
+          _crm: string
+          _estimates: boolean
+          _field: boolean
+          _user: string
+        }
         Returns: undefined
       }
       set_subscription_pack: {

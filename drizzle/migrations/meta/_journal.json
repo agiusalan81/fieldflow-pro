@@ -995,6 +995,13 @@
       "when": 1793078212590,
       "tag": "0141_optional_job_schedule",
       "breakpoints": true
+    },
+    {
+      "idx": 142,
+      "version": "7",
+      "when": 1793078243813,
+      "tag": "0142_granular_member_commercial_access",
+      "breakpoints": true
     }
   ]
 }
