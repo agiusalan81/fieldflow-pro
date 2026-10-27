@@ -16,7 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-type Visit = { id: string; job_number: number };
+type Visit = { id: string; job_number: number; scheduled_date?: string | null };
 type Draft = { scheduled_date: string; window_start: string; window_end: string; priority: string; problem_summary: string; tech: string; assistant: string; teamSize: number; open: boolean; skills: string[] };
 
 /** Edits an existing dispatched visit: date, time window, priority, instructions, lead/assistant and (with Smart Dispatch) skills, team size and open-to-claim. */
@@ -70,7 +70,7 @@ export function EditVisit({ visit }: { visit: Visit }) {
   };
   const person = (value: string, onChange: (v: string) => void, label: string) => <div className="space-y-1"><Label>{label}</Label><Select value={value} onValueChange={onChange}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">Unassigned</SelectItem>{staff.map(u => <SelectItem key={u.id} value={u.id}>{smart && d?.skills.length ? `${u.full_name} · ${skillMatchScore(skillsOf(u.id), d.skills)}/${d.skills.length} skills` : u.full_name}</SelectItem>)}</SelectContent></Select></div>;
   return <Dialog open={open} onOpenChange={v => { if (!busy) setOpen(v); }}>
-    <Button size="icon" variant="ghost" className="shrink-0" title="Edit dispatched visit" aria-label={`Edit visit ${visit.job_number}`} onClick={load}><Pencil className="h-4 w-4" /></Button>
+    <Button size={visit.scheduled_date === null ? "sm" : "icon"} variant={visit.scheduled_date === null ? "outline" : "ghost"} className="shrink-0" title="Edit dispatched visit" aria-label={visit.scheduled_date === null ? `Schedule visit ${visit.job_number}` : `Edit visit ${visit.job_number}`} onClick={load}><Pencil className="h-4 w-4" />{visit.scheduled_date === null && "Schedule visit"}</Button>
     <DialogContent className="max-h-[90vh] overflow-y-auto">
       <DialogHeader><DialogTitle>Edit visit #{visit.job_number}</DialogTitle></DialogHeader>
       {!d ? <p className="text-sm text-muted-foreground">Loading…</p> : <div className="grid gap-3 sm:grid-cols-2">

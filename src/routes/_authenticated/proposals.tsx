@@ -14,6 +14,7 @@ import { TRADES, lineTotal } from "@/lib/price-list";
 import { EQUIPMENT_TYPES, SCOPES, parseTerms, proposalTotals, visibleSections, type Line, type Spec, type Terms } from "@/lib/proposals";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
+import { UnitSelect } from "@/components/unit-select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -169,9 +170,10 @@ function Editor({ id, onBack }: { id: string; onBack: () => void }) {
         <Button variant="ghost" onClick={() => set({ lines: [...p.lines, { id: crypto.randomUUID(), category: "", name: "", unit: "each", quantity: 1, rate: 0, vat: Number(p.terms.offer_vat || 18) }] })}><Plus className="mr-1 h-4 w-4" />Custom row</Button>
       </div>
       {!tradeItems.length && <p className="text-xs text-muted-foreground">Your price list has no items for this trade yet — add them in Company settings → Price list, or use custom rows.</p>}
-      {p.lines.map((l, i) => <div key={l.id} className="grid grid-cols-2 gap-2 border-b pb-2 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_80px_100px_70px_110px_auto_40px] md:items-center">
+      {p.lines.map((l, i) => <div key={l.id} className="grid grid-cols-2 gap-2 border-b pb-2 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_90px_80px_100px_70px_110px_auto_40px] md:items-center">
         <Input aria-label="Item" className="col-span-2 md:col-span-1" placeholder="Item" value={l.name} onChange={(e) => line(i, { name: e.target.value })} />
         <Input aria-label="Installation method" placeholder="Method" value={l.method ?? ""} onChange={(e) => line(i, { method: e.target.value })} />
+        <UnitSelect label={`Proposal item ${i + 1} unit`} value={l.unit} onChange={unit => line(i, { unit })} />
         <Input aria-label="Quantity" type="number" min={0} step="0.01" value={l.quantity} onChange={(e) => line(i, { quantity: Number(e.target.value) })} />
         <Input aria-label="Rate" type="number" min={0} step="0.01" value={l.rate} onChange={(e) => line(i, { rate: Number(e.target.value) })} />
         <Input aria-label="VAT %" type="number" min={0} max={100} value={l.vat} onChange={(e) => line(i, { vat: Number(e.target.value) })} />
