@@ -9,6 +9,7 @@ import { PpmVisits } from "@/components/ppm-visits";
 import { ContractTiers } from "@/components/contract-tiers";
 import { DocumentMasters } from "@/components/document-masters";
 import { supabase } from "@/integrations/supabase/client";
+import { useMemberWorkspaces } from "@/lib/member-workspaces";
 import { useProfile, isOffice } from "@/lib/profile";
 import { useCompanyRules, EQUIPMENT_CATEGORIES } from "@/lib/company";
 import { daysUntil, visitsForTier, contractName } from "@/lib/jobsheets";
@@ -44,7 +45,10 @@ function ContractsPage() {
   const { tab = "renewals" } = Route.useSearch();
   const navigate = useNavigate();
   const { data: profile } = useProfile();
-  const office = isOffice(profile);
+  const access = useMemberWorkspaces();
+  const office = !!access.data?.contracts;
+  if (access.isPending) return <AppShell title="Contracts & checklists"><p>Loading…</p></AppShell>;
+  if (!office) return <AppShell title="Contracts & checklists"><p>Contracts & renewals capability required.</p></AppShell>;
   return (
     <AppShell title="Contracts & checklists">
       <Tabs value={tab === "masters" && !office ? "renewals" : tab} onValueChange={tab => void navigate({ to: "/contracts", search: { tab }, replace: true })} className="mx-auto max-w-6xl">
@@ -52,7 +56,7 @@ function ContractsPage() {
           <TabsTrigger value="renewals">Renewals due</TabsTrigger>
           <TabsTrigger value="agreements">Client agreements</TabsTrigger>
           <TabsTrigger value="types">Service tiers</TabsTrigger>
-          {office && <TabsTrigger value="masters">Contracts & checklist masters</TabsTrigger>}
+          {isOffice(profile) && <TabsTrigger value="masters">Contracts & checklist masters</TabsTrigger>}
           <TabsTrigger value="checklists">Checklists</TabsTrigger>
         </TabsList>
         <TabsContent value="renewals" className="mt-4"><Renewals office={office} /></TabsContent>

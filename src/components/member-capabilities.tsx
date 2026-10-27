@@ -6,7 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQuery } from '@tanstack/react-query';
 import { commercialAccess } from '@/lib/member-workspaces';
-import { crmDefault } from '@/lib/crm';
+import { crmDefaultLevel } from '@/lib/crm';
 import { canEditCapabilities, showsFieldDispatchToggle } from "@/lib/member-capabilities";
 
 /** Secondary capabilities on top of a member's primary role. Primary role keeps payroll and rota. */
@@ -17,7 +17,7 @@ export function MemberCapabilities({ userId, role, actorRole, active }: { userId
   if (!canEditCapabilities(actorRole, role)) return null;
   const estimates = commercialAccess(role, 'estimates', data?.can_estimates);
   const contracts = commercialAccess(role, 'contracts', data?.can_contracts);
-  const crm = data?.crm_access ?? crmDefault(role);
+  const crm = data?.crm_access ?? crmDefaultLevel(role);
   const toggle = async (patch: Partial<{ estimates: boolean; contracts: boolean; field: boolean; crm: string }>) => {
     setBusy(true);
     const { error } = await supabase.rpc("set_member_workspaces", { _user: userId, _field: patch.field ?? data?.can_field_dispatch ?? false, _estimates: patch.estimates ?? estimates, _contracts: patch.contracts ?? contracts, _crm: patch.crm ?? crm });
