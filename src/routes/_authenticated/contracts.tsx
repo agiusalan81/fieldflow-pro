@@ -26,7 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ClientSitePicker } from "@/components/client-site-picker";
 
 export const Route = createFileRoute("/_authenticated/contracts")({ staticData: { sitemap: false },
-  validateSearch: (s: Record<string, unknown>) => ({ tab: ["renewals", "agreements", "types", "masters", "checklists"].includes(String(s["tab"])) ? String(s["tab"]) : "renewals" }),
+  validateSearch: (s: Record<string, unknown>): { tab?: string } => ({ tab: ["renewals", "agreements", "types", "masters", "checklists"].includes(String(s["tab"])) ? String(s["tab"]) : "renewals" }),
   head: () => ({
     meta: [
       { title: "Contracts & checklists — FieldBridge" },
@@ -41,7 +41,7 @@ export const Route = createFileRoute("/_authenticated/contracts")({ staticData: 
 });
 
 function ContractsPage() {
-  const { tab } = Route.useSearch();
+  const { tab = "renewals" } = Route.useSearch();
   const navigate = useNavigate();
   const { data: profile } = useProfile();
   const office = isOffice(profile);

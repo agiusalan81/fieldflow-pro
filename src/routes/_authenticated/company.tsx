@@ -39,7 +39,7 @@ import { BrandingLock } from "@/components/branding-lock";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/company")({ staticData: { sitemap: false },
-  validateSearch: (s: Record<string, unknown>) => ({ section: typeof s["section"] === "string" ? s["section"] : "profile" }),
+  validateSearch: (s: Record<string, unknown>): { section?: string } => ({ section: typeof s["section"] === "string" ? s["section"] : "profile" }),
   head: () => ({
     meta: [
       { title: "Company settings — FieldBridge" },
@@ -406,7 +406,7 @@ function SettingsSections({ superuser, companyId, userId, role }: { superuser: b
   const libraryName = useCompanyTitle("document library");
   const { data: profile } = useProfile();
   const can = useCan(profile);
-  const { section } = Route.useSearch();
+  const { section = "profile" } = Route.useSearch();
   const navigate = useNavigate();
   const [active, setActive] = useState(section);
   const [visited, setVisited] = useState([section]);

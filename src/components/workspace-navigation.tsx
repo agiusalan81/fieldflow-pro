@@ -8,13 +8,13 @@ import { ChatBadge, OnCallBadge, QueueBadge } from '@/components/action-notifica
 import { workspaceShortcuts, type WorkspaceShortcut } from '@/lib/workspace-shortcuts';
 import { recordUsage } from '@/lib/quick-actions';
 
-export type WorkspaceNavItem = { to: string; label: string; group: string; icon: LucideIcon; search?: Record<string, string>; feature?: string; locked?: boolean; soon?: boolean };
+export type WorkspaceNavItem = { to: string; label: string; group: string; icon: LucideIcon; search?: Record<string, string>; feature?: string | undefined; locked?: boolean; soon?: boolean };
 
-function WorkspaceRow({ item, role, touch, uid, onNavigate, keepOpen, close }: { item: WorkspaceNavItem; role?: string; touch: boolean; uid?: string; onNavigate?: () => void; keepOpen: () => void; close: () => void }) {
+function WorkspaceRow({ item, role, touch, uid, onNavigate, keepOpen, close }: { item: WorkspaceNavItem; role?: string | undefined; touch: boolean; uid?: string | undefined; onNavigate?: () => void; keepOpen: () => void; close: () => void }) {
   const [open, setOpen] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
-  const shortcuts = workspaceShortcuts(item.to, role, item.search?.view);
+  const shortcuts = workspaceShortcuts(item.to, role, item.search?.['view']);
   const enter = () => { clearTimeout(timer.current); keepOpen(); if (!touch) setOpen(true); };
   const leave = () => { if (!touch) timer.current = setTimeout(() => { setOpen(false); close(); }, 140); };
   const go = (target: WorkspaceShortcut) => { if (uid) recordUsage(uid, target.to); setOpen(false); onNavigate?.(); };
@@ -29,7 +29,7 @@ function WorkspaceRow({ item, role, touch, uid, onNavigate, keepOpen, close }: {
   return <Popover open={open} onOpenChange={setOpen}><PopoverAnchor asChild>{row}</PopoverAnchor><PopoverContent side="right" align="start" sideOffset={0} className="w-64 p-2" onOpenAutoFocus={e => e.preventDefault()} onCloseAutoFocus={e => e.preventDefault()} onMouseEnter={enter} onMouseLeave={leave}><p className="border-b px-3 py-2 text-xs font-semibold text-muted-foreground">{item.label}</p>{links}</PopoverContent></Popover>;
 }
 
-export function WorkspaceNavigation({ items, role, uid, onNavigate, touch = false }: { items: WorkspaceNavItem[]; role?: string; uid?: string; onNavigate?: () => void; touch?: boolean }) {
+export function WorkspaceNavigation({ items, role, uid, onNavigate, touch = false }: { items: WorkspaceNavItem[]; role?: string | undefined; uid?: string | undefined; onNavigate?: () => void; touch?: boolean }) {
   const [openGroup, setOpenGroup] = useState<string>();
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);

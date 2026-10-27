@@ -40,7 +40,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/admin/jobs")({ staticData: { sitemap: false },
-  validateSearch: (s: Record<string, unknown>): { new?: boolean | undefined; assetId?: string | undefined; problemId?: string | undefined; review?:string; quoteJob?:string; view: string; tab: string } => ({ view: s["view"] === "dispatch" || s["new"] || s["assetId"] || s["problemId"] || s["quoteJob"] ? "dispatch" : "sheets", tab: ["all", "draft", "completed", "archive"].includes(String(s["tab"])) ? String(s["tab"]) : "all", ...(typeof s['quoteJob'] === 'string' ? { quoteJob: s['quoteJob'] } : {}), ...(typeof s["review"]==="string"?{review:s["review"]}:{}), new: s["new"] === true || s["new"] === "true" ? true : undefined, assetId: typeof s["assetId"] === "string" ? s["assetId"] : undefined, problemId: typeof s["problemId"] === "string" ? s["problemId"] : undefined }),
+  validateSearch: (s: Record<string, unknown>): { new?: boolean | undefined; assetId?: string | undefined; problemId?: string | undefined; review?:string; quoteJob?:string; view?: string; tab?: string } => ({ view: s["view"] === "dispatch" || s["new"] || s["assetId"] || s["problemId"] || s["quoteJob"] ? "dispatch" : "sheets", tab: ["all", "draft", "completed", "archive"].includes(String(s["tab"])) ? String(s["tab"]) : "all", ...(typeof s['quoteJob'] === 'string' ? { quoteJob: s['quoteJob'] } : {}), ...(typeof s["review"]==="string"?{review:s["review"]}:{}), new: s["new"] === true || s["new"] === "true" ? true : undefined, assetId: typeof s["assetId"] === "string" ? s["assetId"] : undefined, problemId: typeof s["problemId"] === "string" ? s["problemId"] : undefined }),
   head: () => ({
     meta: [
       { title: "Job sheets — FieldBridge" },
@@ -58,7 +58,7 @@ const STATUSES = [["draft", "Draft"], ["pending", "Pending"], ["in_transit", "In
 const QUEUE_FILTERS = [["admin_queue", "In admin queue"], ["needs_approval", "Needs asset approval"], ["has_pending", "Has pending works"]] as const;
 
 function AdminJobs() {
-  const { view, tab } = Route.useSearch();
+  const { view = "sheets", tab = "all" } = Route.useSearch();
   const dispatchOnly = view === "dispatch";
   const qc = useQueryClient();
   const navigate = useNavigate();

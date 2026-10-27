@@ -14,7 +14,7 @@ import { AppShell, EmptyState } from "@/components/app-shell";
 import {AVAILABILITY_ORDER, activeAvailabilityMember, availabilityStatus, type Availability} from '@/lib/team-availability';
 
 export const Route = createFileRoute("/_authenticated/team")({ staticData: { sitemap: false },
-  validateSearch: (s: Record<string, unknown>) => ({ tab: ["availability", "registered", "invites", "skills"].includes(String(s["tab"])) ? String(s["tab"]) : "availability" }),
+  validateSearch: (s: Record<string, unknown>): { tab?: string } => ({ tab: ["availability", "registered", "invites", "skills"].includes(String(s["tab"])) ? String(s["tab"]) : "availability" }),
   head: () => ({
     meta: [
       { title: "Team availability — FieldBridge" },
@@ -84,7 +84,7 @@ function LiveAvailability() {
 }
 
 function TeamPage() {
- const { tab } = Route.useSearch();
+ const { tab = "availability" } = Route.useSearch();
  const navigate = useNavigate();
  const lock = useNavLock();
  const { data: profile } = useProfile();
