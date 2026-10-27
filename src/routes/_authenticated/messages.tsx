@@ -8,6 +8,7 @@ import { ensurePushSubscription, pushChatMessages } from "@/lib/web-push";
 import { supabase } from "@/integrations/supabase/client";
 import { markThreadRead, unreadByThread, useChatReads } from "@/lib/chat-unread";
 import { useProfile, useCompanyUsers } from "@/lib/profile";
+import { chatClock, chatContactVisible, chatDayLabel, chatFullStamp, chatListStamp, needsDayDivider, needsGapMarker } from "@/lib/chat-time";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,7 +84,7 @@ function Messages() {
   });
 
   const threads: Thread[] = useMemo(() => {
-    const people = users.filter((u) => u.id !== profile?.id).map((u) => ({ kind: "user" as const, id: u.id, label: u.full_name }));
+    const people = users.filter((u) => u.id !== profile?.id && chatContactVisible(u.registration_status)).map((u) => ({ kind: "user" as const, id: u.id, label: u.full_name }));
     const js = jobs.map((j) => ({ kind: "job" as const, id: j.id, label: `${j.clients?.name ?? "Job"} · #${j.id.slice(0, 4)}` }));
     return filter === "people" ? people : filter === "jobs" ? js : [...people, ...js];
   }, [users, jobs, profile, filter]);
