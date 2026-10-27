@@ -200,7 +200,7 @@ export function AudienceToggles({ value, onChange, disabled }: { value: Audience
     {AUDIENCES.map((a) => <label key={a.key} className="flex items-center justify-between text-sm">{a.label}<Switch disabled={disabled} checked={value.includes(a.key)} onCheckedChange={() => onChange(toggleAudience(value, a.key))} /></label>)}</div>;
 }
 
-export function DocumentMasters({ companyId, clientId, siteId, assetId }: { companyId: string; clientId?: string; siteId?: string; assetId?: string }) {
+export function DocumentMasters({ companyId, clientId, siteId, assetId }: { companyId: string; clientId?: string; siteId?: string | undefined; assetId?: string | undefined }) {
   const [picking, setPicking] = useState(false);
   const qc = useQueryClient();
   const { data: company } = useCompanyRules();
