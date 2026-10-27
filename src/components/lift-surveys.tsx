@@ -64,6 +64,7 @@ export function LiftSurveys() {
   };
 
   const createRfq = async (s: (typeof data)[number]) => {
+    if (!profile?.company_id) return;
     const d = normalizeSurvey(s);
     const title = `${s.survey_number || "Survey"} — ${s.sites?.name ?? s.clients?.name ?? "site"}`;
     const notes = [
