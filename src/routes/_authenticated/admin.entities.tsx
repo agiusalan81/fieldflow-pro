@@ -33,7 +33,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/admin/entities")({ staticData: { sitemap: false },
-  validateSearch: (search: Record<string, unknown>): { client?: string } => (typeof search['client'] === 'string' ? { client: search['client'] } : {}),
+  validateSearch: (search: Record<string, unknown>): { client?: string; tab?: string } => ({ ...(typeof search['client'] === 'string' ? { client: search['client'] } : {}), ...(typeof search['tab'] === 'string' ? { tab: search['tab'] } : {}) }),
   head: () => ({
     meta: [
       { title: "Clients, contacts & assets — FieldBridge" },
@@ -57,28 +57,32 @@ function del(table: "sites" | "clients" | "client_contacts" | "assets", id: stri
 
 const ROW = "cursor-pointer hover:bg-muted/50";
 type Open = { id: string; name: string };
-type RecordTab = "sites" | "contacts" | "equipment";
+type RecordTab = string;
 type TabProps = { q: string; onOpen: (c: Open, tab: RecordTab) => void };
 
 function Entities() {
   const word = useTerminology();
   const lock = useNavLock();
-  const { client: focusClient } = Route.useSearch();
+  const { client: focusClient, tab: focusTab } = Route.useSearch();
+  const navigate = Route.useNavigate();
   const clients = useClients();
   const [q, setQ] = useState("");
   const [manage, setManage] = useState<(Open & { tab: RecordTab }) | null>(null);
   const { data: profile } = useProfile();
-  useEffect(() => { const client = clients.data?.find(c => c.id === focusClient); if (client) setManage({ id: client.id, name: client.name, tab: 'sites' }); }, [focusClient, clients.data]);
-  const onOpen = (c: Open, tab: RecordTab) => setManage({ ...c, tab });
+  // Open client and tab live in the address so Back returns to the exact tab.
+  useEffect(() => { const client = focusClient ? clients.data?.find(c => c.id === focusClient) : undefined; setManage(client ? { id: client.id, name: client.name, tab: focusTab ?? 'sites' } : null); }, [focusClient, focusTab, clients.data]);
+  const onOpen = (c: Open, tab: RecordTab) => { setManage({ ...c, tab }); void navigate({ search: { client: c.id, tab } }); };
+  const closeManage = () => { setManage(null); void navigate({ search: {} }); };
+  const switchTab = (tab: string) => { if (manage) { setManage({ ...manage, tab }); void navigate({ search: { client: manage.id, tab }, replace: true }); } };
   return (
     <AppShell title="Clients, sites & assets">
       <div className="mb-3"><Input placeholder="Search client, address, contact, lift reference or serial…" value={q} onChange={(e) => setQ(e.target.value)} /></div>
       <ClientsTab q={q} onOpen={onOpen} />
-      <Dialog open={!!manage} onOpenChange={(o) => !o && setManage(null)}>
+      <Dialog open={!!manage} onOpenChange={(o) => !o && closeManage()}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
           <DialogHeader><DialogTitle>{manage?.name}</DialogTitle></DialogHeader>
           {manage && profile && (
-            <Tabs key={manage.id} defaultValue={manage.tab === "equipment" ? "equipment" : manage.tab === 'contacts' ? 'contacts' : "sites"}>
+            <Tabs key={manage.id} value={manage.tab} onValueChange={switchTab}>
               <TabsList className="mb-3 flex h-auto flex-wrap justify-start gap-1">
                 <TabsTrigger value="sites">Sites</TabsTrigger>
                 <TabsTrigger value="contacts">Contacts & portal</TabsTrigger>
