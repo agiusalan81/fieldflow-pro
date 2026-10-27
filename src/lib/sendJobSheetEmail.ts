@@ -1,3 +1,4 @@
+import { clientChecklistSummary, type CheckResult, type Frequency, type Protocol } from "@/lib/lift-maintenance";
 import { customerNotes } from "@/lib/service-sheet";
 import {formatSiteDisplay} from "@/lib/site-display";
 import { createServerFn } from "@tanstack/react-start";
@@ -187,10 +188,15 @@ async function prepareSheet(supabase: AuthClient, sheetId: string, recipients?: 
     const address = site ? formatSiteDisplay({...site,address:site.address||client?.billing_address||null}) : client?.billing_address??"";
     const date = new Date(sheet.created_at).toLocaleDateString("en-GB");
 
-    const [{ data: logs }, { data: parts }] = await Promise.all([
+    const [{ data: logs }, { data: parts }, { data: protocolLog }] = await Promise.all([
       supabase.from("jobsheet_time_logs").select("log_date, time_in, time_out, traveling_time_hours, technician_initials, technician_count").eq("jobsheet_id", sheetId).order("sort_order"),
       supabase.from("jobsheet_parts").select("part_description, unit, quantity").eq("jobsheet_id", sheetId).order("sort_order"),
+      supabase.from("lift_maintenance_logs").select("protocol_type, frequency, checklist_data, ard_check, out_of_service").eq("job_sheet_id", sheetId).maybeSingle(),
     ]);
+    // Client copy of the maintenance protocol: results only, never readings or tolerances.
+    const protocolSummary = protocolLog ? clientChecklistSummary(protocolLog.protocol_type as Protocol, protocolLog.frequency as Frequency, (protocolLog.checklist_data ?? {}) as Record<string, CheckResult>, (protocolLog.ard_check ?? {}) as Record<string, CheckResult>, protocolLog.out_of_service) : "";
+    const baseNotes = customerNotes(sheet.maintenance_notes, sheet.special_notes_in_pdf ? notes : null);
+    const clientNotes = [baseNotes, protocolSummary && `Maintenance checklist:\n${protocolSummary}`].filter(Boolean).join("\n\n") || null;
 
     const assetType = sheet.asset_type === "Other" ? sheet.asset_type_other : sheet.asset_type;
     const { data: technicianProfile } = sheet.assigned_technician_id ? await supabase.from("users").select("signature_on_file").eq("id",sheet.assigned_technician_id).maybeSingle() : { data: null };
@@ -207,7 +213,7 @@ async function prepareSheet(supabase: AuthClient, sheetId: string, recipients?: 
         return { date: l.log_date, in: l.time_in?.slice(0, 5) ?? "", out: l.time_out?.slice(0, 5) ?? "", travel, total: dayLabourHours(l.time_in, l.time_out, travel, l.technician_count, l.technician_initials), count: technicianCount(l.technician_count, l.technician_initials), techs: l.technician_initials.join(", ") };
       }),
       parts: (parts ?? []).map((p) => ({ desc: p.part_description, unit: p.unit ?? "", qty: Number(p.quantity) })),
-      notes: customerNotes(sheet.maintenance_notes, sheet.special_notes_in_pdf ? notes : null),
+      notes: clientNotes,
       terms: termsFor(parseTerms(settings?.terms), "job_sheet"),
       template: await resolveDocumentAssets(supabase, parseTemplate(settings?.pdf_template)),
     });
