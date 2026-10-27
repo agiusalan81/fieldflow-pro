@@ -263,7 +263,7 @@ function CostingEditor({ draft, setDraft, companyId, onSaved }: { draft: Costing
           </fieldset>
 
           <div className="flex flex-wrap gap-2 border-t pt-3">
-            <Button className="h-11" disabled={save.isPending} onClick={async () => { await save.mutateAsync(); toast.success("Costing sheet saved"); onSaved(); }}>{save.isPending ? "Saving…" : "Save costing sheet"}</Button>
+            <Button className="h-11" disabled={save.isPending} onClick={async () => { await save.mutateAsync(undefined); toast.success("Costing sheet saved"); onSaved(); }}>{save.isPending ? "Saving…" : "Save costing sheet"}</Button>
             <Button className="h-11" variant="secondary" disabled={save.isPending || !lines.length} onClick={pushToQuote}><FileOutput className="mr-1 h-4 w-4" />Push to customer quote</Button>
             <Button className="h-11" variant="outline" onClick={() => setDraft(null)}>Cancel</Button>
           </div>
