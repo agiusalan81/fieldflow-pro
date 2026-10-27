@@ -11,6 +11,9 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SuggestionChips } from "@/components/suggestion-chips";
+import { usePlanFeatures } from "@/lib/plan-features";
+import { useCompanyRules } from "@/lib/company";
+import { companyHasLiftTrade } from "@/lib/trade-association";
 
 const list = (s: string) => s.split(",").map((x) => x.trim()).filter(Boolean);
 /** Guidance and one-tap suggestions per supplier package category. */
@@ -28,7 +31,10 @@ export function useEstimateConfig(companyId?: string) {
 /** Company Settings → Estimates & suppliers. */
 export function EstimateSettings({ companyId }: { companyId: string }) {
   const qc = useQueryClient(); const q = useEstimateConfig(companyId);
+  const planOn = usePlanFeatures(); const { data: company } = useCompanyRules();
+  const liftPack = planOn("lift_pack") && companyHasLiftTrade(company?.industry, company?.trades);
   const [draft, setDraft] = useState<EstimateConfig | null>(null); const [field, setField] = useState(RFQ_FIELDS.find((f) => f.type === "select")!.key); const [busy, setBusy] = useState(false);
+  if (!liftPack) return null;
   const v = draft ?? q.data; if (!v) return <p>{q.error?.message ?? "Loading…"}</p>;
   const set = (n: Partial<EstimateConfig>) => setDraft({ ...v, ...n });
   const f = RFQ_FIELDS.find((x) => x.key === field)!;
