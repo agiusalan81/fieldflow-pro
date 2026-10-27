@@ -5,6 +5,7 @@ import { Pencil, Plus, Trash2, Link as LinkIcon, Save } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { usePlanFeatures } from '@/lib/plan-features';
 import { useClientPortalAccess } from '@/lib/client-portal-access';
+import { sendPortalInvite } from '@/lib/portal-invite.functions';
 import { DELIVERY_PURPOSES, PORTAL_URL, preferencesFor, recipientPreview, type RoutingContact, type DeliveryPurpose } from '@/lib/client-routing';
 import { CONTACT_POSITIONS, contactScopeMatches, contactWrite } from '@/lib/contact-editor';
 import { Button } from '@/components/ui/button';
@@ -48,10 +49,8 @@ export function StaffContacts({ clientId, companyId, siteId, title = 'Contact pe
   };
   const invite = async (c: RoutingContact) => {
     if (!portal.allowed) return;
-    const r = await supabase.rpc('invite_client_contact', { _client: clientId, _contact: c.id, _admin: !!c.is_primary_contact });
-    if (r.error || !r.data) { toast.error(r.error?.message ?? 'Invitation could not be created'); return; }
-    const link = `${PORTAL_URL}?invite=${r.data}`;
-    try { await navigator.clipboard.writeText(link); toast.success('Portal invitation copied'); } catch { toast.message('Portal invitation', { description: link }); }
+    try { const r = await sendPortalInvite({ data: { clientId, contactId: c.id, admin: !!c.is_primary_contact } }); toast.success(r.sent ? `Invitation emailed to ${r.email}` : 'This address has opted out of emails — invitation not sent'); }
+    catch (e) { toast.error(e instanceof Error ? e.message : 'Invitation could not be sent'); }
   };
   return <section className="space-y-3">
     <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-medium">{title}</h3>{!edit && (management || all.length === 0) && <Button size="sm" variant="outline" onClick={() => setEdit({ id: '', first_name: '', last_name: '', email: '', phone: '', role_title: 'Operations manager', site_id: siteId ?? null, site_ids: siteId ? [siteId] : [], all_sites: !siteId, has_whatsapp: false, receives_job_sheets: false, is_primary_contact: all.length === 0, delivery_preferences: {} })}><Plus className="mr-1 h-4 w-4"/>Add contact</Button>}</div>

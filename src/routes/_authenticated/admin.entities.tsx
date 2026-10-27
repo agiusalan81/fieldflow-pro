@@ -8,6 +8,7 @@ import { useClientPortalAccess } from '@/lib/client-portal-access';
 import { ClientPreapproval } from "@/components/client-preapproval";
 import { DocumentMasters } from "@/components/document-masters";
 import { useTerminology } from "@/lib/company";
+import { sendPortalInvite } from "@/lib/portal-invite.functions";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useNavLock } from '@/lib/plan-features';
@@ -129,9 +130,8 @@ function ClientsTab({ q, onOpen }: TabProps) {
     if (error || !r) { toast.error(error?.message ?? "Could not save"); return; }
     const c = { id: r.client_id };
     if (f.invite && portalAccess.allowed) {
-      const { data: token, error: ie } = await supabase.rpc("invite_client_contact", { _client: r.client_id, _contact: r.contact_id, _admin: true });
-      if (ie || !token) toast.error(ie?.message ?? "Portal invitation could not be created");
-      else { const link = `${window.location.origin}/client-portal?invite=${token}`; try { await navigator.clipboard.writeText(link); toast.success("Portal invitation link copied"); } catch { toast.message("Portal invitation link", { description: link }); } }
+      try { const sent = await sendPortalInvite({ data: { clientId: r.client_id, contactId: r.contact_id, admin: true } }); toast.success(sent.sent ? `Portal invitation emailed to ${sent.email}` : "This address has opted out of emails — invitation not sent"); }
+      catch (e) { toast.error(e instanceof Error ? e.message : "Portal invitation could not be sent"); }
     }
     refresh(); setClientId(c.id); setStep(2); toast.success("Client saved — now add sites, contacts and equipment");
   };
