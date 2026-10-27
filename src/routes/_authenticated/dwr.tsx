@@ -58,7 +58,7 @@ function DwrPage() {
   const quick = (days: number) => { const d = new Date(); d.setDate(d.getDate() - days); setFrom(iso(d)); setTo(iso(new Date())); };
 
   return (
-    <AppShell title={manager ? "Daily works reports" : "My daily reports"}>
+    <AppShell title={manager ? "Daily works reports" : "My daily reports · History"}>
       <div className="mx-auto max-w-5xl space-y-4">
         <section className="grid gap-3 rounded-xl border bg-card p-4 sm:grid-cols-2 lg:grid-cols-5">
           <div className="space-y-1"><Label className="text-xs">From</Label><Input type="date" className="h-10" value={from} onChange={(e) => setFrom(e.target.value)} /></div>

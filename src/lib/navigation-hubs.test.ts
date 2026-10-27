@@ -15,4 +15,17 @@ describe('role navigation', () => {
     expect(organizeNavigation('admin', [skills])).toEqual([]);
     expect(organizeNavigation('admin', [{ ...skills, locked: true }]).map(i => i.to)).toEqual(['/skills']);
   });
+  it.each(['admin', 'superuser', 'supervisor', 'technician', 'maintenance'])('keeps personal tasks in My workspace for %s', role => {
+    for (const path of ['/hours', '/leave', '/settings']) expect(navigationHub(role, path)).toBe('My workspace');
+  });
+  it('separates payroll and vertical packs without losing worked hours', () => {
+    for (const path of ['/payroll/wages', '/payroll/payslips', '/payroll/hours', '/admin/leave']) expect(navigationHub('admin', path)).toBe('Payroll & Leave');
+    expect(navigationHub('admin', '/lift-rfq')).toBe('Vertical packs');
+    expect(navigationHub('technician', '/dwr')).toBe('My workspace');
+  });
+  it('preserves distinct dispatch and ledger destinations', () => {
+    const sheet = { to: '/admin/jobs', label: 'Job sheets', group: 'Operations', search: { view: 'sheets' } };
+    const dispatch = { ...sheet, label: 'Dispatched jobs', search: { view: 'dispatch' } };
+    expect(organizeNavigation('admin', [sheet, dispatch, sheet])).toEqual([sheet, dispatch].map(i => ({ ...i, group: 'Operations & field' })));
+  });
 });

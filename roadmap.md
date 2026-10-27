@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Role flyout navigation: hover/auto-close groups and tab shortcuts, touch accordions, personal workspace, separate dispatch/sheet ledger, Payroll & Leave; preserve forms and entitlement guards.
 - [x] Unified usability pass: role-aware menu hubs, categorized alert drawer/object-linked counts, four settings workspaces with mounted editors, global New/search, embedded Team skills and Client 360. Superadmin existing client/quote search, new estimate, exact confirmation-alert link, desktop/406px layout and technician View As verified; 24 tests pass, build OK; no data/permission migrations. Real technician session and approval decisions not exercised.
 - [x] Troubleshoot batch: MINAKEL Technical library Coming soon cleared; pack-level Coming soon in HQ; brand colour on estimate/proposal preview; Company Settings document numbering (estimates, proposals, job sheets, invoices saved); delete any estimate not linked to a job; phone decision accept/decline with pre-filled client name and client email
 - [ ] Live check of new numbering, delete and phone-decision email while signed in
