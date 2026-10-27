@@ -40,7 +40,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/admin/jobs")({ staticData: { sitemap: false },
-  validateSearch: (s: Record<string, unknown>): { new?: boolean | undefined; assetId?: string | undefined; problemId?: string | undefined; review?:string; quoteJob?:string; view?: string; tab?: string } => ({ view: s["view"] === "dispatch" || s["new"] || s["assetId"] || s["problemId"] || s["quoteJob"] ? "dispatch" : "sheets", tab: ["all", "draft", "completed", "archive"].includes(String(s["tab"])) ? String(s["tab"]) : "all", ...(typeof s['quoteJob'] === 'string' ? { quoteJob: s['quoteJob'] } : {}), ...(typeof s["review"]==="string"?{review:s["review"]}:{}), new: s["new"] === true || s["new"] === "true" ? true : undefined, assetId: typeof s["assetId"] === "string" ? s["assetId"] : undefined, problemId: typeof s["problemId"] === "string" ? s["problemId"] : undefined }),
+  validateSearch: (s: Record<string, unknown>): { new?: boolean | undefined; assetId?: string | undefined; problemId?: string | undefined; review?:string; quoteJob?:string; view?: string; tab?: string } => ({ view: s["view"] === "dispatch" || s["new"] || s["assetId"] || s["problemId"] || s["quoteJob"] ? "dispatch" : "sheets", tab: ["all", "draft", "completed", "archive", "scheduled", "unscheduled"].includes(String(s["tab"])) ? String(s["tab"]) : "all", ...(typeof s['quoteJob'] === 'string' ? { quoteJob: s['quoteJob'] } : {}), ...(typeof s["review"]==="string"?{review:s["review"]}:{}), new: s["new"] === true || s["new"] === "true" ? true : undefined, assetId: typeof s["assetId"] === "string" ? s["assetId"] : undefined, problemId: typeof s["problemId"] === "string" ? s["problemId"] : undefined }),
   head: () => ({
     meta: [
       { title: "Job sheets — FieldBridge" },
@@ -170,7 +170,7 @@ function AdminJobs() {
 
   return (
     <AppShell title={dispatchOnly ? "Dispatched jobs" : "Job sheets"}>
-      {dispatchOnly ? <><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-semibold">Team dispatch</h2><NewJobDialog /></div>{canDeleteVisit(me?.role) && <DispatchedVisits />}</> : <>
+      {dispatchOnly ? <><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-semibold">Team dispatch</h2><NewJobDialog /></div>{canDeleteVisit(me?.role) && <DispatchedVisits tab={tab === "unscheduled" ? "unscheduled" : "scheduled"} onTabChange={tab => void navigate({ to: "/admin/jobs", search: { view: "dispatch", tab }, replace: true })} />}</> : <>
       <Tabs value={tab} onValueChange={tab => void navigate({ to: "/admin/jobs", search: { view: "sheets", tab }, replace: true })} className="mb-4"><TabsList className="h-auto flex-wrap"><TabsTrigger value="all">Draft & completed sheets</TabsTrigger><TabsTrigger value="draft">Drafts</TabsTrigger><TabsTrigger value="completed">Completed for review</TabsTrigger><TabsTrigger value="archive">Monthly archive</TabsTrigger></TabsList></Tabs>
       <div className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_220px]">
         <Input placeholder="Search client, technician, asset or sheet no." value={q} onChange={(e) => setQ(e.target.value)} />
