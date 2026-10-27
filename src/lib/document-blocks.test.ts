@@ -141,9 +141,10 @@ describe("checklist copies and reports", () => {
     expect(stripRich(coloured.text)).toBe("check brakes now");
     expect(parseRich(coloured.text)).toEqual([{ text: "check " }, { text: "brakes", bold: true, color: "red" }, { text: " now" }]);
   });
-  it("a selection starting inside a marker expands outward instead of breaking it", () => {
-    const r = wrapSelection("a [red]hot[/red] b", 5, 8, "**");
+  it("a selection crossing marker boundaries expands outward instead of breaking them", () => {
+    const r = wrapSelection("a [red]hot[/red] b", 4, 13, "**");
     expect(r.text).toBe("a **[red]hot[/red]** b");
+    expect(stripRich(r.text)).toBe("a hot b");
     expect(parseRich(r.text).some((s) => s.text.includes("[red]"))).toBe(false);
   });
   it("applying the same marker again unwraps instead of double-wrapping", () => {
