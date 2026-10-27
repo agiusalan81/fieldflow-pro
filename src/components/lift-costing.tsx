@@ -18,7 +18,7 @@ import {
   emptyCosting,
   normalizeCosting,
   priceWith,
-  reconcileClientLines,
+
   stageAmounts,
   applyTemplate,
   normalizeTemplate,
@@ -125,7 +125,6 @@ function CostingEditor({ draft, setDraft, companyId, onSaved }: { draft: Costing
   const breakdown = useMemo(() => costBreakdown(d), [d]);
   const matrix = useMemo(() => comparisonMatrix(d), [d]);
   const current = useMemo(() => priceWith(d, d.equipment_markup_pct, d.labour_markup_pct, d.subcontractor_markup_pct), [d]);
-  const lines = useMemo(() => reconcileClientLines(d), [d]);
   const stages = useMemo(() => stageAmounts(current.price, d.stages), [current.price, d.stages]);
 
   const save = useMutation({
