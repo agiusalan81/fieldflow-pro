@@ -11,6 +11,7 @@ import { usePlanFeatures } from '@/lib/plan-features';
 import { ModulePreview } from '@/components/module-preview';
 import { formatSiteTitle } from '@/lib/site-display';
 import { DocumentMasters } from '@/components/document-masters';
+import { EquipmentContracts } from '@/components/equipment-contracts';
 import { isOffice, useProfile } from '@/lib/profile';
 
 /** Client → head-office contacts, then each site with its own contacts and equipment. */
@@ -74,6 +75,7 @@ export function SiteHierarchy({ clientId, companyId }: { clientId: string; compa
                 </div>
               </AccordionTrigger>
               <AccordionContent className="space-y-4">
+                <EquipmentContracts companyId={companyId} clientId={clientId} siteId={s.id} />
                 {management && <div className="flex justify-end gap-1">
                   <Button size="sm" variant="ghost" onClick={() => setEdit({ id: s.id, name: s.name, address: s.address ?? "", store_code: s.store_code ?? "" })}><Pencil className="mr-1 h-3.5 w-3.5" />Edit site</Button>
                   <Button size="sm" variant="ghost" onClick={() => remove(s.id)}><Trash2 className="mr-1 h-3.5 w-3.5" />Delete</Button>

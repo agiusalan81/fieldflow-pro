@@ -2,6 +2,11 @@ import { describe, expect, it } from "vitest";
 import { featureOn, resolveAppTitle } from "./plan-features";
 
 describe("Platform HQ feature switches", () => {
+  it('keeps generic contracts in Core without requiring the lift or PPM packs', () => {
+    const status = {state:'active',modules:[{name:'core',enabled:true},{name:'contracts',enabled:false},{name:'lift_pack',enabled:false},{name:'ppm_automation',enabled:false}]};
+    expect(featureOn(status,'contracts')).toBe(true);
+    expect(featureOn({...status,modules:[{name:'core',enabled:false}]},'contracts')).toBe(false);
+  });
   it("customer quoting inherits Core rather than supplier or QS access", () => {
     const status = { state: "active", modules: [{ name: "core", enabled: true }, { name: "customer_quotes", enabled: false }, { name: "estimates", enabled: false }, { name: "qs_pricing", enabled: false }] };
     expect(featureOn(status, "customer_quotes")).toBe(true);

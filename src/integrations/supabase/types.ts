@@ -14,6 +14,96 @@ export type Database = {
   }
   public: {
     Tables: {
+      agreement_assets: {
+        Row: {
+          agreement_id: string
+          annual_price: number
+          asset_id: string
+          checklist_document_id: string | null
+          checklist_snapshot: Json
+          company_id: string
+          created_at: string
+          end_date: string
+          id: string
+          interval_months: number
+          pricing_snapshot: Json
+          renewal_history: Json
+          schedule_document_id: string | null
+          schedule_snapshot: Json
+          start_date: string
+        }
+        Insert: {
+          agreement_id: string
+          annual_price?: number
+          asset_id: string
+          checklist_document_id?: string | null
+          checklist_snapshot?: Json
+          company_id?: string
+          created_at?: string
+          end_date: string
+          id?: string
+          interval_months?: number
+          pricing_snapshot?: Json
+          renewal_history?: Json
+          schedule_document_id?: string | null
+          schedule_snapshot?: Json
+          start_date: string
+        }
+        Update: {
+          agreement_id?: string
+          annual_price?: number
+          asset_id?: string
+          checklist_document_id?: string | null
+          checklist_snapshot?: Json
+          company_id?: string
+          created_at?: string
+          end_date?: string
+          id?: string
+          interval_months?: number
+          pricing_snapshot?: Json
+          renewal_history?: Json
+          schedule_document_id?: string | null
+          schedule_snapshot?: Json
+          start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agreement_assets_agreement_id_fkey"
+            columns: ["agreement_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_agreements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agreement_assets_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agreement_assets_checklist_document_id_fkey"
+            columns: ["checklist_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_masters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agreement_assets_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agreement_assets_schedule_document_id_fkey"
+            columns: ["schedule_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_masters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       asset_component_events: {
         Row: {
           asset_id: string
@@ -3991,12 +4081,15 @@ export type Database = {
           annual_price: number
           client_id: string
           company_id: string
+          contract_document_id: string | null
+          contract_kind: string
           contract_type_id: string | null
           created_at: string
           end_date: string
           id: string
           notes: string | null
           price_confirmed_at: string | null
+          project_price: number
           renewal_sent_at: string | null
           renewal_signature: string | null
           renewal_signed_at: string | null
@@ -4005,17 +4098,21 @@ export type Database = {
           start_date: string
           status: string
           terms_snapshot: Json
+          title: string
         }
         Insert: {
           annual_price?: number
           client_id: string
           company_id: string
+          contract_document_id?: string | null
+          contract_kind?: string
           contract_type_id?: string | null
           created_at?: string
           end_date: string
           id?: string
           notes?: string | null
           price_confirmed_at?: string | null
+          project_price?: number
           renewal_sent_at?: string | null
           renewal_signature?: string | null
           renewal_signed_at?: string | null
@@ -4024,17 +4121,21 @@ export type Database = {
           start_date: string
           status?: string
           terms_snapshot?: Json
+          title?: string
         }
         Update: {
           annual_price?: number
           client_id?: string
           company_id?: string
+          contract_document_id?: string | null
+          contract_kind?: string
           contract_type_id?: string | null
           created_at?: string
           end_date?: string
           id?: string
           notes?: string | null
           price_confirmed_at?: string | null
+          project_price?: number
           renewal_sent_at?: string | null
           renewal_signature?: string | null
           renewal_signed_at?: string | null
@@ -4043,6 +4144,7 @@ export type Database = {
           start_date?: string
           status?: string
           terms_snapshot?: Json
+          title?: string
         }
         Relationships: [
           {
@@ -4057,6 +4159,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_agreements_contract_document_id_fkey"
+            columns: ["contract_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_masters"
             referencedColumns: ["id"]
           },
           {
@@ -6539,6 +6648,7 @@ export type Database = {
       can_read_chat_object: { Args: { _name: string }; Returns: boolean }
       chat_sheet_access: { Args: { _sheet: string }; Returns: boolean }
       claim_open_job: { Args: { _job: string }; Returns: string }
+      client_contract_coverage: { Args: { _client: string }; Returns: Json }
       client_message_recipients: {
         Args: {
           _channel: string
@@ -6897,6 +7007,10 @@ export type Database = {
           _year: number
         }
         Returns: undefined
+      }
+      save_equipment_contract: {
+        Args: { _agreement?: string; _header: Json; _lines: Json }
+        Returns: string
       }
       save_fleet_vehicle: {
         Args: { _litres: number; _plate: string; _price: number }

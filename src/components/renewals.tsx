@@ -27,7 +27,8 @@ export function RenewalList({ office, limit }: { office: boolean; limit?: number
   const { data = [] } = useAgreements();
   const { data: c } = useCompanyRules();
   const qc = useQueryClient();
-  const due = data.filter((a) => a.status === "active" && (dueForRenewal(a.end_date, c?.renewalDays ?? 30) || daysUntil(a.end_date) < 0));
+  const coverage = useQuery({ queryKey: ['renewal-covered-agreements'], queryFn: async () => { const r = await supabase.from('agreement_assets').select('agreement_id'); if (r.error) throw r.error; return new Set(r.data.map(x => x.agreement_id)); } });
+  const due = data.filter((a) => !coverage.data?.has(a.id) && a.status === "active" && (dueForRenewal(a.end_date, c?.renewalDays ?? 30) || daysUntil(a.end_date) < 0));
   const act = async (id: string, patch: Record<string, string | null>, msg: string) => {
     const { error } = await supabase.from("maintenance_agreements").update(patch as never).eq("id", id);
     if (error) { toast.error(error.message); return; }

@@ -53,7 +53,7 @@ export const MODULE_DESCRIPTIONS: Record<string, string> = {
   estimates: "Vertical lift supplier RFQs, technical specifications and internal estimate follow-up within the Lifts & Escalators suite. Supplier prices never enter customer documents automatically.",
   qs_pricing: "Company price lists, bills of quantities and as-built quantity surveying.",
   supplier_email: "Email suppliers from estimates and send automatic follow-up reminders.",
-  contracts: "Maintenance agreements, contract tiers and renewal reminders.",
+  contracts: "Core multi-asset/site contracts, agreed checklists, equipment prices and staggered renewals. Lift pricing and automatic PPM remain optional packs.",
   payroll: "Hours, overtime and gross earnings with issued payslips that cannot be changed.",
   safety: "Safety checklists and a fault library used on job sheets.",
   reports: "Share client reports through secure, expiring links.",
@@ -85,7 +85,7 @@ type Status = { state?: string; modules?: { name: string; enabled: boolean }[] |
 
 /** Feature is on unless the company's plan lists it and it is switched off. Companies without a plan keep everything. */
 export function featureOn(status: Status | undefined, key: string) {
-  if (key === "customer_quotes") return featureOn(status, "core");
+  if (key === "customer_quotes" || key === "contracts") return featureOn(status, "core");
   if (!status || status.state === "legacy") return true;
   const m = status.modules?.find((x) => x.name === key);
   return m ? m.enabled : true;
@@ -105,7 +105,7 @@ export function usePlanFeatures(enabled = true) {
 
 /** HQ display choices for locked modules: hide entirely (e.g. grandfathered tenants) or mark as Coming soon. */
 export function lockedVisibility(status: Status | undefined, key: string) {
-  if (key === "customer_quotes") return lockedVisibility(status, "core");
+  if (key === "customer_quotes" || key === "contracts") return lockedVisibility(status, "core");
   const comingSoon = !!status?.coming_soon_modules?.includes(key);
   const hidden = !comingSoon && (!!status?.hide_locked_modules || !!status?.hidden_modules?.includes(key));
   return { hidden, comingSoon };

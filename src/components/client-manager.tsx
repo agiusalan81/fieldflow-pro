@@ -14,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { supabase } from "@/integrations/supabase/client";
 import { isOffice, useProfile } from "@/lib/profile";
 import { DocumentMasters } from "@/components/document-masters";
+import { EquipmentContracts } from '@/components/equipment-contracts';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { RoleCombobox, learnContactRole, LookupInput, learnLookup, useLookup, EQUIPMENT_TYPE } from "@/components/role-combobox";
 import { Button } from "@/components/ui/button";
@@ -144,6 +145,7 @@ export function EquipmentManager({ clientId, companyId, siteId }: { clientId: st
             <div className="text-muted-foreground">Ref {a.reference_number} · S/N {a.serial_number ?? "—"}</div>
           </div>
           <EquipmentQr assetId={a.id} reference={a.reference_number}/>
+          <EquipmentContracts companyId={companyId} clientId={clientId} siteId={a.site_id ?? undefined} assetId={a.id} />
           {isOffice(profile) && <Button size="sm" variant="outline" aria-label={`Add document to equipment ${a.reference_number}`} onClick={() => setDocumentEquipment(a)}><Plus className="mr-1 h-4 w-4" />Add document</Button>}
           <Button size="icon" variant="ghost" aria-label="Edit" onClick={() => { const canonical = types.find(t=>labelKey(t)===labelKey(a.asset_category)); const known = !!canonical; setOther(known ? "" : a.asset_category); setF({ asset_category: canonical ?? "Other", reference_number: a.reference_number, serial_number: a.serial_number ?? "" }); setEditing(a.id); }}><Pencil className="h-4 w-4" /></Button>
           <Button size="icon" variant="ghost" aria-label="Delete" onClick={() => remove(a.id)}><Trash2 className="h-4 w-4" /></Button>
