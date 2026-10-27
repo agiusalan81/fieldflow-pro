@@ -224,12 +224,13 @@ export function parseCommercial(raw: unknown): Commercial {
     showOnClient: r["showOnClient"] !== false,
     showSampleCalculation: r["showSampleCalculation"] === true,
     summaryItems: parseSummaryItems(r["summaryItems"]),
+    tierValues: parseTierValues(r["tierValues"]),
   };
 }
 
 /** True when the document carries any commercial content worth printing. */
 export function hasCommercial(c: Commercial): boolean {
-  return c.liftPricing !== null || c.basePrice !== null || c.visitsPerYear !== null || c.labourDiscountPct > 0 || c.partsDiscountPct > 0 || !!c.terms.trim() || c.summaryItems.length > 0;
+  return c.liftPricing !== null || c.basePrice !== null || c.visitsPerYear !== null || c.labourDiscountPct > 0 || c.partsDiscountPct > 0 || !!c.terms.trim() || c.summaryItems.length > 0 || c.tierValues.length > 0;
 }
 
 export type Extra = { label: string; value: string; audience: BlockAudience };
