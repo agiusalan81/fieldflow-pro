@@ -34,6 +34,7 @@ export function EstimateSettings({ companyId }: { companyId: string }) {
   const planOn = usePlanFeatures(); const { data: company } = useCompanyRules();
   const liftPack = planOn("lift_pack") && companyHasLiftTrade(company?.industry, company?.trades);
   const [draft, setDraft] = useState<EstimateConfig | null>(null); const [field, setField] = useState(RFQ_FIELDS.find((f) => f.type === "select")!.key); const [busy, setBusy] = useState(false);
+  if (!liftPack) return null;
   const v = draft ?? q.data; if (!v) return <p>{q.error?.message ?? "Loading…"}</p>;
   const set = (n: Partial<EstimateConfig>) => setDraft({ ...v, ...n });
   const f = RFQ_FIELDS.find((x) => x.key === field)!;
