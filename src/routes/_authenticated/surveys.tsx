@@ -61,7 +61,7 @@ function SurveysPage() {
 function List({ onOpen, manager, superuser }: { onOpen: (id: string) => void; manager: boolean; superuser: boolean }) {
   const [filter, setFilter] = useState("open");
   const q = useQuery({ queryKey: ["site-surveys"], queryFn: async () => {
-    const r = await supabase.from("site_surveys").select("id,status,track,survey_purpose,location_ref,field_details,materials,other_items,updated_at,clients(name)").order("updated_at", { ascending: false }).limit(200);
+    const r = await supabase.from("site_surveys").select("id,reference,status,track,survey_purpose,location_ref,field_details,materials,other_items,updated_at,clients(name)").order("updated_at", { ascending: false }).limit(200);
     if (r.error) throw r.error; return r.data;
   } });
   const create = async () => {
@@ -77,7 +77,7 @@ function List({ onOpen, manager, superuser }: { onOpen: (id: string) => void; ma
     </div>
     {q.isLoading ? <p className="text-muted-foreground">Loading…</p> : q.error ? <p role="alert" className="text-destructive">Surveys could not be loaded.</p> : !rows.length ? <EmptyState>{manager ? "No site surveys match this filter." : "You have no site surveys yet."}</EmptyState> :
       <ul className="space-y-2">{rows.map((s) => <li key={s.id}><button className="w-full rounded-xl border bg-card p-4 text-left hover:bg-muted/40" onClick={() => onOpen(s.id)}>
-        <div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-muted px-2 py-0.5 text-xs">{STATUS[s.status] ?? s.status}</span>{s.status === "draft" && surveyItemsPending(items(s.materials), items(s.other_items), parseSurveyDetails(s.field_details)) && <span className="rounded-full border border-primary px-2 py-0.5 text-xs text-primary">Materials to complete</span>}<span className="text-xs text-muted-foreground">{s.track === "supplier_rfq" ? "Supplier quotes needed" : "Direct office estimate"}</span></div>
+        <div className="flex flex-wrap items-center gap-2">{s.reference && <span className="font-mono text-xs font-medium">{s.reference}</span>}<span className="rounded-full bg-muted px-2 py-0.5 text-xs">{STATUS[s.status] ?? s.status}</span>{s.status === "draft" && surveyItemsPending(items(s.materials), items(s.other_items), parseSurveyDetails(s.field_details)) && <span className="rounded-full border border-primary px-2 py-0.5 text-xs text-primary">Materials to complete</span>}<span className="text-xs text-muted-foreground">{s.track === "supplier_rfq" ? "Supplier quotes needed" : "Direct office estimate"}</span></div>
         <p className="mt-1 font-medium">{s.clients?.name ?? (parseSurveyDetails(s.field_details).clientName || "No client yet")}{s.location_ref ? ` · ${s.location_ref}` : parseSurveyDetails(s.field_details).siteName ? ` · ${parseSurveyDetails(s.field_details).siteName}` : ""}</p>
         <p className="text-xs text-muted-foreground">{PURPOSES.find((p) => p[0] === s.survey_purpose)?.[1]} · updated {new Date(s.updated_at).toLocaleString()}</p>
       </button></li>)}</ul>}
