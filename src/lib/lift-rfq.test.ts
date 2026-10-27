@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { RFQ_FIELDS, alignToSupplier, optionsFor, parseEstimateConfig, reminderDue, straighten, suggestedPersons, suppliersOffering } from "./lift-rfq";
+import { DEFAULT_SUPPLIERS, RFQ_FIELDS, alignToSupplier, optionsFor, parseEstimateConfig, reminderDue, straighten, suggestedPersons, suppliersOffering } from "./lift-rfq";
 
-const cfg = parseEstimateConfig({});
+const cfg = parseEstimateConfig({ suppliers: DEFAULT_SUPPLIERS });
 const door = RFQ_FIELDS.find((f) => f.key === "door_brand")!;
 
 describe("lift estimate requests", () => {
+  it("new companies start with no package suppliers", () => expect(parseEstimateConfig({}).suppliers).toEqual([]));
   it("AH&MET packages only offer Fermator, AHZ and AHZ Plus doors", () => {
     expect(optionsFor(door, cfg, "AH&MET")).toEqual(["Fermator", "AHZ", "AHZ Plus"]);
   });
