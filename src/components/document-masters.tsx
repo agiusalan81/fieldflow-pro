@@ -25,6 +25,30 @@ import { buildMasterDocumentPdf } from "@/lib/master-document-pdf";
 import { CommercialPriceSummary, LiftCommercialEditor } from "@/components/lift-commercial";
 import { Link } from "@tanstack/react-router";
 import { CONTRACT_TYPE_PRESETS, DOC_TYPE_PRESETS, SECTORS, copyAudience, defaultCopyView, docTypeLabel, fitsAttachment, learnedOptions, missingTags, normalizeDocType, sectorLabel } from "@/lib/document-library-tags";
+import { SearchSelect } from "@/components/search-select";
+import { FormatToolbar } from "@/components/format-toolbar";
+import { extractDocumentText } from "@/lib/document-library.functions";
+import { libraryTermText } from "@/lib/customer-quote-extras";
+import { parseTerms, termsFor } from "@/lib/documents";
+import { stripRich } from "@/lib/rich-text";
+import type { TierValue } from "@/lib/document-blocks";
+
+type TierOpt = { id: string; name: string; visits_per_year: number | null; annual_price: number | null; labour_discount_pct: number | null; parts_discount_pct: number | null };
+
+/** Toggles a tier on a draft: keeps tier_id as the first selection, syncs per-tier commercial values and auto-fills empty single-tier fields. */
+function applyTierToggle<T extends { tier_id: string | null; tier_ids?: string[]; commercial: unknown }>(doc: T, tier: TierOpt, on: boolean): T {
+  const current = doc.tier_ids ?? (doc.tier_id ? [doc.tier_id] : []);
+  const next = on ? [...new Set([...current, tier.id])] : current.filter((id) => id !== tier.id);
+  const c = parseCommercial(doc.commercial);
+  let tierValues = c.tierValues.filter((v) => next.includes(v.tierId));
+  if (on && !tierValues.some((v) => v.tierId === tier.id)) tierValues = [...tierValues, { tierId: tier.id, name: tier.name, visitsPerYear: tier.visits_per_year ?? null, basePrice: tier.annual_price ?? null, labourDiscountPct: tier.labour_discount_pct ?? 0, partsDiscountPct: tier.parts_discount_pct ?? 0 }];
+  let commercial: Commercial = { ...c, tierValues };
+  if (next.length === 1) {
+    const v = tierValues.find((x) => x.tierId === next[0]);
+    if (v) commercial = { ...commercial, visitsPerYear: commercial.visitsPerYear ?? v.visitsPerYear, basePrice: commercial.basePrice ?? v.basePrice, labourDiscountPct: commercial.labourDiscountPct || v.labourDiscountPct, partsDiscountPct: commercial.partsDiscountPct || v.partsDiscountPct };
+  }
+  return { ...doc, tier_id: next[0] ?? null, tier_ids: next, commercial: commercial as unknown as Json };
+}
 
 type Master = Database["public"]["Tables"]["document_masters"]["Row"];
 type PreviewDoc = Pick<Master, "name" | "body" | "items" | "kind"> & Partial<Pick<Master, "sections" | "revision" | "trade" | "field_specs" | "commercial" | "extras">>;
