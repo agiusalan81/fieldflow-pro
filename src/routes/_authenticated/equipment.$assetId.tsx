@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { PpmVisits } from "@/components/ppm-visits";
 import { AssetComponents } from "@/components/asset-components";
 import { LiftPassport } from "@/components/lift-passport";
-import { useProfile, isManager } from "@/lib/profile";
+import { useProfile, isManager, isOffice } from "@/lib/profile";
+import { DocumentMasters } from "@/components/document-masters";
 export const Route = createFileRoute("/_authenticated/equipment/$assetId")({
   staticData: { sitemap: false },
   head: () => ({
@@ -40,7 +41,7 @@ function EquipmentPage() {
       const r = await supabase
         .from("assets")
         .select(
-          "id,reference_number,asset_category,serial_number,location_details,site_id,sites(name)",
+          "id,reference_number,asset_category,serial_number,location_details,site_id,client_id,sites(name)",
         )
         .eq("id", assetId)
         .maybeSingle();
@@ -65,6 +66,9 @@ function EquipmentPage() {
               Serial {q.data.serial_number ?? "—"} · {q.data.location_details ?? ""}
             </p>
           </section>
+          {isOffice(profile) && profile && q.data.client_id && (
+            <DocumentMasters companyId={profile.company_id} clientId={q.data.client_id} siteId={q.data.site_id ?? undefined} assetId={assetId} />
+          )}
           {on("lift_pack") && (
             <LiftPassport
               assetId={assetId}
