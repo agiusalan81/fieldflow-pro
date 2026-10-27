@@ -1,5 +1,8 @@
 import {formatSiteDisplay} from "@/lib/site-display";
 import { TravelPicker } from "@/components/travel-picker";
+import { LiftMaintenanceChecklist } from "@/components/lift-maintenance";
+import { protocolForCategory } from "@/lib/lift-maintenance";
+import { usePlanFeatures } from "@/lib/plan-features";
 import { JobsheetInternalNotes, InternalThread } from "@/components/jobsheet-internal-notes";
 import { sheetFingerprint } from "@/lib/sheet-dirty";
 import { JobReceipts } from "@/components/job-receipts";
@@ -122,6 +125,7 @@ function SheetForm() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { data: profile } = useProfile();
+  const liftFeatures = usePlanFeatures();
   const { data: company } = useCompanyRules();
   const { data: users = [] } = useCompanyUsers();
   const { data: suggestions } = useEntrySuggestions();
@@ -253,6 +257,8 @@ function SheetForm() {
   const site = sites.find((s) => s.id === form.site_id);
   const assets = refs?.assets.filter((a) => a.client_id === form.client_id && (!form.site_id || !a.site_id || a.site_id === form.site_id)) ?? [];
   const asset = refs?.assets.find((a) => a.id === form.asset_id);
+  const liftOn = liftFeatures("lift_pack");
+  const liftProtocol = protocolForCategory(asset?.asset_category ?? (form.asset_type as string | null));
 
   const assetPatch = (id: string | null): Partial<Form> => {
     const a = refs?.assets.find((x) => x.id === id);
@@ -522,6 +528,12 @@ function SheetForm() {
                 </label>
               ))}
             </div>
+          </Section>
+        )}
+
+        {liftOn && form.is_maintenance && liftProtocol && (
+          <Section n={3} title="Lift & escalator maintenance protocol">
+            <LiftMaintenanceChecklist sheetId={sheetId} assetId={(form.asset_id as string | null) ?? null} defaultProtocol={liftProtocol} readOnly={readOnly || assisting} />
           </Section>
         )}
 
