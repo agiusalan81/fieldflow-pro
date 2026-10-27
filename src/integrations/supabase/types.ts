@@ -3259,6 +3259,128 @@ export type Database = {
           },
         ]
       }
+      lift_costing_sheets: {
+        Row: {
+          certification_cost: number
+          client_price: number
+          company_id: string
+          comparison_scenarios: Json
+          contingency_pct: number
+          created_at: string
+          created_by: string | null
+          customs_cost: number
+          dismantling_cost: number
+          electrical_hours: number
+          electrical_rate: number
+          equipment_cost: number
+          equipment_markup_pct: number
+          freight_cost: number
+          id: string
+          labour_markup_pct: number
+          mechanical_hours: number
+          mechanical_rate: number
+          quote_id: string | null
+          rfq_id: string | null
+          stage_payments: Json
+          status: string
+          subcontractor_markup_pct: number
+          survey_id: string | null
+          third_party_costs: Json
+          title: string
+          total_cost: number
+          updated_at: string
+        }
+        Insert: {
+          certification_cost?: number
+          client_price?: number
+          company_id?: string
+          comparison_scenarios?: Json
+          contingency_pct?: number
+          created_at?: string
+          created_by?: string | null
+          customs_cost?: number
+          dismantling_cost?: number
+          electrical_hours?: number
+          electrical_rate?: number
+          equipment_cost?: number
+          equipment_markup_pct?: number
+          freight_cost?: number
+          id?: string
+          labour_markup_pct?: number
+          mechanical_hours?: number
+          mechanical_rate?: number
+          quote_id?: string | null
+          rfq_id?: string | null
+          stage_payments?: Json
+          status?: string
+          subcontractor_markup_pct?: number
+          survey_id?: string | null
+          third_party_costs?: Json
+          title?: string
+          total_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          certification_cost?: number
+          client_price?: number
+          company_id?: string
+          comparison_scenarios?: Json
+          contingency_pct?: number
+          created_at?: string
+          created_by?: string | null
+          customs_cost?: number
+          dismantling_cost?: number
+          electrical_hours?: number
+          electrical_rate?: number
+          equipment_cost?: number
+          equipment_markup_pct?: number
+          freight_cost?: number
+          id?: string
+          labour_markup_pct?: number
+          mechanical_hours?: number
+          mechanical_rate?: number
+          quote_id?: string | null
+          rfq_id?: string | null
+          stage_payments?: Json
+          status?: string
+          subcontractor_markup_pct?: number
+          survey_id?: string | null
+          third_party_costs?: Json
+          title?: string
+          total_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lift_costing_sheets_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lift_costing_sheets_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "customer_quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lift_costing_sheets_rfq_id_fkey"
+            columns: ["rfq_id"]
+            isOneToOne: false
+            referencedRelation: "lift_estimates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lift_costing_sheets_survey_id_fkey"
+            columns: ["survey_id"]
+            isOneToOne: false
+            referencedRelation: "lift_surveys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lift_estimates: {
         Row: {
           client_id: string | null
@@ -3352,6 +3474,264 @@ export type Database = {
           },
           {
             foreignKeyName: "lift_estimates_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lift_maintenance_logs: {
+        Row: {
+          ard_check: Json
+          asset_id: string | null
+          checklist_data: Json
+          company_id: string
+          created_at: string
+          created_by: string | null
+          defects: Json
+          frequency: string
+          id: string
+          job_sheet_id: string
+          measurements: Json
+          out_of_service: boolean
+          protocol_type: string
+          updated_at: string
+        }
+        Insert: {
+          ard_check?: Json
+          asset_id?: string | null
+          checklist_data?: Json
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          defects?: Json
+          frequency?: string
+          id?: string
+          job_sheet_id: string
+          measurements?: Json
+          out_of_service?: boolean
+          protocol_type?: string
+          updated_at?: string
+        }
+        Update: {
+          ard_check?: Json
+          asset_id?: string | null
+          checklist_data?: Json
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          defects?: Json
+          frequency?: string
+          id?: string
+          job_sheet_id?: string
+          measurements?: Json
+          out_of_service?: boolean
+          protocol_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lift_maintenance_logs_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lift_maintenance_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lift_maintenance_logs_job_sheet_id_fkey"
+            columns: ["job_sheet_id"]
+            isOneToOne: true
+            referencedRelation: "job_sheets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lift_passports: {
+        Row: {
+          asset_id: string
+          company_id: string
+          controller_electronics: Json
+          created_at: string
+          created_by: string | null
+          doors_cabin: Json
+          drive_type: string
+          equipment_type: string
+          escalator_geometry: Json
+          escalator_handrail_balustrade: Json
+          escalator_steps_chains: Json
+          general: Json
+          id: string
+          machine_drive: Json
+          notes: string
+          suspension_safety: Json
+          updated_at: string
+        }
+        Insert: {
+          asset_id: string
+          company_id?: string
+          controller_electronics?: Json
+          created_at?: string
+          created_by?: string | null
+          doors_cabin?: Json
+          drive_type?: string
+          equipment_type?: string
+          escalator_geometry?: Json
+          escalator_handrail_balustrade?: Json
+          escalator_steps_chains?: Json
+          general?: Json
+          id?: string
+          machine_drive?: Json
+          notes?: string
+          suspension_safety?: Json
+          updated_at?: string
+        }
+        Update: {
+          asset_id?: string
+          company_id?: string
+          controller_electronics?: Json
+          created_at?: string
+          created_by?: string | null
+          doors_cabin?: Json
+          drive_type?: string
+          equipment_type?: string
+          escalator_geometry?: Json
+          escalator_handrail_balustrade?: Json
+          escalator_steps_chains?: Json
+          general?: Json
+          id?: string
+          machine_drive?: Json
+          notes?: string
+          suspension_safety?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lift_passports_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: true
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lift_passports_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lift_surveys: {
+        Row: {
+          asset_id: string | null
+          client_id: string | null
+          company_id: string
+          conducted_at: string | null
+          conducted_by: string | null
+          created_at: string
+          created_by: string | null
+          dismantling_details: Json
+          floor_heights: Json
+          geometry: Json
+          id: string
+          is_bare_shaft: boolean
+          logistics: Json
+          modernisation_assessment: Json
+          photos: string[]
+          power_supply: Json
+          purpose: string
+          requires_dismantling: boolean
+          site_id: string | null
+          sketch: string | null
+          status: string
+          survey_kind: string
+          survey_number: string
+          updated_at: string
+        }
+        Insert: {
+          asset_id?: string | null
+          client_id?: string | null
+          company_id?: string
+          conducted_at?: string | null
+          conducted_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          dismantling_details?: Json
+          floor_heights?: Json
+          geometry?: Json
+          id?: string
+          is_bare_shaft?: boolean
+          logistics?: Json
+          modernisation_assessment?: Json
+          photos?: string[]
+          power_supply?: Json
+          purpose?: string
+          requires_dismantling?: boolean
+          site_id?: string | null
+          sketch?: string | null
+          status?: string
+          survey_kind?: string
+          survey_number?: string
+          updated_at?: string
+        }
+        Update: {
+          asset_id?: string | null
+          client_id?: string | null
+          company_id?: string
+          conducted_at?: string | null
+          conducted_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          dismantling_details?: Json
+          floor_heights?: Json
+          geometry?: Json
+          id?: string
+          is_bare_shaft?: boolean
+          logistics?: Json
+          modernisation_assessment?: Json
+          photos?: string[]
+          power_supply?: Json
+          purpose?: string
+          requires_dismantling?: boolean
+          site_id?: string | null
+          sketch?: string | null
+          status?: string
+          survey_kind?: string
+          survey_number?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lift_surveys_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lift_surveys_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lift_surveys_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lift_surveys_site_id_fkey"
             columns: ["site_id"]
             isOneToOne: false
             referencedRelation: "sites"

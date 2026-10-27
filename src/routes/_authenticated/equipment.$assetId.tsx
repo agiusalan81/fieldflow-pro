@@ -8,6 +8,7 @@ import { AssetHistory } from "@/components/job-card";
 import { Button } from "@/components/ui/button";
 import { PpmVisits } from "@/components/ppm-visits";
 import { AssetComponents } from "@/components/asset-components";
+import { LiftPassport } from "@/components/lift-passport";
 import { useProfile, isManager } from "@/lib/profile";
 export const Route = createFileRoute("/_authenticated/equipment/$assetId")({
   staticData: { sitemap: false },
@@ -64,6 +65,13 @@ function EquipmentPage() {
               Serial {q.data.serial_number ?? "—"} · {q.data.location_details ?? ""}
             </p>
           </section>
+          {on("lift_pack") && (
+            <LiftPassport
+              assetId={assetId}
+              assetCategory={q.data.asset_category}
+              canManage={isManager(profile)}
+            />
+          )}
           {on("ppm_automation") && (
             <>
               <PpmVisits assetId={assetId} canManage={isManager(profile)} />
