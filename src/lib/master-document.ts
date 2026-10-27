@@ -17,7 +17,12 @@ export function masterDocumentLines(doc: MasterDocumentContent, view: Audience):
   const c = parseCommercial(doc.commercial);
   if (view === "client" && c.showOnClient && hasCommercial(c)) {
     lines.push("Service summary");
-    if (c.visitsPerYear !== null) lines.push(`${c.visitsPerYear} visits per year`);
+    if (c.tierValues.length > 1) {
+      for (const t of c.tierValues) {
+        const parts = [t.visitsPerYear !== null ? `${t.visitsPerYear} visits per year` : "", t.basePrice !== null ? `€${t.basePrice.toFixed(2)}` : "", t.labourDiscountPct ? `${t.labourDiscountPct}% labour discount` : "", t.partsDiscountPct ? `${t.partsDiscountPct}% parts discount` : ""].filter(Boolean);
+        lines.push(`${t.name || "Tier"}: ${parts.join(" · ")}`);
+      }
+    } else if (c.visitsPerYear !== null) lines.push(`${c.visitsPerYear} visits per year`);
     const total = commercialTotal(c), p = c.liftPricing;
     const money = (n: number) => `€${n.toFixed(2)}`;
     if (p) lines.push(`${p.stops} stops · ${p.landingDoors} landing doors · ${p.carAccess} car access`);
