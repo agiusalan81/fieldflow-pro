@@ -233,7 +233,7 @@ export function DocumentMasters({ companyId, clientId }: { companyId: string; cl
     const parsedCommercial = parseCommercial(edit.commercial);
     const commercial = editLift && !parsedCommercial.liftPricing ? { ...parsedCommercial, liftPricing: { ...DEFAULT_LIFT_PRICING } } : parsedCommercial;
     const extras = parseExtras(edit.extras);
-    if (await act(() => supabase.from("document_masters").update({ name: edit.name.trim(), kind: edit.kind, trade: edit.trade, body: edit.body, items, sections: sections as unknown as Json, audience: parseAudience(edit.audience), state, field_specs: specs as unknown as Json, commercial: commercial as unknown as Json, extras: extras as unknown as Json, contract_type: edit.contract_type, sector: edit.sector, tier_id: edit.tier_id }).eq("id", edit.id), state === "active" ? "Document published" : "Draft saved")) setEdit(null);
+    if (await act(() => supabase.from("document_masters").update({ name: edit.name.trim(), kind: edit.kind, trade: edit.trade, body: edit.body, items, sections: sections as unknown as Json, audience: parseAudience(edit.audience), state, field_specs: specs as unknown as Json, commercial: commercial as unknown as Json, extras: extras as unknown as Json, contract_type: edit.contract_type, sector: edit.sector, tier_id: edit.tier_id, tier_ids: edit.tier_ids }).eq("id", edit.id), state === "active" ? "Document published" : "Draft saved")) setEdit(null);
   };
   const saveCopy = async (view: "technician" | "client" | null, tier?: { id: string; name: string }) => {
     if (!edit) return;
@@ -245,7 +245,7 @@ export function DocumentMasters({ companyId, clientId }: { companyId: string; cl
     const sections = view ? parseSections(edit.sections).filter(s => s.audience === "both" || s.audience === view).map(s => ({ ...s, audience: view })) : parseSections(edit.sections);
     const extras = view ? extrasFor(parseExtras(edit.extras), view) : parseExtras(edit.extras);
     const commercial = view === "technician" ? null : edit.commercial;
-    const r = await supabase.from("document_masters").insert({ company_id: companyId, name, kind: edit.kind, trade: edit.trade, body: edit.body, items: rows.items, field_specs: rows.specs as unknown as Json, sections: sections as unknown as Json, extras: extras as unknown as Json, ...(commercial ? { commercial } : {}), audience: view ? [view] : parseAudience(edit.audience), cloned_from: edit.id, contract_type: edit.contract_type, sector: edit.sector, tier_id: tier?.id ?? edit.tier_id, state: view ? "active" : "draft" }).select("id").single();
+    const r = await supabase.from("document_masters").insert({ company_id: companyId, name, kind: edit.kind, trade: edit.trade, body: edit.body, items: rows.items, field_specs: rows.specs as unknown as Json, sections: sections as unknown as Json, extras: extras as unknown as Json, ...(commercial ? { commercial } : {}), audience: view ? [view] : parseAudience(edit.audience), cloned_from: edit.id, contract_type: edit.contract_type, sector: edit.sector, tier_id: tier?.id ?? edit.tier_id, tier_ids: tier ? [tier.id] : edit.tier_ids, state: view ? "active" : "draft" }).select("id").single();
     if (r.error) { toast.error(r.error.message); return false; }
     toast.success(view ? `“${name}” saved to the library` : `Saved “${name}” as a new draft`); refresh(); return true;
   };
