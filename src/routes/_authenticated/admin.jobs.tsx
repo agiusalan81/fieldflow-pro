@@ -206,7 +206,7 @@ function AdminJobs() {
         <Button size="icon" variant="ghost" aria-label="Clear selection" onClick={() => setSelected([])}><X className="h-4 w-4" /></Button>
       </div>}
       <MonthlySheets sheets={list} office={office} />
-      {queue.length > 0 && (
+      {false && queue.length > 0 && (
         <section className="mb-4 rounded-xl border border-warning/50 bg-warning/10 p-4">
           <h2 className="mb-2 font-medium text-foreground">Admin pending queue ({queue.length})</h2>
           <ul className="space-y-2">
