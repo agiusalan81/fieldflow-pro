@@ -217,6 +217,16 @@ export function DocumentMasters({ companyId, clientId }: { companyId: string; cl
   const typeOptions = learnedOptions(DOC_TYPE_PRESETS, docs.map((d) => d.kind === "other" ? "reference" : d.kind));
   const contractTypeOptions = learnedOptions(CONTRACT_TYPE_PRESETS, docs.map((d) => d.contract_type));
   const tierOptions = (refs?.tiers ?? []).filter((t) => t.lifecycle !== "archived");
+  const [newTier, setNewTier] = useState<{ name: string; visits: string; price: string; labour: string; parts: string } | null>(null);
+  const saveNewTier = async () => {
+    if (!newTier?.name.trim() || !edit) return;
+    const r = await supabase.from("contract_types").insert({ company_id: companyId, name: newTier.name.trim(), tier: newTier.name.trim(), equipment_category: "", visits_per_year: Number(newTier.visits || 0), annual_price: Number(newTier.price || 0), labour_discount_pct: Number(newTier.labour || 0), parts_discount_pct: Number(newTier.parts || 0), lifecycle: "active" }).select("id,name,visits_per_year,annual_price,labour_discount_pct,parts_discount_pct").single();
+    if (r.error) { toast.error(r.error.message); return; }
+    toast.success("Tier created and selected");
+    setEdit((cur) => cur ? applyTierToggle(cur, r.data, true) : cur);
+    setNewTier(null);
+    void qc.invalidateQueries({ queryKey: ["master-usage"] }); void qc.invalidateQueries({ queryKey: ["contract-tiers"] }); void qc.invalidateQueries({ queryKey: ["agreement-opts"] });
+  };
   const tagError = (d: { kind: string; contract_type?: string | null; sector?: string | null }) => { const m = missingTags(d); if (m.length) toast.error(`Choose ${m.join(", ")} before saving`); return m.length > 0; };
   const refresh = () => { void qc.invalidateQueries({ queryKey: ["document-masters"] }); void qc.invalidateQueries({ queryKey: ["master-usage"] }); };
   const act = async (action: () => PromiseLike<{ error: { message: string } | null }>, message: string) => { const r = await action(); if (r.error) { toast.error(r.error.message); return false; } toast.success(message); refresh(); return true; };
