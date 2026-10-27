@@ -8,8 +8,8 @@ export const resolveQuotePhotos = createServerFn({ method: 'POST' })
   .inputValidator((input: unknown) => z.object({ quoteId: z.string().uuid(), photoIds: z.array(z.string().uuid()).max(10).optional() }).parse(input))
   .handler(async ({ data, context }) => {
     const quote = await context.supabase.from('customer_quotes').select('data,snapshot').eq('id', data.quoteId).maybeSingle();
-    const manager = await context.supabase.rpc('is_company_manager');
-    if (manager.error || !manager.data) throw new Error('Office access required');
+    const manager = await context.supabase.rpc('member_commercial_can', { _area: 'estimates' });
+    if (manager.error || !manager.data) throw new Error('Estimates & quotes capability required');
     const stored = quote.data?.snapshot ?? quote.data?.data;
     const raw = stored as { document?: { photos?: { id: string }[] }; photos?: { id: string }[] } | null;
     const ids = data.photoIds ?? (raw?.document?.photos ?? raw?.photos ?? []).map(p => p.id);
