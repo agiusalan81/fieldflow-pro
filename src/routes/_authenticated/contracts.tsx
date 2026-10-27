@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -26,6 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ClientSitePicker } from "@/components/client-site-picker";
 
 export const Route = createFileRoute("/_authenticated/contracts")({ staticData: { sitemap: false },
+  validateSearch: (s: Record<string, unknown>) => ({ tab: ["renewals", "agreements", "types", "masters", "checklists"].includes(String(s["tab"])) ? String(s["tab"]) : "renewals" }),
   head: () => ({
     meta: [
       { title: "Contracts & checklists — FieldBridge" },
@@ -40,12 +41,14 @@ export const Route = createFileRoute("/_authenticated/contracts")({ staticData: 
 });
 
 function ContractsPage() {
+  const { tab } = Route.useSearch();
+  const navigate = useNavigate();
   const { data: profile } = useProfile();
   const office = isOffice(profile);
   return (
     <AppShell title="Contracts & checklists">
-      <Tabs defaultValue="renewals" className="mx-auto max-w-6xl">
-        <TabsList className="flex-wrap">
+      <Tabs value={tab === "masters" && !office ? "renewals" : tab} onValueChange={tab => void navigate({ to: "/contracts", search: { tab }, replace: true })} className="mx-auto max-w-6xl">
+        <TabsList className="h-auto flex-wrap">
           <TabsTrigger value="renewals">Renewals due</TabsTrigger>
           <TabsTrigger value="agreements">Client agreements</TabsTrigger>
           <TabsTrigger value="types">Service tiers</TabsTrigger>

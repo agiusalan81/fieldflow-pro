@@ -7,6 +7,7 @@ import { PayrollSetupAlert } from "@/components/payroll-setup-alert";
 import { syncReceipts } from "@/lib/receipt-queue";
 import { WelcomeGuide } from "@/components/welcome-guide";
 import { WorkspaceCreate, WorkspaceSearch } from "@/components/workspace-tools";
+import { WorkspaceNavigation } from "@/components/workspace-navigation";
 import { organizeNavigation } from "@/lib/navigation-hubs";
 import { useCrmAccess } from "@/lib/crm-access";
 import { crmAllows } from "@/lib/crm";
@@ -39,7 +40,7 @@ import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { PlatformFeedback } from "@/components/platform-feedback";
 import { LockedModule, ModulePreview, MODULE_ROUTE } from '@/components/module-preview';
 
-type NavItem = { to: string; label: string; icon: typeof Clock; module?: ModuleKey; office?: boolean; group: string; feature?: string | undefined; locked?: boolean; soon?: boolean };
+type NavItem = { to: string; label: string; icon: typeof Clock; module?: ModuleKey; office?: boolean; group: string; feature?: string | undefined; locked?: boolean; soon?: boolean; search?: Record<string, string> };
 
 const techNav: NavItem[] = [
   { group: "Field work", to: "/dashboard", label: "Today & team", icon: LayoutDashboard },
@@ -61,13 +62,13 @@ const techNav: NavItem[] = [
 
 const adminNav: NavItem[] = [
   { group: "Operations", to: "/dashboard", label: "Overview", icon: LayoutDashboard },
-  { group: "Operations", to: "/admin/jobs", label: "Job sheets", icon: ClipboardList },
+  { group: "Operations", to: "/admin/jobs", search: { view: "sheets" }, label: "Job sheets", icon: ClipboardList },
   { group: "Operations", to: "/pending-works", label: "Pending Works", icon: Hammer, module: "pending_works" },
   { group: "Operations", to: "/expenses", label: "Expenses & receipts", icon: FileText, feature: "receipts" },
   { group: "Operations", to: "/admin/inventory", label: "Inventory", icon: Package, module: "inventory" },
   { group: "Field work", to: "/technical-library", label: "Technical library", icon: FileText, feature: "technical_library" },
   { group: "Team & roster", to: "/team", label: "Team", icon: UserCheck },
-  { group: "Team & roster", to: "/admin/jobs", label: "Team dispatch", icon: Send },
+  { group: "Team & roster", to: "/admin/jobs", search: { view: "dispatch" }, label: "Dispatched jobs", icon: Send },
   { group: "Team & roster", to: "/skills", label: "Skills & specialties", icon: UserCheck, feature: "skills_dispatch" },
   { group: "Team & roster", to: "/messages", label: "Team chat", icon: MessageSquare },
   { group: "Team & roster", to: "/live-map", label: "Live team map", icon: MapPin },
@@ -89,7 +90,7 @@ const adminNav: NavItem[] = [
   { group: "My workspace", to: "/leave", label: "My leave", icon: CalendarDays },
   { group: "Administration", to: "/admin/approvals", label: "Approvals", icon: ClipboardList },
   { group: "Administration", to: "/company", label: "Company settings", icon: Building2, module: "team" },
-  { group: "Payroll", to: "/payroll/wages", label: "Employee wages setup", icon: Settings, office: true, feature: "payroll" },
+  { group: "Payroll", to: "/payroll/wages", label: "Employee wages", icon: Settings, office: true, feature: "payroll" },
   { group: "Payroll", to: "/payroll/hours", label: "Hours worked", icon: Clock, office: true, feature: "payroll" },
   { group: "Payroll", to: "/payroll/payslips", label: "Payslips", icon: Calculator, office: true, feature: "payroll" },
   { group: "Administration", to: "/admin/fields", label: "Fields & lookups", icon: SlidersHorizontal, module: "fields" },
@@ -105,7 +106,7 @@ const supervisorNav: NavItem[] = [
   { group: "Field work", to: "/schedule", label: "My schedule", icon: CalendarClock },
   { group: "Field work", to: "/expenses", label: "Log expense", icon: FileText, feature: "receipts" },
   { group: "Field work", to: "/technical-library", label: "Technical library", icon: FileText, feature: "technical_library" },
-  { group: "Team", to: "/admin/jobs", label: "Team dispatch", icon: Send },
+  { group: "Team", to: "/admin/jobs", search: { view: "dispatch" }, label: "Dispatched jobs", icon: Send },
   { group: "Team", to: "/live-map", label: "Live team map", icon: MapPin },
   { group: "Team", to: "/team", label: "Team", icon: UserCheck },
   { group: "Team", to: "/skills", label: "Skills & specialties", icon: UserCheck, feature: "skills_dispatch" },
@@ -139,45 +140,6 @@ const EXTRA: Record<string, { label: string; icon: typeof Clock; manager?: boole
 };
 
 const isActive = (path: string, to: string) => (to === "/dashboard" ? path === to : path === to || path.startsWith(to + "/"));
-
-function NavLinks({ items, onNavigate, uid }: { items: NavItem[]; onNavigate?: () => void; uid?: string | undefined }) {
-  const path = useRouterState({ select: (s) => s.location.pathname });
-  const overview = items.find(i => i.to === "/dashboard");
-  const groupedItems = items.filter(i => i.to !== "/dashboard");
-  const groups = [...new Set(groupedItems.map((i) => i.group))];
-  const activeGroup = groupedItems.find((i) => isActive(path, i.to))?.group ?? groups[0];
-  const [openGroup, setOpenGroup] = useState<string | undefined>(activeGroup);
-  useEffect(() => { setOpenGroup(activeGroup); }, [activeGroup]);
-  return (
-    <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
-      {overview && <Button asChild variant="ghost" className="shrink-0 justify-start text-sidebar-foreground"><Link to="/dashboard" activeProps={{ className: "bg-sidebar-accent font-medium" }} activeOptions={{ exact: true }} onClick={() => { if (uid) recordUsage(uid, "/dashboard"); onNavigate?.(); }}><LayoutDashboard className="mr-2 h-4 w-4" />{overview.label}</Link></Button>}
-      {groups.map((g) => {
-        const open = openGroup === g;
-        return (
-          <div key={g}>
-            <Button variant="ghost" type="button" aria-expanded={open} onClick={() => setOpenGroup(open ? undefined : g)}
-              className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground">
-              <span className="min-w-0 text-left">{g}</span><ChevronDown className={`h-4 w-4 transition-transform ${open ? "" : "-rotate-90"}`} />
-            </Button>
-            {open && (
-              <div className="mb-1 flex flex-col gap-0.5 pl-1">
-                {groupedItems.filter((i) => i.group === g).map((i) => i.locked ? <LockedModule key={i.to} feature={i.feature ?? 'core'} label={i.label} comingSoon={i.soon}><i.icon className="h-4 w-4 shrink-0"/></LockedModule> : (
-                  <div key={i.to} className="flex items-center gap-1 pr-2"><Link to={i.to}
-                    onClick={() => { if (uid) recordUsage(uid, i.to); onNavigate?.(); }}
-                    className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-3 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                    activeProps={{ className: "bg-sidebar-accent text-sidebar-foreground font-medium" }}
-                    activeOptions={{ exact: i.to === "/dashboard" }}>
-                    <i.icon className="h-4 w-4 shrink-0" /><span className="min-w-0 break-words">{i.label}</span>{i.to === "/standby" && <OnCallBadge userId={uid}/>}{i.to === "/messages" && <ChatBadge userId={uid}/>}
-                  </Link>{["/crm","/estimates","/admin/jobs","/admin/leave","/admin/approvals"].includes(i.to) && <QueueBadge path={i.to} />}</div>
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </nav>
-  );
-}
 
 function QuickLink({ to, uid, className, children }: { to: string; uid?: string | undefined; className: string; children: ReactNode }) {
   const [p, q] = to.split("?");
@@ -333,7 +295,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
       {profile && company && <IdleLogout userId={profile.id} realRole={profile.real_role} timeoutMin={company.idleTimeout} />}
       <aside data-tour="menu" className="tenant-menu sticky top-0 hidden h-screen flex-col gap-6 border-r border-sidebar-border bg-sidebar py-6 px-3 lg:flex">
         {brand}
-        <NavLinks items={items} uid={profile?.id} />
+        <WorkspaceNavigation items={items} role={profile?.role} uid={profile?.id} />
         {footer}
       </aside>
 
@@ -348,7 +310,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
             <SheetContent side="left" style={appearanceVariables(appearance)} data-icons={appearance.iconPreset} className="tenant-menu tenant-experience flex w-72 flex-col gap-6 bg-sidebar py-6">
               <SheetTitle className="sr-only">Menu</SheetTitle>
               {brand}
-              <NavLinks items={items} uid={profile?.id} onNavigate={() => setMenuOpen(false)} />
+              <WorkspaceNavigation items={items} role={profile?.role} uid={profile?.id} touch onNavigate={() => setMenuOpen(false)} />
               {footer}
             </SheetContent>
           </Sheet>
@@ -389,7 +351,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
 
       <nav aria-label="Quick navigation" className="fieldbridge-bottom fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 items-end gap-1 border-t lg:hidden">
         <Link to="/dashboard" className={tab} activeProps={{ className: "text-primary font-medium" }} activeOptions={{ exact: true }}><LayoutDashboard className="h-5 w-5" />{isOffice(profile) ? "Overview" : "Today & team"}</Link>
-        <Link to={manager ? "/admin/jobs" : "/sheets"} className={tab} activeProps={{ className: "text-primary font-medium" }}><ClipboardList className="h-5 w-5" />Job sheets</Link>
+        <Link to={manager ? "/admin/jobs" : "/sheets"} search={manager ? { view: "sheets" } : {}} className={tab} activeProps={{ className: "text-primary font-medium" }}><ClipboardList className="h-5 w-5" />Job sheets</Link>
         {preview.active ? <Link to="/hours" className={tab}><Clock className="h-5 w-5" />Hours</Link> : <WorkspaceCreate {...createProps} mobile />}
         <Link to={second.to} className={tab} activeProps={{ className: "text-primary font-medium" }}><second.icon className="h-5 w-5" />{second.label}</Link>
         <Button type="button" variant="ghost" className={`${tab} h-auto hover:bg-card`} onClick={() => setMenuOpen(true)}><MoreHorizontal className="h-5 w-5" />More</Button>

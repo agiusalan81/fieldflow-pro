@@ -9,7 +9,7 @@ import { CrmSettings } from "@/components/crm-settings";
 import { EstimateSettings } from "@/components/estimate-settings";
 import { QuoteAcceptanceSetting } from "@/components/quote-acceptance-setting";
 import { PriceListSettings } from "@/components/price-list-settings";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -39,6 +39,7 @@ import { BrandingLock } from "@/components/branding-lock";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/company")({ staticData: { sitemap: false },
+  validateSearch: (s: Record<string, unknown>) => ({ section: typeof s["section"] === "string" ? s["section"] : "profile" }),
   head: () => ({
     meta: [
       { title: "Company settings — FieldBridge" },
@@ -405,8 +406,10 @@ function SettingsSections({ superuser, companyId, userId, role }: { superuser: b
   const libraryName = useCompanyTitle("document library");
   const { data: profile } = useProfile();
   const can = useCan(profile);
-  const [active, setActive] = useState("profile");
-  const [visited, setVisited] = useState(["profile"]);
+  const { section } = Route.useSearch();
+  const navigate = useNavigate();
+  const [active, setActive] = useState(section);
+  const [visited, setVisited] = useState([section]);
   const heading = useRef<HTMLHeadingElement>(null);
   const shouldScroll = useRef(false);
   const selectSection = (key: string) => {
@@ -414,6 +417,7 @@ function SettingsSections({ superuser, companyId, userId, role }: { superuser: b
     shouldScroll.current = true;
     setVisited(previous => previous.includes(key) ? previous : [...previous, key]);
     setActive(key);
+    void navigate({ to: "/company", search: { section: key }, replace: true });
   };
   useEffect(() => {
     if (!shouldScroll.current) return;
@@ -448,6 +452,11 @@ function SettingsSections({ superuser, companyId, userId, role }: { superuser: b
     ] },
   ];
   const all = groups.flatMap((g) => g.items);
+  useEffect(() => {
+    const key = all.some(i => i.key === section) ? section : "profile";
+    setActive(key);
+    setVisited(previous => previous.includes(key) ? previous : [...previous, key]);
+  }, [section]);
   const activeIndex = Math.max(0, all.findIndex((i) => i.key === active));
   const current = all[activeIndex];
   if (!current) return null;

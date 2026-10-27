@@ -1,3 +1,5 @@
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { officeLedgerStatus } from "@/lib/workspace-shortcuts";
 import {NewJobDialog} from '@/components/new-job-dialog';
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
@@ -38,7 +40,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/admin/jobs")({ staticData: { sitemap: false },
-  validateSearch: (s: Record<string, unknown>): { new?: boolean | undefined; assetId?: string | undefined; problemId?: string | undefined; review?:string; quoteJob?:string } => ({ ...(typeof s['quoteJob'] === 'string' ? { quoteJob: s['quoteJob'] } : {}), ...(typeof s["review"]==="string"?{review:s["review"]}:{}), new: s["new"] === true || s["new"] === "true" ? true : undefined, assetId: typeof s["assetId"] === "string" ? s["assetId"] : undefined, problemId: typeof s["problemId"] === "string" ? s["problemId"] : undefined }),
+  validateSearch: (s: Record<string, unknown>): { new?: boolean | undefined; assetId?: string | undefined; problemId?: string | undefined; review?:string; quoteJob?:string; view: string; tab: string } => ({ view: s["view"] === "dispatch" || s["new"] || s["assetId"] || s["problemId"] || s["quoteJob"] ? "dispatch" : "sheets", tab: ["all", "draft", "completed", "archive"].includes(String(s["tab"])) ? String(s["tab"]) : "all", ...(typeof s['quoteJob'] === 'string' ? { quoteJob: s['quoteJob'] } : {}), ...(typeof s["review"]==="string"?{review:s["review"]}:{}), new: s["new"] === true || s["new"] === "true" ? true : undefined, assetId: typeof s["assetId"] === "string" ? s["assetId"] : undefined, problemId: typeof s["problemId"] === "string" ? s["problemId"] : undefined }),
   head: () => ({
     meta: [
       { title: "Job sheets — FieldBridge" },
@@ -56,10 +58,13 @@ const STATUSES = [["draft", "Draft"], ["pending", "Pending"], ["in_transit", "In
 const QUEUE_FILTERS = [["admin_queue", "In admin queue"], ["needs_approval", "Needs asset approval"], ["has_pending", "Has pending works"]] as const;
 
 function AdminJobs() {
+  const { view, tab } = Route.useSearch();
+  const dispatchOnly = view === "dispatch";
   const qc = useQueryClient();
   const navigate = useNavigate();
   const { data: defs = [] } = useFieldDefs("job_sheet");
   const [filter, setFilter] = useState("all");
+  useEffect(() => { setFilter("all"); }, [tab]);
   const [q, setQ] = useState("");
   const [mine, setMine] = useState(false);
   const [details, setDetails] = useState({ from: "", to: "", client: "all", technician: "all" });
@@ -140,10 +145,10 @@ function AdminJobs() {
   const {review:focusedReview}=Route.useSearch();
   useEffect(()=>{if(focusedReview){const found=jobs.find(j=>j.id===focusedReview&&j.requires_admin_approval);if(found){setApproving(found);setEquipmentRef("");}}},[focusedReview,jobs]);
   const queue = jobs.filter((j) => matchesSheetFilter(j, "admin_queue"));
-  const base = jobs.filter((j) => matchesSheetDetails(j, { ...details, initials: staff.find((u) => u.id === details.technician) ? initialsOf(staff.find((u) => u.id === details.technician) ?? { full_name: "" }) : undefined }) && (!mine || j.assigned_technician_id === me?.id) && matchesSheetSearch(j.jobsheet_number, [j.clients?.name, j.users?.full_name, j.assets?.reference_number, j.sites?.name, j.reported_fault], q));
+  const base = jobs.filter((j) => officeLedgerStatus(j.status, tab) && matchesSheetDetails(j, { ...details, initials: staff.find((u) => u.id === details.technician) ? initialsOf(staff.find((u) => u.id === details.technician) ?? { full_name: "" }) : undefined }) && (!mine || j.assigned_technician_id === me?.id) && matchesSheetSearch(j.jobsheet_number, [j.clients?.name, j.users?.full_name, j.assets?.reference_number, j.sites?.name, j.reported_fault], q));
   const list = base.filter((j) => matchesSheetFilter(j, filter));
   listRef.current = list.map((j) => j.id);
-  const pills: (readonly [string, string])[] = [["all", "All"], ...STATUSES, ["has_pending", "Pending works"]];
+  const pills: (readonly [string, string])[] = [["all", "All"], ...[STATUSES[0], STATUSES[4]], ["has_pending", "Pending works"]];
   const countFor = (k: string) => base.filter((j) => matchesSheetFilter(j, k)).length;
   const totalHours = (j: (typeof jobs)[number]) => (j.jobsheet_time_logs ?? []).reduce((s, l) => s + Number(l.daily_total_hours || 0), 0);
 
@@ -164,16 +169,16 @@ function AdminJobs() {
   };
 
   return (
-    <AppShell title="Job sheets">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-semibold">Team dispatch</h2><NewJobDialog /></div>
-      {canDeleteVisit(me?.role) && <DispatchedVisits />}
+    <AppShell title={dispatchOnly ? "Dispatched jobs" : "Job sheets"}>
+      {dispatchOnly ? <><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-semibold">Team dispatch</h2><NewJobDialog /></div>{canDeleteVisit(me?.role) && <DispatchedVisits />}</> : <>
+      <Tabs value={tab} onValueChange={tab => void navigate({ to: "/admin/jobs", search: { view: "sheets", tab }, replace: true })} className="mb-4"><TabsList className="h-auto flex-wrap"><TabsTrigger value="all">Draft & completed sheets</TabsTrigger><TabsTrigger value="draft">Drafts</TabsTrigger><TabsTrigger value="completed">Completed for review</TabsTrigger><TabsTrigger value="archive">Monthly archive</TabsTrigger></TabsList></Tabs>
       <div className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_220px]">
         <Input placeholder="Search client, technician, asset or sheet no." value={q} onChange={(e) => setQ(e.target.value)} />
         <Select value={filter} onValueChange={setFilter}>
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All statuses</SelectItem>
-            <SelectGroup><SelectLabel>Status</SelectLabel>{STATUSES.map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}</SelectGroup>
+            <SelectGroup><SelectLabel>Status</SelectLabel>{[STATUSES[0], STATUSES[4]].map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}</SelectGroup>
             <SelectGroup><SelectLabel>Needs attention</SelectLabel>{QUEUE_FILTERS.map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}</SelectGroup>
           </SelectContent>
         </Select>
@@ -279,6 +284,7 @@ function AdminJobs() {
           </Table>
         </div>
       )}
+      </>}
       <Dialog open={!!approving} onOpenChange={(o) => !o && setApproving(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>Approve asset changes</DialogTitle></DialogHeader>
