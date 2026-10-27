@@ -1114,6 +1114,13 @@
       "when": 1793122442029,
       "tag": "0158_bind_expense_file_read_to_authorized_member",
       "breakpoints": true
+    },
+    {
+      "idx": 159,
+      "version": "7",
+      "when": 1793126925169,
+      "tag": "0159_core_equipment_contract_coverage",
+      "breakpoints": true
     }
   ]
 }
