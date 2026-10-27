@@ -1,7 +1,7 @@
 import { useRef } from "react";
-import { ArrowDown, ArrowUp, Bold, Camera, Italic, Plus, Trash2, Underline } from "lucide-react";
+import { ArrowDown, ArrowUp, Camera, Plus, Trash2 } from "lucide-react";
 import { checklistRows, DEFAULT_CHOICES, DEFAULT_SPEC, rowsFromText, FIELD_CONTROLS, moveChecklistRow, type BlockAudience, type FieldControl, type FieldSpec } from "@/lib/document-blocks";
-import { RICH_COLORS, wrapSelection } from "@/lib/rich-text";
+import { FormatToolbar } from "@/components/format-toolbar";
 import { RichText } from "@/components/rich-text";
 import { Button } from "@/components/ui/button";
 import { UnitSelect } from "@/components/unit-select";
@@ -11,31 +11,15 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const SWATCH: Record<string, string> = { red: "bg-destructive", amber: "bg-warning", blue: "bg-primary", green: "bg-success" };
-
 export function ChecklistRowEditor({ items, specs, onChange }: { items: string[]; specs: FieldSpec[]; onChange: (items: string[], specs: FieldSpec[]) => void }) {
   const rows = checklistRows(items, specs);
   const area = useRef<HTMLTextAreaElement>(null);
   const setRows = (next: typeof rows) => onChange(next.map(row => row.item), next.map(row => row.spec));
   const update = (index: number, item: string, spec: FieldSpec) => setRows(rows.map((row, i) => i === index ? { item, spec } : row));
   const setText = (text: string) => { const next = rowsFromText(text, rows.map(r => r.spec)); onChange(next.items, next.specs); };
-  const format = (open: string, close = open) => {
-    const el = area.current; if (!el) return;
-    if (el.selectionStart === el.selectionEnd) return;
-    const r = wrapSelection(el.value, el.selectionStart, el.selectionEnd, open, close);
-    setText(r.text);
-    requestAnimationFrame(() => { el.focus(); el.setSelectionRange(r.start, r.end); });
-  };
-  const keep = (e: React.MouseEvent) => e.preventDefault();
   return <div className="space-y-2"><Label htmlFor="checklist-text">Checklist steps</Label>
     <p className="text-xs text-muted-foreground">Type one step per line — each line becomes a row. Select text, then use the toolbar to format it.</p>
-    <div role="toolbar" aria-label="Text formatting" className="flex flex-wrap items-center gap-1 rounded-md border bg-muted/40 p-1">
-      <Button type="button" size="icon" variant="ghost" title="Bold" aria-label="Bold" onMouseDown={keep} onClick={() => format("**")}><Bold className="h-4 w-4" /></Button>
-      <Button type="button" size="icon" variant="ghost" title="Italic" aria-label="Italic" onMouseDown={keep} onClick={() => format("*")}><Italic className="h-4 w-4" /></Button>
-      <Button type="button" size="icon" variant="ghost" title="Underline" aria-label="Underline" onMouseDown={keep} onClick={() => format("__")}><Underline className="h-4 w-4" /></Button>
-      <span className="mx-1 h-5 w-px bg-border" />
-      {RICH_COLORS.map(c => <button key={c.key} type="button" title={c.label} aria-label={`Colour ${c.label}`} onMouseDown={keep} onClick={() => format(`[${c.key}]`, `[/${c.key}]`)} className={`h-5 w-5 rounded-full border ${SWATCH[c.key]}`} />)}
-    </div>
+    <FormatToolbar target={area} onText={setText} />
     <Textarea ref={area} id="checklist-text" className="font-mono text-sm" rows={Math.max(4, items.length + 1)} value={items.join("\n")} onChange={e => setText(e.target.value)} placeholder={"Check brake operation\nInspect landing doors\nTest alarm button"} />
     <Label>Controls per step</Label>
     {rows.map((row, i) => <div key={i} className="space-y-2 rounded-lg border p-2">
