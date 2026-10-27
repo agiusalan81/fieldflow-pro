@@ -32,6 +32,7 @@ import { matchesSheetSearch } from "@/lib/dwr";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { useFieldDefs, renderCustomValues } from "@/components/custom-fields";
 import { Button } from "@/components/ui/button";
+import { useMemberWorkspaces } from "@/lib/member-workspaces";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -168,9 +169,11 @@ function AdminJobs() {
     finally { setBulkBusy(false); }
   };
 
+  const access = useMemberWorkspaces();
+  if (dispatchOnly && !access.data?.dispatch) return <AppShell title="Dispatched jobs"><p>{access.isPending ? "Loading…" : "Dispatch & scheduling capability required."}</p></AppShell>;
   return (
     <AppShell title={dispatchOnly ? "Dispatched jobs" : "Job sheets"}>
-      {dispatchOnly ? <><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-semibold">Team dispatch</h2><NewJobDialog /></div>{canDeleteVisit(me?.role) && <DispatchedVisits tab={tab === "unscheduled" ? "unscheduled" : "scheduled"} onTabChange={tab => void navigate({ to: "/admin/jobs", search: { view: "dispatch", tab }, replace: true })} />}</> : <>
+      {dispatchOnly ? <><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-semibold">Team dispatch</h2><NewJobDialog /></div>{access.data?.dispatch && <DispatchedVisits tab={tab === "unscheduled" ? "unscheduled" : "scheduled"} onTabChange={tab => void navigate({ to: "/admin/jobs", search: { view: "dispatch", tab }, replace: true })} />}</> : <>
       <Tabs value={tab} onValueChange={tab => void navigate({ to: "/admin/jobs", search: { view: "sheets", tab }, replace: true })} className="mb-4"><TabsList className="h-auto flex-wrap"><TabsTrigger value="all">Draft & completed sheets</TabsTrigger><TabsTrigger value="draft">Drafts</TabsTrigger><TabsTrigger value="completed">Completed for review</TabsTrigger><TabsTrigger value="archive">Monthly archive</TabsTrigger></TabsList></Tabs>
       <div className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_220px]">
         <Input placeholder="Search client, technician, asset or sheet no." value={q} onChange={(e) => setQ(e.target.value)} />
