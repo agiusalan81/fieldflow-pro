@@ -125,9 +125,9 @@ export function LiftPassport({ assetId, assetCategory, canManage }: { assetId: s
         suspension_safety: blocks.suspension_safety ?? {},
         controller_electronics: blocks.controller_electronics ?? {},
         doors_cabin: blocks.doors_cabin ?? {},
-        escalator_geometry: blocks.escalator_geometry ?? {},
-        escalator_steps_chains: blocks.escalator_steps_chains ?? {},
-        escalator_handrail_balustrade: blocks.escalator_handrail_balustrade ?? {},
+        escalator_geometry: blocks['escalator_geometry'] ?? {},
+        escalator_steps_chains: blocks['escalator_steps_chains'] ?? {},
+        escalator_handrail_balustrade: blocks['escalator_handrail_balustrade'] ?? {},
         notes,
         updated_at: new Date().toISOString(),
       };
