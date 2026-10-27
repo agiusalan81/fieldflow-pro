@@ -1,4 +1,4 @@
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { parseIntegrations, ACCOUNTING } from "@/lib/integrations";
 import { parsePhotos } from "@/lib/jobsheets";
 import { estimateExportCsv } from "@/lib/estimate-export";
