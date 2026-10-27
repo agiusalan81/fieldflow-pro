@@ -8,6 +8,7 @@ import { ensurePushSubscription, pushChatMessages } from "@/lib/web-push";
 import { supabase } from "@/integrations/supabase/client";
 import { markThreadRead, unreadByThread, useChatReads } from "@/lib/chat-unread";
 import { useProfile, useCompanyUsers } from "@/lib/profile";
+import { chatClock, chatContactVisible, chatDayLabel, chatFullStamp, chatListStamp, needsDayDivider, needsGapMarker } from "@/lib/chat-time";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,7 +84,7 @@ function Messages() {
   });
 
   const threads: Thread[] = useMemo(() => {
-    const people = users.filter((u) => u.id !== profile?.id).map((u) => ({ kind: "user" as const, id: u.id, label: u.full_name }));
+    const people = users.filter((u) => u.id !== profile?.id && chatContactVisible(u.registration_status)).map((u) => ({ kind: "user" as const, id: u.id, label: u.full_name }));
     const js = jobs.map((j) => ({ kind: "job" as const, id: j.id, label: `${j.clients?.name ?? "Job"} · #${j.id.slice(0, 4)}` }));
     return filter === "people" ? people : filter === "jobs" ? js : [...people, ...js];
   }, [users, jobs, profile, filter]);
@@ -174,7 +175,7 @@ function Messages() {
               const last = lastOf(t);
               return (
                 <li key={t.kind + t.id}>
-                  <Button variant="ghost" disabled={sending} onClick={() => pickThread(t)} className={`grid h-auto w-full grid-cols-[auto_minmax(0,1fr)] whitespace-normal rounded-none items-center gap-3 px-4 py-3 text-left hover:bg-accent ${active?.id === t.id ? "bg-accent" : ""}`}>
+                  <Button variant="ghost" disabled={sending} onClick={() => pickThread(t)} className={`grid h-auto w-full grid-cols-[auto_minmax(0,1fr)_auto] whitespace-normal rounded-none items-center gap-3 px-4 py-3 text-left hover:bg-accent ${active?.id === t.id ? "bg-accent" : ""}`}>
                     <span className="grid h-9 w-9 place-items-center rounded-full bg-muted text-muted-foreground">
                       {t.kind === "job" ? <Hash className="h-4 w-4" /> : <User className="h-4 w-4" />}
                     </span>
@@ -182,7 +183,10 @@ function Messages() {
                       <span className="block truncate text-sm font-medium text-foreground">{t.label}{t.kind === "user" && roleOf(t.id) && <span className="ml-2 rounded bg-muted px-1.5 text-xs font-normal text-muted-foreground">{roleOf(t.id)}</span>}</span>
                       <span className={`block truncate text-xs ${unread[keyOf(t)] ? "font-semibold text-foreground" : "text-muted-foreground"}`}>{last?.message_text || (last?.contact_card ? "Contact" : parseChatFiles(last?.attachments).length ? "Attachment" : "No messages yet")}</span>
                     </span>
-                    {!!unread[keyOf(t)] && <span aria-label={`${unread[keyOf(t)]} unread`} className="col-start-3 row-start-1 rounded-full bg-destructive px-1.5 text-xs text-destructive-foreground">{unread[keyOf(t)]}</span>}
+                    <span className="col-start-3 row-start-1 flex flex-col items-end gap-1">
+                      {last && <time dateTime={last.created_at} title={chatFullStamp(last.created_at)} className="text-[11px] text-muted-foreground">{chatListStamp(last.created_at)}</time>}
+                      {!!unread[keyOf(t)] && <span aria-label={`${unread[keyOf(t)]} unread`} className="rounded-full bg-destructive px-1.5 text-xs text-destructive-foreground">{unread[keyOf(t)]}</span>}
+                    </span>
                   </Button>
                 </li>
               );
@@ -199,17 +203,22 @@ function Messages() {
                 <p className="truncate font-medium text-foreground">{active.label}{active.kind === "user" && roleOf(active.id) && <span className="ml-2 rounded bg-muted px-1.5 text-xs font-normal text-muted-foreground">{roleOf(active.id)}</span>}</p>
               </header>
               <div className="min-h-0 flex-1 space-y-2 overflow-y-auto bg-muted/40 p-4">
-                {current.map((m) => {
+                {current.map((m, i) => {
                   const mine = m.sender_id === profile?.id;
+                  const prev = current[i - 1]?.created_at;
                   return (
-                    <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+                    <div key={m.id}>
+                    {needsDayDivider(prev, m.created_at) && <div className="my-3 flex justify-center"><span className="rounded-full bg-card px-3 py-0.5 text-xs font-medium text-muted-foreground shadow-sm">{chatDayLabel(m.created_at)}</span></div>}
+                    {needsGapMarker(prev, m.created_at) && <p className="my-2 text-center text-[11px] text-muted-foreground">{chatClock(m.created_at)}</p>}
+                    <div className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                       <div className={`min-w-0 max-w-[85%] rounded-lg px-3.5 py-2 text-sm shadow-sm ${mine ? "rounded-br-sm bg-primary text-primary-foreground" : "rounded-bl-sm bg-card text-foreground"}`}>
                         {!mine && active.kind === "job" && <p className="mb-0.5 text-xs font-medium text-primary">{nameOf(m.sender_id)}</p>}
                         <p className="whitespace-pre-wrap break-words">{m.message_text}</p><ChatAttachments files={m.attachments} contact={m.contact_card}/>
-                        <p className={`mt-0.5 text-right text-[10px] ${mine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
-                          {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        <p title={chatFullStamp(m.created_at)} className={`mt-0.5 text-right text-[10px] ${mine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                          <time dateTime={m.created_at}>{chatClock(m.created_at)}</time>
                         </p>
                       </div>
+                    </div>
                     </div>
                   );
                 })}

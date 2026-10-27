@@ -12,16 +12,17 @@ import { canEditCapabilities, showsFieldDispatchToggle } from "@/lib/member-capa
 /** Secondary capabilities on top of a member's primary role. Primary role keeps payroll and rota. */
 export function MemberCapabilities({ userId, role, actorRole, active }: { userId: string; role: string; actorRole: string; active: boolean }) {
   const qc = useQueryClient();
-  const { data } = useQuery({ queryKey: ['member-capabilities', userId], queryFn: async () => { const r = await supabase.from('user_roles').select('can_field_dispatch,can_estimates,can_contracts,can_dispatch_jobs,crm_access').eq('user_id', userId).single(); if (r.error) throw r.error; return r.data; } });
+  const { data } = useQuery({ queryKey: ['member-capabilities', userId], queryFn: async () => { const r = await supabase.from('user_roles').select('can_field_dispatch,can_estimates,can_contracts,can_dispatch_jobs,can_site_surveys,crm_access').eq('user_id', userId).single(); if (r.error) throw r.error; return r.data; } });
   const [busy, setBusy] = useState(false);
   if (!canEditCapabilities(actorRole, role)) return null;
   const estimates = commercialAccess(role, 'estimates', data?.can_estimates);
   const contracts = commercialAccess(role, 'contracts', data?.can_contracts);
   const dispatch = commercialAccess(role, 'dispatch', data?.can_dispatch_jobs);
+  const surveys = data?.can_site_surveys ?? !['superuser','admin'].includes(role);
   const crm = data?.crm_access ?? crmDefaultLevel(role);
-  const toggle = async (patch: Partial<{ estimates: boolean; contracts: boolean; field: boolean; dispatch: boolean; crm: string }>) => {
+  const toggle = async (patch: Partial<{ estimates: boolean; contracts: boolean; field: boolean; dispatch: boolean; surveys: boolean; crm: string }>) => {
     setBusy(true);
-    const { error } = patch.dispatch !== undefined ? await supabase.rpc("set_member_dispatch", { _user: userId, _enabled: patch.dispatch }) : await supabase.rpc("set_member_workspaces", { _user: userId, _field: patch.field ?? data?.can_field_dispatch ?? false, _estimates: patch.estimates ?? estimates, _contracts: patch.contracts ?? contracts, _crm: patch.crm ?? crm });
+    const { error } = patch.surveys !== undefined ? await supabase.rpc("set_member_surveys", { _user: userId, _enabled: patch.surveys }) : patch.dispatch !== undefined ? await supabase.rpc("set_member_dispatch", { _user: userId, _enabled: patch.dispatch }) : await supabase.rpc("set_member_workspaces", { _user: userId, _field: patch.field ?? data?.can_field_dispatch ?? false, _estimates: patch.estimates ?? estimates, _contracts: patch.contracts ?? contracts, _crm: patch.crm ?? crm });
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     toast.success('Member capabilities updated');
@@ -34,6 +35,7 @@ export function MemberCapabilities({ userId, role, actorRole, active }: { userId
       <label className="flex items-center gap-2 text-sm"><Checkbox aria-label="Dispatch and scheduling capability" checked={dispatch} disabled={busy || !active || !data} onCheckedChange={v => void toggle({ dispatch: v === true })} />Dispatch & scheduling</label>
       <label className="flex items-center gap-2 text-sm"><Checkbox aria-label="Estimates and quotes capability" checked={estimates} disabled={busy || !active || !data} onCheckedChange={v => void toggle({ estimates: v === true })} />Estimates & quotes</label>
       <label className="flex items-center gap-2 text-sm"><Checkbox aria-label="Contracts and renewals capability" checked={contracts} disabled={busy || !active || !data} onCheckedChange={v => void toggle({ contracts: v === true })} />Contracts & renewals</label>
+      <label className="flex items-center gap-2 text-sm"><Checkbox aria-label="Site surveys capability" checked={surveys} disabled={busy || !active || !data} onCheckedChange={v => void toggle({ surveys: v === true })} />Site surveys</label>
       <label className="flex items-center gap-2 text-sm"><Checkbox aria-label="CRM capability" checked={crm !== 'none'} disabled={role === "superuser" || busy || !active || !data} onCheckedChange={v => void toggle({ crm: v === true ? 'contributor' : 'none' })} />CRM pipeline</label>
     </div>
     {crm !== 'none' && <div className="mt-3"><Select value={crm} disabled={role === "superuser" || busy || !active || !data} onValueChange={v => void toggle({ crm: v })}><SelectTrigger aria-label="CRM permission level"><SelectValue /></SelectTrigger><SelectContent>{['viewer','contributor','closer','manager'].map(level => <SelectItem key={level} value={level}>{level}</SelectItem>)}</SelectContent></Select></div>}

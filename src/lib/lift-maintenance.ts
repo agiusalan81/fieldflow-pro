@@ -116,3 +116,14 @@ export function defectQuoteLines(defects: Defect[]): string[] {
 export function missingChecks(protocol: Protocol, frequency: Frequency, checks: Record<string, CheckResult>, ard: Record<string, CheckResult>): number {
   return checksFor(protocol, frequency).filter((c) => !checks[c.key]).length + ardFor(protocol, frequency).filter((c) => !ard[c.key]).length;
 }
+
+/** Client copy of a completed protocol: plain wording, no readings, tolerances or internal notes. */
+export function clientChecklistSummary(
+  protocol: Protocol, frequency: Frequency,
+  checks: Record<string, CheckResult>, ard: Record<string, CheckResult>, outOfService: boolean,
+): string {
+  const word = (r: CheckResult | undefined) => r === "ok" ? "Checked — OK" : r === "defect" ? "Attention required" : r === "na" ? "Not applicable" : "Not checked";
+  const lines = [...checksFor(protocol, frequency).map((c) => `• ${c.label}: ${word(checks[c.key])}`), ...ardFor(protocol, frequency).map((c) => `• Emergency rescue (ARD) — ${c.label}: ${word(ard[c.key])}`)];
+  if (outOfService) lines.push("Equipment left out of service for safety. Our office will contact you.");
+  return lines.join("\n");
+}
