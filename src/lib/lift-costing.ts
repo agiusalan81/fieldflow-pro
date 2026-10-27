@@ -167,3 +167,170 @@ export function reconcileClientLines(d: CostingDraft): ClientLine[] {
   }
   return lines;
 }
+
+/* ───────────── Costing & proposal templates (Lift pack) ───────────── */
+
+export const EQUIPMENT_TYPES: { value: string; label: string; groups: SpecGroupKey[] }[] = [
+  { value: "passenger_lift", label: "Passenger lift", groups: ["shaft", "entrances", "platform", "drive", "cabin"] },
+  { value: "goods_lift", label: "Goods lift", groups: ["shaft", "entrances", "platform", "drive"] },
+  { value: "four_post", label: "4-post lift", groups: ["platform", "drive"] },
+  { value: "scissor", label: "Scissor lift", groups: ["platform", "drive"] },
+  { value: "rotary_scissor", label: "Rotary scissor lift", groups: ["platform", "drive"] },
+  { value: "dumbwaiter", label: "Dumbwaiter", groups: ["shaft", "entrances", "platform"] },
+  { value: "platform_lift", label: "Platform / home lift", groups: ["shaft", "entrances", "platform", "drive"] },
+  { value: "other", label: "Other equipment", groups: ["platform"] },
+];
+export const equipmentLabel = (v: string) => EQUIPMENT_TYPES.find((e) => e.value === v)?.label ?? v;
+
+export type SpecGroupKey = "shaft" | "entrances" | "platform" | "drive" | "cabin";
+export const SPEC_GROUPS: { key: SpecGroupKey; label: string; fields: { key: string; label: string }[] }[] = [
+  { key: "shaft", label: "Shaft / well geometry", fields: [
+    { key: "shaft_width", label: "Shaft width (mm)" }, { key: "shaft_depth", label: "Shaft depth (mm)" },
+    { key: "pit_depth", label: "Pit depth (mm)" }, { key: "headroom", label: "Headroom (mm)" },
+    { key: "travel", label: "Travel (mm)" }, { key: "structure", label: "Structure (concrete / steel / free-standing)" }] },
+  { key: "entrances", label: "Stops & entrances", fields: [
+    { key: "stops", label: "Stops" }, { key: "entrances", label: "Entrances (front / rear / adjacent)" }, { key: "door_type", label: "Landing door type" }] },
+  { key: "platform", label: "Load & platform", fields: [
+    { key: "capacity", label: "Rated capacity" }, { key: "platform_size", label: "Platform / car size (W × D × H)" }, { key: "speed", label: "Speed (m/s)" }] },
+  { key: "drive", label: "Drive & power", fields: [
+    { key: "drive_type", label: "Drive type" }, { key: "motor_kw", label: "Motor power (kW)" }, { key: "power_supply", label: "Power supply" }] },
+  { key: "cabin", label: "Cabin & finishes", fields: [
+    { key: "enclosure", label: "Car enclosure" }, { key: "flooring", label: "Flooring" }, { key: "finishes", label: "Finishes & lighting" }] },
+];
+
+export type OutputStyle = "turnkey" | "itemised" | "net_vat_shipping";
+export const OUTPUT_STYLES: { value: OutputStyle; label: string; hint: string }[] = [
+  { value: "turnkey", label: "One price (turnkey)", hint: "Everything rolled into a single client price — e.g. constant-price suppliers." },
+  { value: "itemised", label: "Itemised sections", hint: "Supply, installation, site works, certification as separate lines." },
+  { value: "net_vat_shipping", label: "Net + VAT + shipping + options", hint: "Lift net price, VAT, total, shipping inc. VAT shown separately, options, grand total — for variable freight." },
+];
+
+export type ProposalOption = { label: string; amount: number; selected: boolean };
+export type TemplateDefaults = Partial<Pick<CostingDraft, "equipment_markup_pct" | "labour_markup_pct" | "subcontractor_markup_pct" | "contingency_pct" | "mechanical_hours" | "electrical_hours" | "mechanical_rate" | "electrical_rate" | "vat_pct" | "stages">>;
+
+export type CostingTemplate = {
+  id: string; name: string; equipment_type: string; supplier_origin: string; output_style: OutputStyle;
+  turnkey_description: string; spec_groups: string[]; custom_specs: string[]; defaults: TemplateDefaults;
+  inclusions: string[]; exclusions: string[]; options: ProposalOption[]; notes: string;
+};
+
+const strList = (v: unknown): string[] => (Array.isArray(v) ? v.map((x) => String(x ?? "")).filter((x) => x.trim()) : []);
+const optList = (v: unknown): ProposalOption[] => (Array.isArray(v) ? v.filter((o) => o && typeof o === "object").map((o) => { const r = o as Record<string, unknown>; return { label: String(r["label"] ?? ""), amount: num(r["amount"]), selected: r["selected"] === true }; }) : []);
+const style = (v: unknown): OutputStyle => (v === "turnkey" || v === "net_vat_shipping" ? v : "itemised");
+
+export function normalizeTemplate(row: Record<string, unknown> | null | undefined): CostingTemplate {
+  const def = (row?.["defaults"] && typeof row["defaults"] === "object" ? row["defaults"] : {}) as TemplateDefaults;
+  const eq = String(row?.["equipment_type"] ?? "passenger_lift");
+  const groups = strList(row?.["spec_groups"]);
+  return {
+    id: String(row?.["id"] ?? crypto.randomUUID()), name: String(row?.["name"] ?? ""), equipment_type: eq,
+    supplier_origin: String(row?.["supplier_origin"] ?? ""), output_style: style(row?.["output_style"]),
+    turnkey_description: String(row?.["turnkey_description"] ?? ""),
+    spec_groups: groups.length || row?.["id"] ? groups : (EQUIPMENT_TYPES.find((e) => e.value === eq)?.groups ?? []),
+    custom_specs: strList(row?.["custom_specs"]), defaults: def,
+    inclusions: strList(row?.["inclusions"]), exclusions: strList(row?.["exclusions"]), options: optList(row?.["options"]),
+    notes: String(row?.["notes"] ?? ""),
+  };
+}
+
+/** Applying a template copies its defaults; the sheet stays fully editable afterwards. Costs already entered are kept. */
+export function applyTemplate(d: CostingDraft, t: CostingTemplate): CostingDraft {
+  const f = t.defaults;
+  return {
+    ...d, template_id: t.id, equipment_type: t.equipment_type, output_style: t.output_style,
+    turnkey_description: t.turnkey_description, spec_groups: [...t.spec_groups], custom_specs: [...t.custom_specs],
+    inclusions: [...t.inclusions], exclusions: [...t.exclusions], notes: t.notes,
+    options: t.options.map((o) => ({ ...o })),
+    equipment_markup_pct: f.equipment_markup_pct ?? d.equipment_markup_pct,
+    labour_markup_pct: f.labour_markup_pct ?? d.labour_markup_pct,
+    subcontractor_markup_pct: f.subcontractor_markup_pct ?? d.subcontractor_markup_pct,
+    contingency_pct: f.contingency_pct ?? d.contingency_pct,
+    mechanical_hours: d.mechanical_hours || (f.mechanical_hours ?? 0),
+    electrical_hours: d.electrical_hours || (f.electrical_hours ?? 0),
+    mechanical_rate: d.mechanical_rate || (f.mechanical_rate ?? 0),
+    electrical_rate: d.electrical_rate || (f.electrical_rate ?? 0),
+    vat_pct: f.vat_pct ?? d.vat_pct,
+    stages: f.stages?.length ? f.stages.map((s) => ({ ...s })) : d.stages,
+  };
+}
+
+/** Saves the current sheet's setup as template defaults (no costs, no client data). */
+export function templateFromDraft(d: CostingDraft, name: string): Omit<CostingTemplate, "id"> {
+  return {
+    name, equipment_type: d.equipment_type, supplier_origin: "", output_style: d.output_style,
+    turnkey_description: d.turnkey_description, spec_groups: [...d.spec_groups], custom_specs: [...d.custom_specs],
+    inclusions: [...d.inclusions], exclusions: [...d.exclusions], notes: d.notes,
+    options: d.options.map((o) => ({ ...o, selected: false })),
+    defaults: {
+      equipment_markup_pct: d.equipment_markup_pct, labour_markup_pct: d.labour_markup_pct,
+      subcontractor_markup_pct: d.subcontractor_markup_pct, contingency_pct: d.contingency_pct,
+      mechanical_hours: d.mechanical_hours, electrical_hours: d.electrical_hours,
+      mechanical_rate: d.mechanical_rate, electrical_rate: d.electrical_rate, vat_pct: d.vat_pct, stages: d.stages,
+    },
+  };
+}
+
+export function readProposalExtras(row: Record<string, unknown> | null | undefined) {
+  const specs = row?.["specs"] && typeof row["specs"] === "object" && !Array.isArray(row["specs"]) ? Object.fromEntries(Object.entries(row["specs"] as Record<string, unknown>).map(([k, v]) => [k, String(v ?? "")])) : {};
+  const photos = Array.isArray(row?.["photos"]) ? (row!["photos"] as unknown[]).filter((p) => p && typeof p === "object").map((p) => { const r = p as Record<string, unknown>; return { id: String(r["id"] ?? ""), caption: String(r["caption"] ?? "") }; }).filter((p) => /^[0-9a-f-]{36}$/.test(p.id)) : [];
+  const vat = Number(row?.["vat_pct"]);
+  return {
+    template_id: (row?.["template_id"] as string | null | undefined) ?? null,
+    equipment_type: String(row?.["equipment_type"] ?? "passenger_lift"),
+    output_style: style(row?.["output_style"]),
+    turnkey_description: String(row?.["turnkey_description"] ?? ""),
+    spec_groups: strList(row?.["spec_groups"]), specs, custom_specs: strList(row?.["custom_specs"]),
+    inclusions: strList(row?.["inclusions"]), exclusions: strList(row?.["exclusions"]),
+    options: optList(row?.["options"]), photos, notes: String(row?.["notes"] ?? ""),
+    vat_pct: Number.isFinite(vat) && vat >= 0 && vat <= 100 ? vat : 18,
+  };
+}
+
+/** Spec rows that appear on the client proposal: only active groups/custom specs with a value. */
+export function specRows(d: CostingDraft): { label: string; value: string }[] {
+  const rows: { label: string; value: string }[] = [];
+  for (const g of SPEC_GROUPS) if (d.spec_groups.includes(g.key)) for (const f of g.fields) { const v = (d.specs[f.key] ?? "").trim(); if (v) rows.push({ label: f.label, value: v }); }
+  for (const c of d.custom_specs) { const v = (d.specs[`custom:${c}`] ?? "").trim(); if (v) rows.push({ label: c, value: v }); }
+  return rows;
+}
+
+export type ProposalLine = { description: string; amount: number; kind: "main" | "shipping" | "option" };
+export type ProposalSummary = {
+  lines: ProposalLine[];
+  net: number; vat: number; total: number;
+  shippingNet: number; shippingIncVat: number; optionsNet: number;
+  grandNet: number; grandVat: number; grandTotal: number;
+};
+
+/** Client-facing lines for the chosen output style. Selected options are added on top of the costed price. */
+export function proposalSummary(d: CostingDraft): ProposalSummary {
+  const c = costBreakdown(d);
+  const cont = 1 + d.contingency_pct / 100;
+  const price = priceWith(d, d.equipment_markup_pct, d.labour_markup_pct, d.subcontractor_markup_pct).price;
+  const vatR = d.vat_pct / 100;
+  const name = d.turnkey_description.trim() || `Supply, delivery, installation and commissioning of ${d.title.trim() || equipmentLabel(d.equipment_type).toLowerCase()}`;
+  let lines: ProposalLine[] = [];
+  let shippingNet = 0;
+  if (d.output_style === "turnkey") {
+    if (price > 0) lines = [{ description: name, amount: price, kind: "main" }];
+  } else if (d.output_style === "net_vat_shipping") {
+    shippingNet = round((d.freight_cost + d.customs_cost) * (1 + d.equipment_markup_pct / 100) * cont);
+    const main = round(price - shippingNet);
+    if (main > 0) lines.push({ description: `${d.title.trim() || equipmentLabel(d.equipment_type)} — net price`, amount: main, kind: "main" });
+    if (shippingNet > 0) lines.push({ description: "Shipping, freight & customs (estimate — varies monthly)", amount: shippingNet, kind: "shipping" });
+  } else {
+    lines = reconcileClientLines(d).map((l) => ({ ...l, kind: "main" as const }));
+    void c;
+  }
+  const opts = d.options.filter((o) => o.selected && o.label.trim() && o.amount > 0);
+  for (const o of opts) lines.push({ description: `Option: ${o.label.trim()}`, amount: round(o.amount), kind: "option" });
+  const optionsNet = round(opts.reduce((s, o) => s + o.amount, 0));
+  const net = round(price - shippingNet);
+  const vat = round(net * vatR);
+  const grandNet = round(price + optionsNet);
+  const grandVat = round(grandNet * vatR);
+  return {
+    lines, net, vat, total: round(net + vat), shippingNet, shippingIncVat: round(shippingNet * (1 + vatR)), optionsNet,
+    grandNet, grandVat, grandTotal: round(grandNet + grandVat),
+  };
+}
