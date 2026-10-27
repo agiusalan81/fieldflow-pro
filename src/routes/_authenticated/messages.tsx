@@ -175,7 +175,7 @@ function Messages() {
               const last = lastOf(t);
               return (
                 <li key={t.kind + t.id}>
-                  <Button variant="ghost" disabled={sending} onClick={() => pickThread(t)} className={`grid h-auto w-full grid-cols-[auto_minmax(0,1fr)] whitespace-normal rounded-none items-center gap-3 px-4 py-3 text-left hover:bg-accent ${active?.id === t.id ? "bg-accent" : ""}`}>
+                  <Button variant="ghost" disabled={sending} onClick={() => pickThread(t)} className={`grid h-auto w-full grid-cols-[auto_minmax(0,1fr)_auto] whitespace-normal rounded-none items-center gap-3 px-4 py-3 text-left hover:bg-accent ${active?.id === t.id ? "bg-accent" : ""}`}>
                     <span className="grid h-9 w-9 place-items-center rounded-full bg-muted text-muted-foreground">
                       {t.kind === "job" ? <Hash className="h-4 w-4" /> : <User className="h-4 w-4" />}
                     </span>
