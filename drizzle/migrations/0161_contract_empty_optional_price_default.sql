@@ -1,0 +1,1 @@
+DO $$ DECLARE d text; BEGIN SELECT pg_get_functiondef('public.save_equipment_contract(jsonb,jsonb,uuid)'::regprocedure) INTO d; d=replace(d,'coalesce((_header->>''price'')::numeric,0)','coalesce(nullif(_header->>''price'','''')::numeric,0)'); d=replace(d,'(l->>''price'')::numeric','coalesce(nullif(l->>''price'','''')::numeric,0)'); EXECUTE d; END $$;

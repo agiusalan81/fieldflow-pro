@@ -1128,6 +1128,13 @@
       "when": 1793127229345,
       "tag": "0160_core_contract_access_and_renewal_schedule_bounds",
       "breakpoints": true
+    },
+    {
+      "idx": 161,
+      "version": "7",
+      "when": 1793127331728,
+      "tag": "0161_contract_empty_optional_price_default",
+      "breakpoints": true
     }
   ]
 }
