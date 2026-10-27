@@ -125,7 +125,6 @@ function SheetForm() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { data: profile } = useProfile();
-  const liftOn = usePlanFeatures()("lift_pack");
   const { data: company } = useCompanyRules();
   const { data: users = [] } = useCompanyUsers();
   const { data: suggestions } = useEntrySuggestions();
@@ -257,6 +256,7 @@ function SheetForm() {
   const site = sites.find((s) => s.id === form.site_id);
   const assets = refs?.assets.filter((a) => a.client_id === form.client_id && (!form.site_id || !a.site_id || a.site_id === form.site_id)) ?? [];
   const asset = refs?.assets.find((a) => a.id === form.asset_id);
+  const liftOn = liftFeatures("lift_pack");
   const liftProtocol = protocolForCategory(asset?.asset_category ?? (form.asset_type as string | null));
 
   const assetPatch = (id: string | null): Partial<Form> => {

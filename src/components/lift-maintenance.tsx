@@ -71,7 +71,7 @@ export function LiftMaintenanceChecklist({ sheetId, assetId, defaultProtocol, re
       ? await supabase.from("lift_maintenance_logs").update(row).eq("id", q.data.id)
       : await supabase.from("lift_maintenance_logs").insert(row);
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Maintenance checklist saved");
     qc.invalidateQueries({ queryKey: key });
   };
