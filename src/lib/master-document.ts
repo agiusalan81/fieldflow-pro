@@ -17,7 +17,13 @@ export function masterDocumentLines(doc: MasterDocumentContent, view: Audience):
   const c = parseCommercial(doc.commercial);
   if (view === "client" && c.showOnClient && hasCommercial(c)) {
     lines.push("Service summary");
-    if (c.visitsPerYear !== null) lines.push(`${c.visitsPerYear} visits per year`);
+    if (c.tierValues.length > 1) {
+      for (const t of c.tierValues) {
+        const parts = [t.visitsPerYear !== null ? `${t.visitsPerYear} visits per year` : "", t.basePrice !== null ? `€${t.basePrice.toFixed(2)}` : "", t.labourDiscountPct ? `${t.labourDiscountPct}% labour discount` : "", t.partsDiscountPct ? `${t.partsDiscountPct}% parts discount` : ""].filter(Boolean);
+        lines.push(`${t.name || "Tier"}: ${parts.join(" · ")}`);
+      }
+    } else if (c.visitsPerYear !== null) lines.push(`${c.visitsPerYear} visits per year`);
+    const multi = c.tierValues.length > 1;
     const total = commercialTotal(c), p = c.liftPricing;
     const money = (n: number) => `€${n.toFixed(2)}`;
     if (p) lines.push(`${p.stops} stops · ${p.landingDoors} landing doors · ${p.carAccess} car access`);
@@ -25,9 +31,9 @@ export function masterDocumentLines(doc: MasterDocumentContent, view: Audience):
     if (p && c.showSampleCalculation) {
       lines.push("Base rates & sample calculation", `Base price: ${money(c.basePrice ?? 0)}; includes ${p.includedStops} stops, ${p.includedLandingDoors} landing doors and 1 car access`, `Additional stop: ${money(p.extraStopRate)}; additional landing door: ${money(p.landingDoorRate)}; extra cabin door: ${money(p.extraCarDoorRate)}`, `${commercialPriceLines(c).map(line => `${line.quantity} × ${money(line.rate)}`).join(" + ")} = ${money(total ?? 0)}`);
     }
-    if (total !== null) lines.push(`Total: ${money(total)} ${BILLING_CYCLES.find(cycle => cycle.key === c.billingCycle)?.label.toLowerCase()}`);
-    if (c.labourDiscountPct) lines.push(`Labour discount: ${c.labourDiscountPct}%`);
-    if (c.partsDiscountPct) lines.push(`Parts discount: ${c.partsDiscountPct}%`);
+    if (!multi && total !== null) lines.push(`Total: ${money(total)} ${BILLING_CYCLES.find(cycle => cycle.key === c.billingCycle)?.label.toLowerCase()}`);
+    if (!multi && c.labourDiscountPct) lines.push(`Labour discount: ${c.labourDiscountPct}%`);
+    if (!multi && c.partsDiscountPct) lines.push(`Parts discount: ${c.partsDiscountPct}%`);
     if (c.summaryItems.length) { for (const i of c.summaryItems) lines.push(`• ${i.tag ? `[${i.tag}] ` : ""}${i.text}`); }
     if (c.terms.trim()) lines.push(c.terms);
   }

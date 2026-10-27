@@ -94,6 +94,9 @@ export const BILLING_CYCLES: { key: BillingCycle; label: string }[] = [
   { key: "annually", label: "Annually" },
 ];
 
+/** Per-tier commercial values when a document covers several service tiers; the client copy shows them as a comparison. */
+export type TierValue = { tierId: string; name: string; visitsPerYear: number | null; basePrice: number | null; labourDiscountPct: number; partsDiscountPct: number };
+
 export type Commercial = {
   liftPricing: LiftPricing | null;
   clientPriceDisplay: "compound" | "itemised";
@@ -108,6 +111,7 @@ export type Commercial = {
   showSampleCalculation: boolean;
   /** Client-only summary rows with an optional subtag, e.g. "[Included] Annual safety certification". */
   summaryItems: SummaryItem[];
+  tierValues: TierValue[];
 };
 export type SummaryItem = { tag: string; text: string };
 /** One line per item: "[Tag] text" or "text :: Tag"; blank lines are dropped. */
@@ -139,8 +143,26 @@ function parseSummaryItems(raw: unknown): SummaryItem[] {
 export const DEFAULT_COMMERCIAL: Commercial = {
   liftPricing: null, clientPriceDisplay: "compound",
   visitsPerYear: null, basePrice: null, billingCycle: "annually",
-  labourDiscountPct: 0, partsDiscountPct: 0, terms: "", showOnClient: true, showSampleCalculation: false, summaryItems: [],
+  labourDiscountPct: 0, partsDiscountPct: 0, terms: "", showOnClient: true, showSampleCalculation: false, summaryItems: [], tierValues: [],
 };
+
+function parseTierValues(raw: unknown): TierValue[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((r) => {
+    if (!r || typeof r !== "object") return [];
+    const o = r as Record<string, unknown>;
+    const tierId = typeof o["tierId"] === "string" ? o["tierId"] : "";
+    if (!tierId) return [];
+    return [{
+      tierId,
+      name: typeof o["name"] === "string" ? o["name"].slice(0, 60) : "",
+      visitsPerYear: num(o["visitsPerYear"]),
+      basePrice: num(o["basePrice"]),
+      labourDiscountPct: pct(o["labourDiscountPct"]),
+      partsDiscountPct: pct(o["partsDiscountPct"]),
+    }];
+  }).slice(0, 12);
+}
 
 const num = (v: unknown): number | null => {
   const n = typeof v === "number" ? v : typeof v === "string" && v.trim() ? Number(v) : NaN;
@@ -202,12 +224,13 @@ export function parseCommercial(raw: unknown): Commercial {
     showOnClient: r["showOnClient"] !== false,
     showSampleCalculation: r["showSampleCalculation"] === true,
     summaryItems: parseSummaryItems(r["summaryItems"]),
+    tierValues: parseTierValues(r["tierValues"]),
   };
 }
 
 /** True when the document carries any commercial content worth printing. */
 export function hasCommercial(c: Commercial): boolean {
-  return c.liftPricing !== null || c.basePrice !== null || c.visitsPerYear !== null || c.labourDiscountPct > 0 || c.partsDiscountPct > 0 || !!c.terms.trim() || c.summaryItems.length > 0;
+  return c.liftPricing !== null || c.basePrice !== null || c.visitsPerYear !== null || c.labourDiscountPct > 0 || c.partsDiscountPct > 0 || !!c.terms.trim() || c.summaryItems.length > 0 || c.tierValues.length > 0;
 }
 
 export type Extra = { label: string; value: string; audience: BlockAudience };

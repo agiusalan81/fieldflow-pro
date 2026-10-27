@@ -1803,6 +1803,7 @@ export type Database = {
           source_document_id: string | null
           state: string
           tier_id: string | null
+          tier_ids: string[]
           trade: string
           updated_at: string
         }
@@ -1827,6 +1828,7 @@ export type Database = {
           source_document_id?: string | null
           state?: string
           tier_id?: string | null
+          tier_ids?: string[]
           trade?: string
           updated_at?: string
         }
@@ -1851,6 +1853,7 @@ export type Database = {
           source_document_id?: string | null
           state?: string
           tier_id?: string | null
+          tier_ids?: string[]
           trade?: string
           updated_at?: string
         }
