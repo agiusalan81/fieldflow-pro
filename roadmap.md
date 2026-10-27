@@ -1,4 +1,6 @@
 # Roadmap
+- [x] Document editor bundle: formatting bar no longer splits colour markers (smart wrap/unwrap, tested), shared toolbar added to Summary items with live styled preview, Terms box gets insert-from-library picker (company preset, terms documents, uploaded files), multi-tier tag chips with per-tier visits/price/discount cards and side-by-side client-copy comparison (migration tier_ids + guard, types regenerated); 30 tests pass, build OK
+- [ ] Multi-level fly-out menus for every tabbed section (Contracts, Job sheets & dispatch, Team, Company settings) — user asked after inline accordion trial
 - [x] Document Library workflow: Create new / upload & digitise, near full-screen editor, required tags (creatable Type, learning Contract type, company tiers, sector), separate labelled Technician/Client copies saved to library, previews open on their own copy, audience filter, site/equipment attachments; plus multi-trade industry, appearance preview name, sticky studio preview, Lift-pack-only supplier settings, no "Summary items" sub-heading, "Invite to portal" text buttons with hardened invite. Tests/typecheck pass.
 - [ ] Live signed-in check of the new library flow (blocked: requesting account company access revoked)
 - [ ] Job sheets auto-load the checklist attached to the selected equipment/site
