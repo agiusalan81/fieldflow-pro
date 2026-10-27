@@ -1,5 +1,6 @@
 import { usePlanFeatures } from "@/lib/plan-features";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Camera, Copy, Eye, Archive, Plus, Trash2, Paperclip, Pencil, Download, RotateCcw } from "lucide-react";
