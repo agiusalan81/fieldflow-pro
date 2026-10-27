@@ -10,7 +10,7 @@ import { recordUsage } from '@/lib/quick-actions';
 export type WorkspaceNavItem = { to: string; label: string; group: string; icon: LucideIcon; search?: Record<string, string>; feature?: string | undefined; locked?: boolean; soon?: boolean };
 
 /** Inline accordion: menus open and close only on click/tap, never on hover. */
-function WorkspaceRow({ item, role, uid, onNavigate }: { item: WorkspaceNavItem; role?: string | undefined; uid?: string | undefined; onNavigate?: () => void }) {
+function WorkspaceRow({ item, role, uid, onNavigate }: { item: WorkspaceNavItem; role?: string | undefined; uid?: string | undefined; onNavigate?: (() => void) | undefined }) {
   const [open, setOpen] = useState(false);
   const shortcuts = workspaceShortcuts(item.to, role, item.search?.['view']);
   const go = (target: WorkspaceShortcut) => { if (uid) recordUsage(uid, target.to); onNavigate?.(); };
