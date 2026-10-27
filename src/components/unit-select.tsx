@@ -15,7 +15,7 @@ export function UnitSelect({ value, onChange, disabled, label = 'Unit', maxLengt
   const [open, setOpen] = useState(false); const [query, setQuery] = useState('');
   const history = useQuery({ queryKey: ['unit-history', profile?.id, profile?.company_id], enabled: open && !!profile, staleTime: 60_000, queryFn: async () => {
     const [quotes, prices, parts] = await Promise.all([supabase.from('customer_quotes').select('data').order('updated_at', { ascending: false }).limit(100), supabase.from('company_price_list_items').select('unit').is('archived_at', null).limit(200), supabase.from('jobsheet_parts').select('unit').limit(200)]);
-    return [...quoteSuggestions((quotes.data ?? []).map(q => q.data)).units, ...(prices.data ?? []).map(p => p.unit), ...(parts.data ?? []).map(p => p.unit)];
+    return [...quoteSuggestions((quotes.data ?? []).map(q => q.data)).units, ...(prices.data ?? []).map(p => p.unit), ...(parts.data ?? []).flatMap(p => p.unit ? [p.unit] : [])];
   } });
   const units = industryUnits(company?.industry, company?.trades, history.data);
   const typed = query.trim().slice(0, maxLength);
