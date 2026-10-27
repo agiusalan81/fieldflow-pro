@@ -34,3 +34,16 @@ describe("crm rules", () => {
     expect(moduleCategory("crm_pipeline")).toBe("Clients & Commercial");
   });
 });
+
+import { sourceLabel, sourceOptions } from "./crm";
+describe("custom lead sources", () => {
+  it("shows built-in keys as labels and keeps custom sources as typed", () => {
+    expect(sourceLabel("phone")).toBe("Phone call");
+    expect(sourceLabel("Trade fair")).toBe("Trade fair");
+  });
+  it("offers built-ins then company sources without duplicates", () => {
+    const o = sourceOptions(["phone", "Trade fair", "trade fair "]);
+    expect(o.filter((x) => x === "Phone call")).toHaveLength(1);
+    expect(o.at(-1)).toBe("Trade fair");
+  });
+});

@@ -81,3 +81,5 @@
 - [ ] Lift vertical CRM fields; Document Studio upload wizard (parked by user)
 - [ ] Next build batch (queued): multi-trade main industry; appearance preview uses real company name/document title; sticky Document Studio preview; hide lift package supplier settings unless lift pack active; drop "Summary items" sub-heading; portal invite as text button + fix boolean error
 - [ ] Define Document Library workflow with user (in discussion, one question at a time)
+- [x] Phase 6 + batch: CRM lead "Create estimate" (Lift proposal/costing when Lift pack active, links lead and moves to Quote sent), won buttons, custom learning lead sources; "Quote these defects" from lift maintenance checklist; portal invites emailed directly; Coming soon under menu titles; Client 360 rows clickable; job-sheets pending banner removed. Tests/typecheck pass.
+- [ ] Client 360 "+ Attach document" on Documents/site/equipment; back-navigation state restore; client copy of filled lift checklist; statutory inspections register (queued for next build)
