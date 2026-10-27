@@ -34,7 +34,7 @@
 - Typography: applyTypography/AppShell; locale: locale.ts.
 - Branding shares asset-backed font IDs and preview/PDF decorations; DB/HQ locks protect saved values.
 - Auth emails share auth-brand.tsx; the managed handler owns verification and dispatch for reliable account recovery.
-- Company Settings keeps visited sections mounted; shared document-preview tabs serve desktop/mobile; no implicit draft saves.
+- Shared document-preview tabs serve desktop/mobile; no implicit draft saves.
 - Independent settings editors use settingsSectionPatch to write only owned columns; JSON styling saves merge current stored keys; 
 - Numbers keep raw text until blur; UnitSelect shares trade-aware presets/bounded RLS history — why: no cross-trade defaults.
 - Service sheets share a typed safe projection/renderers for preview, print and email; 
