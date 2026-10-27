@@ -1107,6 +1107,13 @@
       "when": 1793119216539,
       "tag": "0157_client_portal_invite_lookup",
       "breakpoints": true
+    },
+    {
+      "idx": 158,
+      "version": "7",
+      "when": 1793122442029,
+      "tag": "0158_bind_expense_file_read_to_authorized_member",
+      "breakpoints": true
     }
   ]
 }
