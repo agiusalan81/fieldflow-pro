@@ -1023,6 +1023,13 @@
       "when": 1793078513792,
       "tag": "0145_member_workspace_superuser_crm_invariant",
       "breakpoints": true
+    },
+    {
+      "idx": 146,
+      "version": "7",
+      "when": 1793079003089,
+      "tag": "0146_individual_dispatch_workspace",
+      "breakpoints": true
     }
   ]
 }
