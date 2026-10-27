@@ -47,6 +47,23 @@ describe("parseCommercial", () => {
   });
 });
 
+describe("tier values", () => {
+  it("round-trips per-tier visits, prices and discounts", () => {
+    const c = parseCommercial({ tierValues: [{ tierId: "t1", name: "Gold", visitsPerYear: 4, basePrice: 900, labourDiscountPct: 10, partsDiscountPct: 5 }] });
+    expect(c.tierValues).toEqual([{ tierId: "t1", name: "Gold", visitsPerYear: 4, basePrice: 900, labourDiscountPct: 10, partsDiscountPct: 5 }]);
+    expect(parseCommercial(JSON.parse(JSON.stringify(c))).tierValues).toEqual(c.tierValues);
+  });
+  it("drops entries without a tier and clamps bad numbers", () => {
+    const c = parseCommercial({ tierValues: [{ name: "No id" }, { tierId: "t2", name: "Silver", visitsPerYear: -2, basePrice: "450", labourDiscountPct: 140 }] });
+    expect(c.tierValues).toHaveLength(1);
+    expect(c.tierValues[0]).toEqual({ tierId: "t2", name: "Silver", visitsPerYear: null, basePrice: 450, labourDiscountPct: 100, partsDiscountPct: 0 });
+  });
+  it("counts as commercial content and defaults to empty", () => {
+    expect(parseCommercial(undefined).tierValues).toEqual([]);
+    expect(hasCommercial(parseCommercial({ tierValues: [{ tierId: "t1", name: "Gold" }] }))).toBe(true);
+  });
+});
+
 describe("parseExtras", () => {
   it("drops empty entries and filters by audience", () => {
     const extras = parseExtras([{ label: "SLA", value: "4h", audience: "client" }, { label: "", value: "" }, { label: "Oil", value: "ISO 32" }]);
@@ -117,5 +134,28 @@ describe("checklist copies and reports", () => {
     expect(parseRich("**Brake** [red]critical[/red]")).toEqual([{ text: "Brake", bold: true }, { text: " " }, { text: "critical", color: "red" }]);
     expect(stripRich("__Doors__ *ok*")).toBe("Doors ok");
     expect(wrapSelection("abc", 1, 2, "**").text).toBe("a**b**c");
+  });
+  it("wrapping never splits an existing colour marker", () => {
+    const coloured = wrapSelection("check [red]brakes[/red] now", 6, 21, "**");
+    expect(coloured.text).toBe("check **[red]brakes[/red]** now");
+    expect(stripRich(coloured.text)).toBe("check brakes now");
+    expect(parseRich(coloured.text)).toEqual([{ text: "check " }, { text: "brakes", bold: true, color: "red" }, { text: " now" }]);
+  });
+  it("a selection starting inside a marker expands outward instead of breaking it", () => {
+    const r = wrapSelection("a [red]hot[/red] b", 5, 8, "**");
+    expect(r.text).toBe("a **[red]hot[/red]** b");
+    expect(parseRich(r.text).some((s) => s.text.includes("[red]"))).toBe(false);
+  });
+  it("applying the same marker again unwraps instead of double-wrapping", () => {
+    const once = wrapSelection("hello world", 6, 11, "**");
+    expect(once.text).toBe("hello **world**");
+    const twice = wrapSelection(once.text, 8, 13, "**");
+    expect(twice.text).toBe("hello world");
+  });
+  it("colour then bold on the same words stays valid markup", () => {
+    const red = wrapSelection("Oil leak", 0, 8, "[red]", "[/red]");
+    const both = wrapSelection(red.text, 0, red.text.length, "**");
+    expect(stripRich(both.text)).toBe("Oil leak");
+    expect(parseRich(both.text)).toEqual([{ text: "Oil leak", bold: true, color: "red" }]);
   });
 });
