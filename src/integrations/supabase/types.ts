@@ -1714,6 +1714,7 @@ export type Database = {
       }
       document_attachments: {
         Row: {
+          asset_id: string | null
           client_id: string
           company_id: string
           created_at: string
@@ -1723,6 +1724,7 @@ export type Database = {
           snapshot: Json
         }
         Insert: {
+          asset_id?: string | null
           client_id: string
           company_id: string
           created_at?: string
@@ -1732,6 +1734,7 @@ export type Database = {
           snapshot?: Json
         }
         Update: {
+          asset_id?: string | null
           client_id?: string
           company_id?: string
           created_at?: string
@@ -1741,6 +1744,13 @@ export type Database = {
           snapshot?: Json
         }
         Relationships: [
+          {
+            foreignKeyName: "document_attachments_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "document_attachments_client_id_fkey"
             columns: ["client_id"]
@@ -1778,6 +1788,7 @@ export type Database = {
           cloned_from: string | null
           commercial: Json
           company_id: string
+          contract_type: string
           created_at: string
           created_by: string
           extras: Json
@@ -1788,8 +1799,10 @@ export type Database = {
           name: string
           revision: number
           sections: Json
+          sector: string
           source_document_id: string | null
           state: string
+          tier_id: string | null
           trade: string
           updated_at: string
         }
@@ -1799,6 +1812,7 @@ export type Database = {
           cloned_from?: string | null
           commercial?: Json
           company_id: string
+          contract_type?: string
           created_at?: string
           created_by?: string
           extras?: Json
@@ -1809,8 +1823,10 @@ export type Database = {
           name: string
           revision?: number
           sections?: Json
+          sector?: string
           source_document_id?: string | null
           state?: string
+          tier_id?: string | null
           trade?: string
           updated_at?: string
         }
@@ -1820,6 +1836,7 @@ export type Database = {
           cloned_from?: string | null
           commercial?: Json
           company_id?: string
+          contract_type?: string
           created_at?: string
           created_by?: string
           extras?: Json
@@ -1830,8 +1847,10 @@ export type Database = {
           name?: string
           revision?: number
           sections?: Json
+          sector?: string
           source_document_id?: string | null
           state?: string
+          tier_id?: string | null
           trade?: string
           updated_at?: string
         }
@@ -1855,6 +1874,13 @@ export type Database = {
             columns: ["source_document_id"]
             isOneToOne: false
             referencedRelation: "company_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_masters_tier_id_fkey"
+            columns: ["tier_id"]
+            isOneToOne: false
+            referencedRelation: "contract_types"
             referencedColumns: ["id"]
           },
         ]
