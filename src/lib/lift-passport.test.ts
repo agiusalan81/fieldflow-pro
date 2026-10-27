@@ -21,9 +21,9 @@ describe("lift passport model", () => {
 
   it("normalizeBlocks coerces jsonb into string maps and drops empties", () => {
     const blocks = normalizeBlocks({ general: { manufacturer: "Kone", year_installed: 2015, empty: "" }, machine_drive: null });
-    expect(blocks.general).toEqual({ manufacturer: "Kone", year_installed: "2015" });
-    expect(blocks.machine_drive).toEqual({});
-    expect(normalizeBlocks(null).general).toEqual({});
+    expect(blocks['general']).toEqual({ manufacturer: "Kone", year_installed: "2015" });
+    expect(blocks['machine_drive']).toEqual({});
+    expect(normalizeBlocks(null)['general']).toEqual({});
   });
 
   it("learns suggestions from other passports, skipping N/A, without duplicating built-ins", () => {
@@ -31,8 +31,8 @@ describe("lift passport model", () => {
       { general: { manufacturer: "Kone", lift_ref: "L1" } },
       { general: { manufacturer: "CustomBrand", lift_ref: "L1" }, controller_electronics: { controller: NA } },
     ]);
-    expect(learned.manufacturer).toEqual(["Kone", "CustomBrand"]);
-    expect(learned.controller).toBeUndefined();
+    expect(learned['manufacturer']).toEqual(["Kone", "CustomBrand"]);
+    expect(learned['controller']).toBeUndefined();
     const field = sectionsFor("lift")[0]!.fields.find((f) => f.key === "manufacturer")!;
     const opts = fieldOptions(field, learned);
     expect(opts.filter((o) => o === "Kone")).toHaveLength(1);
