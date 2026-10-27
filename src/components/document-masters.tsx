@@ -133,30 +133,51 @@ function SectionEditor({ sections, onChange }: { sections: DocSection[]; onChang
 const AUDIENCE_OPTS: { key: BlockAudience; label: string }[] = [{ key: "both", label: "Both copies" }, { key: "technician", label: "Technician only" }, { key: "client", label: "Client only" }];
 
 function CommercialEditor({ value, onChange, liftEnabled }: { value: Commercial; onChange: (c: Commercial) => void; liftEnabled: boolean }) {
+  const extractTerms = useServerFn(extractDocumentText);
+  const { data: library } = useQuery({ queryKey: ["doc-terms-library"], queryFn: async () => { const [masters, files, settings] = await Promise.all([supabase.from("document_masters").select("id,name,body,commercial").eq("kind", "terms").eq("state", "active").order("name"), supabase.from("company_documents").select("id,name").eq("category", "terms").order("name"), supabase.from("company_settings").select("terms").maybeSingle()]); return { masters: masters.data ?? [], files: files.data ?? [], preset: termsFor(parseTerms(settings.data?.terms), "agreement") }; } });
+  const multi = value.tierValues.length > 1;
+  const setTier = (tierId: string, patch: Partial<TierValue>) => onChange({ ...value, tierValues: value.tierValues.map((t) => (t.tierId === tierId ? { ...t, ...patch } : t)) });
+  const pickTerms = (key: string) => { void (async () => { try {
+    if (key === "preset") { onChange({ ...value, terms: library?.preset ?? "" }); return; }
+    let text = "";
+    if (key.startsWith("master:")) { const m = library?.masters.find((x) => x.id === key.slice(7)); if (m) text = libraryTermText(m); }
+    else text = (await extractTerms({ data: { documentId: key.slice(5) } })).text;
+    if (text.length > 5000) throw new Error("These terms exceed 5,000 characters. Shorten them in the library first.");
+    onChange({ ...value, terms: text });
+  } catch (e) { toast.error(e instanceof Error ? e.message : "Could not load those terms"); } })(); };
   return <div className="space-y-3 rounded-lg border p-3"><div className="flex items-center justify-between"><Label>Document setup — pricing engine & service terms</Label><label className="flex items-center gap-2 text-xs">Show prices on client copy<Switch checked={value.showOnClient} onCheckedChange={(showOnClient) => onChange({ ...value, showOnClient })} /></label></div>
     <p className="text-xs text-muted-foreground">Optional. Leave price empty for a pure checklist document. Technicians never see this block.</p>
     <div className="grid grid-cols-2 gap-3">
-      <div><Label>Visits / year</Label><Input min={0} type="number" value={value.visitsPerYear ?? ""} onChange={(e) => onChange({ ...value, visitsPerYear: e.target.value === "" ? null : Number(e.target.value) })} /></div>
-      <div><Label>Base price (€)</Label><Input min={0} step="0.01" type="number" value={value.basePrice ?? ""} onChange={(e) => onChange({ ...value, basePrice: e.target.value === "" ? null : Number(e.target.value) })} /></div>
+      {!multi && <div><Label>Visits / year</Label><Input min={0} type="number" value={value.visitsPerYear ?? ""} onChange={(e) => onChange({ ...value, visitsPerYear: e.target.value === "" ? null : Number(e.target.value) })} /></div>}
+      {!multi && <div><Label>Base price (€)</Label><Input min={0} step="0.01" type="number" value={value.basePrice ?? ""} onChange={(e) => onChange({ ...value, basePrice: e.target.value === "" ? null : Number(e.target.value) })} /></div>}
       <div><Label>Billing cycle</Label><Select value={value.billingCycle} onValueChange={(v) => onChange({ ...value, billingCycle: v as Commercial["billingCycle"] })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{BILLING_CYCLES.map((c) => <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>)}</SelectContent></Select></div>
-      <div className="grid grid-cols-2 gap-2"><div><Label>Labour disc %</Label><Input min={0} max={100} type="number" value={value.labourDiscountPct} onChange={(e) => onChange({ ...value, labourDiscountPct: Number(e.target.value) })} /></div><div><Label>Parts disc %</Label><Input min={0} max={100} type="number" value={value.partsDiscountPct} onChange={(e) => onChange({ ...value, partsDiscountPct: Number(e.target.value) })} /></div></div>
+      {!multi && <div className="grid grid-cols-2 gap-2"><div><Label>Labour disc %</Label><Input min={0} max={100} type="number" value={value.labourDiscountPct} onChange={(e) => onChange({ ...value, labourDiscountPct: Number(e.target.value) })} /></div><div><Label>Parts disc %</Label><Input min={0} max={100} type="number" value={value.partsDiscountPct} onChange={(e) => onChange({ ...value, partsDiscountPct: Number(e.target.value) })} /></div></div>}
     </div>
+    {multi && <div className="space-y-2"><p className="text-xs text-muted-foreground">Each selected tier gets its own visits, price and discounts — the client copy shows them side by side for comparison.</p>{value.tierValues.map((t) => <div key={t.tierId} className="space-y-2 rounded-md border p-2"><p className="text-sm font-medium">{t.name || "Tier"}</p><div className="grid grid-cols-2 gap-2">
+      <div><Label>Visits / year</Label><Input aria-label={`Visits per year for ${t.name}`} min={0} type="number" value={t.visitsPerYear ?? ""} onChange={(e) => setTier(t.tierId, { visitsPerYear: e.target.value === "" ? null : Number(e.target.value) })} /></div>
+      <div><Label>Base price (€)</Label><Input aria-label={`Base price for ${t.name}`} min={0} step="0.01" type="number" value={t.basePrice ?? ""} onChange={(e) => setTier(t.tierId, { basePrice: e.target.value === "" ? null : Number(e.target.value) })} /></div>
+      <div><Label>Labour disc %</Label><Input aria-label={`Labour discount for ${t.name}`} min={0} max={100} type="number" value={t.labourDiscountPct} onChange={(e) => setTier(t.tierId, { labourDiscountPct: Number(e.target.value) })} /></div>
+      <div><Label>Parts disc %</Label><Input aria-label={`Parts discount for ${t.name}`} min={0} max={100} type="number" value={t.partsDiscountPct} onChange={(e) => setTier(t.tierId, { partsDiscountPct: Number(e.target.value) })} /></div>
+    </div></div>)}</div>}
     {liftEnabled && <LiftCommercialEditor alwaysOn value={value.liftPricing ? value : { ...value, liftPricing: { ...DEFAULT_LIFT_PRICING } }} onChange={onChange} />}
     <SummaryItemsEditor items={value.summaryItems} onChange={(summaryItems) => onChange({ ...value, summaryItems })} />
-    <div><Label>Terms</Label><Textarea rows={3} value={value.terms} onChange={(e) => onChange({ ...value, terms: e.target.value })} placeholder="Payment terms, response times, exclusions…" /></div></div>;
+    <div className="space-y-1.5"><Label>Terms</Label><SearchSelect value="" placeholder="Insert terms from library…" options={[...(library?.preset ? [{ value: "preset", label: "Company agreement terms" }] : []), ...(library?.masters ?? []).map((m) => ({ value: `master:${m.id}`, label: m.name })), ...(library?.files ?? []).map((f) => ({ value: `file:${f.id}`, label: `${f.name} (uploaded file)` }))]} onChange={pickTerms} /><Textarea rows={3} value={value.terms} onChange={(e) => onChange({ ...value, terms: e.target.value })} placeholder="Payment terms, response times, exclusions…" /></div></div>;
 }
 
 function SummaryItemsEditor({ items, onChange }: { items: SummaryItem[]; onChange: (items: SummaryItem[]) => void }) {
   const [text, setText] = useState(() => summaryItemsToText(items));
   const [focused, setFocused] = useState(false);
+  const area = useRef<HTMLTextAreaElement>(null);
   useEffect(() => { if (!focused) setText(summaryItemsToText(items)); }, [items, focused]);
   const up = (i: number, n: Partial<SummaryItem>) => onChange(items.map((it, j) => (j === i ? { ...it, ...n } : it)));
+  const setBoth = (t: string) => { setText(t); onChange(summaryItemsFromText(t)); };
   return <div className="space-y-2"><Label>Summary items (client copy)</Label>
-    <p className="text-xs text-muted-foreground">One item per line. Add a subtag with <code>[Included] Annual safety certification</code> or <code>24/7 callout :: Coverage</code>. Shown under Service summary in your brand colour; technicians never see these.</p>
-    <Textarea aria-label="Summary items" rows={4} value={text} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} onChange={(e) => { setText(e.target.value); onChange(summaryItemsFromText(e.target.value)); }} placeholder={"[Included] Annual safety certification\n[Optional] Weekend callouts\nRemote monitoring :: SLA"} />
+    <p className="text-xs text-muted-foreground">One item per line. Add a subtag with <code>[Included] Annual safety certification</code> or <code>24/7 callout :: Coverage</code>. Select text, then use the toolbar for bold or colour. Shown under Service summary in your brand colour; technicians never see these.</p>
+    <FormatToolbar target={area} onText={setBoth} label="Summary item formatting" />
+    <Textarea ref={area} aria-label="Summary items" rows={4} value={text} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} onChange={(e) => setBoth(e.target.value)} placeholder={"[Included] Annual safety certification\n[Optional] Weekend callouts\nRemote monitoring :: SLA"} />
     {items.length > 0 && <div className="space-y-1">{items.map((it, i) => <div key={i} className="grid grid-cols-[110px_1fr_36px] gap-2">
       <Input aria-label={`Subtag ${i + 1}`} placeholder="Subtag" value={it.tag} onChange={(e) => up(i, { tag: e.target.value.slice(0, 40) })} />
-      <Input aria-label={`Summary item ${i + 1}`} value={it.text} onChange={(e) => up(i, { text: e.target.value })} />
+      <div className="min-w-0"><Input aria-label={`Summary item ${i + 1}`} value={it.text} onChange={(e) => up(i, { text: e.target.value })} />{it.text.trim() && stripRich(it.text) !== it.text && <p className="mt-0.5 text-xs text-muted-foreground"><RichText text={it.text} /></p>}</div>
       <Button size="icon" variant="ghost" aria-label="Remove summary item" onClick={() => onChange(items.filter((_, j) => j !== i))}><Trash2 className="h-4 w-4" /></Button>
     </div>)}</div>}
   </div>;
