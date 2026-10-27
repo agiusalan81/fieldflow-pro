@@ -12,7 +12,7 @@ import { DocumentMasters } from "@/components/document-masters";
 import { supabase } from "@/integrations/supabase/client";
 import { useMemberWorkspaces } from "@/lib/member-workspaces";
 import { useProfile, isOffice } from "@/lib/profile";
-import { useCompanyRules, EQUIPMENT_CATEGORIES } from "@/lib/company";
+import { EQUIPMENT_CATEGORIES } from "@/lib/company";
 import { daysUntil, visitsForTier, contractName } from "@/lib/jobsheets";
 import { LookupInput, learnLookup, CONTRACT_CATEGORY } from "@/components/role-combobox";
 import { RenewalList, useAgreements } from "@/components/renewals";
@@ -25,7 +25,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ClientSitePicker } from "@/components/client-site-picker";
 
 export const Route = createFileRoute("/_authenticated/contracts")({ staticData: { sitemap: false },
   validateSearch: (s: Record<string, unknown>): { tab?: string } => ({ tab: ["renewals", "agreements", "types", "masters", "checklists"].includes(String(s["tab"])) ? String(s["tab"]) : "renewals" }),
@@ -82,56 +81,10 @@ function Renewals({ office }: { office: boolean }) {
 
 function Agreements({ office, companyId }: { office: boolean; companyId?: string | undefined }) {
   const on = usePlanFeatures();
-  const qc = useQueryClient();
   const { data = [] } = useAgreements();
-  const { data: opts } = useQuery({
-    queryKey: ["agreement-opts"],
-    queryFn: async () => {
-      const [c, t] = await Promise.all([supabase.from("clients").select("id, name").order("name"), supabase.from("contract_types").select("id, name, annual_price").eq("lifecycle", "active").order("name")]);
-      return { clients: c.data ?? [], types: t.data ?? [] };
-    },
-  });
-  const today = new Date().toISOString().slice(0, 10);
-  const [f, setF] = useState({ client_id: "", contract_type_id: "", start_date: today, end_date: "", annual_price: "" });
-  const add = async () => {
-    if (!companyId) return;
-    if (!f.client_id || !f.end_date) { toast.error("Choose a client and an end date"); return; }
-    if (f.end_date <= f.start_date) { toast.error("End date must be after the start date"); return; }
-    const { error } = await supabase.from("maintenance_agreements").insert({ company_id: companyId, client_id: f.client_id, contract_type_id: f.contract_type_id || null, start_date: f.start_date, end_date: f.end_date, annual_price: Number(f.annual_price) || 0 });
-    if (error) { toast.error(error.message); return; }
-    toast.success("Agreement added");
-    setF({ ...f, client_id: "", end_date: "", annual_price: "" });
-    qc.invalidateQueries({ queryKey: ["agreements"] });
-  };
   return (
     <div className="space-y-4">
       {companyId && office && <EquipmentContracts companyId={companyId} central />}
-      {office && (
-        <section className="grid gap-2 rounded-xl border bg-card p-4 md:grid-cols-6 md:items-end">
-          <div className="md:col-span-2"><ClientSitePicker showSite={false} clientId={f.client_id || null} siteId={null} onChange={(client) => setF({ ...f, client_id: client ?? "" })} /></div>
-          <div className="space-y-1.5"><Label>Contract type</Label>
-            <Select value={f.contract_type_id} onValueChange={(v) => setF({ ...f, contract_type_id: v, annual_price: f.annual_price || String(opts?.types.find((t) => t.id === v)?.annual_price ?? "") })}><SelectTrigger className="h-11"><SelectValue placeholder="Type" /></SelectTrigger>
-              <SelectContent>{opts?.types.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select>
-          </div>
-          <div className="space-y-1.5"><Label>Start</Label><Input className="h-11" type="date" value={f.start_date} onChange={(e) => setF({ ...f, start_date: e.target.value })} /></div>
-          <div className="space-y-1.5"><Label>End</Label><Input className="h-11" type="date" value={f.end_date} onChange={(e) => setF({ ...f, end_date: e.target.value })} /></div>
-          <div className="space-y-1.5"><Label>€ / year</Label><div className="flex gap-2"><Input className="h-11" type="number" value={f.annual_price} onChange={(e) => setF({ ...f, annual_price: e.target.value })} /><Button className="h-11" onClick={add}>Add</Button></div></div>
-          <div className="md:col-span-6">
-            <LibraryImport label="Import agreement from document library" onPick={async (id) => {
-              const d = await extractContractDetails({ data: { documentId: id } });
-              const client = opts?.clients.find((c) => d.client_name && c.name.toLowerCase().includes(d.client_name.toLowerCase()));
-              setF({
-                ...f,
-                client_id: client?.id ?? f.client_id,
-                start_date: d.start_date || f.start_date,
-                end_date: d.end_date || f.end_date,
-                annual_price: d.annual_price ? String(d.annual_price) : f.annual_price,
-              });
-              toast.success(client ? `Details read — client matched to ${client.name}. Review and tap Add.` : "Details read — choose the client, review and tap Add.");
-            }} />
-          </div>
-        </section>
-      )}
       {!data.length ? <EmptyState>No client agreements yet.</EmptyState> : (
         <ul className="divide-y rounded-xl border bg-card">
           {data.map((a) => (
