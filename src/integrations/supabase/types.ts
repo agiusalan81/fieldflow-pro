@@ -6644,6 +6644,14 @@ export type Database = {
       fleet_day: { Args: { _date: string; _user: string }; Returns: Json }
       fleet_vehicle_list: { Args: never; Returns: Json }
       generate_ppm_visits: { Args: { _plan: string }; Returns: number }
+      get_client_portal_invite: {
+        Args: { _token: string }
+        Returns: {
+          company_name: string
+          email: string
+          valid: boolean
+        }[]
+      }
       get_equipment_logbook: { Args: { _token: string }; Returns: Json }
       get_equipment_report_target: { Args: { _token: string }; Returns: Json }
       get_invite: {
