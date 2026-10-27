@@ -11,6 +11,7 @@ import { AssetComponents } from "@/components/asset-components";
 import { LiftPassport } from "@/components/lift-passport";
 import { useProfile, isManager, isOffice } from "@/lib/profile";
 import { DocumentMasters } from "@/components/document-masters";
+import { LiftInspections } from "@/components/lift-inspections";
 export const Route = createFileRoute("/_authenticated/equipment/$assetId")({
   staticData: { sitemap: false },
   head: () => ({
@@ -76,6 +77,7 @@ function EquipmentPage() {
               canManage={isManager(profile)}
             />
           )}
+          {on("lift_pack") && <LiftInspections assetId={assetId} canManage={isManager(profile)} />}
           {on("ppm_automation") && (
             <>
               <PpmVisits assetId={assetId} canManage={isManager(profile)} />
