@@ -30,5 +30,5 @@ export function organizeNavigation<T extends { to: string; label: string; group:
     seen.add(key);
     // Existing screens remain available from their owning workspace.
     return !['/team-invites', '/admin/fields'].includes(item.to) && (item.to !== '/skills' || !!item.locked);
-  }).map(item => ({ ...item, group: navigationHub(role, item.to), label: item.to === '/admin/leave' && role !== 'supervisor' ? 'Leave overview' : item.to === '/as-built' ? 'As-built measurements' : item.label }));
+  }).map(item => ({ ...item, group: navigationHub(role, item.to), label: item.to === '/leave' ? 'My leave' : item.to === '/settings' ? 'My settings' : item.to === '/admin/leave' && role !== 'supervisor' ? 'Leave overview' : item.to === '/as-built' ? 'As-built measurements' : item.label }));
 }
