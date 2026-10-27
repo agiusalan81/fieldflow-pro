@@ -10,10 +10,13 @@ import { Input } from "@/components/ui/input";
 import { usePlanFeatures } from '@/lib/plan-features';
 import { ModulePreview } from '@/components/module-preview';
 import { formatSiteTitle } from '@/lib/site-display';
+import { DocumentMasters } from '@/components/document-masters';
+import { isOffice, useProfile } from '@/lib/profile';
 
 /** Client → head-office contacts, then each site with its own contacts and equipment. */
 export function SiteHierarchy({ clientId, companyId }: { clientId: string; companyId: string }) {
   const qc = useQueryClient();
+  const { data: profile } = useProfile();
   const management = usePlanFeatures()('client_management');
   const key = ["client-sites", clientId];
   const { data: sites = [] } = useQuery({ queryKey: key, queryFn: async () => (await supabase.from("sites").select("*").eq("client_id", clientId).order("name")).data ?? [] });
@@ -76,6 +79,7 @@ export function SiteHierarchy({ clientId, companyId }: { clientId: string; compa
                   <Button size="sm" variant="ghost" onClick={() => remove(s.id)}><Trash2 className="mr-1 h-3.5 w-3.5" />Delete</Button>
                 </div>}
                 <EquipmentManager clientId={clientId} companyId={companyId} siteId={s.id} />
+                {isOffice(profile) && <DocumentMasters companyId={companyId} clientId={clientId} siteId={s.id} compact />}
               </AccordionContent>
             </AccordionItem>
           );
