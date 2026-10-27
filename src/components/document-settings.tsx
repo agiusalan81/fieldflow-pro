@@ -1,3 +1,4 @@
+import { useProfile } from "@/lib/profile";
 import { useEffect, useState } from "react";
 import { settingsSectionPatch } from "@/lib/settings-sections";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
