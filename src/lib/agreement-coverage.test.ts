@@ -1,0 +1,14 @@
+import { describe, expect, it } from 'vitest';
+import { coverageTotal, coverageDatesValid, passportCommercial, calculatedCoveragePrice } from './agreement-coverage';
+import { DEFAULT_COMMERCIAL, DEFAULT_LIFT_PRICING } from './document-blocks';
+describe('equipment contract rules', () => {
+  it('aggregates one site contract from separately priced assets', () => expect(coverageTotal([{price:'1200'},{price:'450'}])).toBe(1650));
+  it('supports three independent contracts covering two assets each', () => expect([[100,200],[300,400],[500,600]].map(pair => coverageTotal(pair.map(price => ({price:String(price)}))))).toEqual([300,700,1100]));
+  it('accepts independent February and September equipment dates', () => expect(coverageDatesValid([{start:'2026-02-01',end:'2027-02-01'},{start:'2026-09-01',end:'2027-09-01'}])).toBe(true));
+  it('rejects expiry before equipment starts', () => expect(coverageDatesValid([{start:'2026-09-01',end:'2026-02-01'}])).toBe(false));
+  it('prices stops, landing doors and car access independently', () => {
+    const c = passportCommercial({...DEFAULT_COMMERCIAL,basePrice:500,liftPricing:{...DEFAULT_LIFT_PRICING,extraStopRate:50,landingDoorRate:20,extraCarDoorRate:75}}, {stops:'5',entrances:'2'}, {landing_doors:'7'});
+    expect(calculatedCoveragePrice(c)).toBe('865');
+  });
+  it('does not infer landing doors from stop count', () => expect(passportCommercial({...DEFAULT_COMMERCIAL,liftPricing:{...DEFAULT_LIFT_PRICING,landingDoors:3}}, {stops:8}, {}).liftPricing?.landingDoors).toBe(3));
+});

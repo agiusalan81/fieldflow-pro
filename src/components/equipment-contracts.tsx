@@ -1,0 +1,87 @@
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { FileText, Plus, RefreshCw } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
+import { useMemberWorkspaces } from '@/lib/member-workspaces';
+import { usePlanFeatures } from '@/lib/plan-features';
+import { parseCommercial, parseFieldSpecs, commercialTotal, type Commercial } from '@/lib/document-blocks';
+import { coverageDatesValid, coverageTotal, passportCommercial, calculatedCoveragePrice, type CoverageDraft } from '@/lib/agreement-coverage';
+import { daysUntil } from '@/lib/jobsheets';
+import { PPM_CADENCES } from '@/lib/ppm';
+import { LiftCommercialEditor } from '@/components/lift-commercial';
+import { ClientSitePicker } from '@/components/client-site-picker';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+export function useAgreementCoverage() {
+  return useQuery({queryKey:['agreement-coverage'],queryFn:async()=>{const r=await supabase.from('agreement_assets').select('*, assets(reference_number), maintenance_agreements(title, client_id, site_id, status)');if(r.error)throw r.error;return r.data;}});
+}
+function Choice({label,value,onChange,options}:{label:string;value:string;onChange:(v:string)=>void;options:{id:string;name:string}[]}) {
+  return <div className="min-w-0 space-y-1"><Label>{label}</Label><Select value={value||'none'} onValueChange={v=>onChange(v==='none'?'':v)}><SelectTrigger aria-label={label}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">None</SelectItem>{options.map(d=><SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent></Select></div>;
+}
+export function EquipmentContracts({companyId,clientId,siteId,assetId,central=false}:{companyId:string;clientId?:string;siteId?:string;assetId?:string;central?:boolean}) {
+  const access=useMemberWorkspaces();const on=usePlanFeatures();const [open,setOpen]=useState(false);
+  if(!access.data?.contracts || !on('contracts'))return null;
+  return <><Button size="sm" variant="outline" onClick={()=>setOpen(true)} aria-label={assetId?'Equipment contracts':siteId?'Site contracts':'New contract'}><FileText className="mr-1 h-4 w-4"/>{assetId?'Contracts':siteId?'Site contracts':'New contract'}</Button><Dialog open={open} onOpenChange={setOpen}><DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-4xl"><DialogHeader><DialogTitle>{central?'New contract':assetId?'Equipment contracts':'Site contracts'}</DialogTitle></DialogHeader>{open&&<ContractEditor companyId={companyId} initialClient={clientId} initialSite={siteId} initialAsset={assetId} onSaved={()=>setOpen(false)}/>}</DialogContent></Dialog></>;
+}
+function ContractEditor({companyId,initialClient,initialSite,initialAsset,onSaved}:{companyId:string;initialClient?:string;initialSite?:string;initialAsset?:string;onSaved:()=>void}) {
+  const qc=useQueryClient();const on=usePlanFeatures();const today=new Date().toISOString().slice(0,10);
+  const [h,setH]=useState({client_id:initialClient??'',site_id:initialSite??'',title:'',kind:'maintenance',document_id:'',tier_id:'',start:today,end:'',price:'',notes:''});
+  const [lines,setLines]=useState<CoverageDraft[]>([]);const [existing,setExisting]=useState('');const [busy,setBusy]=useState(false);
+  const coverage=useAgreementCoverage();
+  const opts=useQuery({queryKey:['contract-editor-options',h.client_id,on('lift_pack')],queryFn:async()=>{
+    const [a,d,t,m,p]=await Promise.all([supabase.from('assets').select('id,reference_number,asset_category,site_id').eq('client_id',h.client_id||'00000000-0000-0000-0000-000000000000'),supabase.from('document_masters').select('id,name,kind,items,field_specs,commercial,body').eq('state','active'),supabase.from('contract_types').select('id,name,commercial,annual_price,checklist_document_id').eq('lifecycle','active'),supabase.from('maintenance_agreements').select('id,title,site_id,start_date,end_date,clients(name)').eq('client_id',h.client_id||'00000000-0000-0000-0000-000000000000').eq('status','active').eq('contract_kind','maintenance'),on('lift_pack')?supabase.from('lift_passports').select('asset_id,general,doors_cabin'):Promise.resolve({data:[],error:null})]);
+    for(const r of [a,d,t,m,p])if(r.error)throw r.error;
+    return {assets:a.data??[],documents:d.data??[],tiers:t.data??[],agreements:m.data??[],passports:p.data??[]};
+  }});
+  const assets=(opts.data?.assets??[]).filter(a=>(!h.site_id||a.site_id===h.site_id)&&(!initialAsset||a.id===initialAsset));
+  const assigned=coverage.data?.filter(x=>x.maintenance_agreements?.client_id===h.client_id&&(!initialAsset||x.asset_id===initialAsset)&&(!initialSite||x.maintenance_agreements.site_id===initialSite))??[];
+  const patch=(id:string,p:Partial<CoverageDraft>)=>setLines(old=>old.map(x=>x.asset_id===id?{...x,...p}:x));
+  const makeLine=(id:string):CoverageDraft=>({asset_id:id,checklist_id:'',schedule_id:'',price:'',start:h.start,end:h.end,months:'1',pricing:parseCommercial({})});
+  const toggle=(id:string,checked:boolean)=>setLines(old=>checked?[...old,makeLine(id)]:old.filter(x=>x.asset_id!==id));
+  const applyPrice=(id:string,c:Commercial)=>patch(id,{pricing:c,price:calculatedCoveragePrice(c)});
+  const save=async()=>{
+    if(!h.client_id||!h.end||h.end<=h.start||!coverageDatesValid(lines)||lines.some(x=>!Number.isFinite(Number(x.price))||Number(x.price)<0)||(!existing&&h.kind==='maintenance'&&!lines.length)){toast.error('Choose equipment, valid dates and non-negative prices');return;}
+    setBusy(true);try{const r=await supabase.rpc('save_equipment_contract',{_header:h as unknown as Json,_lines:lines as unknown as Json,...(existing?{_agreement:existing}:{})});if(r.error)throw r.error;await Promise.all(['agreements','agreement-coverage','client-contract-coverage','client-workspace'].map(k=>qc.invalidateQueries({queryKey:[k]})));toast.success('Contract saved with agreed equipment work and prices');onSaved();}catch(e){toast.error((e as {message?:string}).message??'Could not save contract');}finally{setBusy(false);}
+  };
+  return <div className="space-y-4">
+    {opts.error&&<p role="alert" className="text-destructive">Contract choices could not be loaded.</p>}
+    {assigned.length>0&&<section className="space-y-2 border-b pb-3"><h3 className="font-semibold">Current equipment coverage</h3>{assigned.map(x=><p key={x.id} className="text-sm">{x.maintenance_agreements?.title||'Maintenance agreement'} · {x.assets?.reference_number} · €{Number(x.annual_price).toFixed(2)} · {x.start_date} → {x.end_date}</p>)}</section>}
+    <ClientSitePicker clientId={h.client_id||null} siteId={h.site_id||null} onChange={(client,site)=>{if(initialClient)return;setH({...h,client_id:client??'',site_id:site??''});setLines([]);}} />
+    {initialClient&&<p className="text-sm text-muted-foreground">{initialSite?'Selected site':'Selected client'} · {initialAsset?'selected equipment':''}</p>}
+    {initialAsset&&<Choice label="Add to existing contract" value={existing} options={(opts.data?.agreements??[]).filter(a=>!a.site_id||a.site_id===(opts.data?.assets.find(x=>x.id===initialAsset)?.site_id)).map(a=>({id:a.id,name:a.title||`${a.clients?.name} · ${a.start_date}`}))} onChange={v=>{setExisting(v);const a=opts.data?.agreements.find(x=>x.id===v);if(a)setH({...h,start:a.start_date,end:a.end_date});setLines([]);}}/>}
+    {!existing&&<><div className="grid gap-3 sm:grid-cols-2"><div className="space-y-1"><Label htmlFor="contract-title">Contract title</Label><Input id="contract-title" value={h.title} onChange={e=>setH({...h,title:e.target.value})}/></div><Choice label="Contract category" value={h.kind} options={[{id:'maintenance',name:'Maintenance'},{id:'installation',name:'New installation / project'}]} onChange={kind=>{if(kind){setH({...h,kind});setLines([]);}}}/><Choice label="Contract document" value={h.document_id} options={(opts.data?.documents??[]).filter(d=>d.kind==='contract')} onChange={document_id=>setH({...h,document_id})}/><Choice label="Service tier" value={h.tier_id} options={opts.data?.tiers??[]} onChange={tier_id=>setH({...h,tier_id})}/></div>
+    {h.document_id&&<details className="border-y py-2"><summary className="cursor-pointer text-sm font-medium">Preview contract terms</summary><p className="whitespace-pre-wrap text-sm">{opts.data?.documents.find(d=>d.id===h.document_id)?.body}</p></details>}</>}
+    <div className="grid gap-3 sm:grid-cols-2"><div className="space-y-1"><Label htmlFor="contract-start">Start date</Label><Input id="contract-start" type="date" value={h.start} onChange={e=>setH({...h,start:e.target.value})}/></div><div className="space-y-1"><Label htmlFor="contract-end">Expiry date</Label><Input id="contract-end" type="date" value={h.end} onChange={e=>setH({...h,end:e.target.value})}/></div></div>
+    {h.kind==='installation'?<><Label htmlFor="contract-project-price">Project price (€)</Label><Input id="contract-project-price" type="number" min={0} value={h.price} onChange={e=>setH({...h,price:e.target.value})}/><Label htmlFor="contract-project-work">Scope, milestones, warranty & handover</Label><Textarea id="contract-project-work" value={h.notes} onChange={e=>setH({...h,notes:e.target.value})}/></>:<>
+    <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-semibold">Covered equipment</h3>{!initialAsset&&<Button size="sm" variant="outline" onClick={()=>setLines(assets.filter(a=>!coverage.data?.some(x=>x.agreement_id===existing&&x.asset_id===a.id)).map(a=>lines.find(x=>x.asset_id===a.id)??makeLine(a.id)))}><Plus className="mr-1 h-4 w-4"/>Cover all site equipment</Button>}</div>
+    {!assets.length&&<p className="text-sm text-muted-foreground">No equipment at this selection.</p>}
+    {assets.map(a=>{const l=lines.find(x=>x.asset_id===a.id);const duplicate=!!existing&&coverage.data?.some(x=>x.agreement_id===existing&&x.asset_id===a.id);return <section key={a.id} className="space-y-3 border-t pt-3"><label className="flex items-center gap-2 font-medium"><Checkbox disabled={duplicate} checked={!!l} onCheckedChange={v=>toggle(a.id,v===true)}/>{a.reference_number} · {a.asset_category}{duplicate?' · Already covered':''}</label>{l&&<>
+      <div className="grid gap-3 sm:grid-cols-2"><Choice label={`Checklist · ${a.reference_number}`} value={l.checklist_id} options={(opts.data?.documents??[]).filter(d=>d.kind==='checklist')} onChange={id=>{const d=opts.data?.documents.find(x=>x.id===id);const specs=parseFieldSpecs(d?.field_specs,d?.items.length??0);patch(a.id,{checklist_id:id,...(specs.some(s=>s.price)?{price:String(specs.reduce((sum,s)=>sum+(s.price??0),0))}:{})});}}/><Choice label={`Schedule of works · ${a.reference_number}`} value={l.schedule_id} options={opts.data?.documents??[]} onChange={schedule_id=>patch(a.id,{schedule_id})}/>
+      {(['start','end','price'] as const).map(k=><div key={k} className="space-y-1"><Label htmlFor={`${a.id}-${k}`}>{k==='price'?'Equipment price (€ / year)':k==='start'?'Equipment starts':'Equipment expiry'}</Label><Input id={`${a.id}-${k}`} type={k==='price'?'number':'date'} min={k==='price'?0:undefined} value={l[k]} onChange={e=>patch(a.id,{[k]:e.target.value})}/></div>)}<Choice label={`Maintenance frequency · ${a.reference_number}`} value={l.months} options={PPM_CADENCES.map(c=>({id:String(c.months),name:c.label}))} onChange={months=>{if(months)patch(a.id,{months});}}/></div>
+      {l.checklist_id&&<details><summary className="cursor-pointer text-sm font-medium">Agreed checklist preview</summary><ul className="list-disc pl-5 text-sm">{opts.data?.documents.find(d=>d.id===l.checklist_id)?.items.map((i,n)=><li key={n}>{i}</li>)}</ul></details>}
+      {on('lift_pack')&&opts.data?.passports.some(p=>p.asset_id===a.id)&&<><Button size="sm" variant="outline" onClick={()=>{const tier=opts.data?.tiers.find(t=>t.id===h.tier_id);const doc=opts.data?.documents.find(d=>d.id===l.checklist_id);const p=opts.data?.passports.find(x=>x.asset_id===a.id);let c=passportCommercial(tier?.commercial??doc?.commercial,p?.general,p?.doors_cabin);if(c.basePrice===null)c={...c,basePrice:Number(tier?.annual_price??l.price)||0};applyPrice(a.id,c);}}><RefreshCw className="mr-1 h-4 w-4"/>Apply tier rates & passport dimensions</Button><LiftCommercialEditor value={l.pricing} onChange={c=>applyPrice(a.id,c)}/></>}
+    </>}</section>;})}</>}
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4"><p className="font-semibold">{h.kind==='installation'?'Project total':'Contract total'}: €{(h.kind==='installation'?Number(h.price)||0:coverageTotal(lines)).toFixed(2)}</p><Button disabled={busy||opts.isPending||!!opts.error} onClick={()=>void save()}>{busy?'Saving…':existing?'Add equipment to contract':'Save contract'}</Button></div>
+  </div>;
+}
+
+export function AgreementAssetLines({agreementId,renewalsOnly=false}:{agreementId?:string;renewalsOnly?:boolean}) {
+  const q=useAgreementCoverage();const qc=useQueryClient();const on=usePlanFeatures();const [busy,setBusy]=useState<string|null>(null);
+  const rows=(q.data??[]).filter(x=>(!agreementId||x.agreement_id===agreementId)&&(!renewalsOnly||x.maintenance_agreements?.status==='active'&&daysUntil(x.end_date)<=30));
+  const action=async(x:typeof rows[number],kind:'renew'|'schedule')=>{setBusy(x.id);try{
+    if(kind==='renew'){const start=new Date(x.end_date+'T00:00:00Z');start.setUTCDate(start.getUTCDate()+1);const end=new Date(start);end.setUTCFullYear(end.getUTCFullYear()+1);end.setUTCDate(end.getUTCDate()-1);const r=await supabase.from('agreement_assets').update({start_date:start.toISOString().slice(0,10),end_date:end.toISOString().slice(0,10)}).eq('id',x.id);if(r.error)throw r.error;}
+    else{const old=await supabase.from('ppm_plans').select('id').eq('agreement_id',x.agreement_id).eq('asset_id',x.asset_id).maybeSingle();if(old.error)throw old.error;const r=old.data?await supabase.rpc('generate_ppm_visits',{_plan:old.data.id}):await supabase.from('ppm_plans').insert({agreement_id:x.agreement_id,asset_id:x.asset_id,first_due_date:x.start_date,interval_months:x.interval_months});if(r.error)throw r.error;}
+    await Promise.all(['agreement-coverage','agreements','ppm-plans','ppm-visits','client-contract-coverage'].map(k=>qc.invalidateQueries({queryKey:[k]})));toast.success(kind==='renew'?'Equipment coverage renewed; previous dates retained':'Maintenance visits scheduled');
+  }catch(e){toast.error((e as {message?:string}).message??'Could not update coverage');}finally{setBusy(null);}};
+  if(q.error)return <p role="alert" className="text-destructive">Equipment coverage could not be loaded.</p>;
+  if(!rows.length)return null;
+  return <ul className="divide-y border-y">{rows.map(x=>{const s=x.checklist_snapshot as {name?:string;items?:string[]};return <li key={x.id} className="space-y-2 py-3 text-sm"><p className="font-medium">{x.assets?.reference_number}{renewalsOnly?` · ${x.maintenance_agreements?.title||'Maintenance contract'}`:''} · €{Number(x.annual_price).toFixed(2)}</p><p>{x.start_date} → {x.end_date} · {12/x.interval_months} visits/year · <span className={daysUntil(x.end_date)<0?'text-destructive':'text-muted-foreground'}>{daysUntil(x.end_date)<0?'Expired':`${daysUntil(x.end_date)} days left`}</span></p>{s.name&&<details><summary className="cursor-pointer">{s.name}</summary><ul className="list-disc pl-5">{s.items?.map((i,n)=><li key={n}>{i}</li>)}</ul></details>}<div className="flex flex-wrap gap-2">{on('ppm_automation')&&<Button size="sm" variant="outline" disabled={!!busy} onClick={()=>void action(x,'schedule')}>Schedule maintenance</Button>}{daysUntil(x.end_date)<=30&&<Button size="sm" variant="outline" disabled={!!busy} onClick={()=>{if(confirm(`Renew ${x.assets?.reference_number} for one year at the same agreed price and work?`))void action(x,'renew');}}>Renew this equipment</Button>}</div></li>;})}</ul>;
+}
