@@ -6326,6 +6326,7 @@ export type Database = {
           can_dispatch_jobs: boolean | null
           can_estimates: boolean | null
           can_field_dispatch: boolean
+          can_site_surveys: boolean | null
           company_id: string
           created_at: string
           crm_access: string | null
@@ -6344,6 +6345,7 @@ export type Database = {
           can_dispatch_jobs?: boolean | null
           can_estimates?: boolean | null
           can_field_dispatch?: boolean
+          can_site_surveys?: boolean | null
           company_id: string
           created_at?: string
           crm_access?: string | null
@@ -6362,6 +6364,7 @@ export type Database = {
           can_dispatch_jobs?: boolean | null
           can_estimates?: boolean | null
           can_field_dispatch?: boolean
+          can_site_surveys?: boolean | null
           company_id?: string
           created_at?: string
           crm_access?: string | null
@@ -6632,6 +6635,8 @@ export type Database = {
       member_dispatch_can: { Args: never; Returns: boolean }
       member_handover_preview: { Args: { _user: string }; Returns: Json }
       member_is_active: { Args: { _user: string }; Returns: boolean }
+      member_survey_can: { Args: never; Returns: boolean }
+      member_survey_not_revoked: { Args: never; Returns: boolean }
       my_commercial_status: { Args: never; Returns: Json }
       my_crm_access: { Args: never; Returns: string }
       my_member_capabilities: { Args: never; Returns: Json }
@@ -6923,6 +6928,10 @@ export type Database = {
       }
       set_member_primary_skill: {
         Args: { _skill: string; _user: string }
+        Returns: undefined
+      }
+      set_member_surveys: {
+        Args: { _enabled: boolean; _user: string }
         Returns: undefined
       }
       set_member_workspaces: {

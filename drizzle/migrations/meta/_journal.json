@@ -1079,6 +1079,13 @@
       "when": 1793114587598,
       "tag": "0153_crm_start_estimate",
       "breakpoints": true
+    },
+    {
+      "idx": 154,
+      "version": "7",
+      "when": 1793115473991,
+      "tag": "0154_member_site_survey_capability",
+      "breakpoints": true
     }
   ]
 }
