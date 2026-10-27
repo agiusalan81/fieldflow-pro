@@ -90,6 +90,7 @@ const LIFT_DOORS: PassportSection = {
     sel("clear_opening", "Clear opening", ["700 mm", "800 mm", "900 mm", "1000 mm", "1100 mm", "1200 mm"]),
     sel("door_configuration", "Door configuration", ["2-panel centre", "2-panel telescopic", "3-panel telescopic", "4-panel centre", "Single swing"]),
     sel("landing_locks", "Landing locks", ["Wittur", "Fermator", "AHZ", "Selcom", "Sematic", "Prisma"]),
+    num("landing_doors", "Landing doors (independent of stops)"),
     sel("safety_edge", "Safety edge", ["Light curtain", "Mechanical edge", "Both", "N/A"]),
     sel("car_top_controls", "Car top inspection controls", ["Fitted", "N/A"]),
   ],

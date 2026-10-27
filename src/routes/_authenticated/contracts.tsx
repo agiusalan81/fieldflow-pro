@@ -6,6 +6,7 @@ import { Trash2 } from "lucide-react";
 import { usePlanFeatures } from "@/lib/plan-features";
 import { PpmCoverage } from "@/components/ppm-coverage";
 import { PpmVisits } from "@/components/ppm-visits";
+import { EquipmentContracts, AgreementAssetLines } from '@/components/equipment-contracts';
 import { ContractTiers } from "@/components/contract-tiers";
 import { DocumentMasters } from "@/components/document-masters";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,6 +75,7 @@ function Renewals({ office }: { office: boolean }) {
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground">Confirm the price is still the same, send the renewal to the client, then renew once they sign. Automatic client emails and e-signatures will be connected in a later step.</p>
       <RenewalList office={office} />
+      {office && <AgreementAssetLines renewalsOnly />}
     </div>
   );
 }
@@ -103,6 +105,7 @@ function Agreements({ office, companyId }: { office: boolean; companyId?: string
   };
   return (
     <div className="space-y-4">
+      {companyId && office && <EquipmentContracts companyId={companyId} central />}
       {office && (
         <section className="grid gap-2 rounded-xl border bg-card p-4 md:grid-cols-6 md:items-end">
           <div className="md:col-span-2"><ClientSitePicker showSite={false} clientId={f.client_id || null} siteId={null} onChange={(client) => setF({ ...f, client_id: client ?? "" })} /></div>
@@ -133,9 +136,10 @@ function Agreements({ office, companyId }: { office: boolean; companyId?: string
         <ul className="divide-y rounded-xl border bg-card">
           {data.map((a) => (
             <li key={a.id} className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm">
-              <div className="min-w-0 flex-1"><p className="truncate font-medium text-foreground">{a.clients?.name}</p><p className="text-muted-foreground">{a.contract_types?.name ?? "Custom"} · {a.start_date} → {a.end_date} · €{Number(a.annual_price).toFixed(2)}</p></div>
+              <div className="min-w-0 flex-1"><p className="break-words font-medium text-foreground">{a.title || a.clients?.name}</p><p className="text-muted-foreground">{a.clients?.name} · {a.sites?.name} · {a.contract_kind === 'installation' ? 'Installation project' : a.contract_types?.name ?? "Maintenance"} · {a.start_date} → {a.end_date} · €{Number(a.annual_price).toFixed(2)}</p></div>
               <span className="text-xs text-muted-foreground">{daysUntil(a.end_date) < 0 ? "Expired" : `${daysUntil(a.end_date)} days left`}</span>
               {on('ppm_automation') && <PpmCoverage agreementId={a.id} clientId={a.client_id} start={a.start_date} end={a.end_date} canManage={office} />}
+              <div className="w-full"><AgreementAssetLines agreementId={a.id} /></div>
             </li>
           ))}
         </ul>
