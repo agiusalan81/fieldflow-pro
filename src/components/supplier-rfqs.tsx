@@ -139,6 +139,7 @@ export function SupplierRfqs() {
                     ? <Button size="sm" onClick={() => { const v = window.prompt("Supplier estimate amount (€)"); if (v) move(e, "quoted", { quoted_amount: Number(v) || null }); }}>Mark estimate received</Button>
                     : <Button size="sm" onClick={() => move(e, next.key)}>Mark: {next.label}</Button>
                 )}
+                {(e.status === "quoted" || e.status === "client_ready") && <Button size="sm" variant="outline" asChild><Link to="/lift-costing">Cost & quote</Link></Button>}
                 {e.status === "client_ready" && <Button size="sm" variant="outline" onClick={() => move(e, "lost")}>Mark lost</Button>}
                 <Button size="sm" variant="outline" onClick={async () => {
                   const v = window.prompt("Agreed client price (€) — used for billing", String(e.client_price ?? ""));
