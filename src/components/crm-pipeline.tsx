@@ -153,8 +153,8 @@ function LeadPanel({ lead, company, level, onDeleted }: { lead: Lead; company?: 
   const [valueText, setValueText] = useState(lead.value == null ? "" : String(lead.value));
   const saveValue = () => { const t = valueText.trim().replace(",", "."); const v = t ? Number(t) : null; if (v != null && !Number.isFinite(v)) { toast.error("Enter a number or leave empty for TBD"); return; } void run(() => supabase.from("crm_opportunities").update({ value: v }).eq("id", lead.id), "Value updated"); };
   const del = async () => { setBusy(true); const r = await supabase.rpc("crm_delete_lead", { _id: lead.id }); setBusy(false); if (r.error) { toast.error(errMsg(r.error)); return; } toast.success("Lead deleted"); onDeleted(); await Promise.all(["crm-leads", "crm-followups", "action-notifications"].map((k) => qc.invalidateQueries({ queryKey: [k] }))); };
-  const company = useCompanyRules().data; const planOn = usePlanFeatures();
-  const liftOn = planOn("lift_pack") && companyHasLiftTrade(company?.industry, company?.trades);
+  const companyRules = useCompanyRules().data; const planOn = usePlanFeatures();
+  const liftOn = planOn("lift_pack") && companyHasLiftTrade(companyRules?.industry, companyRules?.trades);
   const startEstimate = async (kind: "quote" | "lift") => {
     setBusy(true); const r = await supabase.rpc("crm_start_estimate", { _id: lead.id, _kind: kind }); setBusy(false);
     if (r.error) { toast.error(errMsg(r.error)); return; }

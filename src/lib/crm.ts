@@ -31,6 +31,20 @@ export const LEAD_SOURCES = [
   { key: "website", label: "Website" },
 ] as const;
 
+/** Display label for a stored lead source: built-in keys map to labels, custom sources show as typed. */
+export function sourceLabel(source: string) {
+  return LEAD_SOURCES.find((s) => s.key === source)?.label ?? source;
+}
+/** Built-in source labels followed by the company's own past sources, de-duplicated case-insensitively. */
+export function sourceOptions(past: string[]) {
+  const out: string[] = []; const seen = new Set<string>();
+  for (const v of [...LEAD_SOURCES.map((s) => s.label), ...past.map(sourceLabel)]) {
+    const t = v.trim(); const k = t.toLowerCase();
+    if (t && !seen.has(k)) { seen.add(k); out.push(t); }
+  }
+  return out;
+}
+
 export type ActionType = { key: string; label: string; icon: string; dueHours: number; custom: boolean };
 /** Built-in follow-up actions every company starts with; custom types are added per company. */
 export const DEFAULT_ACTIONS: ActionType[] = [
