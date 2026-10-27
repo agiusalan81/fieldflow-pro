@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { customerQuoteDocument, emptyQuoteDocument, quoteDraftForEditor, quoteBillingLines, quoteExpired, quoteLineSchema, quoteTotals, type QuoteLine } from './customer-quotes';
 const line: QuoteLine = { id: '12345678-1234-4234-8234-123456789abc', description: 'Work', category: 'labour', unit: 'hour', quantity: 2, rate: 100, discount: 10, vat: 18 };
 describe('Core customer quotes', () => {
+  it('supports a fixed-price quote selected during creation', () => { const quote = customerQuoteDocument({ ...emptyQuoteDocument('quote'), title: 'Fixed repair' }); expect(quote.kind).toBe('quote'); expect(quoteDraftForEditor(quote).kind).toBe('quote'); });
   it('opens a legacy CRM draft without lines or editor fields', () => {
     const draft = quoteDraftForEditor({ title: 'Lift Modernisation Tender' });
     expect(draft.title).toBe('Lift Modernisation Tender');

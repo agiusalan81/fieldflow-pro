@@ -1,8 +1,9 @@
-export type NumberingKind = "estimate" | "proposal" | "job_sheet" | "invoice";
+export type NumberingKind = "estimate" | "quote" | "proposal" | "job_sheet" | "invoice";
 export type NumberFormat = { prefix: string; padding: number; next: number };
 
 export const NUMBERED_DOCUMENTS: { key: NumberingKind; label: string; prefix: string; note?: string }[] = [
   { key: "estimate", label: "Estimates", prefix: "EST-" },
+  { key: "quote", label: "Quotes", prefix: "QUO-" },
   { key: "proposal", label: "Proposals", prefix: "PRP-" },
   { key: "job_sheet", label: "Job sheets", prefix: "JS-" },
   { key: "invoice", label: "Invoices", prefix: "INV-", note: "Saved now and used when invoicing is connected." },

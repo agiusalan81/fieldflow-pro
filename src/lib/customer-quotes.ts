@@ -7,7 +7,7 @@ export const quoteLineSchema = z.object({
   discount: z.number().finite().min(0).max(100), vat: z.number().finite().min(0).max(100),
 });
 export const quoteDocumentSchema = z.object({
-  kind: z.enum(['estimate', 'proposal']), title: z.string().trim().min(1).max(200),
+  kind: z.enum(['estimate', 'quote', 'proposal']), title: z.string().trim().min(1).max(200),
   issue_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), valid_until: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   scope: z.string().max(10000), exclusions: z.string().max(10000), payment: z.string().max(5000),
   timeframe: z.string().max(2000), notes: z.string().max(10000), lines: z.array(quoteLineSchema).max(100),
@@ -38,7 +38,7 @@ export function quoteTotals(lines: QuoteLine[] | null | undefined): QuoteTotals 
 }
 /** Explicit allowlist: supplier metadata and private notes are never projected. */
 export function customerQuoteDocument(raw: unknown) { return quoteDocumentSchema.parse(raw); }
-export function emptyQuoteDocument(kind: 'estimate' | 'proposal' = 'estimate'): QuoteDocument {
+export function emptyQuoteDocument(kind: QuoteDocument['kind'] = 'estimate'): QuoteDocument {
   const now = new Date(); const expiry = new Date(now); expiry.setUTCDate(expiry.getUTCDate() + 30);
   return { kind, title: '', issue_date: now.toISOString().slice(0, 10), valid_until: expiry.toISOString().slice(0, 10), scope: '', exclusions: '', payment: '', timeframe: '', notes: '', lines: [], photos: [] };
 }
@@ -49,7 +49,7 @@ export function quoteDraftForEditor(raw: unknown): QuoteDocument {
   const data = raw as Record<string, unknown>;
   return {
     ...defaults,
-    kind: data['kind'] === 'proposal' ? 'proposal' : 'estimate',
+    kind: data['kind'] === 'proposal' ? 'proposal' : data['kind'] === 'quote' ? 'quote' : 'estimate',
     ...Object.fromEntries(['title', 'issue_date', 'valid_until', 'scope', 'exclusions', 'payment', 'timeframe', 'notes'].map(key => [key, typeof data[key] === 'string' ? data[key] : defaults[key as keyof QuoteDocument]])),
     lines: Array.isArray(data['lines']) ? data['lines'] as QuoteLine[] : [],
     photos: Array.isArray(data['photos']) ? data['photos'] as QuoteDocument['photos'] : [],
