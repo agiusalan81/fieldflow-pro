@@ -3268,27 +3268,40 @@ export type Database = {
           contingency_pct: number
           created_at: string
           created_by: string | null
+          custom_specs: Json
           customs_cost: number
           dismantling_cost: number
           electrical_hours: number
           electrical_rate: number
           equipment_cost: number
           equipment_markup_pct: number
+          equipment_type: string
+          exclusions: Json
           freight_cost: number
           id: string
+          inclusions: Json
           labour_markup_pct: number
           mechanical_hours: number
           mechanical_rate: number
+          notes: string
+          options: Json
+          output_style: string
+          photos: Json
           quote_id: string | null
           rfq_id: string | null
+          spec_groups: string[]
+          specs: Json
           stage_payments: Json
           status: string
           subcontractor_markup_pct: number
           survey_id: string | null
+          template_id: string | null
           third_party_costs: Json
           title: string
           total_cost: number
+          turnkey_description: string
           updated_at: string
+          vat_pct: number
         }
         Insert: {
           certification_cost?: number
@@ -3298,27 +3311,40 @@ export type Database = {
           contingency_pct?: number
           created_at?: string
           created_by?: string | null
+          custom_specs?: Json
           customs_cost?: number
           dismantling_cost?: number
           electrical_hours?: number
           electrical_rate?: number
           equipment_cost?: number
           equipment_markup_pct?: number
+          equipment_type?: string
+          exclusions?: Json
           freight_cost?: number
           id?: string
+          inclusions?: Json
           labour_markup_pct?: number
           mechanical_hours?: number
           mechanical_rate?: number
+          notes?: string
+          options?: Json
+          output_style?: string
+          photos?: Json
           quote_id?: string | null
           rfq_id?: string | null
+          spec_groups?: string[]
+          specs?: Json
           stage_payments?: Json
           status?: string
           subcontractor_markup_pct?: number
           survey_id?: string | null
+          template_id?: string | null
           third_party_costs?: Json
           title?: string
           total_cost?: number
+          turnkey_description?: string
           updated_at?: string
+          vat_pct?: number
         }
         Update: {
           certification_cost?: number
@@ -3328,27 +3354,40 @@ export type Database = {
           contingency_pct?: number
           created_at?: string
           created_by?: string | null
+          custom_specs?: Json
           customs_cost?: number
           dismantling_cost?: number
           electrical_hours?: number
           electrical_rate?: number
           equipment_cost?: number
           equipment_markup_pct?: number
+          equipment_type?: string
+          exclusions?: Json
           freight_cost?: number
           id?: string
+          inclusions?: Json
           labour_markup_pct?: number
           mechanical_hours?: number
           mechanical_rate?: number
+          notes?: string
+          options?: Json
+          output_style?: string
+          photos?: Json
           quote_id?: string | null
           rfq_id?: string | null
+          spec_groups?: string[]
+          specs?: Json
           stage_payments?: Json
           status?: string
           subcontractor_markup_pct?: number
           survey_id?: string | null
+          template_id?: string | null
           third_party_costs?: Json
           title?: string
           total_cost?: number
+          turnkey_description?: string
           updated_at?: string
+          vat_pct?: number
         }
         Relationships: [
           {
@@ -3377,6 +3416,81 @@ export type Database = {
             columns: ["survey_id"]
             isOneToOne: false
             referencedRelation: "lift_surveys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lift_costing_sheets_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "lift_costing_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lift_costing_templates: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string | null
+          custom_specs: Json
+          defaults: Json
+          equipment_type: string
+          exclusions: Json
+          id: string
+          inclusions: Json
+          name: string
+          notes: string
+          options: Json
+          output_style: string
+          spec_groups: string[]
+          supplier_origin: string
+          turnkey_description: string
+          updated_at: string
+        }
+        Insert: {
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          custom_specs?: Json
+          defaults?: Json
+          equipment_type?: string
+          exclusions?: Json
+          id?: string
+          inclusions?: Json
+          name: string
+          notes?: string
+          options?: Json
+          output_style?: string
+          spec_groups?: string[]
+          supplier_origin?: string
+          turnkey_description?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          custom_specs?: Json
+          defaults?: Json
+          equipment_type?: string
+          exclusions?: Json
+          id?: string
+          inclusions?: Json
+          name?: string
+          notes?: string
+          options?: Json
+          output_style?: string
+          spec_groups?: string[]
+          supplier_origin?: string
+          turnkey_description?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lift_costing_templates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]

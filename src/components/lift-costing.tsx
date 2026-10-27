@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { FileOutput, Plus, Trash2 } from "lucide-react";
+import { BookmarkPlus, FileOutput, Plus, Trash2 } from "lucide-react";
+import { EquipmentAndLayout, ProposalContent, ProposalPreview, TechnicalSpecs } from "@/components/lift-costing-proposal";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
@@ -19,6 +20,12 @@ import {
   priceWith,
   reconcileClientLines,
   stageAmounts,
+  applyTemplate,
+  normalizeTemplate,
+  proposalSummary,
+  specRows,
+  templateFromDraft,
+  equipmentLabel,
   type CostingDraft,
 } from "@/lib/lift-costing";
 import { Button } from "@/components/ui/button";
@@ -80,6 +87,29 @@ function CostingEditor({ draft, setDraft, companyId, onSaved }: { draft: Costing
     queryFn: async () => (await supabase.from("lift_estimates").select("id, title, client_id, site_id, quoted_amount").order("updated_at", { ascending: false })).data ?? [],
   });
 
+  const { data: templates = [], refetch: refetchTemplates } = useQuery({
+    queryKey: ["lift-costing-templates"],
+    queryFn: async () => (await supabase.from("lift_costing_templates").select("*").order("name")).data?.map((t) => normalizeTemplate(t)) ?? [],
+  });
+  const saveAsTemplate = async () => {
+    const name = window.prompt("Template name (e.g. 4-post lift, China goods lift, Dumbwaiter)", d.title || equipmentLabel(d.equipment_type));
+    if (!name?.trim()) return;
+    const t = templateFromDraft(d, name.trim());
+    const r = await supabase.from("lift_costing_templates").insert({ ...t, defaults: t.defaults as unknown as Json, options: t.options as unknown as Json, inclusions: t.inclusions as unknown as Json, exclusions: t.exclusions as unknown as Json, custom_specs: t.custom_specs as unknown as Json, company_id: companyId }).select("id").single();
+    if (r.error) { toast.error(r.error.message); return; }
+    set({ template_id: r.data.id });
+    await refetchTemplates();
+    toast.success(`Template "${name.trim()}" saved — pick it next time to prefill everything`);
+  };
+  const deleteTemplate = async () => {
+    const t = templates.find((x) => x.id === d.template_id);
+    if (!t || !window.confirm(`Delete template "${t.name}"? Existing sheets keep their content.`)) return;
+    const r = await supabase.from("lift_costing_templates").delete().eq("id", t.id);
+    if (r.error) { toast.error(r.error.message); return; }
+    set({ template_id: null }); await refetchTemplates(); toast.success("Template deleted");
+  };
+  const summary = useMemo(() => proposalSummary(d), [d]);
+
   const survey = surveys.find((s) => s.id === d.survey_id);
   const rfq = rfqs.find((r) => r.id === d.rfq_id);
 
@@ -113,6 +143,11 @@ function CostingEditor({ draft, setDraft, companyId, onSaved }: { draft: Costing
         comparison_scenarios: matrix as unknown as Json,
         stage_payments: d.stages as unknown as Json,
         total_cost: breakdown.total, client_price: current.price,
+        template_id: d.template_id, equipment_type: d.equipment_type, output_style: d.output_style,
+        turnkey_description: d.turnkey_description, spec_groups: d.spec_groups, specs: d.specs as unknown as Json,
+        custom_specs: d.custom_specs as unknown as Json, inclusions: d.inclusions as unknown as Json,
+        exclusions: d.exclusions as unknown as Json, options: d.options as unknown as Json,
+        photos: d.photos as unknown as Json, notes: d.notes, vat_pct: d.vat_pct,
         status: status ?? (d.status === "draft" ? "priced" : d.status),
         updated_at: new Date().toISOString(),
       };
@@ -128,12 +163,19 @@ function CostingEditor({ draft, setDraft, companyId, onSaved }: { draft: Costing
     const clientId = survey?.client_id ?? rfq?.client_id ?? null;
     const siteId = survey?.site_id ?? rfq?.site_id ?? null;
     if (!clientId) { toast.error("Link a survey or RFQ with a client first"); return; }
-    if (!lines.length) { toast.error("Enter costs first — there is nothing to quote"); return; }
+    if (!summary.lines.length) { toast.error("Enter costs first — there is nothing to quote"); return; }
+    const specText = specRows(d).map((x) => `${x.label}: ${x.value}`).join("\n");
+    const incl = d.inclusions.filter((x) => x.trim()).map((x) => `• ${x}`).join("\n");
+    const avail = d.options.filter((o) => !o.selected && o.label.trim()).map((o) => `• ${o.label} — €${o.amount.toFixed(2)} + VAT`).join("\n");
     const doc = {
       ...emptyQuoteDocument("quote"),
       title: d.title.trim() || survey?.survey_number || rfq?.title || "Lift installation",
-      lines: lines.map((l) => ({ ...newQuoteLine(), description: l.description, rate: l.amount })),
-      payment: d.stages.length ? stages.map((s) => `${s.label}: ${s.pct}% (${euro(s.amount)})`).join("\n") : "",
+      lines: summary.lines.map((l) => ({ ...newQuoteLine(d.vat_pct), description: l.description, rate: l.amount })),
+      scope: [specText && `Technical specification\n${specText}`, incl && `Included\n${incl}`].filter(Boolean).join("\n\n"),
+      exclusions: d.exclusions.filter((x) => x.trim()).map((x) => `• ${x}`).join("\n"),
+      notes: [d.notes.trim(), avail && `Available options\n${avail}`].filter(Boolean).join("\n\n"),
+      photos: d.photos,
+      payment: d.stages.length ? stageAmounts(summary.grandNet, d.stages).map((s) => `${s.label}: ${s.pct}% (${euro(s.amount)})`).join("\n") : "",
     };
     const quoteId = crypto.randomUUID();
     try {
@@ -156,9 +198,22 @@ function CostingEditor({ draft, setDraft, companyId, onSaved }: { draft: Costing
 
   return (
     <Dialog open onOpenChange={(o) => !o && setDraft(null)}>
-      <DialogContent className="max-h-[94dvh] max-w-5xl overflow-y-auto">
+      <DialogContent className="max-h-[94dvh] max-w-7xl overflow-y-auto">
         <DialogHeader><DialogTitle>{d.isNew ? "New costing sheet" : "Edit costing sheet"}</DialogTitle></DialogHeader>
-        <div className="space-y-5">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="min-w-0 space-y-5">
+          <fieldset className="space-y-2 rounded-lg border p-3">
+            <legend className="px-1 text-sm font-medium">Template</legend>
+            <div className="flex flex-wrap items-center gap-2">
+              <Select value={d.template_id ?? "none"} onValueChange={(v) => { const t = templates.find((x) => x.id === v); setDraft(t ? applyTemplate(d, t) : { ...d, template_id: null }); }}>
+                <SelectTrigger className="h-10 w-full sm:w-72"><SelectValue placeholder="No template" /></SelectTrigger>
+                <SelectContent><SelectItem value="none">No template</SelectItem>{templates.map((t) => <SelectItem key={t.id} value={t.id}>{t.name} · {equipmentLabel(t.equipment_type)}</SelectItem>)}</SelectContent>
+              </Select>
+              <Button type="button" size="sm" variant="outline" onClick={saveAsTemplate}><BookmarkPlus className="mr-1 h-4 w-4" />Save setup as new template</Button>
+              {d.template_id && <Button type="button" size="sm" variant="ghost" onClick={deleteTemplate}><Trash2 className="mr-1 h-4 w-4" />Delete template</Button>}
+            </div>
+            <p className="text-xs text-muted-foreground">Templates hold equipment type, spec fields, markups, labour hours, VAT, stages, inclusions, exclusions, options, notes and the client price layout. Everything stays editable on each sheet.</p>
+          </fieldset>
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="space-y-1.5"><Label>Title</Label><Input className="h-10" placeholder="e.g. 8-person MRL, 5 stops" value={d.title} onChange={(e) => set({ title: e.target.value })} /></div>
             <div className="space-y-1.5">
@@ -176,6 +231,8 @@ function CostingEditor({ draft, setDraft, companyId, onSaved }: { draft: Costing
               </Select>
             </div>
           </div>
+          <EquipmentAndLayout d={d} set={set} />
+          <TechnicalSpecs d={d} set={set} />
           {survey?.requires_dismantling && !d.dismantling_cost && <p className="text-xs text-accent-foreground">The linked survey requires dismantling — remember to cost it below.</p>}
 
           <fieldset className="space-y-3 rounded-lg border p-3">
@@ -254,19 +311,18 @@ function CostingEditor({ draft, setDraft, companyId, onSaved }: { draft: Costing
             <Button type="button" size="sm" variant="outline" onClick={() => set({ stages: [...d.stages, { label: "", pct: 0 }] })}><Plus className="mr-1 h-4 w-4" />Add stage</Button>
           </fieldset>
 
-          <fieldset className="space-y-2 rounded-lg border p-3">
-            <legend className="px-1 text-sm font-medium">Client proposal preview (costs & margins stay hidden)</legend>
-            {lines.length ? lines.map((l, i) => (
-              <div key={i} className="flex justify-between gap-2 text-sm"><span>{l.description}</span><span className="font-medium">{euro(l.amount)}</span></div>
-            )) : <p className="text-sm text-muted-foreground">Enter costs above to build the client proposal.</p>}
-            {!!lines.length && <div className="flex justify-between border-t pt-2 text-sm font-semibold"><span>Total (excl. VAT)</span><span>{euro(current.price)}</span></div>}
-          </fieldset>
+          <ProposalContent d={d} set={set} />
 
           <div className="flex flex-wrap gap-2 border-t pt-3">
             <Button className="h-11" disabled={save.isPending} onClick={async () => { await save.mutateAsync(undefined); toast.success("Costing sheet saved"); onSaved(); }}>{save.isPending ? "Saving…" : "Save costing sheet"}</Button>
-            <Button className="h-11" variant="secondary" disabled={save.isPending || !lines.length} onClick={pushToQuote}><FileOutput className="mr-1 h-4 w-4" />Push to customer quote</Button>
+            <Button className="h-11" variant="secondary" disabled={save.isPending || !summary.lines.length} onClick={pushToQuote}><FileOutput className="mr-1 h-4 w-4" />Push to customer quote</Button>
             <Button className="h-11" variant="outline" onClick={() => setDraft(null)}>Cancel</Button>
           </div>
+        </div>
+        <aside className="min-w-0 lg:sticky lg:top-0 lg:self-start">
+          <p className="mb-2 text-sm font-medium">Client proposal preview <span className="text-xs font-normal text-muted-foreground">(costs, suppliers & margins hidden)</span></p>
+          <ProposalPreview d={d} />
+        </aside>
         </div>
       </DialogContent>
     </Dialog>

@@ -1058,6 +1058,13 @@
       "when": 1793104661796,
       "tag": "0150_lift_vertical_pack_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 151,
+      "version": "7",
+      "when": 1793110284357,
+      "tag": "0151_lift_costing_templates",
+      "breakpoints": true
     }
   ]
 }
