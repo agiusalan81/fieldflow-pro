@@ -47,7 +47,7 @@
 - job_sheets embeds use users!job_sheets_assigned_technician_id_fkey; two users FKs.
 - Signing batches: creator-owned, finalized transactionally; store delivery before sending via shared PDF builder; atomic, retry-safe delivery.
 - Offline: account-scoped IndexedDB/optimistic RPC/PWA; confirmed discard atomically removes only that account/sheet draft/photos/cache; retain inaccessible drafts.
-- Masters immutable except names; shared document-blocks pricing/tags/copies; compact site actions reuse DocumentMasters with client/site preselected and existing office/DB guards — why: no duplicated attachment workflow.
+- Masters immutable except names; shared document-blocks pricing/tags/copies; site/equipment buttons reuse DocumentMasters with targets preselected; copy audience never blocks equipment — why: one attachment workflow.
 - Platform authority is protected separately in user_roles; HQ uses a narrow directory RPC, not tenant reads; 
 - Plan access: DB write guards + plan-features.ts menu gating; legacy stays on. RFQ rules in lift-rfq.ts; 
 - Client reports use immutable DB-built safe snapshots and hashed expiring/revocable links; photo paths stay server-only; 
