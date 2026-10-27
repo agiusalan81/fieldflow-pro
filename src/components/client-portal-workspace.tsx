@@ -9,6 +9,7 @@ import { buildCustomerQuotePdf } from '@/lib/customer-quote-pdf';
 import { notifyQuoteDecision } from '@/lib/customer-quotes.functions';
 import { formatSiteTitle } from '@/lib/site-display';
 import { ClientRouting, PortalSiteCodes } from '@/components/client-routing';
+import { PortalContracts } from '@/components/portal-contracts';
 import { CustomerQuotePreview } from '@/components/customer-quote-preview';
 import { useQuotePhotoUrls } from '@/components/customer-quote-photos';
 import { ModulePreview } from '@/components/module-preview';
@@ -68,6 +69,7 @@ export function ClientPortalWorkspace({ clientId }: { clientId: string }) {
         <TabsTrigger value="sheets">Service sheets</TabsTrigger>
         <TabsTrigger value="quotes">Quotes & estimates{pending.length ? ` (${pending.length})` : ''}</TabsTrigger>
         <TabsTrigger value="sites">Sites & equipment</TabsTrigger>
+        <TabsTrigger value="contracts">Contracts & maintenance</TabsTrigger>
         <TabsTrigger value="team">{data.scope.admin ? 'Team & access' : 'My details'}</TabsTrigger>
       </TabsList>
 
@@ -97,6 +99,7 @@ export function ClientPortalWorkspace({ clientId }: { clientId: string }) {
       </TabsContent>
 
       <TabsContent value="team"><ClientRouting clientId={clientId} portal /></TabsContent>
+      <TabsContent value="contracts"><PortalContracts clientId={clientId} /></TabsContent>
     </Tabs>
 
     <Dialog open={!!open} onOpenChange={o => { if (!o && !busy) setOpen(null); }}>
