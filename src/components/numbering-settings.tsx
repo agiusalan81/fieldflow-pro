@@ -21,7 +21,7 @@ export function NumberingSettings({ companyId }: { companyId: string }) {
     ]);
     if (s.error) throw s.error;
     const cfg = (s.data.numbering ?? {}) as Config;
-    for (const r of c.data ?? []) { const k = r.kind as NumberingKind; if (cfg[k]) cfg[k] = { ...cfg[k]!, next: Number(r.next_value) }; }
+    for (const r of c.data ?? []) { const k = r.kind as NumberingKind; const format = cfg[k]; if (format) cfg[k] = { ...format, next: Number(r.next_value) }; }
     return cfg;
   } });
   const [draft, setDraft] = useState<Config | null>(null); const [busy, setBusy] = useState(false);
