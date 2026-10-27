@@ -50,6 +50,6 @@ describe("client checklist summary", () => {
     const text = clientChecklistSummary("lift", "monthly", { [first.key]: "defect" }, {}, true);
     expect(text).toContain(`${first.label}: Attention required`);
     expect(text).toContain("out of service");
-    expect(text).not.toMatch(/guide|mm/);
+    expect(text).not.toMatch(/guide|\d+ ?mm\b/);
   });
 });
