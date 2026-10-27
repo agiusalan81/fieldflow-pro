@@ -73,3 +73,5 @@
 - [x] Commercial & CRM access for field staff: individual estimates/contracts/dispatch flags with protected RPCs and existing granular CRM levels.
 - [x] Consolidated build: quote-totals guard; supervisor All team sheets (no history cutoff); CRM settings tab with per-member levels (none/viewer/contributor/closer/manager, DB-enforced); header New lead; company phone prefix; TBD lead value; permanent lead delete; spotlight guided tour for tech/supervisor/office. Verified live as superadmin
 - [ ] Lift vertical CRM fields; Document Studio upload wizard (parked by user)
+- [ ] Next build batch (queued): multi-trade main industry; appearance preview uses real company name/document title; sticky Document Studio preview; hide lift package supplier settings unless lift pack active; drop "Summary items" sub-heading; portal invite as text button + fix boolean error
+- [ ] Define Document Library workflow with user (in discussion, one question at a time)
