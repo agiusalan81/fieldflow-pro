@@ -108,6 +108,11 @@ export function collectDefects(
   return out;
 }
 
+/** One customer-quote line description per recorded defect, ready for the office to price. */
+export function defectQuoteLines(defects: Defect[]): string[] {
+  return defects.map((d) => `Corrective work: ${d.label}${d.detail ? ` (${d.detail})` : ""}`);
+}
+
 export function missingChecks(protocol: Protocol, frequency: Frequency, checks: Record<string, CheckResult>, ard: Record<string, CheckResult>): number {
   return checksFor(protocol, frequency).filter((c) => !checks[c.key]).length + ardFor(protocol, frequency).filter((c) => !ard[c.key]).length;
 }

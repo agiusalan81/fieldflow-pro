@@ -34,3 +34,11 @@ describe("lift maintenance tolerances", () => {
     expect(protocolForCategory("Generator")).toBeNull();
   });
 });
+
+import { defectQuoteLines } from "./lift-maintenance";
+describe("defectQuoteLines", () => {
+  it("creates one priced-later line per defect, keeping measurement detail", () => {
+    expect(defectQuoteLines([{ source: "check", label: "Door rollers" }, { source: "measurement", label: "Levelling", detail: "14 mm — guide ±10 mm" }]))
+      .toEqual(["Corrective work: Door rollers", "Corrective work: Levelling (14 mm — guide ±10 mm)"]);
+  });
+});

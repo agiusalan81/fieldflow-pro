@@ -145,7 +145,6 @@ function AdminJobs() {
 
   const {review:focusedReview}=Route.useSearch();
   useEffect(()=>{if(focusedReview){const found=jobs.find(j=>j.id===focusedReview&&j.requires_admin_approval);if(found){setApproving(found);setEquipmentRef("");}}},[focusedReview,jobs]);
-  const queue = jobs.filter((j) => matchesSheetFilter(j, "admin_queue"));
   const base = jobs.filter((j) => officeLedgerStatus(j.status, tab) && matchesSheetDetails(j, { ...details, initials: staff.find((u) => u.id === details.technician) ? initialsOf(staff.find((u) => u.id === details.technician) ?? { full_name: "" }) : undefined }) && (!mine || j.assigned_technician_id === me?.id) && matchesSheetSearch(j.jobsheet_number, [j.clients?.name, j.users?.full_name, j.assets?.reference_number, j.sites?.name, j.reported_fault], q));
   const list = base.filter((j) => matchesSheetFilter(j, filter));
   listRef.current = list.map((j) => j.id);
@@ -206,25 +205,6 @@ function AdminJobs() {
         <Button size="icon" variant="ghost" aria-label="Clear selection" onClick={() => setSelected([])}><X className="h-4 w-4" /></Button>
       </div>}
       <MonthlySheets sheets={list} office={office} />
-      {queue.length > 0 && (
-        <section className="mb-4 rounded-xl border border-warning/50 bg-warning/10 p-4">
-          <h2 className="mb-2 font-medium text-foreground">Admin pending queue ({queue.length})</h2>
-          <ul className="space-y-2">
-            {queue.map((j) => (
-              <li key={j.id} onClick={() => open(j.id)} className="grid cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-lg bg-card p-3 text-sm transition-colors hover:bg-muted/50">
-                <div className="min-w-0">
-                  <p className="truncate font-medium"><span className="font-mono text-primary">#{j.jobsheet_number}</span> {j.clients?.name} · {j.users?.full_name ?? "—"}</p>
-                  {j.requires_admin_approval && <p className="truncate text-xs text-muted-foreground">Asset changed: model {j.lift_model || "—"}, serial {j.serial_number || "—"}</p>}
-                  {j.pending_works_future_jobs?.trim() && <p className="truncate text-xs text-muted-foreground">Pending works: {j.pending_works_future_jobs}</p>}
-                </div>
-                <div className="flex gap-1" onClick={stop}>
-                  {j.requires_admin_approval && <Button size="sm" onClick={() => setApproving(j)}>Approve asset</Button>}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
       <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="Filter by status">
         {pills.map(([k, l]) => (
           <Button key={k} size="sm" variant={filter === k ? "default" : "outline"} aria-pressed={filter === k} onClick={() => setFilter(k)} className="rounded-full">

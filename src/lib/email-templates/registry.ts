@@ -3,6 +3,7 @@ import { template as invoiceReminderTemplate } from './invoice-reminder'
 import { template as customerQuoteTemplate } from './customer-quote'
 import { template as quoteDecisionTemplate } from './quote-decision'
 import { template as quotePhoneDecisionTemplate } from './quote-phone-decision'
+import { template as portalInviteTemplate } from './portal-invite'
 
 export interface TemplateEntry {
   component: ComponentType<any>
@@ -26,4 +27,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'invoice-reminder': invoiceReminderTemplate,
   'quote-decision': quoteDecisionTemplate,
   'quote-phone-decision': quotePhoneDecisionTemplate,
+  'portal-invite': portalInviteTemplate,
 }

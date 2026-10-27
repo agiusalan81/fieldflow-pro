@@ -25,8 +25,9 @@ export function ClientRecords({ clientId, kind }: { clientId: string; kind: 'quo
   if (query.isPending) return <p role="status" className="py-6 text-sm text-muted-foreground">Loading records…</p>;
   if (query.isError) return <div className="py-6"><p role="alert" className="text-sm text-destructive">Could not load these records.</p><Button variant="outline" onClick={() => void query.refetch()}>Try again</Button></div>;
   if (!query.data.length) return <p className="py-6 text-sm text-muted-foreground">No {kind === 'sheets' ? 'job sheets' : kind} for this client.</p>;
-  return <ul className="divide-y">{query.data.map(r => <li key={r.id} className="flex items-center gap-3 py-3">
-    <div className="min-w-0 flex-1"><p className="break-words font-medium">{r.title}</p><p className="break-words text-sm capitalize text-muted-foreground">{r.detail}</p></div>
-    {kind !== 'contracts' && <Button asChild variant="ghost" size="icon" aria-label={`Open ${r.title}`} title={`Open ${r.title}`}>{kind === 'quotes' ? <Link to="/estimates" search={{ quote: r.id }}><ArrowUpRight className="h-4 w-4" /></Link> : <Link to="/sheets/$sheetId" params={{ sheetId: r.id }}><ArrowUpRight className="h-4 w-4" /></Link>}</Button>}
+  const body = (r: { title: string; detail: string }) => <><div className="min-w-0 flex-1"><p className="break-words font-medium">{r.title}</p><p className="break-words text-sm capitalize text-muted-foreground">{r.detail}</p></div>{kind !== 'contracts' && <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />}</>;
+  const row = 'flex items-center gap-3 rounded-md px-2 py-3 transition-colors hover:bg-muted/50';
+  return <ul className="divide-y">{query.data.map(r => <li key={r.id}>
+    {kind === 'contracts' ? <div className={row}>{body(r)}</div> : kind === 'quotes' ? <Link to="/estimates" search={{ quote: r.id }} className={row}>{body(r)}</Link> : <Link to="/sheets/$sheetId" params={{ sheetId: r.id }} className={row}>{body(r)}</Link>}
   </li>)}</ul>;
 }

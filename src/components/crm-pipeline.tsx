@@ -9,6 +9,9 @@ import { formatMoney } from "@/lib/locale";
 import { crmAllows, leadValueLabel, type CrmLevel, CRM_STAGES, DEAL_TYPES, LEAD_SOURCES, OPEN_STAGES, canConvert, defaultDue, followupState, isClosed, mergeActions, pipelineTotals, stageLabel, type WonTarget } from "@/lib/crm";
 import { useCrmAccess } from "@/lib/crm-access";
 import { useCompanyRules } from "@/lib/company";
+import { usePlanFeatures } from "@/lib/plan-features";
+import { companyHasLiftTrade } from "@/lib/trade-association";
+import { sourceLabel, sourceOptions } from "@/lib/crm";
 import { PhoneInput } from "@/components/client-manager";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ClientSitePicker } from "@/components/client-site-picker";
@@ -101,11 +104,12 @@ export function NewLeadDialog({ open, onOpenChange, company, onCreated }: { open
   const defaultCode = useCompanyRules().data?.locale.countryCode ?? "+356";
   const phoneCode = f.phoneCode || defaultCode;
   const set = (p: Partial<typeof blank>) => setF((x) => ({ ...x, ...p }));
+  const pastSources = useQuery({ queryKey: ["crm-sources"], queryFn: async () => (await supabase.from("crm_opportunities").select("source").limit(500)).data?.map((r) => r.source) ?? [] });
   const save = async () => {
     if (!f.title.trim()) { toast.error("Give the lead a short title"); return; }
     const a = actions.find((x) => x.key === f.action);
     setBusy(true);
-    const r = await supabase.rpc("crm_create_lead", { _lead: { title: f.title, client_id: f.client_id, site_id: f.site_id, contact_name: f.contact_name, contact_phone: f.contact_phone.trim() ? `${phoneCode} ${f.contact_phone.trim()}` : "", contact_email: f.contact_email, deal_type: f.deal_type, source: f.source, value: !f.valueUnknown && f.value.trim() ? f.value.replace(",", ".") : null }, _note: f.note, _followup: a && f.due ? { action_key: a.key, action_label: a.label, due_at: new Date(f.due).toISOString() } : null });
+    const r = await supabase.rpc("crm_create_lead", { _lead: { title: f.title, client_id: f.client_id, site_id: f.site_id, contact_name: f.contact_name, contact_phone: f.contact_phone.trim() ? `${phoneCode} ${f.contact_phone.trim()}` : "", contact_email: f.contact_email, deal_type: f.deal_type, source: f.source.trim() || "phone", value: !f.valueUnknown && f.value.trim() ? f.value.replace(",", ".") : null }, _note: f.note, _followup: a && f.due ? { action_key: a.key, action_label: a.label, due_at: new Date(f.due).toISOString() } : null });
     setBusy(false);
     if (r.error) { toast.error(errMsg(r.error)); return; }
     toast.success("Lead saved"); setF(blank); onOpenChange(false);
@@ -123,7 +127,7 @@ export function NewLeadDialog({ open, onOpenChange, company, onCreated }: { open
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="space-y-1"><Label htmlFor="lead-type">Deal type</Label><NativeSelect id="lead-type" value={f.deal_type} onValueChange={(v) => set({ deal_type: v })}>{DEAL_TYPES.map((d) => <option key={d.key} value={d.key}>{d.label}</option>)}</NativeSelect></div>
-        <div className="space-y-1"><Label htmlFor="lead-source">Source</Label><NativeSelect id="lead-source" value={f.source} onValueChange={(v) => set({ source: v })}>{LEAD_SOURCES.map((d) => <option key={d.key} value={d.key}>{d.label}</option>)}</NativeSelect></div>
+        <div className="space-y-1"><Label htmlFor="lead-source">Source</Label><Input id="lead-source" list="lead-source-options" value={sourceLabel(f.source)} placeholder="Pick or type a new source" onChange={(e) => set({ source: e.target.value })} /><datalist id="lead-source-options">{sourceOptions(pastSources.data ?? []).map((o) => <option key={o} value={o} />)}</datalist></div>
         <div className="space-y-1"><Label htmlFor="lead-value">Estimated value</Label><Input id="lead-value" inputMode="decimal" disabled={f.valueUnknown} placeholder={f.valueUnknown ? "Unknown for now" : "0.00"} value={f.valueUnknown ? "" : f.value} onChange={(e) => set({ value: e.target.value })} /><label className="flex items-center gap-2 text-xs text-muted-foreground"><input type="checkbox" className="h-4 w-4 accent-primary" checked={f.valueUnknown} onChange={(e) => set({ valueUnknown: e.target.checked })} />Unknown — add after site visit</label></div>
       </div>
       <div className="space-y-1"><div className="flex items-center justify-between gap-2"><Label htmlFor="lead-note">Call notes</Label><VoiceDictation label="Dictate call notes" value={f.note} onApply={(t) => set({ note: t })} /></div><Textarea id="lead-note" rows={4} value={f.note} onChange={(e) => set({ note: e.target.value })} /></div>
@@ -140,7 +144,7 @@ function LeadPanel({ lead, company, level, onDeleted }: { lead: Lead; company?: 
   const canEdit = crmAllows(level, "contributor"), canClose = crmAllows(level, "closer"), canDelete = crmAllows(level, "manager");
   const qc = useQueryClient(); const navigate = useNavigate(); const types = useActionTypes(company); const actions = mergeActions(types.data ?? []);
   const [note, setNote] = useState(""); const [kind, setKind] = useState("note"); const [action, setAction] = useState("default:phone_call"); const [due, setDue] = useState(toLocalInput(defaultDue({ dueHours: 24 })));
-  const [won, setWon] = useState<WonTarget>("quote"); const [lostReason, setLostReason] = useState(""); const [recontact, setRecontact] = useState(""); const [busy, setBusy] = useState(false);
+  const [lostReason, setLostReason] = useState(""); const [recontact, setRecontact] = useState(""); const [busy, setBusy] = useState(false);
   const timeline = useQuery({ queryKey: ["crm-activities", lead.id], queryFn: async () => { const r = await supabase.from("crm_activities").select("id,kind,body,created_at").eq("opportunity_id", lead.id).order("created_at", { ascending: false }); if (r.error) throw r.error; return r.data; } });
   const fups = useQuery({ queryKey: ["crm-lead-followups", lead.id], queryFn: async () => { const r = await supabase.from("crm_followups").select("id,opportunity_id,action_key,action_label,due_at,done_at,notes").eq("opportunity_id", lead.id).order("due_at", { ascending: false }); if (r.error) throw r.error; return r.data as Followup[]; } });
   const refresh = () => Promise.all(["crm-leads", "crm-followups", "action-notifications"].map((k) => qc.invalidateQueries({ queryKey: [k] })).concat([qc.invalidateQueries({ queryKey: ["crm-activities", lead.id] }), qc.invalidateQueries({ queryKey: ["crm-lead-followups", lead.id] })]));
@@ -149,7 +153,16 @@ function LeadPanel({ lead, company, level, onDeleted }: { lead: Lead; company?: 
   const [valueText, setValueText] = useState(lead.value == null ? "" : String(lead.value));
   const saveValue = () => { const t = valueText.trim().replace(",", "."); const v = t ? Number(t) : null; if (v != null && !Number.isFinite(v)) { toast.error("Enter a number or leave empty for TBD"); return; } void run(() => supabase.from("crm_opportunities").update({ value: v }).eq("id", lead.id), "Value updated"); };
   const del = async () => { setBusy(true); const r = await supabase.rpc("crm_delete_lead", { _id: lead.id }); setBusy(false); if (r.error) { toast.error(errMsg(r.error)); return; } toast.success("Lead deleted"); onDeleted(); await Promise.all(["crm-leads", "crm-followups", "action-notifications"].map((k) => qc.invalidateQueries({ queryKey: [k] }))); };
-  const markWon = async () => {
+  const companyRules = useCompanyRules().data; const planOn = usePlanFeatures();
+  const liftOn = planOn("lift_pack") && companyHasLiftTrade(companyRules?.industry, companyRules?.trades);
+  const startEstimate = async (kind: "quote" | "lift") => {
+    setBusy(true); const r = await supabase.rpc("crm_start_estimate", { _id: lead.id, _kind: kind }); setBusy(false);
+    if (r.error) { toast.error(errMsg(r.error)); return; }
+    await refresh(); const out = r.data as { quote_id?: string; sheet_id?: string };
+    if (out.quote_id) { toast.success("Estimate created — lead moved to Quote sent"); navigate({ to: "/estimates", search: { quote: out.quote_id } }); }
+    else if (out.sheet_id) { toast.success("Costing sheet opened"); navigate({ to: "/lift-costing", search: { sheet: out.sheet_id } }); }
+  };
+  const markWon = async (won: WonTarget) => {
     setBusy(true); const r = await supabase.rpc("crm_mark_won", { _id: lead.id, _target: won }); setBusy(false);
     if (r.error) { toast.error(errMsg(r.error)); return; }
     await refresh(); toast.success("Lead won");
@@ -160,9 +173,11 @@ function LeadPanel({ lead, company, level, onDeleted }: { lead: Lead; company?: 
   };
   return <div className="space-y-5">
     <SheetHeader><SheetTitle>{lead.title}</SheetTitle></SheetHeader>
-    <div className="flex flex-wrap gap-2 text-sm"><Badge>{stageLabel(lead.stage)}</Badge><Badge variant="outline">{dealLabel(lead.deal_type)}</Badge><Badge variant="outline">{LEAD_SOURCES.find((s) => s.key === lead.source)?.label ?? lead.source}</Badge><Badge variant="outline">{leadValueLabel(lead.value, formatMoney)}</Badge></div>
+    <div className="flex flex-wrap gap-2 text-sm"><Badge>{stageLabel(lead.stage)}</Badge><Badge variant="outline">{dealLabel(lead.deal_type)}</Badge><Badge variant="outline">{sourceLabel(lead.source)}</Badge><Badge variant="outline">{leadValueLabel(lead.value, formatMoney)}</Badge></div>
     <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm"><dt className="text-muted-foreground">Client</dt><dd>{lead.clients?.name ?? "Not a client yet"}</dd><dt className="text-muted-foreground">Contact</dt><dd>{[lead.contact_name, lead.contact_phone, lead.contact_email].filter(Boolean).join(" · ") || "—"}</dd>{lead.lost_reason && <><dt className="text-muted-foreground">Lost reason</dt><dd>{lead.lost_reason}</dd></>}</dl>
     <div className="flex flex-wrap gap-2">
+      {!closed && canEdit && !lead.quote_id && <Button size="sm" disabled={busy} onClick={() => void startEstimate("quote")}><Plus className="mr-1 h-4 w-4" />{liftOn ? "Standard estimate" : "Create estimate"}</Button>}
+      {!closed && canEdit && liftOn && <Button size="sm" variant={lead.quote_id ? "outline" : "default"} disabled={busy} onClick={() => void startEstimate("lift")}><Plus className="mr-1 h-4 w-4" />Lift proposal / costing</Button>}
       {lead.quote_id && <Button size="sm" variant="outline" onClick={() => navigate({ to: "/estimates", search: { quote: lead.quote_id ?? undefined } })}>Open estimate</Button>}
       {lead.job_id && <Button size="sm" variant="outline" onClick={() => navigate({ to: "/admin/jobs" })}>Open dispatch</Button>}
     </div>
@@ -182,7 +197,7 @@ function LeadPanel({ lead, company, level, onDeleted }: { lead: Lead; company?: 
     </section>
 
     {!closed && canClose && <section className="grid gap-4 rounded-lg border p-3 sm:grid-cols-2" aria-label="Close lead">
-      <div className="space-y-2"><h3 className="font-medium">Mark as won</h3><NativeSelect aria-label="Convert to" value={won} onValueChange={(v) => setWon(v as WonTarget)}><option value="quote" disabled={!canConvert("quote", lead)}>Create customer estimate</option><option value="job" disabled={!canConvert("job", lead)}>Create dispatch job{lead.client_id ? "" : " (needs a client)"}</option><option value="contract">Set up a contract</option><option value="none">Just mark won</option></NativeSelect><Button className="w-full" disabled={busy || !canConvert(won, lead)} onClick={markWon}>Mark won</Button></div>
+      <div className="space-y-2"><h3 className="font-medium">Mark as won</h3><p className="text-xs text-muted-foreground">Use once the client has accepted. Choose what to set up next:</p><div className="grid gap-2">{(["job", "contract", "none"] as WonTarget[]).map((t) => <Button key={t} variant={t === "none" ? "outline" : "secondary"} className="w-full" disabled={busy || !canConvert(t, lead)} onClick={() => void markWon(t)}>{t === "job" ? `Won → create job${lead.client_id ? "" : " (needs a client)"}` : t === "contract" ? "Won → set up contract" : "Just mark won"}</Button>)}</div></div>
       <div className="space-y-2"><h3 className="font-medium">Mark as lost</h3><Input aria-label="Lost reason" placeholder="Reason (required)" value={lostReason} onChange={(e) => setLostReason(e.target.value)} /><Label htmlFor="recontact" className="text-xs text-muted-foreground">Remind me to re-contact (optional)</Label><Input id="recontact" type="date" value={recontact} onChange={(e) => setRecontact(e.target.value)} /><Button variant="outline" className="w-full" disabled={busy || !lostReason.trim()} onClick={() => void run(() => supabase.rpc("crm_mark_lost", { _id: lead.id, _reason: lostReason, ...(recontact ? { _recontact_at: new Date(`${recontact}T09:00`).toISOString() } : {}) }), "Lead marked lost")}>Mark lost</Button></div>
     </section>}
     {closed && canClose && <Button variant="outline" disabled={busy} onClick={() => void run(() => supabase.from("crm_opportunities").update({ stage: "contacted" }).eq("id", lead.id), "Lead reopened")}>Reopen lead</Button>}

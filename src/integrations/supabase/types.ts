@@ -3284,6 +3284,7 @@ export type Database = {
           mechanical_hours: number
           mechanical_rate: number
           notes: string
+          opportunity_id: string | null
           options: Json
           output_style: string
           photos: Json
@@ -3327,6 +3328,7 @@ export type Database = {
           mechanical_hours?: number
           mechanical_rate?: number
           notes?: string
+          opportunity_id?: string | null
           options?: Json
           output_style?: string
           photos?: Json
@@ -3370,6 +3372,7 @@ export type Database = {
           mechanical_hours?: number
           mechanical_rate?: number
           notes?: string
+          opportunity_id?: string | null
           options?: Json
           output_style?: string
           photos?: Json
@@ -3395,6 +3398,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lift_costing_sheets_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "crm_opportunities"
             referencedColumns: ["id"]
           },
           {
@@ -6500,6 +6510,10 @@ export type Database = {
       }
       crm_mark_won: { Args: { _id: string; _target: string }; Returns: Json }
       crm_rank: { Args: { _level: string }; Returns: number }
+      crm_start_estimate: {
+        Args: { _id: string; _kind: string }
+        Returns: Json
+      }
       current_company_id: { Args: never; Returns: string }
       customer_quote_action: {
         Args: { _action: string; _data?: Json; _id: string }
