@@ -34,7 +34,8 @@ export function WorkspaceNavigation({ items, role, uid, onNavigate, touch = fals
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
   const overview = items.find(i => i.to === '/dashboard');
-  const groups = [...new Set(items.filter(i => i !== overview).map(i => i.group))].sort((a, b) => a === 'My workspace' ? 1 : b === 'My workspace' ? -1 : 0);
+  const order = ['My field work', 'Operations & field', 'Team supervision', 'Commercial & CRM', 'Team & workforce', 'Payroll & Leave', 'Fleet & expenses', 'Vertical packs', 'Company administration', 'My time & rota', 'My workspace'];
+  const groups = [...new Set(items.filter(i => i !== overview).map(i => i.group))].sort((a, b) => order.indexOf(a) - order.indexOf(b));
   const keepOpen = () => clearTimeout(timer.current);
   const close = () => { if (!touch) timer.current = setTimeout(() => setOpenGroup(undefined), 180); };
   return <nav aria-label="Workspace menu" className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
