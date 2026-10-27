@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+/** Core quotes can request written confirmation of an office-recorded acceptance without the portal pack. */
+export function quoteLinkAllowsDecision(status: string, portalEnabled: boolean) {
+  return portalEnabled || status === 'awaiting_confirmation';
+}
+
 export const quoteLineSchema = z.object({
   id: z.string().uuid(), description: z.string().trim().min(1).max(1000),
   category: z.enum(['labour', 'material', 'service']), unit: z.string().max(30),
