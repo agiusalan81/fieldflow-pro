@@ -36,14 +36,17 @@ export function BillingReview({ sheetId, onClose }: { sheetId: string | null; on
         s.customer_quote_id ? supabase.from("customer_quotes").select("reference,snapshot").eq("id", s.customer_quote_id).single() : Promise.resolve({ data: null, error: null }),
       ]);
       if (coreQuote.error) throw coreQuote.error;
+      const { data: rc } = await supabase.from("jobsheet_receipts").select("id, created_at, expense_id, expense_receipts(amount, currency, expense_date, expense_categories(name))").eq("jobsheet_id", s.id).order("created_at");
+      const receipts = (rc ?? []).map((r) => { const e = r.expense_receipts as { amount: number | null; currency: string; expense_date: string | null; expense_categories: { name: string } | null } | null; return { id: r.id, date: e?.expense_date ?? r.created_at.slice(0, 10), amount: Number(e?.amount ?? 0), currency: e?.currency ?? "EUR", category: e?.expense_categories?.name ?? "Receipt" }; });
       const coreSnapshot = coreQuote.data?.snapshot as unknown as QuoteSnapshot | null;
-      return { coreSnapshot, coreReference: coreQuote.data?.reference, s, estimates: est.data ?? [], agreement: ag.data?.[0] ?? null, company: parseRates(cs.data?.default_rates) ?? ZERO_RATES, integ: parseIntegrations(cs.data?.integrations) };
+      return { receipts, coreSnapshot, coreReference: coreQuote.data?.reference, s, estimates: est.data ?? [], agreement: ag.data?.[0] ?? null, company: parseRates(cs.data?.default_rates) ?? ZERO_RATES, integ: parseIntegrations(cs.data?.integrations) };
     },
   });
   const [estimateId, setEstimateId] = useState<string>("none");
   const [source, setSource] = useState<PriceSource>("company");
   const [lines, setLines] = useState<Line[]>([]);
   const [ready, setReady] = useState(false);
+  const [billable, setBillable] = useState<string[]>([]);
   useEffect(() => { setReady(false); }, [sheetId]);
 
   const hours = (data?.s.jobsheet_time_logs ?? []).reduce((a, l) => {
@@ -67,7 +70,8 @@ export function BillingReview({ sheetId, onClose }: { sheetId: string | null; on
 
   useEffect(() => {
     if (!data || ready) return;
-    const saved = data.s.billing_data as { lines?: Line[] } | null;
+    const saved = data.s.billing_data as { lines?: Line[]; billable_receipts?: string[] } | null;
+    setBillable(saved?.billable_receipts ?? []);
     const est = data.s.estimate_id ?? "none";
     const src = (data.s.billing_source as PriceSource) ?? pickSource({ estimate: !!data.coreSnapshot || est !== "none", contract: !!data.agreement, clientRates: !!clientRates });
     setEstimateId(est); setSource(src);
@@ -84,7 +88,7 @@ export function BillingReview({ sheetId, onClose }: { sheetId: string | null; on
     const { data: u } = await supabase.auth.getUser();
     const { error } = await supabase.from("job_sheets").update({
       estimate_id: estimateId === "none" ? null : estimateId, billing_source: source, billing_status: status,
-      billing_data: { lines, total: linesTotal(lines), hours } as never, billing_reviewed_by: u.user?.id ?? null, billing_reviewed_at: new Date().toISOString(),
+      billing_data: { lines, billable_receipts: billable, pending_billable_receipts: billable.filter((id) => !lines.some((l) => l.receipt_id === id)), total: linesTotal(lines), hours } as never, billing_reviewed_by: u.user?.id ?? null, billing_reviewed_at: new Date().toISOString(),
     }).eq("id", data.s.id);
     if (error) { toast.error(error.message); return; }
     const prov = ACCOUNTING.find((a) => a.key === data.integ.accounting.provider)?.label;
@@ -143,6 +147,14 @@ export function BillingReview({ sheetId, onClose }: { sheetId: string | null; on
                 </tbody>
               </table>
             </div>
+            {data.receipts.length > 0 && <div className="space-y-2 rounded-lg border p-3">
+              <p className="text-sm font-medium">Receipts attached to this job sheet</p>
+              {data.receipts.map((r) => { const on = billable.includes(r.id); const added = lines.some((l) => l.receipt_id === r.id); return <div key={r.id} className="flex flex-wrap items-center gap-3 text-sm">
+                <label className="flex items-center gap-2"><input type="checkbox" checked={on} onChange={(e) => { setBillable(e.target.checked ? [...billable, r.id] : billable.filter((x) => x !== r.id)); if (!e.target.checked) setLines(lines.filter((l) => l.receipt_id !== r.id)); }} />Billable to client</label>
+                <span className="flex-1 text-muted-foreground">{r.date} · {r.category} · {r.currency} {r.amount.toFixed(2)}</span>
+                {on && (added ? <span className="text-xs text-muted-foreground">Added to invoice lines</span> : <Button size="sm" variant="outline" onClick={() => setLines([...lines, { description: `Reimbursable expense: ${r.category}`, qty: 1, unit_price: r.amount, kind: "extra", receipt_id: r.id }])}>Add as invoice line</Button>)}
+              </div>; })}
+            </div>}
             <div className="flex items-center justify-between">
               <Button size="sm" variant="outline" onClick={() => setLines([...lines, { description: "Extra work / parts", qty: 1, unit_price: 0, kind: "extra" }])}><Plus className="mr-1 h-4 w-4" />Add line</Button>
               <p className="font-display text-xl tabular-nums text-foreground">€{linesTotal(lines).toFixed(2)} <span className="text-xs text-muted-foreground">excl. tax</span></p>
