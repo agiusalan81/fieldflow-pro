@@ -32,6 +32,7 @@ import { Route as AuthenticatedFleetRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedHoursRouteImport } from './routes/_authenticated/hours'
 import { Route as AuthenticatedLeaveRouteImport } from './routes/_authenticated/leave'
 import { Route as AuthenticatedLiftRfqRouteImport } from './routes/_authenticated/lift-rfq'
+import { Route as AuthenticatedLiftSurveysRouteImport } from './routes/_authenticated/lift-surveys'
 import { Route as AuthenticatedLiveMapRouteImport } from './routes/_authenticated/live-map'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
 import { Route as AuthenticatedOvertimeRouteImport } from './routes/_authenticated/overtime'
@@ -190,6 +191,12 @@ const AuthenticatedLiftRfqRoute = AuthenticatedLiftRfqRouteImport.update({
   path: '/lift-rfq',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedLiftSurveysRoute =
+  AuthenticatedLiftSurveysRouteImport.update({
+    id: '/lift-surveys',
+    path: '/lift-surveys',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedLiveMapRoute = AuthenticatedLiveMapRouteImport.update({
   id: '/live-map',
   path: '/live-map',
@@ -442,6 +449,7 @@ export interface FileRoutesByFullPath {
   '/hours': typeof AuthenticatedHoursRoute
   '/leave': typeof AuthenticatedLeaveRoute
   '/lift-rfq': typeof AuthenticatedLiftRfqRoute
+  '/lift-surveys': typeof AuthenticatedLiftSurveysRoute
   '/live-map': typeof AuthenticatedLiveMapRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/overtime': typeof AuthenticatedOvertimeRoute
@@ -508,6 +516,7 @@ export interface FileRoutesByTo {
   '/hours': typeof AuthenticatedHoursRoute
   '/leave': typeof AuthenticatedLeaveRoute
   '/lift-rfq': typeof AuthenticatedLiftRfqRoute
+  '/lift-surveys': typeof AuthenticatedLiftSurveysRoute
   '/live-map': typeof AuthenticatedLiveMapRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/overtime': typeof AuthenticatedOvertimeRoute
@@ -576,6 +585,7 @@ export interface FileRoutesById {
   '/_authenticated/hours': typeof AuthenticatedHoursRoute
   '/_authenticated/leave': typeof AuthenticatedLeaveRoute
   '/_authenticated/lift-rfq': typeof AuthenticatedLiftRfqRoute
+  '/_authenticated/lift-surveys': typeof AuthenticatedLiftSurveysRoute
   '/_authenticated/live-map': typeof AuthenticatedLiveMapRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/overtime': typeof AuthenticatedOvertimeRoute
@@ -644,6 +654,7 @@ export interface FileRouteTypes {
     | '/hours'
     | '/leave'
     | '/lift-rfq'
+    | '/lift-surveys'
     | '/live-map'
     | '/messages'
     | '/overtime'
@@ -710,6 +721,7 @@ export interface FileRouteTypes {
     | '/hours'
     | '/leave'
     | '/lift-rfq'
+    | '/lift-surveys'
     | '/live-map'
     | '/messages'
     | '/overtime'
@@ -777,6 +789,7 @@ export interface FileRouteTypes {
     | '/_authenticated/hours'
     | '/_authenticated/leave'
     | '/_authenticated/lift-rfq'
+    | '/_authenticated/lift-surveys'
     | '/_authenticated/live-map'
     | '/_authenticated/messages'
     | '/_authenticated/overtime'
@@ -1006,6 +1019,13 @@ declare module '@tanstack/react-router' {
       path: '/lift-rfq'
       fullPath: '/lift-rfq'
       preLoaderRoute: typeof AuthenticatedLiftRfqRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/lift-surveys': {
+      id: '/_authenticated/lift-surveys'
+      path: '/lift-surveys'
+      fullPath: '/lift-surveys'
+      preLoaderRoute: typeof AuthenticatedLiftSurveysRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/live-map': {
@@ -1334,6 +1354,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHoursRoute: typeof AuthenticatedHoursRoute
   AuthenticatedLeaveRoute: typeof AuthenticatedLeaveRoute
   AuthenticatedLiftRfqRoute: typeof AuthenticatedLiftRfqRoute
+  AuthenticatedLiftSurveysRoute: typeof AuthenticatedLiftSurveysRoute
   AuthenticatedLiveMapRoute: typeof AuthenticatedLiveMapRoute
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedOvertimeRoute: typeof AuthenticatedOvertimeRoute
@@ -1378,6 +1399,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHoursRoute: AuthenticatedHoursRoute,
   AuthenticatedLeaveRoute: AuthenticatedLeaveRoute,
   AuthenticatedLiftRfqRoute: AuthenticatedLiftRfqRoute,
+  AuthenticatedLiftSurveysRoute: AuthenticatedLiftSurveysRoute,
   AuthenticatedLiveMapRoute: AuthenticatedLiveMapRoute,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedOvertimeRoute: AuthenticatedOvertimeRoute,
