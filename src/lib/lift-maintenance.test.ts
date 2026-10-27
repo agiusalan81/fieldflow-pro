@@ -42,3 +42,14 @@ describe("defectQuoteLines", () => {
       .toEqual(["Corrective work: Door rollers", "Corrective work: Levelling (14 mm — guide ±10 mm)"]);
   });
 });
+
+describe("client checklist summary", () => {
+  it("hides readings and states results plainly", async () => {
+    const { clientChecklistSummary, checksFor } = await import("./lift-maintenance");
+    const first = checksFor("lift", "monthly")[0]!;
+    const text = clientChecklistSummary("lift", "monthly", { [first.key]: "defect" }, {}, true);
+    expect(text).toContain(`${first.label}: Attention required`);
+    expect(text).toContain("out of service");
+    expect(text).not.toMatch(/guide|mm/);
+  });
+});
