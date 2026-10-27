@@ -5790,6 +5790,7 @@ export type Database = {
         Row: {
           can_commercial_access: boolean
           can_contracts: boolean | null
+          can_dispatch_jobs: boolean | null
           can_estimates: boolean | null
           can_field_dispatch: boolean
           company_id: string
@@ -5807,6 +5808,7 @@ export type Database = {
         Insert: {
           can_commercial_access?: boolean
           can_contracts?: boolean | null
+          can_dispatch_jobs?: boolean | null
           can_estimates?: boolean | null
           can_field_dispatch?: boolean
           company_id: string
@@ -5824,6 +5826,7 @@ export type Database = {
         Update: {
           can_commercial_access?: boolean
           can_contracts?: boolean | null
+          can_dispatch_jobs?: boolean | null
           can_estimates?: boolean | null
           can_field_dispatch?: boolean
           company_id?: string
@@ -6089,6 +6092,7 @@ export type Database = {
       is_platform_owner: { Args: never; Returns: boolean }
       mark_customer_quote_seen: { Args: { _quote: string }; Returns: undefined }
       member_commercial_can: { Args: { _area: string }; Returns: boolean }
+      member_dispatch_can: { Args: never; Returns: boolean }
       member_handover_preview: { Args: { _user: string }; Returns: Json }
       member_is_active: { Args: { _user: string }; Returns: boolean }
       my_commercial_status: { Args: never; Returns: Json }
@@ -6374,6 +6378,10 @@ export type Database = {
       }
       set_member_crm_access: {
         Args: { _level: string; _user: string }
+        Returns: undefined
+      }
+      set_member_dispatch: {
+        Args: { _enabled: boolean; _user: string }
         Returns: undefined
       }
       set_member_primary_skill: {

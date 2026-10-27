@@ -1016,6 +1016,27 @@
       "when": 1793078404846,
       "tag": "0144_commercial_evidence_capability_access",
       "breakpoints": true
+    },
+    {
+      "idx": 145,
+      "version": "7",
+      "when": 1793078513792,
+      "tag": "0145_member_workspace_superuser_crm_invariant",
+      "breakpoints": true
+    },
+    {
+      "idx": 146,
+      "version": "7",
+      "when": 1793079003089,
+      "tag": "0146_individual_dispatch_workspace",
+      "breakpoints": true
+    },
+    {
+      "idx": 147,
+      "version": "7",
+      "when": 1793079059241,
+      "tag": "0147_preserve_claim_flow_with_dispatch_capabilities",
+      "breakpoints": true
     }
   ]
 }

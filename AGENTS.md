@@ -29,14 +29,14 @@
 - Payroll routes share payroll-page.tsx. Opening leave/payslips save atomically with issued-slip/totals guards; year-qualified carry-forward prevents double consumption; 
 - Sign-off/leave/overtime/checklist/renewals use tested jobsheets.ts; shared rules.
 - DWR: one canonical report/shift; retain corrected/superseded originals; filing clears held flags; 
-- Dispatch: lead plus optional assistant both read one sheet; only lead starts/edits; daily logs seed both initials; 
+- Dispatch: lead/assistant share one sheet; lead edits, logs seed both. Null dates use Unscheduled queue; atomic quote conversion retains frozen billing prices — why: scheduling can wait. 
 - Overtime uses captured DWR intervals/rules; old reports show associated sites only; factual allocation.
 - Typography: applyTypography/AppShell; locale: locale.ts.
 - Branding shares asset-backed font IDs and preview/PDF decorations; DB/HQ locks protect saved values.
 - Auth emails share auth-brand.tsx; the managed handler owns verification and dispatch for reliable account recovery.
-- Company Settings keeps visited sections mounted; shared document-preview tabs serve desktop/mobile; no implicit draft saves.
+- Shared document-preview tabs serve desktop/mobile; no implicit draft saves.
 - Independent settings editors use settingsSectionPatch to write only owned columns; JSON styling saves merge current stored keys; 
-- Numbers keep raw text until blur; suggestions use bounded RLS history and account/company cache keys.
+- Numbers keep raw text until blur; UnitSelect shares trade-aware presets/bounded RLS history — why: no cross-trade defaults.
 - Service sheets share a typed safe projection/renderers for preview, print and email; 
 - Pending works close via close_pending_on_followup trigger; sheet creation requires clock-in or standby; enforce without UI.
 - Billing precedence in billing.ts, config in integrations.ts; job_sheets_guard_billing allows office review only; completed office list rows open shared BillingReview.
@@ -80,5 +80,5 @@
 - Customer quoting uses separate customer_quotes, safe shared projections, immutable issued snapshots and atomic quote RPCs; Core quoting must not inherit supplier/QS pack gates.
 - HQ module composition uses shared layer/domain taxonomy and one tier-or-pack matrix; customer_quotes inherits Core entitlement so the display split never creates a new paid gate.
 - CRM pipeline rules live in tested src/lib/crm.ts; leads/follow-ups/timeline are manager-only RLS tables guarded by guard_module_write_additional('crm_pipeline'); conversions go through crm_mark_won/crm_mark_lost RPCs so stage, links and follow-up closure stay atomic.
-- Secondary member capabilities live as flags on user_roles (can_field_dispatch); dispatch eligibility goes through is_dispatchable_member / isDispatchable so primary role still drives payroll and rota.
+- Protected per-member RPCs/RLS govern estimates, contracts and dispatch; field eligibility is separate, CRM levels persist — why: primary roles still drive payroll/rota.
 - CRM access is per member: user_roles.crm_access (null = role default) resolved by DB my_crm_access()/crm_can(); RLS, crm_mark_won and crm_delete_lead enforce it, UI mirrors via src/lib/crm.ts — why: different staff need different CRM powers without changing their primary role.

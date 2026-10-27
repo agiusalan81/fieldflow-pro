@@ -35,6 +35,7 @@ import { SignaturePad } from "@/components/signature-pad";
 import { DepartureRequest } from "@/components/client-notices";
 import { draftKey, getLocalDraft, saveLocalDraft, syncDraft, removeLocalDraft, type DraftSnapshot } from "@/lib/offline";
 import { Button } from "@/components/ui/button";
+import { UnitSelect } from "@/components/unit-select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -586,7 +587,7 @@ function SheetForm() {
                       <div key={j} className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 md:grid-cols-[minmax(0,1fr)_70px_70px_110px_auto]">
                         <Input className="col-span-2 h-10 md:col-span-1" list="previous-part-descriptions" placeholder="Part description" value={p.part_description} onChange={(e) => setPart(j, { part_description: e.target.value })} />
                         <div className="grid grid-cols-3 gap-2 md:contents">
-                          <Input className="h-10" list="previous-part-units" placeholder="Unit" value={p.unit} onChange={(e) => setPart(j, { unit: e.target.value })} />
+                          <UnitSelect label="Part unit" value={p.unit} onChange={unit => setPart(j, { unit })} />
                           <NumInput className="h-10" min="0" aria-label="Part quantity" placeholder="Qty" value={p.quantity} onChange={(v) => setPart(j, { quantity: v })} />
                           <NumInput className="h-10" min="0" step="0.25" aria-label="Hours acquiring this part" placeholder="Acq. h" value={p.time_acquiring_parts_hours} onChange={(v) => setPart(j, { time_acquiring_parts_hours: v })} />
                         </div>

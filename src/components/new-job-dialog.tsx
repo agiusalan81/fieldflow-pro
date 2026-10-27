@@ -30,6 +30,7 @@ import { matchesSheetSearch } from "@/lib/dwr";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { useFieldDefs, renderCustomValues } from "@/components/custom-fields";
 import { Button } from "@/components/ui/button";
+import { useMemberWorkspaces } from "@/lib/member-workspaces";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -42,6 +43,7 @@ import { isDispatchable, useFieldDispatchIds } from "@/lib/member-capabilities";
 export type PendingDispatch = {id:string;pending_status:string;client_id:string;site_id:string|null;asset_id:string|null;pending_works_future_jobs:string|null;jobsheet_number:string};
 export function NewJobDialog({pending,onClose}:{pending?:PendingDispatch;onClose?:()=>void}) {
   const { data: profile } = useProfile();
+  const access = useMemberWorkspaces();
   const { data: suggestions } = useEntrySuggestions();
   const { data: allUsers = [] } = useCompanyUsers();
   const { data: fieldIds } = useFieldDispatchIds();
@@ -131,6 +133,7 @@ export function NewJobDialog({pending,onClose}:{pending?:PendingDispatch;onClose
     } finally { savingRef.current = false; setSaving(false); }
   };
 
+  if (!access.data?.dispatch) return null;
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild><Button data-tour="dispatch" size="sm" className={pending?"hidden":"h-11"}><Plus className="mr-1 h-4 w-4" />Team dispatch</Button></DialogTrigger>
