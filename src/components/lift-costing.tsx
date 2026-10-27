@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { BookmarkPlus, FileOutput, Plus, Trash2 } from "lucide-react";
@@ -36,7 +36,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 const euro = (n: number) => `€${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-export function LiftCosting() {
+export function LiftCosting({ openSheet }: { openSheet?: string | undefined } = {}) {
   const { data: profile } = useProfile();
   const qc = useQueryClient();
   const [draft, setDraft] = useState<CostingDraft | null>(null);
@@ -49,6 +49,13 @@ export function LiftCosting() {
       return r.data;
     },
   });
+
+  const [opened, setOpened] = useState<string | null>(null);
+  useEffect(() => {
+    if (!openSheet || opened === openSheet) return;
+    const row = data.find((c) => c.id === openSheet);
+    if (row) { setDraft(normalizeCosting(row)); setOpened(openSheet); }
+  }, [openSheet, opened, data]);
 
   return (
     <div className="mx-auto max-w-4xl space-y-4">
