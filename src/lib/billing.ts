@@ -2,7 +2,7 @@
 export type Rates = { standard: number; ot15: number; ot20: number; callout: number };
 export type Hours = { standard: number; ot15: number; ot20: number };
 export type PriceSource = "estimate" | "contract" | "client" | "company";
-export type Line = { description: string; qty: number; unit_price: number; kind: "labour" | "parts" | "fixed" | "extra" | "callout" };
+export type Line = { description: string; qty: number; unit_price: number; kind: "labour" | "parts" | "fixed" | "extra" | "callout"; receipt_id?: string };
 
 export const ZERO_RATES: Rates = { standard: 0, ot15: 0, ot20: 0, callout: 0 };
 

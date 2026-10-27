@@ -29,6 +29,7 @@ const label = (k: string) => BLOCKS.find((b) => b.key === k)?.label ?? k;
 export function DocumentSettings({ companyId, part }: { companyId: string; part: "branding" | "terms" }) {
   const planOn = usePlanFeatures();
   const qc = useQueryClient();
+  const { data: profileData } = useProfile();
   const { data } = useQuery({
     queryKey: ["doc-settings"],
     queryFn: async () => (await supabase.from("company_settings").select("pdf_template, terms, note_presets, logo_data, office_address, company_address, vat_number, office_phone, company_email").maybeSingle()).data,
@@ -87,8 +88,9 @@ export function DocumentSettings({ companyId, part }: { companyId: string; part:
   };
   const toggle = (k: PdfTemplate["order"][number]) => setT({ ...t, hidden: t.hidden.includes(k) ? t.hidden.filter((x) => x !== k) : [...t.hidden, k] });
 
+  const companyName = profileData?.companies?.name?.trim() || "Your Company";
   const SAMPLE = {
-    company: "Your Company Ltd", number: "1042", date: new Date().toLocaleDateString("en-GB"),
+    company: companyName, number: "1042", date: new Date().toLocaleDateString("en-GB"),
     client: "Plaza Hotel Ltd", address: "Tower Road, Sliema", asset: "Elevator - LFT-02 - Model XJ-500 - S/N 88412",
     fault: "Lift stops between floors 2 and 3 with a loud grinding noise.",
     repairs: "Replaced worn guide rollers on the car frame, re-aligned the door tracks and tested 20 full travel cycles. Operation is now smooth and quiet.",
@@ -145,7 +147,7 @@ export function DocumentSettings({ companyId, part }: { companyId: string; part:
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Live preview — what the client receives</p>
             <Button size="sm" variant="outline" onClick={downloadSample}><Download className="mr-1 h-3.5 w-3.5" />Sample PDF</Button>
           </div>
-          <DocumentPreview template={resolved ?? t} logo={data?.logo_data ?? ""} />
+          <DocumentPreview template={resolved ? { ...t, fontData: resolved.fontData, backgroundData: resolved.backgroundData } : t} logo={data?.logo_data ?? ""} />
           <p className="mt-2 text-xs text-muted-foreground">Sample data shown. Download the sample PDF to see the exact file the client receives by email.</p>
         </section>
       </div>

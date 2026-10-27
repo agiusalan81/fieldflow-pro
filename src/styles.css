@@ -267,7 +267,7 @@ html, body { overflow-x: hidden; }
 .tenant-experience[data-icons=strong] nav svg, .tenant-experience[data-icons=strong] .tenant-menu svg { stroke-width: 2.8; }
 .tenant-experience[data-icons=duotone] nav svg, .tenant-experience[data-icons=duotone] .tenant-menu svg { fill: var(--sidebar-accent); stroke: var(--sidebar-primary); }
 .tenant-experience[data-company-font=on] { font-family: "FieldBridgeCompany", var(--font-sans); }
-.document-paper { background-image: linear-gradient(var(--document-overlay),var(--document-overlay)), var(--document-background-image, none); background-size: 100% 100%; --document-overlay: oklch(1 0 0 / .88); print-color-adjust: exact; }
+.document-paper { background-image: linear-gradient(var(--document-overlay),var(--document-overlay)), var(--document-background-image, none); background-size: 100% 100%; --document-overlay: oklch(1 0 0 / .55); print-color-adjust: exact; }
 .document-paper[data-frame=line] { outline: 1px solid var(--document-primary); outline-offset: -8px; }
 .document-paper[data-frame=double] { outline: 3px double var(--document-primary); outline-offset: -8px; }
 .document-paper section > p, .document-paper td { background: var(--document-field-background, var(--document-paper)); color: var(--document-field-text, var(--document-ink)); }
