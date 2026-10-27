@@ -65,6 +65,13 @@ function EquipmentPage() {
               Serial {q.data.serial_number ?? "—"} · {q.data.location_details ?? ""}
             </p>
           </section>
+          {on("lift_pack") && (
+            <LiftPassport
+              assetId={assetId}
+              assetCategory={q.data.asset_category}
+              canManage={isManager(profile)}
+            />
+          )}
           {on("ppm_automation") && (
             <>
               <PpmVisits assetId={assetId} canManage={isManager(profile)} />
