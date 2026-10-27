@@ -1121,6 +1121,13 @@
       "when": 1793126925169,
       "tag": "0159_core_equipment_contract_coverage",
       "breakpoints": true
+    },
+    {
+      "idx": 160,
+      "version": "7",
+      "when": 1793127229345,
+      "tag": "0160_core_contract_access_and_renewal_schedule_bounds",
+      "breakpoints": true
     }
   ]
 }
