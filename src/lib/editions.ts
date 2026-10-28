@@ -55,7 +55,7 @@ export const EDITION_SPEC: Record<Edition, EditionSpec> = {
     ],
   },
   retail: {
-    product: "FieldBridge Retail",
+    product: "AisleOps",
     tagline: "In-house store maintenance",
     home: "/retail",
     hiddenRoutes: CONTRACTOR_ONLY,
