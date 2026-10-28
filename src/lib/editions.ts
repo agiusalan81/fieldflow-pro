@@ -92,3 +92,14 @@ export function editionMenu<T extends { to: string; label: string }>(edition: Ed
 export function editionLabel(edition: Edition, label: string) {
   return EDITION_SPEC[edition].labels[label] ?? label;
 }
+
+/** In-house editions (hotel/retail) have no external clients, leads or sales pipeline. */
+export function isInHouse(edition: Edition) {
+  return edition !== "contractor";
+}
+
+/** Equipment type choices for the edition; contractor keeps the lift-first list. */
+export function editionEquipmentTypes(edition: Edition, contractorTypes: string[]): string[] {
+  if (!isInHouse(edition)) return contractorTypes;
+  return [...EDITION_SPEC[edition].assetGroups.flatMap((g) => g.items), "Other"];
+}
