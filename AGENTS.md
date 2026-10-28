@@ -16,7 +16,7 @@
 - Quote photos use private immutable storage metadata and frozen snapshot IDs/captions, with customer URLs resolved only after token or portal authorization — why: previews and PDFs must share evidence without exposing unrelated file paths.
 - Navigation-only role exclusions use role-menu.ts for sidebar/mobile shortcuts; they never change page authorization. Legacy quote drafts default missing editor fields on read, leaving issued snapshots and write validation unchanged.
 - Analytics: owner-only coarse counts; server-derived tenant. Product-scoped outreach/feedback; saved follow-ups send nothing.
-- HQ: product-scoped workspaces, owner-only RPCs, separate legal profiles.
+- HQ: product-scoped owner-only setup/invites/resets; ordered tenant deletes retain users/branding/platform bills and refuse issued payroll — why: no cross-tenant or financial-history loss.
 - Chrome: neutral surfaces/token controls; phone theme matches neutral bar, never gradients.
 - Travel shares startJobTravel; arrival saves time before on-site status.
 - Invite functions/loaders use timeouts and middleware.
