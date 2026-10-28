@@ -7,9 +7,10 @@ import { labelKey, uniqueLabels } from "@/lib/attention-rules";
 import { parsePhone } from "@/lib/contact-details";
 import { tenantLocale } from "@/lib/locale";
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Pencil, Plus, Trash2, Check, X, Copy, ChevronDown } from "lucide-react";
+import { Pencil, Plus, Trash2, Check, X, Copy, ChevronDown, BookOpen } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { isOffice, useProfile } from "@/lib/profile";
@@ -82,6 +83,7 @@ const emptyEq: EqDraft = { asset_category: "", reference_number: "", serial_numb
 export function EquipmentManager({ clientId, companyId, siteId }: { clientId: string; companyId: string; siteId?: string }) {
   const qc = useQueryClient();
   const { data: profile } = useProfile();
+  const hasPassport = usePlanFeatures()("lift_pack");
   const [documentEquipment, setDocumentEquipment] = useState<{ id: string; site_id: string | null; reference_number: string } | null>(null);
   const key = ["client-assets", clientId];
   const { data: allAssets = [] } = useQuery({ queryKey: key, queryFn: async () => (await supabase.from("assets").select("*").eq("client_id", clientId).order("reference_number")).data ?? [] });
@@ -145,6 +147,7 @@ export function EquipmentManager({ clientId, companyId, siteId }: { clientId: st
             <div className="text-muted-foreground">Ref {a.reference_number} · S/N {a.serial_number ?? "—"}</div>
           </div>
           <EquipmentQr assetId={a.id} reference={a.reference_number}/>
+          <Button asChild size="sm" variant="outline"><Link to="/equipment/$assetId" params={{ assetId: a.id }} hash={hasPassport ? "passport" : undefined} aria-label={`${hasPassport ? "Passport" : "View equipment"} ${a.reference_number}`}><BookOpen className="mr-1 h-4 w-4" />{hasPassport ? "Passport" : "View equipment"}</Link></Button>
           <EquipmentContracts companyId={companyId} clientId={clientId} siteId={a.site_id ?? undefined} assetId={a.id} />
           {isOffice(profile) && <Button size="sm" variant="outline" aria-label={`Add document to equipment ${a.reference_number}`} onClick={() => setDocumentEquipment(a)}><Plus className="mr-1 h-4 w-4" />Add document</Button>}
           <Button size="icon" variant="ghost" aria-label="Edit" onClick={() => { const canonical = types.find(t=>labelKey(t)===labelKey(a.asset_category)); const known = !!canonical; setOther(known ? "" : a.asset_category); setF({ asset_category: canonical ?? "Other", reference_number: a.reference_number, serial_number: a.serial_number ?? "" }); setEditing(a.id); }}><Pencil className="h-4 w-4" /></Button>
