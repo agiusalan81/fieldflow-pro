@@ -7,6 +7,7 @@ import { usePlanFeatures } from "@/lib/plan-features";
 import { PpmCoverage } from "@/components/ppm-coverage";
 import { PpmVisits } from "@/components/ppm-visits";
 import { EquipmentContracts, AgreementAssetLines } from '@/components/equipment-contracts';
+import { AssignedEquipmentWork } from '@/components/assigned-equipment-work';
 import { ContractTiers } from "@/components/contract-tiers";
 import { DocumentMasters } from "@/components/document-masters";
 import { supabase } from "@/integrations/supabase/client";
@@ -85,6 +86,7 @@ function Agreements({ office, companyId }: { office: boolean; companyId?: string
   return (
     <div className="space-y-4">
       {companyId && office && <EquipmentContracts companyId={companyId} central />}
+      {companyId&&office&&<AssignedEquipmentWork companyId={companyId}/>}
       {!data.length ? <EmptyState>No client agreements yet.</EmptyState> : (
         <ul className="divide-y rounded-xl border bg-card">
           {data.map((a) => (
