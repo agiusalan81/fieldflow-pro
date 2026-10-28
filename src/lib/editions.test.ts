@@ -22,3 +22,11 @@ describe("editions", () => {
     }
   });
 });
+
+import { isInHouse as _inHouse, editionEquipmentTypes as _types, CHECKLIST_PRESETS as _presets } from "./editions";
+describe("AisleOps in-house rules", () => {
+  it("retail is in-house, contractor is not", () => { expect(_inHouse("retail")).toBe(true); expect(_inHouse("contractor")).toBe(false); });
+  it("retail equipment list has no lifts", () => { const t = _types("retail", ["Passenger Lift"]); expect(t).not.toContain("Passenger Lift"); expect(t).toContain("Cold room"); });
+  it("contractor keeps its lift list", () => { expect(_types("contractor", ["Passenger Lift"])).toEqual(["Passenger Lift"]); });
+  it("retail has a refrigeration checklist", () => { expect(_presets.retail?.["Refrigeration"]?.length).toBeGreaterThan(0); });
+});

@@ -5,7 +5,7 @@ import hero from "@/assets/retail-hero.jpg";
 import { Button } from "@/components/ui/button";
 import { EDITION_SPEC } from "@/lib/editions";
 
-const TITLE = "FieldBridge Retail | Supermarket & Store Maintenance Software";
+const TITLE = "AisleOps | Supermarket & Store Maintenance Software";
 const DESC = "Maintenance software for supermarket chains: refrigeration, bakeries, factories, store fabric and car parks across every outlet, with QR fault reporting.";
 
 export const Route = createFileRoute("/retail")({
@@ -47,7 +47,7 @@ function RetailPage() {
           <div className="mx-auto w-full max-w-6xl px-6 pb-12 text-background">
             <h1 className="max-w-2xl font-display text-4xl font-bold uppercase leading-none sm:text-6xl">Every store. Every fridge. Every tile.</h1>
             <p className="mt-4 max-w-xl text-lg opacity-90">One maintenance system for your supermarket chain — outlets, bakeries, factories and car parks.</p>
-            <Button asChild size="lg" className="mt-6 bg-brand-amber text-foreground hover:bg-brand-amber/90"><a href="mailto:hello@fieldbridgeapp.com?subject=FieldBridge%20Retail%20demo">Get a demo</a></Button>
+            <Button asChild size="lg" className="mt-6 bg-brand-amber text-foreground hover:bg-brand-amber/90"><a href="mailto:hello@fieldbridgeapp.com?subject=AisleOps%20demo">Get a demo</a></Button>
           </div>
         </div>
       </section>

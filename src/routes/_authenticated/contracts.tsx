@@ -13,7 +13,10 @@ import { DocumentMasters } from "@/components/document-masters";
 import { supabase } from "@/integrations/supabase/client";
 import { useMemberWorkspaces } from "@/lib/member-workspaces";
 import { useProfile, isOffice } from "@/lib/profile";
-import { EQUIPMENT_CATEGORIES } from "@/lib/company";
+import { EQUIPMENT_CATEGORIES as CONTRACTOR_CATEGORIES } from "@/lib/company";
+import { useEdition } from "@/lib/plan-features";
+import { isInHouse, EDITION_SPEC, CHECKLIST_PRESETS } from "@/lib/editions";
+function useEquipmentCategories() { const { edition } = useEdition(); return isInHouse(edition) ? [...EDITION_SPEC[edition].assetGroups.map((g) => g.group), "Custom"] : CONTRACTOR_CATEGORIES; }
 import { daysUntil, visitsForTier, contractName } from "@/lib/jobsheets";
 import { LookupInput, learnLookup, CONTRACT_CATEGORY } from "@/components/role-combobox";
 import { RenewalList, useAgreements } from "@/components/renewals";
@@ -105,6 +108,7 @@ function Agreements({ office, companyId }: { office: boolean; companyId?: string
 }
 
 function Types({ office, companyId }: { office: boolean; companyId?: string | undefined }) {
+  const EQUIPMENT_CATEGORIES = useEquipmentCategories();
   const qc = useQueryClient();
   const { data = [] } = useQuery({
     queryKey: ["contract-types"],
@@ -172,12 +176,14 @@ function Types({ office, companyId }: { office: boolean; companyId?: string | un
 }
 
 function Checklists({ office, companyId }: { office: boolean; companyId?: string | undefined }) {
+  const EQUIPMENT_CATEGORIES = useEquipmentCategories();
+  const presets = CHECKLIST_PRESETS[useEdition().edition] ?? {};
   const qc = useQueryClient();
   const { data = [] } = useQuery({
     queryKey: ["checklists"],
     queryFn: async () => { const { data, error } = await supabase.from("checklist_templates").select("*").order("equipment_category"); if (error) throw error; return data; },
   });
-  const [f, setF] = useState({ equipment_category: "Elevator", name: "", items: "" });
+  const [f, setF] = useState({ equipment_category: EQUIPMENT_CATEGORIES[0] ?? "Elevator", name: "", items: (presets[EQUIPMENT_CATEGORIES[0] ?? ""] ?? []).join("\n") });
   const save = async () => {
     const items = f.items.split("\n").map((s) => s.trim()).filter(Boolean);
     if (!items.length) { toast.error("Add at least one checklist item"); return; }
@@ -190,7 +196,7 @@ function Checklists({ office, companyId }: { office: boolean; companyId?: string
   };
   const load = (cat: string) => {
     const c = data.find((x) => x.equipment_category === cat);
-    setF({ equipment_category: cat, name: c?.name ?? "", items: ((c?.items as string[]) ?? []).join("\n") });
+    setF({ equipment_category: cat, name: c?.name ?? "", items: ((c?.items as string[]) ?? presets[cat] ?? []).join("\n") });
   };
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">

@@ -55,7 +55,7 @@ export const EDITION_SPEC: Record<Edition, EditionSpec> = {
     ],
   },
   retail: {
-    product: "FieldBridge Retail",
+    product: "AisleOps",
     tagline: "In-house store maintenance",
     home: "/retail",
     hiddenRoutes: CONTRACTOR_ONLY,
@@ -103,3 +103,19 @@ export function editionEquipmentTypes(edition: Edition, contractorTypes: string[
   if (!isInHouse(edition)) return contractorTypes;
   return [...EDITION_SPEC[edition].assetGroups.flatMap((g) => g.items), "Other"];
 }
+
+/** Starter checklists per equipment group, offered when a company has not saved its own. */
+export const CHECKLIST_PRESETS: Partial<Record<Edition, Record<string, string[]>>> = {
+  retail: {
+    "Refrigeration": ["Record cabinet / room temperature", "Check door seals and gaskets", "Clean condenser coils", "Check evaporator for ice build-up", "Clear drain lines", "Check fans and lighting", "Check refrigerant leaks / alarms", "Confirm temperature alarm works"],
+    "Bakery & production": ["Isolate and lock off before work", "Check guards and emergency stops", "Inspect belts, chains and bearings", "Check heating elements and thermostats", "Check door seals and steam system", "Lubricate moving parts (food-safe)", "Clean down after work (food safety)", "Test run and confirm with shift lead"],
+    "Building fabric": ["Inspect floor tiles for cracks / trip hazards", "Inspect wall tiles and paint", "Check ceilings for leaks or stains", "Test automatic doors and sensors", "Test shutters", "Check washrooms (taps, WC, hand dryers)", "Make area safe / signage in place"],
+    "Store equipment": ["Check checkouts / POS hardware", "Check scales calibration label", "Inspect shelving and racking for damage", "Check lighting (replace failed lamps)", "Check signage", "Test security gates / CCTV"],
+    "Plant & services": ["Check AC / AHU filters", "Check belts and motors", "Generator run test and fuel level", "Inspect distribution board", "Check fire alarm panel for faults", "Check sprinkler valves and gauges", "Check water pumps"],
+    "Outdoor & parking": ["Test car park barrier", "Check car park lighting", "Inspect paving for potholes", "Check road markings", "Clear drainage gullies", "Test loading bay / dock leveller"],
+  },
+  hotel: {
+    "Guest room": ["Test AC and thermostat", "Check TV and remote", "Check minibar cooling", "Test safe", "Test door lock / key card", "Check shower, taps and WC", "Check all lighting", "Check curtains, blinds and furniture"],
+    "Building fabric": ["Inspect floor and wall tiles", "Check walls and paint", "Check ceilings for leaks", "Check doors and frames", "Check windows and balcony railings"],
+  },
+};

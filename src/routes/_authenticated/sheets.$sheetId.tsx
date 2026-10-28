@@ -2,7 +2,8 @@ import {formatSiteDisplay} from "@/lib/site-display";
 import { TravelPicker } from "@/components/travel-picker";
 import { LiftMaintenanceChecklist } from "@/components/lift-maintenance";
 import { protocolForCategory } from "@/lib/lift-maintenance";
-import { usePlanFeatures } from "@/lib/plan-features";
+import { usePlanFeatures, useEdition } from "@/lib/plan-features";
+import { isInHouse } from "@/lib/editions";
 import { JobsheetInternalNotes, InternalThread } from "@/components/jobsheet-internal-notes";
 import { sheetFingerprint } from "@/lib/sheet-dirty";
 import { JobReceipts } from "@/components/job-receipts";
@@ -126,6 +127,7 @@ function SheetForm() {
   const qc = useQueryClient();
   const { data: profile } = useProfile();
   const liftFeatures = usePlanFeatures();
+  const inHouse = isInHouse(useEdition().edition);
   const { data: company } = useCompanyRules();
   const { data: users = [] } = useCompanyUsers();
   const { data: suggestions } = useEntrySuggestions();
@@ -355,7 +357,8 @@ function SheetForm() {
     if ((await pendingReceipts(profile.id, sheetId)).length) { toast.error("Upload pending receipt PDFs before submitting this sheet."); return; }
     if (await persist("completed")) {
       await supabase.from("job_sheets").update({ work_end_time: new Date().toISOString() }).eq("id", sheetId);
-      try {
+      if (inHouse) toast.success(`Ticket ${sheet.jobsheet_number} submitted`);
+      else try {
         const result = await sendJobSheetEmail({ data: { sheetId } });
         toast.success(result.sent
           ? `Job sheet ${sheet.jobsheet_number} submitted and emailed to ${result.recipients.join(", ")}`
@@ -420,7 +423,7 @@ function SheetForm() {
         if (!confirm("Discard this device's saved changes and load the latest job sheet?")) return;
         cleanState.current=null; await removeLocalDraft(profile.id, sheetId); revision.current = sheet.updated_at; setConflict(false); setForm(null); setLocalReady(false); await qc.invalidateQueries({ queryKey: ["sheet", sheetId] });
       }}>Discard local changes &amp; reload</Button></div>}
-      {readOnly && manager && <ReportSharing sheetId={sheetId} />}
+      {readOnly && manager && !inHouse && <ReportSharing sheetId={sheetId} />}
       <JobReceipts userId={profile.id} companyId={profile.company_id} sheetId={sheetId} readOnly={busy} />
       {!form.signature_data && sheet.departure_status !== "none" && (
         <div className={`mx-auto mb-4 max-w-5xl rounded-xl border-2 p-4 text-sm ${sheet.departure_status === "approved" ? "border-success bg-success/10" : sheet.departure_status === "rejected" ? "border-destructive bg-destructive/10" : "border-warning bg-warning/15"}`}>
@@ -629,13 +632,13 @@ function SheetForm() {
         <Section n={5} title="Internal only — never shown to client" priv>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-1.5">
-              <Label>{word("pending")}</Label>
-              <p className="text-xs text-muted-foreground">Goes to the admin pending queue.</p>
+              <Label>{inHouse ? "Follow-up / parts to order" : word("pending")}</Label>
+              <p className="text-xs text-muted-foreground">{inHouse ? "Goes to the maintenance team's open faults list." : "Goes to the admin pending queue."}</p>
               <SuggestedTextarea rows={3} aria-label="Pending works" disabled={readOnly} value={(form.pending_works_future_jobs as string) ?? ""} onValueChange={pending_works_future_jobs => set({ pending_works_future_jobs })} suggestions={suggestions?.pending} />
               <VoiceDictation label="pending works" disabled={readOnly} value={(form.pending_works_future_jobs as string) ?? ""} onApply={(t) => set({ pending_works_future_jobs: t })} />
               <JobPhotos {...photoProps} scope="pending" day={null} />
             </div>
-            <div className="space-y-1.5">
+            {!inHouse && <div className="space-y-1.5">
               {readOnly || form.signature_data ? <JobsheetInternalNotes sheetId={sheetId} userId={profile.id} companyId={profile.company_id} initial={form.internal_comments_admin_only as string | null} initialAt={sheet.updated_at} /> : <>
               <Label>{word("internal")} (admin only)</Label>
               <p className="text-xs text-muted-foreground">For the office team. After signing, more comments are added to this same thread.</p>
@@ -643,7 +646,7 @@ function SheetForm() {
               <VoiceDictation label="internal comments" disabled={readOnly} value={(form.internal_comments_admin_only as string) ?? ""} onApply={(t) => set({ internal_comments_admin_only: t })} />
               <InternalThread sheetId={sheetId} />
               </>}
-            </div>
+            </div>}
           </div>
         </Section>
 
