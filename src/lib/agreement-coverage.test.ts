@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { coverageTotal, coverageDatesValid, passportCommercial, calculatedCoveragePrice } from './agreement-coverage';
+import { coverageTotal, coverageDatesValid, passportCommercial, calculatedCoveragePrice, agreementTotal, schedulePricing } from './agreement-coverage';
 import { DEFAULT_COMMERCIAL, DEFAULT_LIFT_PRICING } from './document-blocks';
 describe('equipment contract rules', () => {
+  it('retains asset prices while using a collective agreed total', () => expect(agreementTotal([{price:'1200'},{price:'450'}], 'collective', '1500')).toBe(1500));
+  it('uses itemised asset totals rather than a collective override', () => expect(agreementTotal([{price:'1200'},{price:'450'}], 'itemised', '1500')).toBe(1650));
+  it('automatically applies a two-stop schedule to actual passport stops', () => expect(schedulePricing({commercial:{basePrice:500,liftPricing:{...DEFAULT_LIFT_PRICING,extraStopRate:50}},field_specs:[],items:[]},true,{general:{stops:5},doors_cabin:{}}).price).toBe('650'));
+  it('keeps Core schedule pricing independent of lift dimensions', () => expect(schedulePricing({commercial:{basePrice:500,liftPricing:{...DEFAULT_LIFT_PRICING,extraStopRate:50,stops:5}},field_specs:[],items:[]},false).price).toBe('500'));
   it('aggregates one site contract from separately priced assets', () => expect(coverageTotal([{price:'1200'},{price:'450'}])).toBe(1650));
   it('supports three independent contracts covering two assets each', () => expect([[100,200],[300,400],[500,600]].map(pair => coverageTotal(pair.map(price => ({price:String(price)}))))).toEqual([300,700,1100]));
   it('accepts independent February and September equipment dates', () => expect(coverageDatesValid([{start:'2026-02-01',end:'2027-02-01'},{start:'2026-09-01',end:'2027-09-01'}])).toBe(true));
