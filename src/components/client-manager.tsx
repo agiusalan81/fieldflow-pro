@@ -1,4 +1,6 @@
 import { EquipmentQr } from "@/components/equipment-qr";
+import { useEdition } from "@/lib/plan-features";
+import { editionEquipmentTypes } from "@/lib/editions";
 import { ClientPortalInvitationGate } from '@/components/client-portal-invitation-gate';
 import { useClientPortalAccess } from '@/lib/client-portal-access';
 import { usePlanFeatures } from '@/lib/plan-features';
@@ -92,7 +94,9 @@ export function EquipmentManager({ clientId, companyId, siteId }: { clientId: st
   const [f, setF] = useState<EqDraft>(emptyEq);
   const [other, setOther] = useState("");
   const { data: learnt = [] } = useLookup(EQUIPMENT_TYPE);
-  const types = [...uniqueLabels([...EQUIPMENT_TYPES.filter(t=>t!=="Other"), ...learnt.filter(l=>l.is_approved).map(l=>l.label_value), ...allAssets.map(a=>a.asset_category)]).filter(t=>labelKey(t)!=="other"), "Other"];
+  const { edition } = useEdition();
+  const baseTypes = editionEquipmentTypes(edition, EQUIPMENT_TYPES);
+  const types = [...uniqueLabels([...baseTypes.filter(t=>t!=="Other"), ...learnt.filter(l=>l.is_approved).map(l=>l.label_value), ...allAssets.map(a=>a.asset_category)]).filter(t=>labelKey(t)!=="other"), "Other"];
   const refresh = () => { qc.invalidateQueries({ queryKey: key }); qc.invalidateQueries({ queryKey: ["assets"] }); qc.invalidateQueries({ queryKey: ["assets-all"] }); qc.invalidateQueries({ queryKey: ["entities-unified"] }); };
 
   const save = async (e: React.FormEvent) => {

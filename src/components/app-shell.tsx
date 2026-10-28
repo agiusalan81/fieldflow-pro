@@ -1,7 +1,7 @@
 import { QrCode } from "lucide-react";
 import { ActionNotifications, ChatBadge, OnCallBadge, QueueBadge } from "@/components/action-notifications";
 import { usePlanFeatures, useLockedVisibility, useNavLock, resolveAppTitle, useEdition } from "@/lib/plan-features";
-import { editionMenu, editionLabel, EDITION_SPEC } from "@/lib/editions";
+import { editionMenu, editionLabel, EDITION_SPEC, isInHouse } from "@/lib/editions";
 import { DepartureAlerts } from "@/components/client-notices";
 import { LocationSharing } from "@/components/location-sharing";
 import { PayrollSetupAlert } from "@/components/payroll-setup-alert";
@@ -255,7 +255,8 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   const { edition } = useEdition(!!actor);
   useEffect(() => { document.documentElement.dataset["edition"] = edition; return () => { delete document.documentElement.dataset["edition"]; }; }, [edition]);
   const items = editionMenu(edition, organizeNavigation(profile?.role, baseItems.filter(i => (i.to === "/contracts" && workspaces?.contracts && !preview.member || i.to === "/surveys" && workspaces?.surveys && !preview.member || showRoleMenuItem(profile?.role, i.to)))).map(i => ({ ...i, label: personal[i.label] ?? industrySheetLabel(appearance.industryPreset, i.label) })));
-  const createProps = { manager: !!workspaces?.dispatch && !!items.find(i => i.to === "/admin/jobs" && !i.locked), field: (!manager || profile?.role === "supervisor" || !!actor?.can_field_dispatch) && !navLock("core").locked, estimates: !!workspaces?.estimates && !!items.find(i => i.to === "/estimates" && !i.locked), crm: crmAllows(crmLevel, "contributor") && !navLock("crm_pipeline").locked, company: profile?.company_id };
+  const inHouse = isInHouse(edition);
+  const createProps = { manager: (!inHouse || profile?.role !== "technician") && !!workspaces?.dispatch && !!items.find(i => i.to === "/admin/jobs" && !i.locked), field: (!manager || profile?.role === "supervisor" || !!actor?.can_field_dispatch) && !navLock("core").locked, estimates: !!workspaces?.estimates && !!items.find(i => i.to === "/estimates" && !i.locked), crm: !inHouse && crmAllows(crmLevel, "contributor") && !navLock("crm_pipeline").locked, company: profile?.company_id };
   const appTitle = (() => { const t = resolveAppTitle(company?.appTitle, planOn("custom_app_title")); return t === "FieldBridge" ? EDITION_SPEC[edition].product : t; })();
   useEffect(() => { applyTypography(company?.theme); return () => applyTypography(undefined); }, [company?.theme]);
   useEffect(() => {
