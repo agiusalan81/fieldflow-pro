@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { PpmVisits } from "@/components/ppm-visits";
 import { AssetComponents } from "@/components/asset-components";
 import { LiftPassport } from "@/components/lift-passport";
-import { useProfile, isManager, isOffice } from "@/lib/profile";
+import { useProfile, isManager } from "@/lib/profile";
 import { LiftInspections } from "@/components/lift-inspections";
 import { z } from 'zod';
 export const Route = createFileRoute("/_authenticated/equipment/$assetId")({
