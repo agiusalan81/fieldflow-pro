@@ -6940,6 +6940,19 @@ export type Database = {
           user_count: number
         }[]
       }
+      platform_create_company: {
+        Args: {
+          _cadence?: string
+          _name: string
+          _packs?: string[]
+          _plan?: string
+          _price?: number
+          _product: string
+          _seats?: number
+          _test: boolean
+        }
+        Returns: string
+      }
       platform_hq_directory: {
         Args: never
         Returns: {
@@ -6961,6 +6974,10 @@ export type Database = {
           module: string
           subscription_id: string
         }[]
+      }
+      platform_initial_superuser_invite: {
+        Args: { _company: string; _email?: string; _name?: string }
+        Returns: Json
       }
       platform_reset_test_data: {
         Args: {
