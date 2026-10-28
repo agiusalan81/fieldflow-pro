@@ -166,3 +166,28 @@ export const sendTestPush = createServerFn({ method: "POST" })
     const sent = devices ? await deliver(supabaseAdmin, subs as Sub[], { title: "FieldBridge test", body: "Your phone received the FieldBridge test alert.", url: "/messages", tag: "fb-test" }) : 0;
     return { devices, sent };
   });
+
+/** Lead board alerts: pushes each lead event to the company's CRM managers and the lead owner, deep-linked to the lead. */
+export const notifyLeadPush = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ leadId: z.string().uuid(), event: z.string().min(1).max(80) }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    // RLS confirms the caller can see this lead before anyone is alerted.
+    const { data: lead } = await supabase.from("crm_opportunities").select("id,title,company_id,owner_id").eq("id", data.leadId).maybeSingle();
+    if (!lead) return { sent: 0 };
+    const { data: me } = await supabase.from("users").select("full_name").eq("id", userId).maybeSingle();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: roles } = await supabaseAdmin.from("user_roles").select("user_id,role,registration_status").eq("company_id", lead.company_id).eq("registration_status", "active");
+    const recipients = new Set((roles ?? []).filter((r) => ["superuser", "admin", "supervisor"].includes(r.role as string)).map((r) => r.user_id as string));
+    if (lead.owner_id && (roles ?? []).some((r) => r.user_id === lead.owner_id)) recipients.add(lead.owner_id);
+    recipients.delete(userId);
+    if (!recipients.size) return { sent: 0 };
+    const { data: subs } = await supabaseAdmin.from("push_subscriptions").select("endpoint,p256dh,auth").in("user_id", [...recipients]);
+    const sent = await deliver(supabaseAdmin, (subs ?? []) as Sub[], {
+      title: `Lead · ${data.event}`,
+      body: `${lead.title}${me?.full_name ? ` — by ${me.full_name}` : ""}`,
+      url: `/crm?lead=${lead.id}`, tag: `lead:${lead.id}`,
+    });
+    return { sent };
+  });

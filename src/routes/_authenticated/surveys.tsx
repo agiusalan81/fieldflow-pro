@@ -55,10 +55,10 @@ function SurveysPage() {
   const open = (id?: string) => void navigate({ to: "/surveys", search: { survey: id } });
   if (!profile) return <AppShell title="Site surveys"><p className="text-muted-foreground">Loading…</p></AppShell>;
   if (!on("site_surveys")) return <AppShell title="Site surveys"><EmptyState>Site surveys are not included in your plan. Ask your administrator to enable it.</EmptyState></AppShell>;
-  return <AppShell title="Site surveys">{survey ? <Editor id={survey} onBack={() => open()} /> : <List onOpen={open} manager={isManager(profile)} superuser={["superuser", "admin"].includes(profile.role)} />}</AppShell>;
+  return <AppShell title="Site surveys">{survey ? <Editor id={survey} onBack={() => open()} /> : <List onOpen={open} manager={isManager(profile)} superuser={["superuser", "admin"].includes(profile.role)} canCreate={profile.role !== "admin"} />}</AppShell>;
 }
 
-function List({ onOpen, manager, superuser }: { onOpen: (id: string) => void; manager: boolean; superuser: boolean }) {
+function List({ onOpen, manager, superuser, canCreate }: { onOpen: (id: string) => void; manager: boolean; superuser: boolean; canCreate: boolean }) {
   const [filter, setFilter] = useState("open");
   const q = useQuery({ queryKey: ["site-surveys"], queryFn: async () => {
     const r = await supabase.from("site_surveys").select("id,reference,status,track,survey_purpose,location_ref,field_details,materials,other_items,updated_at,clients(name)").order("updated_at", { ascending: false }).limit(200);
@@ -72,7 +72,7 @@ function List({ onOpen, manager, superuser }: { onOpen: (id: string) => void; ma
   return <div className="mx-auto max-w-5xl space-y-4">
     {superuser && <ReviewSettings />}
     <div className="flex flex-wrap items-end gap-2">
-      <Button onClick={create}><Plus className="mr-1 h-4 w-4" />New site survey</Button>
+      {canCreate && <Button onClick={create}><Plus className="mr-1 h-4 w-4" />New site survey</Button>}
       <div className="ml-auto w-48"><Label htmlFor="survey-filter">Show</Label><select id="survey-filter" className={sel} value={filter} onChange={(e) => setFilter(e.target.value)}><option value="open">Open</option><option value="all">All</option>{Object.entries(STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
     </div>
     {q.isLoading ? <p className="text-muted-foreground">Loading…</p> : q.error ? <p role="alert" className="text-destructive">Surveys could not be loaded.</p> : !rows.length ? <EmptyState>{manager ? "No site surveys match this filter." : "You have no site surveys yet."}</EmptyState> :
