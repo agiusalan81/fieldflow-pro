@@ -7,6 +7,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Printer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, isManager } from "@/lib/profile";
+import { useEdition } from "@/lib/plan-features";
+import { isInHouse } from "@/lib/editions";
 import { labourHours, technicianCount } from "@/lib/jobsheets";
 import { ServiceSheet } from "@/components/service-sheet";
 import { formatOfficeAddress } from "@/lib/contact-details";
