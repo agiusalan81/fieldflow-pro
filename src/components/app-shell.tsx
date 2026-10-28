@@ -38,6 +38,7 @@ import { Input } from "@/components/ui/input";
 import { QUICK_DEFAULTS, MENU_ONLY, rankActions, readUsage, recordUsage, resetUsage } from "@/lib/quick-actions";
 import { useUserPreview, clearUserPreview } from "@/lib/impersonation";
 import { UserPreviewControl, UserPreviewBanner } from "@/components/user-preview";
+import { ReturnToHqBanner } from "@/components/test-company-switch";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { PlatformFeedback } from "@/components/platform-feedback";
 import { LockedModule, ModulePreview, MODULE_ROUTE } from '@/components/module-preview';
@@ -351,6 +352,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
           </div>
         </header>
         <UserPreviewBanner />
+        <ReturnToHqBanner />
         {actor && !preview.active && <ProfileCompletionGate profile={actor} />}
         <main className="tenant-workspace flex-1 px-4 pt-5 pb-24 sm:px-6 lg:px-8 lg:py-8">
           {actor && !preview.active && <DepartureAlerts userId={actor.id} />}
