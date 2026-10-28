@@ -1156,6 +1156,13 @@
       "when": 1793159095239,
       "tag": "0164_contract_matrix_collective_pricing",
       "breakpoints": true
+    },
+    {
+      "idx": 165,
+      "version": "7",
+      "when": 1793163612240,
+      "tag": "0165_passport_technical_handover",
+      "breakpoints": true
     }
   ]
 }

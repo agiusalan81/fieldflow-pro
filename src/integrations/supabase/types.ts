@@ -4341,6 +4341,72 @@ export type Database = {
           },
         ]
       }
+      passport_submissions: {
+        Row: {
+          asset_id: string
+          blocks: Json
+          company_id: string
+          component: string
+          created_at: string
+          file_path: string | null
+          file_type: string
+          id: string
+          notes: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          submitted_by: string
+          title: string
+        }
+        Insert: {
+          asset_id: string
+          blocks?: Json
+          company_id?: string
+          component?: string
+          created_at?: string
+          file_path?: string | null
+          file_type?: string
+          id?: string
+          notes?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_by?: string
+          title?: string
+        }
+        Update: {
+          asset_id?: string
+          blocks?: Json
+          company_id?: string
+          component?: string
+          created_at?: string
+          file_path?: string | null
+          file_type?: string
+          id?: string
+          notes?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_by?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "passport_submissions_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "passport_submissions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payroll_payslips: {
         Row: {
           company_id: string
@@ -6980,6 +7046,10 @@ export type Database = {
           termination_reason: string
         }[]
       }
+      review_passport_handover: {
+        Args: { _approve: boolean; _id: string }
+        Returns: undefined
+      }
       revoke_client_portal_access: {
         Args: { _client: string; _contact: string }
         Returns: undefined
@@ -7190,6 +7260,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      submit_passport_handover: { Args: { _id: string }; Returns: undefined }
       submit_platform_feedback: {
         Args: { _category: string; _message: string; _rating: number }
         Returns: string
