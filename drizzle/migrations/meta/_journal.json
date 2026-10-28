@@ -1163,6 +1163,13 @@
       "when": 1793163612240,
       "tag": "0165_passport_technical_handover",
       "breakpoints": true
+    },
+    {
+      "idx": 166,
+      "version": "7",
+      "when": 1793168319137,
+      "tag": "0166_hq_test_reset_all_modules",
+      "breakpoints": true
     }
   ]
 }
