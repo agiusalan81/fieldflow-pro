@@ -37,7 +37,6 @@ export function StorePlaques() {
       const qr = await brandedQr(`${window.location.origin}/store-report/${r.data}`, company?.logo || undefined, 900);
       w.document.write(plaqueHtml({ size, copies, qr, store: store.name ?? "Store", company: p?.companies?.name ?? "", logo: company?.logo || undefined }));
       w.document.close();
-      w.onload = () => w.print();
       setTimeout(() => w.print(), 600);
       await qc.invalidateQueries({ queryKey: ["store-report-links"] });
     } catch (e) { w.close(); toast.error(e instanceof Error ? e.message : "Could not prepare the plaque"); }
