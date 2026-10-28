@@ -16,9 +16,14 @@ export const openTestCompany = createServerFn({ method: "POST" })
     const { data: ctl } = await supabaseAdmin.from("platform_company_controls").select("is_test").eq("company_id", co.id).maybeSingle();
     if (!ctl?.is_test) throw new Error("Only test companies can be opened from HQ");
     if (co.id === (await context.supabase.rpc("current_company_id")).data) throw new Error("You are already signed into this company");
-    const email = `hq-test+${co.id.slice(0, 8)}@fieldbridgeapp.com`;
-    const { data: existing } = await supabaseAdmin.from("users").select("id").eq("email", email).maybeSingle();
-    if (!existing) {
+    // Reuse the test company's existing active Superuser when one exists; otherwise create a dedicated one.
+    const { data: su } = await supabaseAdmin.from("user_roles").select("user_id").eq("company_id", co.id).eq("role", "superuser").eq("registration_status", "active").limit(1).maybeSingle();
+    let email = `hq-test+${co.id.slice(0, 8)}@fieldbridgeapp.com`;
+    if (su) {
+      const { data: u } = await supabaseAdmin.auth.admin.getUserById(su.user_id);
+      if (!u.user?.email) throw new Error("The test Superuser has no email");
+      email = u.user.email;
+    } else {
       const { data: inv, error } = await context.supabase.rpc("platform_initial_superuser_invite", { _company: co.id, _name: `HQ Test · ${co.name}` });
       if (error) throw new Error(error.message);
       const token = (inv as { token?: string } | null)?.token;
