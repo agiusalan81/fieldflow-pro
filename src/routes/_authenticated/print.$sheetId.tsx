@@ -7,6 +7,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Printer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, isManager } from "@/lib/profile";
+import { useEdition } from "@/lib/plan-features";
+import { isInHouse } from "@/lib/editions";
 import { labourHours, technicianCount } from "@/lib/jobsheets";
 import { ServiceSheet } from "@/components/service-sheet";
 import { formatOfficeAddress } from "@/lib/contact-details";
@@ -33,6 +35,7 @@ function PrintSheet() {
   const { sheetId } = Route.useParams();
   const { data: profile } = useProfile();
   const { data: company } = useCompanyRules();
+  const inHouse = isInHouse(useEdition().edition);
   const { data } = useQuery({
     queryKey: ["print", sheetId],
     queryFn: async () => {
@@ -67,7 +70,7 @@ function PrintSheet() {
           <div className="text-right"><p className="font-mono text-lg">Job sheet- {s.jobsheet_number}</p><p className="text-muted-foreground">{new Date(s.created_at).toLocaleDateString()}</p></div>
         </header>
         <section className="grid grid-cols-2 gap-4">
-          <div><p className="text-xs uppercase text-muted-foreground">Client</p><p>{s.clients?.name}</p><p className="text-muted-foreground">{s.clients?.billing_address}</p></div>
+          <div><p className="text-xs uppercase text-muted-foreground">{inHouse ? "Location" : "Client"}</p><p>{s.clients?.name}</p><p className="text-muted-foreground">{s.clients?.billing_address}</p></div>
           <div><p className="text-xs uppercase text-muted-foreground">Site</p><p>{s.sites?formatSiteTitle(s.sites):"—"}</p><p className="text-muted-foreground">{s.sites?.address}</p></div>
           <div><p className="text-xs uppercase text-muted-foreground">Asset</p><p>{s.asset_type === "Other" ? s.asset_type_other : s.asset_type} {s.assets?.reference_number}</p><p className="text-muted-foreground">Model {s.lift_model || "—"} · S/N {s.serial_number || "—"}</p></div>
           <div><p className="text-xs uppercase text-muted-foreground">Work type</p><p>{types || "—"}</p><p className="text-muted-foreground">{s.maintenance_agreement_type ?? ""}</p></div>
@@ -93,9 +96,9 @@ function PrintSheet() {
         <footer className="grid grid-cols-2 gap-6 border-t pt-4">
           <div><p className="text-xs uppercase text-muted-foreground">Technician</p><p>{s.technician_name}</p>{data.technicianSignature && <img src={data.technicianSignature} alt="Technician signature" className="mt-1 h-20 max-w-full object-contain" />}</div>
           <div>
-            <p className="text-xs uppercase text-muted-foreground">Client sign-off{s.signature_data ? " · Signed" : ""}</p>
+            <p className="text-xs uppercase text-muted-foreground">{inHouse ? "Sign-off & verification" : "Client sign-off"}{s.signature_data ? " · Signed" : ""}</p>
             <p>{s.client_full_name} · ID {s.client_id_card_no}</p>
-            {s.signature_data && <img src={s.signature_data} alt="Client signature" className="mt-1 h-20" />}
+            {s.signature_data && <img src={s.signature_data} alt={inHouse ? "Verifier signature" : "Client signature"} className="mt-1 h-20" />}
           </div>
         </footer>
       </article>}

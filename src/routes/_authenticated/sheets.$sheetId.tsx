@@ -647,29 +647,31 @@ function SheetForm() {
           </div>
         </Section>
 
-        <section className="rounded-xl border bg-card p-4 space-y-2">
-          <Label htmlFor="maintenance-notes">Maintenance notes</Label>
-          <p className="text-xs text-muted-foreground">Shown to the customer on the job sheet, PDF and email.</p>
-          <Textarea id="maintenance-notes" rows={3} disabled={readOnly} placeholder="e.g. Ropes lubricated, door gap adjusted, recommend brake inspection next visit." value={(form.maintenance_notes as string) ?? ""} onChange={(e) => set({ maintenance_notes: e.target.value })} />
-          <VoiceDictation label="maintenance notes" disabled={readOnly} value={(form.maintenance_notes as string) ?? ""} onApply={(t) => set({ maintenance_notes: t })} />
-        </section>
+        {!inHouse && (
+          <section className="rounded-xl border bg-card p-4 space-y-2">
+            <Label htmlFor="maintenance-notes">Maintenance notes</Label>
+            <p className="text-xs text-muted-foreground">Shown to the customer on the job sheet, PDF and email.</p>
+            <Textarea id="maintenance-notes" rows={3} disabled={readOnly} placeholder="e.g. Ropes lubricated, door gap adjusted, recommend brake inspection next visit." value={(form.maintenance_notes as string) ?? ""} onChange={(e) => set({ maintenance_notes: e.target.value })} />
+            <VoiceDictation label="maintenance notes" disabled={readOnly} value={(form.maintenance_notes as string) ?? ""} onApply={(t) => set({ maintenance_notes: t })} />
+          </section>
+        )}
 
-        <SpecialNotes form={form} set={set} readOnly={readOnly} />
+        {!inHouse && <SpecialNotes form={form} set={set} readOnly={readOnly} />}
 
-        <Section n={6} title="Client sign-off">
+        <Section n={6} title={inHouse ? "Sign-off & verification" : "Client sign-off"}>
           {form.signature_data ? (
             <div className="flex flex-wrap items-center gap-4">
-              <img src={form.signature_data as string} alt="Client signature" className="h-24 rounded-lg border bg-card" />
+              <img src={form.signature_data as string} alt={inHouse ? "Verifier signature" : "Client signature"} className="h-24 rounded-lg border bg-card" />
               <div className="text-sm"><p className="font-medium">{form.client_full_name as string}</p><p className="text-muted-foreground">ID {form.client_id_card_no as string}</p></div>
             </div>
           ) : <p className="text-sm text-muted-foreground">Not signed yet.</p>}
           {form.signature_data && <p className="mt-2 text-xs text-success">Signed — the PDF opens read-only, no further signature needed.</p>}
           {!readOnly && !form.signature_data && (
             <Button type="button" className="mt-4 h-11 w-full sm:w-auto" onClick={() => setSignOpen(true)}>
-              <PenLine className="mr-1 h-4 w-4" />Present to client for sign-off
+              <PenLine className="mr-1 h-4 w-4" />{inHouse ? "Present for sign-off & verification" : "Present to client for sign-off"}
             </Button>
           )}
-          {!form.signature_data && <DepartureRequest preapproved={client?.preapprove_departure ?? false} sheet={{ id: sheet.id, departure_status: sheet.departure_status, departure_note: sheet.departure_note, departure_reply: sheet.departure_reply, signature_data: null, return_fee_waived: sheet.return_fee_waived }} manager={manager} onChange={() => { revision.current = null; qc.invalidateQueries({ queryKey: ["sheet", sheetId] }); }} />}
+          {!inHouse && !form.signature_data && <DepartureRequest preapproved={client?.preapprove_departure ?? false} sheet={{ id: sheet.id, departure_status: sheet.departure_status, departure_note: sheet.departure_note, departure_reply: sheet.departure_reply, signature_data: null, return_fee_waived: sheet.return_fee_waived }} manager={manager} onChange={() => { revision.current = null; qc.invalidateQueries({ queryKey: ["sheet", sheetId] }); }} />}
         </Section>
       </fieldset>
 
@@ -678,7 +680,7 @@ function SheetForm() {
           onPointerDownOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => { if (handOff) e.preventDefault(); }}
           className="h-[100dvh] max-h-[100dvh] w-screen max-w-none overflow-y-auto rounded-none sm:h-auto sm:max-h-[95vh] sm:max-w-3xl sm:rounded-lg">
-          <DialogHeader><DialogTitle>Job sheet {sheet.jobsheet_number} — client copy</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{inHouse ? `Job sheet ${sheet.jobsheet_number} — work verification & sign-off` : `Job sheet ${sheet.jobsheet_number} — client copy`}</DialogTitle></DialogHeader>
           {handOff ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-6 py-16 text-center">
               <p className="text-2xl font-semibold">Thank you!</p>
@@ -688,7 +690,7 @@ function SheetForm() {
           ) : (
           <div className="space-y-4 text-sm">
             <div className="grid gap-2 rounded-lg bg-muted/50 p-3 sm:grid-cols-2">
-              <p><span className="text-muted-foreground">Client:</span> {client?.name ?? "—"}</p>
+              <p><span className="text-muted-foreground">{inHouse ? "Location:" : "Client:"}</span> {client?.name ?? "—"}</p>
               <p><span className="text-muted-foreground">Date:</span> {new Date(sheet.created_at).toLocaleDateString()}</p>
               <p className="sm:col-span-2"><span className="text-muted-foreground">Address:</span> {address || "—"}</p>
               <p><span className="text-muted-foreground">Equipment:</span> {asset ? `${asset.reference_number} · ${asset.asset_category}` : (form.asset_type as string)}</p>
