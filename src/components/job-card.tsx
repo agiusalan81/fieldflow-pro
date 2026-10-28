@@ -35,7 +35,7 @@ export function AssetHistory({ assetId, label }: { assetId: string; label: strin
   return (
     <div className="space-y-2">
       <p className="text-sm text-muted-foreground">{label}</p>
-      {isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : data.length === 0 ? <p className="text-sm text-muted-foreground">No previous job sheets for this lift.</p> : (
+      {isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : data.length === 0 ? <p className="text-sm text-muted-foreground">No previous job sheets for this equipment.</p> : (
         <ul className="max-h-[60vh] space-y-2 overflow-y-auto">
           {data.map((s) => (
             <li key={s.id} className="rounded-lg border p-3 text-sm">
@@ -58,9 +58,9 @@ export function LiftHistoryButton({ assetId, label }: { assetId: string | null; 
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button variant="outline" className="h-11" disabled={!assetId}><History className="mr-1 h-4 w-4" />Lift History</Button></DialogTrigger>
+      <DialogTrigger asChild><Button variant="outline" className="h-11" disabled={!assetId}><History className="mr-1 h-4 w-4" />Equipment history</Button></DialogTrigger>
       <DialogContent>
-        <DialogHeader><DialogTitle>Lift history</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>Equipment history</DialogTitle></DialogHeader>
         {assetId && open && <AssetHistory assetId={assetId} label={label} />}
       </DialogContent>
     </Dialog>

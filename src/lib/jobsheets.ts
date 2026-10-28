@@ -23,7 +23,7 @@ export async function createDraftSheet(profile: Profile, jobId?: string) {
         ...(job.ppm_plan_id ? { is_maintenance: true } : {}),
         lift_model: ((job.assets?.custom_attributes as Record<string, unknown> | null)?.["model"] as string) ?? null,
         serial_number: job.assets?.serial_number ?? ((job.assets?.custom_attributes as Record<string, unknown> | null)?.["serial"] as string) ?? null,
-        asset_type: cat.includes("escalator") ? "Escalator" : cat.includes("lift") || !cat ? "Lift" : "Other",
+        asset_type: cat.includes("escalator") ? "Escalator" : cat.includes("lift") ? "Lift" : "Other",
         asset_type_other: cat && !cat.includes("lift") && !cat.includes("escalator") ? job.assets?.asset_category : null,
       };
     }

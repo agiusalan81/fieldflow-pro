@@ -481,8 +481,6 @@ function SheetForm() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : <p className="mt-3 flex items-start gap-1.5 text-sm text-muted-foreground"><MapPin className="mt-0.5 h-4 w-4 shrink-0" />No address on file</p>}
-        </Section>
-
           <div className="mt-4 grid gap-4 border-t pt-4 md:grid-cols-4">
             {liftOn && <div className="space-y-1.5">
               <Label>{word("asset_type")}</Label>
@@ -496,6 +494,7 @@ function SheetForm() {
             <div className="space-y-1.5"><Label>{word("serial")}</Label><Input placeholder="Serial number" disabled={readOnly} className="h-11" value={(form.serial_number as string) ?? ""} onChange={(e) => set({ serial_number: e.target.value, requires_admin_approval: true })} /></div>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">Details fill in from the chosen {word("equipment").toLowerCase()} and can be corrected here.</p>
+        </Section>
 
         <Section n={3} title="Work classification">
           <div className="grid gap-3 sm:grid-cols-3">
