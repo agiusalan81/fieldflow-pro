@@ -1170,6 +1170,13 @@
       "when": 1793168319137,
       "tag": "0166_hq_test_reset_all_modules",
       "breakpoints": true
+    },
+    {
+      "idx": 167,
+      "version": "7",
+      "when": 1793172190545,
+      "tag": "0167_hq_company_creation_and_superuser_invites",
+      "breakpoints": true
     }
   ]
 }
