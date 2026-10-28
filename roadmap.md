@@ -92,3 +92,6 @@
 - [ ] Define Document Library workflow with user (in discussion, one question at a time)
 - [x] Phase 6 + batch: CRM lead "Create estimate" (Lift proposal/costing when Lift pack active, links lead and moves to Quote sent), won buttons, custom learning lead sources; "Quote these defects" from lift maintenance checklist; portal invites emailed directly; Coming soon under menu titles; Client 360 rows clickable; job-sheets pending banner removed. Tests/typecheck pass.
 - [ ] Client 360 "+ Attach document" on Documents/site/equipment; back-navigation state restore; client copy of filled lift checklist; statutory inspections register (queued for next build)
+- [x] Hotels & Retail editions: two HQ products with plans, own entitlement resolution, distinct look/wording/menu, /hotels and /retail pages, test companies TEST Azure Bay Resort & TEST FreshMart Stores with sites/assets. In-app look not seen signed in (no member account yet).
+- [ ] Editions follow-ups: public self-signup per product, room/equipment QR guest reporting form, edition-aware asset category picker, real domains.
+- [ ] Queued: Document preview & send from preview (estimates, proposals, lift costing).
