@@ -23,6 +23,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+/** Quick expiry choices, counted from the contract start date. */
+export const EXPIRY_PRESETS=[{label:'30 days',days:30},{label:'60 days',days:60},{label:'90 days',days:90},{label:'6 months',months:6},{label:'1 year',months:12},{label:'2 years',months:24}] as const;
+export function addPeriod(start:string,p:{days?:number;months?:number}){const [y,m,d]=start.split('-').map(Number);const dt=new Date(Date.UTC(y,m-1,d));if('days' in p&&p.days)dt.setUTCDate(dt.getUTCDate()+p.days);else if(p.months){const t=new Date(Date.UTC(y,m-1+p.months,1));const last=new Date(Date.UTC(t.getUTCFullYear(),t.getUTCMonth()+1,0)).getUTCDate();t.setUTCDate(Math.min(d,last));return t.toISOString().slice(0,10);}return dt.toISOString().slice(0,10);}
 export function useAgreementCoverage() {
   return useQuery({queryKey:['agreement-coverage'],queryFn:async()=>{const r=await supabase.from('agreement_assets').select('*, assets(reference_number), maintenance_agreements(title, client_id, site_id, status)');if(r.error)throw r.error;return r.data;}});
 }
@@ -36,6 +39,7 @@ export function EquipmentContracts({companyId,clientId,siteId,assetId,central=fa
 }
 function ContractEditor({companyId,initialClient,initialSite,initialAsset,onSaved}:{companyId:string;initialClient?:string | undefined;initialSite?:string | undefined;initialAsset?:string | undefined;onSaved:()=>void}) {
   const qc=useQueryClient();const on=usePlanFeatures();const today=new Date().toISOString().slice(0,10);
+  const setEnd=(v:string)=>{setH(x=>({...x,end:v}));setLines(old=>old.map(l=>!l.end||l.end===h.end?{...l,end:v}:l));};
   const [h,setH]=useState({client_id:initialClient??'',site_id:initialSite??'',title:'',kind:'maintenance',document_id:'',tier_id:'',start:today,end:'',price:'',notes:'',pricing_mode:'itemised',collective_price:''});
   const [selectedDocs,setSelectedDocs]=useState<string[]|null>(null);const [preview,setPreview]=useState('');
   const [lines,setLines]=useState<CoverageDraft[]>([]);const [existing,setExisting]=useState('');const [busy,setBusy]=useState(false);
