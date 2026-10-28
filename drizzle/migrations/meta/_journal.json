@@ -1219,6 +1219,13 @@
       "when": 1793173711127,
       "tag": "0173_site_visit_counter_supported_kind",
       "breakpoints": true
+    },
+    {
+      "idx": 174,
+      "version": "7",
+      "when": 1793175658192,
+      "tag": "0174_hq_delete_test_company",
+      "breakpoints": true
     }
   ]
 }
