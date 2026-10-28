@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Send, Trash2 } from "lucide-react";
+import { ArrowLeft, ChevronDown, Plus, Send, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { useProfile, isManager } from "@/lib/profile";
@@ -11,6 +11,7 @@ import { formatSiteDisplay } from "@/lib/site-display";
 import { clientEstimateView, parsePricing, pricingTotals, type Pricing, type PricingLine, type RateUnit } from "@/lib/survey-pricing";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -55,10 +56,11 @@ function SurveysPage() {
   const open = (id?: string) => void navigate({ to: "/surveys", search: { survey: id } });
   if (!profile) return <AppShell title="Site surveys"><p className="text-muted-foreground">Loading…</p></AppShell>;
   if (!on("site_surveys")) return <AppShell title="Site surveys"><EmptyState>Site surveys are not included in your plan. Ask your administrator to enable it.</EmptyState></AppShell>;
-  return <AppShell title="Site surveys">{survey ? <Editor id={survey} onBack={() => open()} /> : <List onOpen={open} manager={isManager(profile)} superuser={["superuser", "admin"].includes(profile.role)} canCreate={profile.role !== "admin"} />}</AppShell>;
+  return <AppShell title="Site surveys">{survey ? <Editor id={survey} onBack={() => open()} /> : <List onOpen={open} manager={isManager(profile)} superuser={["superuser", "admin"].includes(profile.role)} canCreate={profile.role !== "admin"} lift={on("lift_pack") && isManager(profile)} />}</AppShell>;
 }
 
-function List({ onOpen, manager, superuser, canCreate }: { onOpen: (id: string) => void; manager: boolean; superuser: boolean; canCreate: boolean }) {
+function List({ onOpen, manager, superuser, canCreate, lift }: { onOpen: (id: string) => void; manager: boolean; superuser: boolean; canCreate: boolean; lift: boolean }) {
+  const navigate = useNavigate();
   const [filter, setFilter] = useState("open");
   const q = useQuery({ queryKey: ["site-surveys"], queryFn: async () => {
     const r = await supabase.from("site_surveys").select("id,reference,status,track,survey_purpose,location_ref,field_details,materials,other_items,updated_at,clients(name)").order("updated_at", { ascending: false }).limit(200);
@@ -72,7 +74,11 @@ function List({ onOpen, manager, superuser, canCreate }: { onOpen: (id: string) 
   return <div className="mx-auto max-w-5xl space-y-4">
     {superuser && <ReviewSettings />}
     <div className="flex flex-wrap items-end gap-2">
-      {canCreate && <Button onClick={create}><Plus className="mr-1 h-4 w-4" />New site survey</Button>}
+      {canCreate && (lift ? <DropdownMenu><DropdownMenuTrigger asChild><Button><Plus className="mr-1 h-4 w-4" />New site survey<ChevronDown className="ml-1 h-4 w-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="start" className="w-72">
+        <DropdownMenuItem onSelect={() => void create()}><div><p className="font-medium">General site survey</p><p className="text-xs text-muted-foreground">Any trade · for general quotes</p></div></DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => void navigate({ to: "/lift-surveys", search: { new: "1" } })}><div><p className="font-medium">Lift site survey</p><p className="text-xs text-muted-foreground">Stops, shaft depth, pit, headroom</p></div></DropdownMenuItem>
+      </DropdownMenuContent></DropdownMenu> : <Button onClick={create}><Plus className="mr-1 h-4 w-4" />New site survey</Button>)}
+      {lift && <Button variant="outline" asChild><Link to="/lift-surveys" search={{ new: undefined }}>Lift site surveys</Link></Button>}
       <div className="ml-auto w-48"><Label htmlFor="survey-filter">Show</Label><select id="survey-filter" className={sel} value={filter} onChange={(e) => setFilter(e.target.value)}><option value="open">Open</option><option value="all">All</option>{Object.entries(STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
     </div>
     {q.isLoading ? <p className="text-muted-foreground">Loading…</p> : q.error ? <p role="alert" className="text-destructive">Surveys could not be loaded.</p> : !rows.length ? <EmptyState>{manager ? "No site surveys match this filter." : "You have no site surveys yet."}</EmptyState> :

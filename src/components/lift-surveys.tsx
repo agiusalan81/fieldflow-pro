@@ -42,7 +42,7 @@ const STEPS = [
   { key: "evidence", label: "Sketches & photos" },
 ] as const;
 
-export function LiftSurveys() {
+export function LiftSurveys({ autoNew = false }: { autoNew?: boolean } = {}) {
   const { data: profile } = useProfile();
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -62,6 +62,12 @@ export function LiftSurveys() {
     d.conducted_at = new Date().toISOString().slice(0, 10);
     setDraft(d);
   };
+  useEffect(() => {
+    if (!autoNew) return;
+    openNew();
+    void navigate({ to: "/lift-surveys", search: { new: undefined }, replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoNew]);
 
   const createRfq = async (s: (typeof data)[number]) => {
     if (!profile?.company_id) return;
