@@ -1191,6 +1191,13 @@
       "when": 1793172791289,
       "tag": "0169_hq_company_system_defaults",
       "breakpoints": true
+    },
+    {
+      "idx": 170,
+      "version": "7",
+      "when": 1793172861132,
+      "tag": "0170_hq_reset_superseded_report_safety",
+      "breakpoints": true
     }
   ]
 }
