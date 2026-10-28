@@ -28,3 +28,8 @@ export function schedulePricing(doc: { commercial: unknown; field_specs: unknown
   const total = commercialTotal(pricing);
   return { pricing, price: total === null && !itemPrice ? '' : String(total ?? itemPrice), months: pricing.visitsPerYear && [1,2,3,4,6,12].includes(12 / pricing.visitsPerYear) ? String(12 / pricing.visitsPerYear) : '1' };
 }
+
+export function assignedDocumentIds(attachments: {master_id:string;site_id:string|null;asset_id:string|null}[], asset:{id:string;site_id:string|null}) {
+  const matching=attachments.filter(x=>x.asset_id===asset.id||(!x.asset_id&&(!x.site_id||x.site_id===asset.site_id)));
+  return [...matching].sort((a,b)=>(b.asset_id?2:b.site_id?1:0)-(a.asset_id?2:a.site_id?1:0)||a.master_id.localeCompare(b.master_id)).map(x=>x.master_id);
+}

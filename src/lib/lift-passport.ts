@@ -26,6 +26,8 @@ const LIFT_GENERAL: PassportSection = {
   title: "General & performance",
   fields: [
     txt("lift_ref", "Lift reference / ID"),
+    txt("serial_number", "Serial number"),
+    txt("location_details", "Location details"),
     sel("manufacturer", "Manufacturer", ["Kone", "Otis", "Schindler", "TK Elevator", "Mitsubishi", "Fujitec", "Hyundai", "Kleemann", "Orona", "GMV", "Locally assembled"]),
     num("year_installed", "Year installed"),
     sel("lift_type", "Lift type", ["Passenger", "Goods / Passenger", "Service / Stretcher", "Bed / Hospital", "Panoramic / Glass", "Home lift / Platform", "Dumbwaiter"]),
@@ -49,6 +51,8 @@ const LIFT_MACHINE: PassportSection = {
     sel("pump_brand", "Pump / power unit brand", ["GMV", "Blain", "Bucher", "Moris", "Omega"], ["hydraulic"]),
     sel("valve_block", "Valve block", ["GMV 3010", "GMV NGV", "Blain EV100", "Bucher LRV"], ["hydraulic"]),
     sel("cylinder_type", "Cylinder type", ["Direct 1:1", "Roped 2:1", "Telescopic"], ["hydraulic"]),
+    sel("piston_brand", "Piston / cylinder brand", ["GMV", "Moris", "Bucher", "Omar Lifts", "Algi", "Wittur"], ["hydraulic"]),
+    num("piston_diameter", "Piston diameter", "mm", ["hydraulic"]),
     sel("oil_grade", "Hydraulic oil grade", ["ISO VG 32", "ISO VG 46", "ISO VG 68"], ["hydraulic"]),
     num("tank_volume", "Tank volume", "L", ["hydraulic"]),
     sel("rupture_valve", "Rupture valve", ["Fitted", "N/A"], ["hydraulic"]),
@@ -101,6 +105,8 @@ const ESC_GENERAL: PassportSection = {
   title: "General & geometry",
   fields: [
     txt("escalator_ref", "Escalator / walk reference"),
+    txt("serial_number", "Serial number"),
+    txt("location_details", "Location details"),
     sel("manufacturer", "Manufacturer", ["Otis", "Schindler", "Kone", "TK Elevator", "Mitsubishi", "Fujitec", "Hyundai", "Orona"]),
     num("year_installed", "Year installed"),
     sel("escalator_type", "Type", ["Escalator", "Moving walk — inclined", "Moving walk — flat"]),
@@ -197,7 +203,7 @@ export function normalizeBlocks(row: Record<string, unknown> | null | undefined)
     out[key] = {};
     if (block && typeof block === "object" && !Array.isArray(block)) {
       for (const [k, v] of Object.entries(block as Record<string, unknown>)) {
-        if (v != null && v !== "") out[key]![k] = String(v);
+        if (v != null && v !== "") { const target = out[key]; if (target) target[k] = String(v); }
       }
     }
   }
@@ -232,4 +238,12 @@ export function equipmentTypeForCategory(category: string | null | undefined): P
   if (c.includes("escalator")) return "escalator";
   if (c.includes("walk")) return "moving_walk";
   return "lift";
+}
+
+export type PassportAsset = { reference_number: string; serial_number: string | null; location_details: string | null };
+export function assetPassportBlocks(asset: PassportAsset | undefined, category: string | null, row: Record<string, unknown> | null | undefined): PassportBlocks {
+  const blocks = normalizeBlocks(row);
+  if (row || !asset) return blocks;
+  blocks['general'] = { [equipmentTypeForCategory(category) === 'lift' ? 'lift_ref' : 'escalator_ref']: asset.reference_number, serial_number: asset.serial_number ?? '', location_details: asset.location_details ?? '' };
+  return blocks;
 }

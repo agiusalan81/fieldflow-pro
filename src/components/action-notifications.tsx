@@ -58,6 +58,8 @@ export function useActionQueues() {
   const manager=!!p&&isManager(p);
   const catsOn=!!p&&on('receipts')&&['admin','superuser','supervisor'].includes(p.role),leaveOn=core&&can('leave_approvals'),problemsOn=core&&manager&&can('pending_works');
   const surveysOn=!!p&&on('site_surveys')&&manager;
+  const passportOn=!!p&&manager&&on('lift_pack');
+  const passports=useQuery({queryKey:['action-notifications','passports',p?.id,passportOn],enabled:passportOn,refetchInterval:15000,queryFn:async()=>{const r=await supabase.from('passport_submissions').select('id,asset_id,title').eq('status','pending').order('created_at').limit(50);if(r.error)throw r.error;return r.data;}}).data??[];
   const surveys=useQuery({queryKey:['action-notifications','surveys',p?.id,surveysOn],enabled:surveysOn,refetchInterval:15000,queryFn:async()=>{if(!p)return [];const r=await supabase.from('site_surveys').select('id,location_ref,reviewer_id').in('status',['submitted','under_review']).or(`reviewer_id.eq.${p.id},reviewer_id.is.null`).order('submitted_at',{ascending:true}).limit(20);if(r.error)throw r.error;return r.data;}}).data??[];
   const crmLevel=useCrmAccess(!!p).data;const crmOn=crmAllows(crmLevel,'viewer')&&on('crm_pipeline');
   const crm=useQuery({queryKey:['action-notifications','crm',p?.id,crmOn],enabled:crmOn,refetchInterval:30000,queryFn:async()=>{const end=new Date();end.setHours(23,59,59,999);const r=await supabase.from('crm_followups').select('id,opportunity_id,action_label,due_at').is('done_at',null).lte('due_at',end.toISOString()).or(`assignee_id.eq.${p?.id},assignee_id.is.null`).order('due_at').limit(20);if(r.error)throw r.error;return r.data;}}).data??[];
@@ -78,8 +80,8 @@ export function useActionQueues() {
   }});
   const chat=threads.reduce((a,t)=>a+t.n,0);
   const problems=data?.problems??[];
-  const count=crm.length+decided.length+surveys.length+chat+(data?.incoming.length??0)+(data?.approval.length??0)+(data?.leave.length??0)+(data?.responses.length??0)+problems.length+(data?.categories.length??0);
-  return { threads, crm, decided, surveys, problems, data, count, chat };
+  const count=passports.length+crm.length+decided.length+surveys.length+chat+(data?.incoming.length??0)+(data?.approval.length??0)+(data?.leave.length??0)+(data?.responses.length??0)+problems.length+(data?.categories.length??0);
+  return { passports, threads, crm, decided, surveys, problems, data, count, chat };
 }
 
 export function QueueBadge({ path }: { path: string }) {
@@ -89,7 +91,7 @@ export function QueueBadge({ path }: { path: string }) {
     '/estimates': q.decided.length,
     '/admin/jobs': q.problems.length,
     '/admin/leave': (q.data?.leave.length ?? 0) + (q.data?.responses.length ?? 0),
-    '/admin/approvals': q.data?.categories.length ?? 0,
+    '/admin/approvals': (q.data?.categories.length ?? 0)+q.passports.length,
   };
   const count = counts[path] ?? 0;
   const cls = 'shrink-0 rounded-full bg-destructive px-1.5 text-xs text-destructive-foreground';
@@ -100,13 +102,14 @@ export function QueueBadge({ path }: { path: string }) {
   const leave = q.data?.leave[0] ?? q.data?.responses[0];
   if (path === '/admin/leave' && leave) return <Link className={cls} aria-label={`${count} leave actions — open next`} to="/admin/leave" search={{ request: leave.id }}>{count}</Link>;
   if (path === '/admin/approvals' && q.data?.categories[0]) return <Link className={cls} aria-label={`${count} expense categories — open next`} to="/admin/approvals" search={{ category: 'expenses', item: q.data.categories[0].id }}>{count}</Link>;
+  if(path==='/admin/approvals'&&q.passports[0])return <Link className={cls} to="/equipment/$assetId" params={{assetId:q.passports[0].asset_id}} search={{view:'passport',submission:q.passports[0].id}}>{count}</Link>;
   return null;
 }
 
 export function ActionNotifications() {
-  const { threads, crm, decided, surveys, problems, data, count } = useActionQueues();
+  const { passports, threads, crm, decided, surveys, problems, data, count } = useActionQueues();
   const [open, setOpen] = useState(false);
-  const approvalCount = (data?.incoming.length ?? 0) + (data?.approval.length ?? 0) + (data?.leave.length ?? 0) + (data?.responses.length ?? 0) + (data?.categories.length ?? 0);
+  const approvalCount = passports.length+(data?.incoming.length ?? 0) + (data?.approval.length ?? 0) + (data?.leave.length ?? 0) + (data?.responses.length ?? 0) + (data?.categories.length ?? 0);
   const commercialCount = crm.length + decided.length;
   const fieldCount = problems.length + surveys.length + threads.reduce((n, t) => n + t.n, 0);
   const item="h-auto w-full justify-start whitespace-normal py-3 [&_span]:whitespace-normal [&_span]:break-words [&_span]:text-wrap";
@@ -118,6 +121,7 @@ export function ActionNotifications() {
       <Tabs defaultValue={fieldCount && !approvalCount && !commercialCount ? 'field' : approvalCount ? 'approvals' : 'commercial'} className="min-w-0 px-4 pb-6" onClick={e => { if ((e.target as HTMLElement).closest('a')) setOpen(false); }}>
         <TabsList className="grid h-auto w-full grid-cols-3"><TabsTrigger value="approvals" className="min-w-0 whitespace-normal text-xs">Approvals · {approvalCount}</TabsTrigger><TabsTrigger value="commercial" className="min-w-0 whitespace-normal text-xs">Commercial · {commercialCount}</TabsTrigger><TabsTrigger value="field" className="min-w-0 whitespace-normal text-xs">Field & chat · {fieldCount}</TabsTrigger></TabsList>
         <TabsContent value="approvals" className="space-y-2 pt-3">{!approvalCount && empty}
+          {passports.map(s=><Button key={s.id} asChild variant="outline" className={item}><Link to="/equipment/$assetId" params={{assetId:s.asset_id}} search={{view:'passport',submission:s.id}}><Row icon={AlertTriangle}>Technical passport handover: {s.title}</Row></Link></Button>)}
           {data?.categories.map(c=><Button key={c.id} asChild variant="outline" className={item}><Link to="/admin/approvals" search={{category:"expenses",item:c.id}}><Row icon={AlertTriangle}>Expense category to approve: {c.name}</Row></Link></Button>)}
           {data?.incoming.map(s=><Button key={s.id} asChild variant="outline" className={item}><Link to="/standby" search={{swap:s.id}}><Row icon={CalendarClock}>On-call swap — Accept, Decline or Snooze</Row></Link></Button>)}
           {data?.approval.map(s=><Button key={s.id} asChild variant="outline" className={item}><Link to="/standby" search={{swap:s.id}}><Row icon={CalendarClock}>On-call swap — review approval</Row></Link></Button>)}

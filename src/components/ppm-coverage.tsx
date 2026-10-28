@@ -151,7 +151,7 @@ export function PpmCoverage({
                   </p>
                   {p.asset_id && (
                     <Button asChild size="sm" variant="ghost" className="mt-1 h-7 px-2">
-                      <Link to="/equipment/$assetId" params={{ assetId: p.asset_id }}>Passport</Link>
+                      <Link to="/equipment/$assetId" params={{ assetId: p.asset_id }} search={{view:'passport'}}>Passport</Link>
                     </Button>
                   )}
                 </div>
