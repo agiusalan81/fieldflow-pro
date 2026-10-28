@@ -481,22 +481,19 @@ function SheetForm() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : <p className="mt-3 flex items-start gap-1.5 text-sm text-muted-foreground"><MapPin className="mt-0.5 h-4 w-4 shrink-0" />No address on file</p>}
-        </Section>
-
-        <Section n={2} title={word("equipment")}>
-          <div className="grid gap-4 md:grid-cols-4">
-            <div className="space-y-1.5">
+          <div className="mt-4 grid gap-4 border-t pt-4 md:grid-cols-4">
+            {liftOn && <div className="space-y-1.5">
               <Label>{word("asset_type")}</Label>
-              <Select value={(form.asset_type as string) ?? "Lift"} onValueChange={(v) => set({ asset_type: v })}>
+              <Select value={(form.asset_type as string) ?? "Other"} disabled={readOnly} onValueChange={(v) => set({ asset_type: v })}>
                 <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
                 <SelectContent>{["Lift", "Escalator", "Other"].map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
               </Select>
-            </div>
-            {form.asset_type === "Other" && <div className="space-y-1.5"><Label>Specify</Label><Input className="h-11" value={(form.asset_type_other as string) ?? ""} onChange={(e) => set({ asset_type_other: e.target.value })} /></div>}
-            <div className="space-y-1.5"><Label>{word("model")}</Label><Input placeholder="Please fill in model" className="h-11" value={(form.lift_model as string) ?? ""} onChange={(e) => set({ lift_model: e.target.value, requires_admin_approval: true })} /></div>
-            <div className="space-y-1.5"><Label>{word("serial")}</Label><Input placeholder="Please fill in serial number" className="h-11" value={(form.serial_number as string) ?? ""} onChange={(e) => set({ serial_number: e.target.value, requires_admin_approval: true })} /></div>
+            </div>}
+            {(!liftOn || form.asset_type === "Other") && <div className="space-y-1.5"><Label>{liftOn ? "Specify" : word("asset_type")}</Label><Input className="h-11" disabled={readOnly} placeholder="e.g. Cold room, oven, shutter" value={(form.asset_type_other as string) ?? ""} onChange={(e) => set({ asset_type: "Other", asset_type_other: e.target.value })} /></div>}
+            <div className="space-y-1.5"><Label>{word("model")}</Label><Input placeholder="Model" disabled={readOnly} className="h-11" value={(form.lift_model as string) ?? ""} onChange={(e) => set({ lift_model: e.target.value, requires_admin_approval: true })} /></div>
+            <div className="space-y-1.5"><Label>{word("serial")}</Label><Input placeholder="Serial number" disabled={readOnly} className="h-11" value={(form.serial_number as string) ?? ""} onChange={(e) => set({ serial_number: e.target.value, requires_admin_approval: true })} /></div>
           </div>
-          <p className="mt-2 text-xs text-muted-foreground"></p>
+          <p className="mt-1 text-xs text-muted-foreground">Details fill in from the chosen {word("equipment").toLowerCase()} and can be corrected here.</p>
         </Section>
 
         <Section n={3} title="Work classification">
@@ -629,7 +626,7 @@ function SheetForm() {
           </div>
         </Section>
 
-        <Section n={5} title="Internal only — never shown to client" priv>
+        <Section n={4} title="Notes">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-1.5">
               <Label>{inHouse ? "Follow-up / parts to order" : word("pending")}</Label>

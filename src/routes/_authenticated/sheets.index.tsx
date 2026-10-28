@@ -92,7 +92,7 @@ function SheetsPage() {
           <StatusBadge status={s.status} />
         </div>
         <p className="mt-1 truncate font-medium text-foreground">{s.clients?.name}{s.sites?.name ? ` · ${formatSiteTitle(s.sites)}` : ""}</p>
-        <p className="truncate text-xs text-muted-foreground">{teamView && s.technician?.full_name ? `${s.technician.full_name} · ` : ""}{s.assets?.reference_number ?? "No lift"} · {s.reported_fault || "No fault noted"} · {new Date(s.created_at).toLocaleDateString()}</p>
+        <p className="truncate text-xs text-muted-foreground">{teamView && s.technician?.full_name ? `${s.technician.full_name} · ` : ""}{s.assets?.reference_number ?? "No equipment"} · {s.reported_fault || "No fault noted"} · {new Date(s.created_at).toLocaleDateString()}</p>
       </div>
       <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
         {isPreview ? <span className="text-xs text-muted-foreground">Read-only preview</span> : completed ? (
