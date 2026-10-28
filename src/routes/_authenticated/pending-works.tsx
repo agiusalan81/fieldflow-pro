@@ -1,6 +1,7 @@
 import {NewJobDialog} from '@/components/new-job-dialog';
 import { PendingPhotoStrip } from "@/components/pending-photo-strip";
 import { EquipmentProblemQueue } from "@/components/equipment-problem-queue";
+import { StoreProblemQueue } from "@/components/store-problem-queue";
 import { InternalThread } from "@/components/jobsheet-internal-notes";
 import { Textarea } from "@/components/ui/textarea";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -79,6 +80,7 @@ function PendingWorks() {
           ))}
         </div>
         <EquipmentProblemQueue/>
+        <StoreProblemQueue/>
         {!rows.length ? <EmptyState>No pending works here.</EmptyState> : (
           <ul className="space-y-2">
             {rows.map((r) => {

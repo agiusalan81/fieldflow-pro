@@ -60,6 +60,7 @@ import { Route as ProblemTokenRouteImport } from './routes/problem.$token'
 import { Route as QuoteTokenRouteImport } from './routes/quote.$token'
 import { Route as ReferralCodeRouteImport } from './routes/referral.$code'
 import { Route as ReportTokenRouteImport } from './routes/report.$token'
+import { Route as StoreReportTokenRouteImport } from './routes/store-report.$token'
 import { Route as AuthenticatedAdminApprovalsRouteImport } from './routes/_authenticated/admin.approvals'
 import { Route as AuthenticatedAdminEntitiesRouteImport } from './routes/_authenticated/admin.entities'
 import { Route as AuthenticatedAdminFieldsRouteImport } from './routes/_authenticated/admin.fields'
@@ -341,6 +342,11 @@ const ReportTokenRoute = ReportTokenRouteImport.update({
   path: '/report/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StoreReportTokenRoute = StoreReportTokenRouteImport.update({
+  id: '/store-report/$token',
+  path: '/store-report/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminApprovalsRoute =
   AuthenticatedAdminApprovalsRouteImport.update({
     id: '/admin/approvals',
@@ -502,6 +508,7 @@ export interface FileRoutesByFullPath {
   '/quote/$token': typeof QuoteTokenRoute
   '/referral/$code': typeof ReferralCodeRoute
   '/report/$token': typeof ReportTokenRoute
+  '/store-report/$token': typeof StoreReportTokenRoute
   '/admin/approvals': typeof AuthenticatedAdminApprovalsRoute
   '/admin/entities': typeof AuthenticatedAdminEntitiesRoute
   '/admin/fields': typeof AuthenticatedAdminFieldsRoute
@@ -573,6 +580,7 @@ export interface FileRoutesByTo {
   '/quote/$token': typeof QuoteTokenRoute
   '/referral/$code': typeof ReferralCodeRoute
   '/report/$token': typeof ReportTokenRoute
+  '/store-report/$token': typeof StoreReportTokenRoute
   '/admin/approvals': typeof AuthenticatedAdminApprovalsRoute
   '/admin/entities': typeof AuthenticatedAdminEntitiesRoute
   '/admin/fields': typeof AuthenticatedAdminFieldsRoute
@@ -646,6 +654,7 @@ export interface FileRoutesById {
   '/quote/$token': typeof QuoteTokenRoute
   '/referral/$code': typeof ReferralCodeRoute
   '/report/$token': typeof ReportTokenRoute
+  '/store-report/$token': typeof StoreReportTokenRoute
   '/_authenticated/admin/approvals': typeof AuthenticatedAdminApprovalsRoute
   '/_authenticated/admin/entities': typeof AuthenticatedAdminEntitiesRoute
   '/_authenticated/admin/fields': typeof AuthenticatedAdminFieldsRoute
@@ -719,6 +728,7 @@ export interface FileRouteTypes {
     | '/quote/$token'
     | '/referral/$code'
     | '/report/$token'
+    | '/store-report/$token'
     | '/admin/approvals'
     | '/admin/entities'
     | '/admin/fields'
@@ -790,6 +800,7 @@ export interface FileRouteTypes {
     | '/quote/$token'
     | '/referral/$code'
     | '/report/$token'
+    | '/store-report/$token'
     | '/admin/approvals'
     | '/admin/entities'
     | '/admin/fields'
@@ -862,6 +873,7 @@ export interface FileRouteTypes {
     | '/quote/$token'
     | '/referral/$code'
     | '/report/$token'
+    | '/store-report/$token'
     | '/_authenticated/admin/approvals'
     | '/_authenticated/admin/entities'
     | '/_authenticated/admin/fields'
@@ -903,6 +915,7 @@ export interface RootRouteChildren {
   QuoteTokenRoute: typeof QuoteTokenRoute
   ReferralCodeRoute: typeof ReferralCodeRoute
   ReportTokenRoute: typeof ReportTokenRoute
+  StoreReportTokenRoute: typeof StoreReportTokenRoute
   ApiPublicJobsBillingDailyRoute: typeof ApiPublicJobsBillingDailyRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -1269,6 +1282,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/store-report/$token': {
+      id: '/store-report/$token'
+      path: '/store-report/$token'
+      fullPath: '/store-report/$token'
+      preLoaderRoute: typeof StoreReportTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin/approvals': {
       id: '/_authenticated/admin/approvals'
       path: '/admin/approvals'
@@ -1535,6 +1555,7 @@ const rootRouteChildren: RootRouteChildren = {
   QuoteTokenRoute: QuoteTokenRoute,
   ReferralCodeRoute: ReferralCodeRoute,
   ReportTokenRoute: ReportTokenRoute,
+  StoreReportTokenRoute: StoreReportTokenRoute,
   ApiPublicJobsBillingDailyRoute: ApiPublicJobsBillingDailyRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,

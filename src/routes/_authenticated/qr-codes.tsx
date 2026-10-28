@@ -7,6 +7,7 @@ import { EquipmentQr } from '@/components/equipment-qr';
 import { NativeSelect } from '@/components/ui/native-select';
 import { Input } from '@/components/ui/input';
 import { isManager, useProfile } from '@/lib/profile';
+import { StorePlaques } from '@/components/store-plaques';
 
 export const Route = createFileRoute('/_authenticated/qr-codes')({ staticData: { sitemap: false },
   head: () => ({ meta: [
@@ -44,6 +45,7 @@ function QrPage() {
   return (
     <AppShell title="QR code generator">
       <div className="mx-auto max-w-4xl space-y-5">
+        <StorePlaques />
         <p className="text-sm text-muted-foreground">Pick a lift or asset, then tap the QR button to preview and print branded stickers: Technical data & history for your team, or Report a fault for building occupants.</p>
         <div className="grid gap-3 sm:grid-cols-3">
           <NativeSelect aria-label="Client" value={client} onValueChange={v => { setClient(v); setSite(""); }}>

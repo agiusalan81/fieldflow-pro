@@ -58,7 +58,7 @@ export const EDITION_SPEC: Record<Edition, EditionSpec> = {
     product: "AisleOps",
     tagline: "In-house store maintenance",
     home: "/retail",
-    hiddenRoutes: CONTRACTOR_ONLY,
+    hiddenRoutes: CONTRACTOR_ONLY.filter((r) => r !== "/surveys"),
     labels: {
       "Clients & assets": "Stores, sites & equipment",
       "Job sheets": "Maintenance tickets",
@@ -70,6 +70,7 @@ export const EDITION_SPEC: Record<Edition, EditionSpec> = {
       "Pending works": "Open faults",
       "Overview": "Estate overview",
       "Today & team": "Today's rounds",
+      "Site surveys": "Store visits",
     },
     siteTypes: ["Superstore", "Express outlet", "Bakery", "Pastry kitchen", "Production / factory", "Warehouse & distribution", "Head office", "Car park"],
     assetGroups: [
