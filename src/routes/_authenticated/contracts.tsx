@@ -108,6 +108,7 @@ function Agreements({ office, companyId }: { office: boolean; companyId?: string
 }
 
 function Types({ office, companyId }: { office: boolean; companyId?: string | undefined }) {
+  const EQUIPMENT_CATEGORIES = useEquipmentCategories();
   const qc = useQueryClient();
   const { data = [] } = useQuery({
     queryKey: ["contract-types"],
@@ -175,6 +176,7 @@ function Types({ office, companyId }: { office: boolean; companyId?: string | un
 }
 
 function Checklists({ office, companyId }: { office: boolean; companyId?: string | undefined }) {
+  const EQUIPMENT_CATEGORIES = useEquipmentCategories();
   const qc = useQueryClient();
   const { data = [] } = useQuery({
     queryKey: ["checklists"],
