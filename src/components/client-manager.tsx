@@ -13,7 +13,7 @@ import { Pencil, Plus, Trash2, Check, X, Copy, ChevronDown } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { isOffice, useProfile } from "@/lib/profile";
-import { DocumentMasters } from "@/components/document-masters";
+import { ClientContractDocuments } from "@/components/client-contract-documents";
 import { EquipmentContracts } from '@/components/equipment-contracts';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { RoleCombobox, learnContactRole, LookupInput, learnLookup, useLookup, EQUIPMENT_TYPE } from "@/components/role-combobox";
@@ -154,7 +154,7 @@ export function EquipmentManager({ clientId, companyId, siteId }: { clientId: st
       <Dialog open={!!documentEquipment} onOpenChange={(open) => { if (!open) setDocumentEquipment(null); }}>
         <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-4xl">
           <DialogHeader><DialogTitle>Equipment documents · {documentEquipment?.reference_number}</DialogTitle></DialogHeader>
-          {documentEquipment && <DocumentMasters key={documentEquipment.id} companyId={companyId} clientId={clientId} siteId={documentEquipment.site_id ?? undefined} assetId={documentEquipment.id} />}
+          {documentEquipment && <ClientContractDocuments key={documentEquipment.id} companyId={companyId} clientId={clientId} siteId={documentEquipment.site_id ?? undefined} assetId={documentEquipment.id} />}
         </DialogContent>
       </Dialog>
     </div>
