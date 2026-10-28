@@ -1233,6 +1233,13 @@
       "when": 1793175728657,
       "tag": "0175_hq_delete_test_company_audit_fix",
       "breakpoints": true
+    },
+    {
+      "idx": 176,
+      "version": "7",
+      "when": 1793182008046,
+      "tag": "0176_lift_costing_capability",
+      "breakpoints": true
     }
   ]
 }

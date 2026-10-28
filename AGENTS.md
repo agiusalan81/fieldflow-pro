@@ -11,10 +11,10 @@
 
 ## Rules
 - Navigation consumes authorized menu items; flyouts/touch shortcuts share workspace-shortcuts.ts with URL-selected tabs — why: tier/Coming soon guards stay authoritative without duplicate screens.
-- Company settings use four workspace tabs and retain visited editors mounted; related client records are bounded, RLS-scoped read-only lists with existing detail links — why: reorganization preserves unsaved edits and record history.
+- Company settings: four tabs keep visited editors mounted; client related records are bounded RLS read-only lists — why: preserve unsaved edits.
 - Email identity resolves server-side via company_email_branding plus HQ override; managed sends keep verified From, Gmail keeps its mailbox From — why: no forced-identity bypass or spoofing.
-- Quote photos use private immutable storage metadata and frozen snapshot IDs/captions, with customer URLs resolved only after token or portal authorization — why: previews and PDFs must share evidence without exposing unrelated file paths.
-- Navigation-only role exclusions use role-menu.ts for sidebar/mobile shortcuts; they never change page authorization. Legacy quote drafts default missing editor fields on read, leaving issued snapshots and write validation unchanged.
+- Quote photos: private immutable storage, frozen snapshot IDs/captions, URLs only after token/portal auth — why: no unrelated path exposure.
+- role-menu.ts exclusions are navigation-only. Legacy quote drafts default missing fields on read only.
 - Analytics: owner-only coarse counts; server-derived tenant. Product-scoped outreach/feedback; saved follow-ups send nothing.
 - HQ: product-scoped owner-only setup/invites/resets; ordered tenant deletes retain users/branding/platform bills and refuse issued payroll — why: no cross-tenant or financial-history loss.
 - Chrome: neutral surfaces/token controls; phone theme matches neutral bar, never gradients.
@@ -82,4 +82,4 @@
 - Per-member CRM access: user_roles.crm_access (null = role default) via my_crm_access()/crm_can(), enforced by RLS/RPCs, mirrored in crm.ts — why: CRM powers vary without changing primary role.
 - Protected per-member RPCs/RLS govern estimates, contracts and dispatch; field eligibility is separate, CRM levels persist — why: primary roles still drive payroll/rota.
 - CRM rules in tested src/lib/crm.ts; manager-only RLS guarded by guard_module_write_additional('crm_pipeline'); crm_mark_won/lost RPCs keep conversions atomic.
-- Lift costing templates (lift_costing_templates) only seed sheet defaults; sheets copy values so editing/deleting a template never changes saved sheets or issued quotes. Proposal branding follows company_module_access('branding_documents') — why: vertical customisation is pack-gated, branding is tier-gated.
+- Lift costing: templates only seed sheet defaults (sheets copy values); access via member_costing_can()/can_lift_costing, mirrored by liftCostingAccess(); proposal branding follows branding_documents — why: saved quotes never change, supervisors cost only when enabled.

@@ -6582,6 +6582,7 @@ export type Database = {
           can_dispatch_jobs: boolean | null
           can_estimates: boolean | null
           can_field_dispatch: boolean
+          can_lift_costing: boolean | null
           can_site_surveys: boolean | null
           company_id: string
           created_at: string
@@ -6601,6 +6602,7 @@ export type Database = {
           can_dispatch_jobs?: boolean | null
           can_estimates?: boolean | null
           can_field_dispatch?: boolean
+          can_lift_costing?: boolean | null
           can_site_surveys?: boolean | null
           company_id: string
           created_at?: string
@@ -6620,6 +6622,7 @@ export type Database = {
           can_dispatch_jobs?: boolean | null
           can_estimates?: boolean | null
           can_field_dispatch?: boolean
+          can_lift_costing?: boolean | null
           can_site_surveys?: boolean | null
           company_id?: string
           created_at?: string
@@ -6897,6 +6900,7 @@ export type Database = {
       is_platform_owner: { Args: never; Returns: boolean }
       mark_customer_quote_seen: { Args: { _quote: string }; Returns: undefined }
       member_commercial_can: { Args: { _area: string }; Returns: boolean }
+      member_costing_can: { Args: never; Returns: boolean }
       member_dispatch_can: { Args: never; Returns: boolean }
       member_handover_preview: { Args: { _user: string }; Returns: Json }
       member_is_active: { Args: { _user: string }; Returns: boolean }
@@ -7225,6 +7229,10 @@ export type Database = {
         Returns: undefined
       }
       set_member_dispatch: {
+        Args: { _enabled: boolean; _user: string }
+        Returns: undefined
+      }
+      set_member_lift_costing: {
         Args: { _enabled: boolean; _user: string }
         Returns: undefined
       }
