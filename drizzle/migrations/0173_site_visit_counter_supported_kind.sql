@@ -1,0 +1,2 @@
+ALTER TABLE public.company_number_counters DROP CONSTRAINT company_number_counters_kind_check;
+ALTER TABLE public.company_number_counters ADD CONSTRAINT company_number_counters_kind_check CHECK(kind IN ('estimate','quote','proposal','job_sheet','invoice','site_visit'));
