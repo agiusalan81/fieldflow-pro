@@ -6957,6 +6957,10 @@ export type Database = {
         }
         Returns: string
       }
+      platform_delete_test_company: {
+        Args: { _company: string; _confirmation: string; _subscription: string }
+        Returns: undefined
+      }
       platform_hq_directory: {
         Args: never
         Returns: {
