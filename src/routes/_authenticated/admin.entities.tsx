@@ -82,8 +82,8 @@ function Entities() {
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
           <DialogHeader><DialogTitle>{manage?.name}</DialogTitle></DialogHeader>
           {manage && profile && (
-            <Tabs key={manage.id} value={manage.tab} onValueChange={switchTab}>
-              <TabsList className="mb-3 flex h-auto flex-wrap justify-start gap-1">
+            <Tabs className="min-w-0 max-w-full" key={manage.id} value={manage.tab} onValueChange={switchTab}>
+              <TabsList className="mb-3 flex h-auto w-full flex-wrap justify-start gap-1 [&>button]:whitespace-normal">
                 <TabsTrigger value="sites">Sites</TabsTrigger>
                 <TabsTrigger value="contacts">Contacts & portal</TabsTrigger>
                 <TabsTrigger value="equipment">{word("equipment")}</TabsTrigger>
