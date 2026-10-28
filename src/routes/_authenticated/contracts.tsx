@@ -13,7 +13,10 @@ import { DocumentMasters } from "@/components/document-masters";
 import { supabase } from "@/integrations/supabase/client";
 import { useMemberWorkspaces } from "@/lib/member-workspaces";
 import { useProfile, isOffice } from "@/lib/profile";
-import { EQUIPMENT_CATEGORIES } from "@/lib/company";
+import { EQUIPMENT_CATEGORIES as CONTRACTOR_CATEGORIES } from "@/lib/company";
+import { useEdition } from "@/lib/plan-features";
+import { isInHouse, EDITION_SPEC } from "@/lib/editions";
+function useEquipmentCategories() { const { edition } = useEdition(); return isInHouse(edition) ? [...EDITION_SPEC[edition].assetGroups.map((g) => g.group), "Custom"] : CONTRACTOR_CATEGORIES; }
 import { daysUntil, visitsForTier, contractName } from "@/lib/jobsheets";
 import { LookupInput, learnLookup, CONTRACT_CATEGORY } from "@/components/role-combobox";
 import { RenewalList, useAgreements } from "@/components/renewals";
