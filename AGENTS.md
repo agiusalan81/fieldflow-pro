@@ -83,3 +83,4 @@
 - Protected per-member RPCs/RLS govern estimates, contracts and dispatch; field eligibility is separate, CRM levels persist — why: primary roles still drive payroll/rota.
 - CRM rules in tested src/lib/crm.ts; manager-only RLS guarded by guard_module_write_additional('crm_pipeline'); crm_mark_won/lost RPCs keep conversions atomic.
 - Lift costing: templates only seed sheet defaults (sheets copy values); access via member_costing_can()/can_lift_costing, mirrored by liftCostingAccess(); proposal branding follows branding_documents — why: saved quotes never change, supervisors cost only when enabled.
+- Editions: engine_edition + company_product_id() pick tenant product; editions.ts only reskins — why: one engine, DB access.
