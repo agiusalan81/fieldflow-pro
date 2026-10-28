@@ -9,8 +9,7 @@ import { Button } from "@/components/ui/button";
 import { PpmVisits } from "@/components/ppm-visits";
 import { AssetComponents } from "@/components/asset-components";
 import { LiftPassport } from "@/components/lift-passport";
-import { useProfile, isManager, isOffice } from "@/lib/profile";
-import { DocumentMasters } from "@/components/document-masters";
+import { useProfile, isManager } from "@/lib/profile";
 import { LiftInspections } from "@/components/lift-inspections";
 import { z } from 'zod';
 export const Route = createFileRoute("/_authenticated/equipment/$assetId")({
@@ -62,6 +61,7 @@ function EquipmentPage() {
         <EmptyState>Equipment unavailable or not authorised for this account.</EmptyState>
       ) : (
         <div className="mx-auto max-w-5xl space-y-8">
+          <Button variant="ghost" size="sm" onClick={() => window.history.length > 1 ? window.history.back() : void 0}>← Back</Button>
           <section className="space-y-2 border-b pb-5">
             <h1 className="text-2xl font-semibold">{q.data.reference_number}</h1>
             <p>
@@ -73,9 +73,7 @@ function EquipmentPage() {
           </section>
           {focused&&<Button asChild variant="outline"><Link to="/equipment/$assetId" params={{assetId}} search={{view:'overview'}}>Back to equipment overview</Link></Button>}
           {focused&&!on('lift_pack')&&<EmptyState>Technical passports require the Lift Industry Pack.</EmptyState>}
-          {!focused&&isOffice(profile) && profile && q.data.client_id && (
-            <DocumentMasters companyId={profile.company_id} clientId={q.data.client_id} siteId={q.data.site_id ?? undefined} assetId={assetId} />
-          )}
+          
           {on("lift_pack") && (
             <section id="passport" className="scroll-mt-20">
             <LiftPassport

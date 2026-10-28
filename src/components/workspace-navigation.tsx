@@ -34,7 +34,7 @@ export function WorkspaceNavigation({ items, role, uid, onNavigate }: { items: W
     {overview && <Button asChild variant="ghost" className="justify-start text-sidebar-foreground"><Link to="/dashboard" onClick={onNavigate}><LayoutDashboard className="mr-2 h-4 w-4" />{overview.label}</Link></Button>}
     {groups.map(group => <div key={group}>
       <Button variant="ghost" className="h-auto min-h-11 w-full justify-between whitespace-normal text-left text-xs font-semibold text-sidebar-foreground" aria-expanded={openGroup === group} onClick={() => setOpenGroup(openGroup === group ? undefined : group)}><span>{group}</span><ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${openGroup === group ? '' : '-rotate-90'}`} /></Button>
-      {openGroup === group && <div className="mb-2 border-l border-sidebar-border pl-2">{items.filter(i => i.group === group).map(i => <WorkspaceRow key={i.to + JSON.stringify(i.search ?? {})} item={i} role={role} uid={uid} onNavigate={onNavigate} />)}</div>}
+      {openGroup === group && <div className="mb-2 border-l border-sidebar-border pl-2">{items.filter(i => i.group === group && i.to !== '/dashboard').map(i => <WorkspaceRow key={i.to + JSON.stringify(i.search ?? {})} item={i} role={role} uid={uid} onNavigate={onNavigate} />)}</div>}
     </div>)}
   </nav>;
 }

@@ -8,6 +8,8 @@ import { useProfile } from "@/lib/profile";
 import { formatMoney } from "@/lib/locale";
 import { crmAllows, leadValueLabel, type CrmLevel, CRM_STAGES, DEAL_TYPES, LEAD_SOURCES, OPEN_STAGES, canConvert, defaultDue, followupState, isClosed, mergeActions, pipelineTotals, stageLabel, type WonTarget } from "@/lib/crm";
 import { useCrmAccess } from "@/lib/crm-access";
+import { notifyLeadPush } from "@/lib/web-push.functions";
+const pushLead = (leadId: unknown, event: string) => { if (typeof leadId === "string") void notifyLeadPush({ data: { leadId, event } }).catch(() => undefined); };
 import { useCompanyRules } from "@/lib/company";
 import { usePlanFeatures } from "@/lib/plan-features";
 import { companyHasLiftTrade } from "@/lib/trade-association";
@@ -112,7 +114,7 @@ export function NewLeadDialog({ open, onOpenChange, company, onCreated }: { open
     const r = await supabase.rpc("crm_create_lead", { _lead: { title: f.title, client_id: f.client_id, site_id: f.site_id, contact_name: f.contact_name, contact_phone: f.contact_phone.trim() ? `${phoneCode} ${f.contact_phone.trim()}` : "", contact_email: f.contact_email, deal_type: f.deal_type, source: f.source.trim() || "phone", value: !f.valueUnknown && f.value.trim() ? f.value.replace(",", ".") : null }, _note: f.note, _followup: a && f.due ? { action_key: a.key, action_label: a.label, due_at: new Date(f.due).toISOString() } : null });
     setBusy(false);
     if (r.error) { toast.error(errMsg(r.error)); return; }
-    toast.success("Lead saved"); setF(blank); onOpenChange(false);
+    toast.success("Lead saved"); pushLead(r.data as unknown, "New lead"); setF(blank); onOpenChange(false);
     await qc.invalidateQueries({ queryKey: ["crm-leads"] }); await qc.invalidateQueries({ queryKey: ["crm-followups"] });
     onCreated(r.data as string);
   };
@@ -148,7 +150,7 @@ function LeadPanel({ lead, company, level, onDeleted }: { lead: Lead; company?: 
   const timeline = useQuery({ queryKey: ["crm-activities", lead.id], queryFn: async () => { const r = await supabase.from("crm_activities").select("id,kind,body,created_at").eq("opportunity_id", lead.id).order("created_at", { ascending: false }); if (r.error) throw r.error; return r.data; } });
   const fups = useQuery({ queryKey: ["crm-lead-followups", lead.id], queryFn: async () => { const r = await supabase.from("crm_followups").select("id,opportunity_id,action_key,action_label,due_at,done_at,notes").eq("opportunity_id", lead.id).order("due_at", { ascending: false }); if (r.error) throw r.error; return r.data as Followup[]; } });
   const refresh = () => Promise.all(["crm-leads", "crm-followups", "action-notifications"].map((k) => qc.invalidateQueries({ queryKey: [k] })).concat([qc.invalidateQueries({ queryKey: ["crm-activities", lead.id] }), qc.invalidateQueries({ queryKey: ["crm-lead-followups", lead.id] })]));
-  const run = async (fn: () => PromiseLike<{ error: unknown }>, ok: string) => { setBusy(true); const r = await fn(); setBusy(false); if (r.error) { toast.error(errMsg(r.error)); return false; } toast.success(ok); await refresh(); return true; };
+  const run = async (fn: () => PromiseLike<{ error: unknown }>, ok: string) => { setBusy(true); const r = await fn(); setBusy(false); if (r.error) { toast.error(errMsg(r.error)); return false; } toast.success(ok); pushLead(lead.id, ok); await refresh(); return true; };
   const closed = isClosed(lead.stage);
   const [valueText, setValueText] = useState(lead.value == null ? "" : String(lead.value));
   const saveValue = () => { const t = valueText.trim().replace(",", "."); const v = t ? Number(t) : null; if (v != null && !Number.isFinite(v)) { toast.error("Enter a number or leave empty for TBD"); return; } void run(() => supabase.from("crm_opportunities").update({ value: v }).eq("id", lead.id), "Value updated"); };
@@ -165,7 +167,7 @@ function LeadPanel({ lead, company, level, onDeleted }: { lead: Lead; company?: 
   const markWon = async (won: WonTarget) => {
     setBusy(true); const r = await supabase.rpc("crm_mark_won", { _id: lead.id, _target: won }); setBusy(false);
     if (r.error) { toast.error(errMsg(r.error)); return; }
-    await refresh(); toast.success("Lead won");
+    await refresh(); toast.success("Lead won"); pushLead(lead.id, "Lead won");
     const out = r.data as { quote_id?: string; job_id?: string };
     if (won === "quote" && out.quote_id) navigate({ to: "/estimates", search: { quote: out.quote_id } });
     else if (won === "job") navigate({ to: "/admin/jobs" });
