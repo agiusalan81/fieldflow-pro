@@ -1,6 +1,7 @@
 import { QrCode } from "lucide-react";
 import { ActionNotifications, ChatBadge, OnCallBadge, QueueBadge } from "@/components/action-notifications";
-import { usePlanFeatures, useLockedVisibility, useNavLock, resolveAppTitle } from "@/lib/plan-features";
+import { usePlanFeatures, useLockedVisibility, useNavLock, resolveAppTitle, useEdition } from "@/lib/plan-features";
+import { editionMenu, editionLabel, EDITION_SPEC } from "@/lib/editions";
 import { DepartureAlerts } from "@/components/client-notices";
 import { LocationSharing } from "@/components/location-sharing";
 import { PayrollSetupAlert } from "@/components/payroll-setup-alert";
@@ -250,9 +251,11 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   const appearance = company?.appearance ?? DEFAULT_APPEARANCE;
   const coName = profile?.companies?.name?.trim();
   const personal: Record<string, string> = coName ? { "Team": `${coName} Team`, "Team chat": `${coName} Chat`, "Technical library": `${coName} Technical library` } : {};
-  const items = organizeNavigation(profile?.role, baseItems.filter(i => (i.to === "/contracts" && workspaces?.contracts && !preview.member || i.to === "/surveys" && workspaces?.surveys && !preview.member || showRoleMenuItem(profile?.role, i.to)))).map(i => ({ ...i, label: personal[i.label] ?? industrySheetLabel(appearance.industryPreset, i.label) }));
+  const { edition } = useEdition(!!actor);
+  useEffect(() => { document.documentElement.dataset["edition"] = edition; return () => { delete document.documentElement.dataset["edition"]; }; }, [edition]);
+  const items = editionMenu(edition, organizeNavigation(profile?.role, baseItems.filter(i => (i.to === "/contracts" && workspaces?.contracts && !preview.member || i.to === "/surveys" && workspaces?.surveys && !preview.member || showRoleMenuItem(profile?.role, i.to)))).map(i => ({ ...i, label: personal[i.label] ?? industrySheetLabel(appearance.industryPreset, i.label) })));
   const createProps = { manager: !!workspaces?.dispatch && !!items.find(i => i.to === "/admin/jobs" && !i.locked), field: (!manager || profile?.role === "supervisor" || !!actor?.can_field_dispatch) && !navLock("core").locked, estimates: !!workspaces?.estimates && !!items.find(i => i.to === "/estimates" && !i.locked), crm: crmAllows(crmLevel, "contributor") && !navLock("crm_pipeline").locked, company: profile?.company_id };
-  const appTitle = resolveAppTitle(company?.appTitle, planOn("custom_app_title"));
+  const appTitle = (() => { const t = resolveAppTitle(company?.appTitle, planOn("custom_app_title")); return t === "FieldBridge" ? EDITION_SPEC[edition].product : t; })();
   useEffect(() => { applyTypography(company?.theme); return () => applyTypography(undefined); }, [company?.theme]);
   useEffect(() => {
     const source = company?.theme.customFontData; if (!source) return;
@@ -359,8 +362,8 @@ export function AppShell({ title, actions, children }: { title: string; actions?
       </div>
 
       <nav aria-label="Quick navigation" className="fieldbridge-bottom fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 items-end gap-1 border-t lg:hidden">
-        <Link to="/dashboard" className={tab} activeProps={{ className: "text-primary font-medium" }} activeOptions={{ exact: true }}><LayoutDashboard className="h-5 w-5" />{isOffice(profile) ? "Overview" : "Today & team"}</Link>
-        <Link to={manager ? "/admin/jobs" : "/sheets"} search={manager ? { view: "sheets" } : {}} className={tab} activeProps={{ className: "text-primary font-medium" }}><ClipboardList className="h-5 w-5" />Job sheets</Link>
+        <Link to="/dashboard" className={tab} activeProps={{ className: "text-primary font-medium" }} activeOptions={{ exact: true }}><LayoutDashboard className="h-5 w-5" />{editionLabel(edition, isOffice(profile) ? "Overview" : "Today & team")}</Link>
+        <Link to={manager ? "/admin/jobs" : "/sheets"} search={manager ? { view: "sheets" } : {}} className={tab} activeProps={{ className: "text-primary font-medium" }}><ClipboardList className="h-5 w-5" />{editionLabel(edition, "Job sheets")}</Link>
         {preview.active ? <Link to="/hours" className={tab}><Clock className="h-5 w-5" />Hours</Link> : <WorkspaceCreate {...createProps} mobile />}
         <Link to={second.to} className={tab} activeProps={{ className: "text-primary font-medium" }}><second.icon className="h-5 w-5" />{second.label}</Link>
         <Button type="button" variant="ghost" className={`${tab} h-auto hover:bg-card`} onClick={() => setMenuOpen(true)}><MoreHorizontal className="h-5 w-5" />More</Button>

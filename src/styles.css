@@ -288,7 +288,7 @@ html[data-edition="hotel"]:not(.dark) {
   --app-footer-gradient: linear-gradient(to left, var(--brand-navy-deep), var(--brand-navy));
   --radius: 1rem;
 }
-html[data-edition="hotel"] { --font-display: "Lora", Georgia, serif; }
+html[data-edition="hotel"] .font-display { font-family: "Lora", Georgia, serif; }
 html[data-edition="retail"]:not(.dark) {
   --brand-navy: oklch(0.48 0.14 150);
   --brand-navy-deep: oklch(0.36 0.11 150);
@@ -302,4 +302,5 @@ html[data-edition="retail"]:not(.dark) {
   --app-footer-gradient: linear-gradient(to left, var(--brand-navy), var(--brand-navy));
   --radius: 0.3rem;
 }
-html[data-edition="retail"] { --font-display: "Space Grotesk", system-ui, sans-serif; --font-sans: "Archivo", system-ui, sans-serif; }
+html[data-edition="retail"] .font-display { font-family: "Space Grotesk", system-ui, sans-serif; letter-spacing: -0.02em; }
+html[data-edition="retail"] body { font-family: "Archivo", system-ui, sans-serif; }
