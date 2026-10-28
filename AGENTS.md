@@ -84,4 +84,4 @@
 - CRM rules in tested src/lib/crm.ts; manager-only RLS guarded by guard_module_write_additional('crm_pipeline'); crm_mark_won/lost RPCs keep conversions atomic.
 - Lift costing: templates only seed sheet defaults (sheets copy values); access via member_costing_can()/can_lift_costing, mirrored by liftCostingAccess(); proposal branding follows branding_documents — why: saved quotes never change, supervisors cost only when enabled.
 - Editions: engine_edition + company_product_id() pick tenant product; editions.ts only reskins — why: one engine, DB access.
-- HQ test-company switcher (test-company-switch.functions.ts) is owner-only, refuses non-test companies, signs in as that company's Superuser via magic-link token and keeps the HQ session locally for Return to HQ — why: never alter the owner's own membership.
+- HQ test switcher: owner-only, test companies only, signs in as their Superuser; HQ session kept locally — why: owner membership never changes.
