@@ -1198,6 +1198,13 @@
       "when": 1793172861132,
       "tag": "0170_hq_reset_superseded_report_safety",
       "breakpoints": true
+    },
+    {
+      "idx": 171,
+      "version": "7",
+      "when": 1793173510124,
+      "tag": "0171_hq_test_component_history_reset",
+      "breakpoints": true
     }
   ]
 }
