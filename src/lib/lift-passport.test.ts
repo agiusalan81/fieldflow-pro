@@ -1,7 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { equipmentTypeForCategory, fieldOptions, fieldsFor, learnFromPassports, NA, normalizeBlocks, sectionsFor } from "./lift-passport";
+import { assetPassportBlocks, equipmentTypeForCategory, fieldOptions, fieldsFor, learnFromPassports, NA, normalizeBlocks, sectionsFor } from "./lift-passport";
 
 describe("lift passport model", () => {
+  it('prefills reference, serial and location only for a new passport',()=>{
+    const asset={reference_number:'GL1',serial_number:'SN-145',location_details:'Main entrance'};
+    expect(assetPassportBlocks(asset,'Lift',null)['general']).toEqual({lift_ref:'GL1',serial_number:'SN-145',location_details:'Main entrance'});
+    expect(assetPassportBlocks(asset,'Lift',{general:{lift_ref:'Verified GL1'}})['general']).toEqual({lift_ref:'Verified GL1'});
+  });
+  it('hydraulic piston brand and diameter in mm never appear in traction fields',()=>{
+    const machine=sectionsFor('lift').find(s=>s.key==='machine_drive');if(!machine)throw Error('Missing section');
+    expect(fieldsFor(machine,'hydraulic').find(f=>f.key==='piston_brand')?.type).toBe('select');
+    expect(fieldsFor(machine,'hydraulic').find(f=>f.key==='piston_diameter')?.unit).toBe('mm');
+    expect(fieldsFor(machine,'traction').some(f=>f.key==='piston_brand'||f.key==='piston_diameter')).toBe(false);
+  });
   it("lifts get the five lift sections, escalators get the six escalator sections", () => {
     expect(sectionsFor("lift").map((s) => s.key)).toEqual(["general", "machine_drive", "suspension_safety", "controller_electronics", "doors_cabin"]);
     expect(sectionsFor("escalator").map((s) => s.key)).toEqual(["general", "machine_drive", "escalator_steps_chains", "escalator_handrail_balustrade", "controller_electronics"]);
