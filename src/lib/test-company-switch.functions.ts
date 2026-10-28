@@ -11,9 +11,10 @@ export const openTestCompany = createServerFn({ method: "POST" })
     const { data: owner } = await context.supabase.rpc("is_platform_owner");
     if (owner !== true) throw new Error("Platform-owner access required");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: co } = await supabaseAdmin.from("companies").select("id,name,is_test").eq("id", data.companyId).maybeSingle();
+    const { data: co } = await supabaseAdmin.from("companies").select("id,name").eq("id", data.companyId).maybeSingle();
     if (!co) throw new Error("Company not found");
-    if (!co.is_test) throw new Error("Only test companies can be opened from HQ");
+    const { data: ctl } = await supabaseAdmin.from("platform_company_controls").select("is_test").eq("company_id", co.id).maybeSingle();
+    if (!ctl?.is_test) throw new Error("Only test companies can be opened from HQ");
     if (co.id === (await context.supabase.rpc("current_company_id")).data) throw new Error("You are already signed into this company");
     const email = `hq-test+${co.id.slice(0, 8)}@fieldbridgeapp.com`;
     const { data: existing } = await supabaseAdmin.from("users").select("id").eq("email", email).maybeSingle();
