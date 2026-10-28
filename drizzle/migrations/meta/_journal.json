@@ -1226,6 +1226,13 @@
       "when": 1793175658192,
       "tag": "0174_hq_delete_test_company",
       "breakpoints": true
+    },
+    {
+      "idx": 175,
+      "version": "7",
+      "when": 1793175728657,
+      "tag": "0175_hq_delete_test_company_audit_fix",
+      "breakpoints": true
     }
   ]
 }
