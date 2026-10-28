@@ -59,7 +59,7 @@
 - HQ merges registry/product/catalog module keys; catalog writes register keys atomically. Owner-only toggles; isStorageAddon separates storage packs.
 - Attention: guarded atomic pending RPCs/separate actions; never edit signed content; 
 - Rota: supervisor config separate from payroll; swaps apply atomically with audit.
-- Equipment: shortcuts reuse the authorized detail/passport route and pack gates; public QR lookup stays hashed, revocable, bounded and reference/category-only.
+- Equipment: focused passports prefill new records; private field handovers merge via manager-only RPCs; QR stays hashed/revocable/bounded — why: preserve engineering evidence.
 - Deletion shares record-deletion/DeleteVisit; office sheet and manager visit RLS apply; visit deletion keeps sheets, client-report FKs retain shared evidence.
 - QR dispatch closes only its matching report after visit insert, refreshes attention and clears URL state; failures warn against duplicate dispatch.
 - Chat compresses photos only. Push: dedicated /push/ worker, encrypted previews; acceptance is not delivery proof. Audio unlocks on gestures.
@@ -69,7 +69,7 @@
 - Staff signatures share staff-signature editors and own-user RPC; protected real roles govern eligibility and profile guards retain identity protection.
 - Sheet sync serializes per account/sheet, rebasing local versions only. Autosave uses dirty fingerprints; failures retain newer drafts.
 - PDF.js uses v4/canvasContext; newer Map APIs break field devices.
-- Contracts: shared client/site/equipment matrix uses atomic attachment/contract RPCs, frozen work/prices, optional passport rates and collective totals; PPM dates and safe portal snapshots retain agreed coverage.
+- Contracts: scope-ranked attachments seed new coverage; atomic matrix RPCs freeze work/prices with optional passport rates/collective totals; PPM/portal retain coverage — why: never rewrite agreed history.
 - StaffContacts/contact-editor own contact writes; portal scope is staff-only. HQ setup options save atomically; staff/portal access stays independent.
 - Delivery uses client_message_recipients; preferences choose recipients, not unsupported channel delivery.
 - Own-shift RPC captures one-time GPS; failure never blocks clock-out; history distinguishes action fixes from breadcrumbs.
