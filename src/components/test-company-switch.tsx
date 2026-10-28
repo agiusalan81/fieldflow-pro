@@ -36,7 +36,7 @@ export function ReturnToHqBanner() {
         const { error } = await supabase.auth.setSession(s);
         localStorage.removeItem(KEY);
         if (error) { await supabase.auth.signOut(); window.location.assign('/auth'); return; }
-        window.location.assign('/hq');
+        window.location.assign('/platform');
       } catch { localStorage.removeItem(KEY); window.location.assign('/auth'); }
     }}><Undo2 className="mr-1 h-4 w-4" />Return to HQ</Button>
   </div>;
