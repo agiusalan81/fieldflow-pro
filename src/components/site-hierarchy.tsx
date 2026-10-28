@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { usePlanFeatures } from '@/lib/plan-features';
 import { ModulePreview } from '@/components/module-preview';
 import { formatSiteTitle } from '@/lib/site-display';
-import { DocumentMasters } from '@/components/document-masters';
+import { ClientContractDocuments } from '@/components/client-contract-documents';
 import { EquipmentContracts } from '@/components/equipment-contracts';
 import { isOffice, useProfile } from '@/lib/profile';
 
@@ -81,7 +81,7 @@ export function SiteHierarchy({ clientId, companyId }: { clientId: string; compa
                   <Button size="sm" variant="ghost" onClick={() => remove(s.id)}><Trash2 className="mr-1 h-3.5 w-3.5" />Delete</Button>
                 </div>}
                 <EquipmentManager clientId={clientId} companyId={companyId} siteId={s.id} />
-                {isOffice(profile) && <DocumentMasters companyId={companyId} clientId={clientId} siteId={s.id} compact />}
+                {isOffice(profile) && <ClientContractDocuments companyId={companyId} clientId={clientId} siteId={s.id} />}
               </AccordionContent>
             </AccordionItem>
           );

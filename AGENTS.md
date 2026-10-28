@@ -69,7 +69,7 @@
 - Staff signatures share staff-signature editors and own-user RPC; protected real roles govern eligibility and profile guards retain identity protection.
 - Sheet sync serializes per account/sheet, rebasing local versions only. Autosave uses dirty fingerprints; failures retain newer drafts.
 - PDF.js uses v4/canvasContext; newer Map APIs break field devices.
-- Contracts: atomic asset lines, frozen work/prices, renewal history, shared site/equipment entry, scoped portal. PPM uses asset dates; sheets capture agreed text — why: preserve staggered coverage.
+- Contracts: shared client/site/equipment matrix uses atomic attachment/contract RPCs, frozen work/prices, optional passport rates and collective totals; PPM dates and safe portal snapshots retain agreed coverage.
 - StaffContacts/contact-editor own contact writes; portal scope is staff-only. HQ setup options save atomically; staff/portal access stays independent.
 - Delivery uses client_message_recipients; preferences choose recipients, not unsupported channel delivery.
 - Own-shift RPC captures one-time GPS; failure never blocks clock-out; history distinguishes action fixes from breadcrumbs.
