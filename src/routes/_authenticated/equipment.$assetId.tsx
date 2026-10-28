@@ -12,8 +12,10 @@ import { LiftPassport } from "@/components/lift-passport";
 import { useProfile, isManager, isOffice } from "@/lib/profile";
 import { DocumentMasters } from "@/components/document-masters";
 import { LiftInspections } from "@/components/lift-inspections";
+import { z } from 'zod';
 export const Route = createFileRoute("/_authenticated/equipment/$assetId")({
   staticData: { sitemap: false },
+  validateSearch: z.object({view:z.enum(['overview','passport']).default('overview'),submission:z.string().uuid().optional()}),
   head: () => ({
     meta: [
       { title: "Equipment records — FieldBridge" },
@@ -36,6 +38,8 @@ function EquipmentPage() {
   const on = usePlanFeatures();
   const { data: profile } = useProfile();
   const { assetId } = Route.useParams();
+  const {view,submission}=Route.useSearch();
+  const focused=view==='passport';
   const q = useQuery({
     queryKey: ["equipment-detail", assetId],
     queryFn: async () => {
@@ -51,7 +55,7 @@ function EquipmentPage() {
     },
   });
   return (
-    <AppShell title={q.data?.reference_number ?? "Equipment"}>
+    <AppShell title={focused ? 'Technical passport' : q.data?.reference_number ?? "Equipment"}>
       {q.isPending ? (
         <p>Loading equipment…</p>
       ) : q.error || !q.data ? (
@@ -67,7 +71,9 @@ function EquipmentPage() {
               Serial {q.data.serial_number ?? "—"} · {q.data.location_details ?? ""}
             </p>
           </section>
-          {isOffice(profile) && profile && q.data.client_id && (
+          {focused&&<Button asChild variant="outline"><Link to="/equipment/$assetId" params={{assetId}} search={{view:'overview'}}>Back to equipment overview</Link></Button>}
+          {focused&&!on('lift_pack')&&<EmptyState>Technical passports require the Lift Industry Pack.</EmptyState>}
+          {!focused&&isOffice(profile) && profile && q.data.client_id && (
             <DocumentMasters companyId={profile.company_id} clientId={q.data.client_id} siteId={q.data.site_id ?? undefined} assetId={assetId} />
           )}
           {on("lift_pack") && (
@@ -76,26 +82,28 @@ function EquipmentPage() {
               assetId={assetId}
               assetCategory={q.data.asset_category}
               canManage={isManager(profile)}
+              asset={q.data}
+              focus={submission}
             />
             </section>
           )}
-          {on("lift_pack") && <LiftInspections assetId={assetId} canManage={isManager(profile)} />}
-          {on("ppm_automation") && (
+          {!focused&&on("lift_pack") && <LiftInspections assetId={assetId} canManage={isManager(profile)} />}
+          {!focused&&on("ppm_automation") && (
             <>
               <PpmVisits assetId={assetId} canManage={isManager(profile)} />
               <AssetComponents assetId={assetId} canManage={isManager(profile)} />
             </>
           )}
-          {on("technical_library") && (
+          {!focused&&on("technical_library") && (
             <section>
               <h2 className="mb-4 font-medium">Technical library</h2>
               <TechnicalLibrary initialAsset={assetId} initialSite={q.data.site_id ?? ""} />
             </section>
           )}
-          <section>
+          {!focused&&<section>
             <h2 className="mb-4 font-medium">Service history</h2>
             <AssetHistory assetId={assetId} label={q.data.reference_number} />
-          </section>
+          </section>}
           <Button asChild variant="outline">
             <Link to="/dashboard">My dashboard</Link>
           </Button>

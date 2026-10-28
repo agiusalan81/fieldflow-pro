@@ -4,6 +4,7 @@ import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/lib/profile";
+import { PassportEvidence } from '@/components/passport-evidence';
 import {
   DRIVE_TYPES,
   NA,
@@ -12,6 +13,8 @@ import {
   fieldsFor,
   learnFromPassports,
   normalizeBlocks,
+  assetPassportBlocks,
+  type PassportAsset,
   sectionsFor,
   type DriveType,
   type PassportBlocks,
@@ -73,7 +76,7 @@ function SuggestField({ field, value, options, disabled, onChange }: { field: Pa
   );
 }
 
-export function LiftPassport({ assetId, assetCategory, canManage }: { assetId: string; assetCategory: string | null; canManage: boolean }) {
+export function LiftPassport({ assetId, assetCategory, canManage, asset, focus }: { assetId: string; assetCategory: string | null; canManage: boolean; asset?: PassportAsset; focus?: string | undefined }) {
   const { data: profile } = useProfile();
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
@@ -108,7 +111,7 @@ export function LiftPassport({ assetId, assetCategory, canManage }: { assetId: s
     const row = q.data;
     setEquipmentType((row?.equipment_type as PassportEquipmentType | undefined) ?? equipmentTypeForCategory(assetCategory));
     setDriveType((row?.drive_type as DriveType | undefined) ?? "");
-    setBlocks(normalizeBlocks(row));
+    setBlocks(assetPassportBlocks(asset, assetCategory, row));
     setNotes(row?.notes ?? "");
     setTab("general");
     setEditing(true);
@@ -146,7 +149,7 @@ export function LiftPassport({ assetId, assetCategory, canManage }: { assetId: s
   });
 
   const sections = useMemo(() => sectionsFor(equipmentType), [equipmentType]);
-  const activeSection = sections.find((s) => s.key === tab) ?? sections[0]!;
+  const activeSection = sections.find((s) => s.key === tab) ?? sections[0];
   const setValue = (section: string, key: string, v: string) =>
     setBlocks((b) => ({ ...b, [section]: { ...(b[section] ?? {}), [key]: v } }));
 
@@ -155,10 +158,11 @@ export function LiftPassport({ assetId, assetCategory, canManage }: { assetId: s
   const viewType = (editing ? equipmentType : (row?.equipment_type as PassportEquipmentType | undefined)) ?? equipmentTypeForCategory(assetCategory);
   const viewDrive = (editing ? driveType : (row?.drive_type as DriveType | undefined)) ?? "";
   const viewSections = sectionsFor(viewType);
-  const viewActive = viewSections.find((s) => s.key === tab) ?? viewSections[0]!;
+  const viewActive = viewSections.find((s) => s.key === tab) ?? viewSections[0];
+  if (!activeSection || !viewActive) return null;
 
   return (
-    <section className="space-y-4 rounded-lg border p-4">
+    <section className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 className="font-medium">Technical passport</h2>
@@ -182,7 +186,7 @@ export function LiftPassport({ assetId, assetCategory, canManage }: { assetId: s
                 <div className="flex gap-1">
                   {(["lift", "escalator", "moving_walk"] as const).map((t) => (
                     <Button key={t} type="button" size="sm" variant={equipmentType === t ? "default" : "outline"} onClick={() => { setEquipmentType(t); setTab("general"); }}>
-                      {t === "moving_walk" ? "Moving walk" : t[0]!.toUpperCase() + t.slice(1)}
+                      {t === "moving_walk" ? "Moving walk" : t.charAt(0).toUpperCase() + t.slice(1)}
                     </Button>
                   ))}
                 </div>
@@ -243,6 +247,7 @@ export function LiftPassport({ assetId, assetCategory, canManage }: { assetId: s
           )}
         </>
       )}
+      <PassportEvidence assetId={assetId} canManage={canManage} equipmentType={viewType} driveType={viewDrive} focus={focus}/>
     </section>
   );
 }

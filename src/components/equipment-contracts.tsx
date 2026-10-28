@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -8,7 +8,7 @@ import type { Json } from '@/integrations/supabase/types';
 import { useMemberWorkspaces } from '@/lib/member-workspaces';
 import { usePlanFeatures } from '@/lib/plan-features';
 import { parseCommercial, DEFAULT_LIFT_PRICING, type Commercial } from '@/lib/document-blocks';
-import { coverageDatesValid, coverageTotal, passportCommercial, calculatedCoveragePrice, schedulePricing, agreementTotal, type CoverageDraft } from '@/lib/agreement-coverage';
+import { assignedDocumentIds, coverageDatesValid, coverageTotal, passportCommercial, calculatedCoveragePrice, schedulePricing, agreementTotal, type CoverageDraft } from '@/lib/agreement-coverage';
 import { daysUntil } from '@/lib/jobsheets';
 import { PPM_CADENCES } from '@/lib/ppm';
 import { LiftCommercialEditor } from '@/components/lift-commercial';
@@ -41,14 +41,23 @@ function ContractEditor({companyId,initialClient,initialSite,initialAsset,onSave
   const [lines,setLines]=useState<CoverageDraft[]>([]);const [existing,setExisting]=useState('');const [busy,setBusy]=useState(false);
   const coverage=useAgreementCoverage();
   const opts=useQuery({queryKey:['contract-editor-options',h.client_id,on('lift_pack')],queryFn:async()=>{
-    const [a,d,t,m,p,si,attachments]=await Promise.all([supabase.from('assets').select('id,reference_number,asset_category,site_id').eq('client_id',h.client_id||'00000000-0000-0000-0000-000000000000'),supabase.from('document_masters').select('id,name,kind,items,field_specs,commercial,body').eq('state','active'),supabase.from('contract_types').select('id,name,commercial,annual_price,checklist_document_id').eq('lifecycle','active'),supabase.from('maintenance_agreements').select('id,title,site_id,start_date,end_date,clients(name)').eq('client_id',h.client_id||'00000000-0000-0000-0000-000000000000').eq('status','active').eq('contract_kind','maintenance'),on('lift_pack')?supabase.from('lift_passports').select('asset_id,general,doors_cabin'):Promise.resolve({data:[],error:null}),supabase.from('sites').select('id,name').eq('client_id',h.client_id||'00000000-0000-0000-0000-000000000000'),supabase.from('document_attachments').select('master_id').eq('client_id',h.client_id||'00000000-0000-0000-0000-000000000000')]);
+    const [a,d,t,m,p,si,attachments]=await Promise.all([supabase.from('assets').select('id,reference_number,asset_category,site_id').eq('client_id',h.client_id||'00000000-0000-0000-0000-000000000000'),supabase.from('document_masters').select('id,name,kind,items,field_specs,commercial,body').eq('state','active'),supabase.from('contract_types').select('id,name,commercial,annual_price,checklist_document_id').eq('lifecycle','active'),supabase.from('maintenance_agreements').select('id,title,site_id,start_date,end_date,clients(name)').eq('client_id',h.client_id||'00000000-0000-0000-0000-000000000000').eq('status','active').eq('contract_kind','maintenance'),on('lift_pack')?supabase.from('lift_passports').select('asset_id,general,doors_cabin'):Promise.resolve({data:[],error:null}),supabase.from('sites').select('id,name').eq('client_id',h.client_id||'00000000-0000-0000-0000-000000000000'),supabase.from('document_attachments').select('master_id,site_id,asset_id').eq('client_id',h.client_id||'00000000-0000-0000-0000-000000000000')]);
     for(const r of [a,d,t,m,p,si,attachments])if(r.error)throw r.error;
     return {assets:a.data??[],documents:d.data??[],tiers:t.data??[],agreements:m.data??[],passports:p.data??[],sites:si.data??[],attachments:attachments.data??[]};
   }});
   const assets=(opts.data?.assets??[]).filter(a=>(!h.site_id||a.site_id===h.site_id)&&(!initialAsset||a.id===initialAsset));
   const assigned=coverage.data?.filter(x=>x.maintenance_agreements?.client_id===h.client_id&&(!initialAsset||x.asset_id===initialAsset)&&(!initialSite||x.maintenance_agreements.site_id===initialSite))??[];
   const patch=(id:string,p:Partial<CoverageDraft>)=>setLines(old=>old.map(x=>x.asset_id===id?{...x,...p}:x));
-  const makeLine=(id:string):CoverageDraft=>({asset_id:id,checklist_id:'',schedule_id:'',price:'',start:h.start,end:h.end,months:'1',pricing:parseCommercial({})});
+  const makeLine=(id:string):CoverageDraft=>{
+    const asset=opts.data?.assets.find(a=>a.id===id);
+    const ids=asset?assignedDocumentIds(opts.data?.attachments??[],asset):[];
+    const docs=ids.map(id=>opts.data?.documents.find(d=>d.id===id)).filter(d=>d!==undefined);
+    const checklist=docs.find(d=>d.kind==='checklist');
+    const schedule=docs.find(d=>d.kind!=='contract'&&(d.kind!=='checklist'||parseCommercial(d.commercial).basePrice!==null||parseCommercial(d.commercial).liftPricing!==null));
+    return {asset_id:id,checklist_id:checklist?.id??'',schedule_id:schedule?.id??'',price:'',start:h.start,end:h.end,months:'1',pricing:parseCommercial({}),...(schedule?schedulePricing(schedule,on('lift_pack'),opts.data?.passports.find(p=>p.asset_id===id)): {})};
+  };
+  const [seeded,setSeeded]=useState('');
+  useEffect(()=>{if(!opts.data||seeded===`${h.client_id}:${h.site_id}:${existing}`)return;setSeeded(`${h.client_id}:${h.site_id}:${existing}`);if(existing||h.kind!=='maintenance')return;setLines(old=>old.length?old:assets.filter(a=>assignedDocumentIds(opts.data?.attachments??[],a).some(id=>opts.data?.documents.some(d=>d.id===id&&d.kind!=='contract'))).map(a=>makeLine(a.id)));},[opts.data,h.client_id,h.site_id,existing,h.kind,seeded]);
   const toggle=(id:string,checked:boolean)=>setLines(old=>checked?[...old,makeLine(id)]:old.filter(x=>x.asset_id!==id));
   const applyPrice=(id:string,c:Commercial)=>patch(id,{pricing:c,price:calculatedCoveragePrice(c)});
   const save=async()=>{
