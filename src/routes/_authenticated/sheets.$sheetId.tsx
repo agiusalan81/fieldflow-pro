@@ -680,7 +680,7 @@ function SheetForm() {
           onPointerDownOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => { if (handOff) e.preventDefault(); }}
           className="h-[100dvh] max-h-[100dvh] w-screen max-w-none overflow-y-auto rounded-none sm:h-auto sm:max-h-[95vh] sm:max-w-3xl sm:rounded-lg">
-          <DialogHeader><DialogTitle>Job sheet {sheet.jobsheet_number} — client copy</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{inHouse ? `Job sheet ${sheet.jobsheet_number} — work verification & sign-off` : `Job sheet ${sheet.jobsheet_number} — client copy`}</DialogTitle></DialogHeader>
           {handOff ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-6 py-16 text-center">
               <p className="text-2xl font-semibold">Thank you!</p>
@@ -690,7 +690,7 @@ function SheetForm() {
           ) : (
           <div className="space-y-4 text-sm">
             <div className="grid gap-2 rounded-lg bg-muted/50 p-3 sm:grid-cols-2">
-              <p><span className="text-muted-foreground">Client:</span> {client?.name ?? "—"}</p>
+              <p><span className="text-muted-foreground">{inHouse ? "Location:" : "Client:"}</span> {client?.name ?? "—"}</p>
               <p><span className="text-muted-foreground">Date:</span> {new Date(sheet.created_at).toLocaleDateString()}</p>
               <p className="sm:col-span-2"><span className="text-muted-foreground">Address:</span> {address || "—"}</p>
               <p><span className="text-muted-foreground">Equipment:</span> {asset ? `${asset.reference_number} · ${asset.asset_category}` : (form.asset_type as string)}</p>
