@@ -20,6 +20,7 @@ describe("HQ test reset eligibility", () => {
   it("rejects payroll clearing", () => expect(canResetTestCompany(true,"Minakel","Minakel",["payroll"])).toBe(false));
   it("accepts only selected supported modules for designated test companies", () => expect(canResetTestCompany(true,"Minakel","Minakel",["qs_pricing","skills_dispatch"])).toBe(true));
   it("does not permit an empty selection", () => expect(canResetTestCompany(true,"Minakel","Minakel",[])).toBe(false));
+  it("accepts job sheet clearing for test companies", () => expect(canResetTestCompany(true,"Minakel","Minakel",["job_sheets","chat"])).toBe(true));
 });
 describe("HQ company location", () => {
   it("keeps city and country distinct without inferring a country", () => {expect(tenantLocation("London", "United Kingdom")).toBe("London, United Kingdom");expect(tenantLocation("London", "")).toBe("London");});
