@@ -65,7 +65,7 @@ export function LiftSurveys({ autoNew = false }: { autoNew?: boolean } = {}) {
   useEffect(() => {
     if (!autoNew) return;
     openNew();
-    void navigate({ to: "/lift-surveys", search: {}, replace: true });
+    void navigate({ to: "/lift-surveys", search: { new: undefined }, replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoNew]);
 

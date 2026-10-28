@@ -78,7 +78,7 @@ function List({ onOpen, manager, superuser, canCreate, lift }: { onOpen: (id: st
         <DropdownMenuItem onSelect={() => void create()}><div><p className="font-medium">General site survey</p><p className="text-xs text-muted-foreground">Any trade · for general quotes</p></div></DropdownMenuItem>
         <DropdownMenuItem onSelect={() => void navigate({ to: "/lift-surveys", search: { new: "1" } })}><div><p className="font-medium">Lift site survey</p><p className="text-xs text-muted-foreground">Stops, shaft depth, pit, headroom</p></div></DropdownMenuItem>
       </DropdownMenuContent></DropdownMenu> : <Button onClick={create}><Plus className="mr-1 h-4 w-4" />New site survey</Button>)}
-      {lift && <Button variant="outline" asChild><Link to="/lift-surveys" search={{}}>Lift site surveys</Link></Button>}
+      {lift && <Button variant="outline" asChild><Link to="/lift-surveys" search={{ new: undefined }}>Lift site surveys</Link></Button>}
       <div className="ml-auto w-48"><Label htmlFor="survey-filter">Show</Label><select id="survey-filter" className={sel} value={filter} onChange={(e) => setFilter(e.target.value)}><option value="open">Open</option><option value="all">All</option>{Object.entries(STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
     </div>
     {q.isLoading ? <p className="text-muted-foreground">Loading…</p> : q.error ? <p role="alert" className="text-destructive">Surveys could not be loaded.</p> : !rows.length ? <EmptyState>{manager ? "No site surveys match this filter." : "You have no site surveys yet."}</EmptyState> :
