@@ -59,7 +59,7 @@
 - HQ merges registry/product/catalog module keys; catalog writes register keys atomically. Owner-only toggles; isStorageAddon separates storage packs.
 - Attention: guarded atomic pending RPCs/separate actions; never edit signed content; 
 - Rota: supervisor config separate from payroll; swaps apply atomically with audit.
-- Equipment QR: private routes/RLS; hashed revocable public lookup exposes only reference/category; reports stay bounded/throttled; private technical/client data.
+- Equipment: shortcuts reuse the authorized detail/passport route and pack gates; public QR lookup stays hashed, revocable, bounded and reference/category-only.
 - Deletion shares record-deletion/DeleteVisit; office sheet and manager visit RLS apply; visit deletion keeps sheets, client-report FKs retain shared evidence.
 - QR dispatch closes only its matching report after visit insert, refreshes attention and clears URL state; failures warn against duplicate dispatch.
 - Chat compresses photos only. Push: dedicated /push/ worker, encrypted previews; acceptance is not delivery proof. Audio unlocks on gestures.
