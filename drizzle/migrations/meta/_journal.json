@@ -1205,6 +1205,20 @@
       "when": 1793173510124,
       "tag": "0171_hq_test_component_history_reset",
       "breakpoints": true
+    },
+    {
+      "idx": 172,
+      "version": "7",
+      "when": 1793173557542,
+      "tag": "0172_hq_test_document_reset_guard",
+      "breakpoints": true
+    },
+    {
+      "idx": 173,
+      "version": "7",
+      "when": 1793173711127,
+      "tag": "0173_site_visit_counter_supported_kind",
+      "breakpoints": true
     }
   ]
 }

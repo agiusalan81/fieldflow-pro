@@ -29,3 +29,6 @@ export const SAFE_RESET_MODULES = [
 export function canResetTestCompany(isTest: boolean, name: string, confirmation: string, modules: string[]) {
   return isTest && name === confirmation && modules.length > 0 && modules.every(m => SAFE_RESET_MODULES.some(s => s.key === m));
 }
+export function canCleanSlate(isTest: boolean, name: string, confirmation: string) {
+  return isTest && name.length > 0 && name === confirmation;
+}

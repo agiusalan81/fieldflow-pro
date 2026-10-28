@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canResetTestCompany, isStorageAddon, tenantLocation, trialUsesFullFeatures } from "./hq";
+import { canCleanSlate, canResetTestCompany, isStorageAddon, tenantLocation, trialUsesFullFeatures } from "./hq";
 import { featureOn } from "./plan-features";
 describe("HQ trial module control", () => {
   it('immediate trial-to-tier application disables full-trial entitlement fallback',()=>{expect(trialUsesFullFeatures('trial',true)).toBe(false);expect(trialUsesFullFeatures('trial',false)).toBe(true);});
@@ -15,6 +15,8 @@ describe("HQ trial module control", () => {
   });
 });
 describe("HQ test reset eligibility", () => {
+  it("refuses a full clean slate for a production tenant", () => expect(canCleanSlate(false,"MINAKEL","MINAKEL")).toBe(false));
+  it("requires the exact tenant name for a full clean slate", () => {expect(canCleanSlate(true,"MINAKEL","minakel")).toBe(false);expect(canCleanSlate(true,"MINAKEL","MINAKEL")).toBe(true);});
   it("rejects a production company even with the exact name", () => expect(canResetTestCompany(false,"Minakel","Minakel",["qs_pricing"])).toBe(false));
   it("requires an exact company-name confirmation", () => expect(canResetTestCompany(true,"Minakel","Other company",["qs_pricing"])).toBe(false));
   it("rejects payroll clearing", () => expect(canResetTestCompany(true,"Minakel","Minakel",["payroll"])).toBe(false));
