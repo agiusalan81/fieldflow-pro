@@ -272,3 +272,35 @@ html, body { overflow-x: hidden; }
 .document-paper[data-frame=double] { outline: 3px double var(--document-primary); outline-offset: -8px; }
 .document-paper section > p, .document-paper td { background: var(--document-field-background, var(--document-paper)); color: var(--document-field-text, var(--document-ink)); }
 .document-paper h1,.document-paper h2,.document-paper h3 { font-family: inherit; font-style: normal; color: var(--document-primary); }
+
+/* Product editions: same engine, distinct look. Set on <html data-edition>. */
+html[data-edition="hotel"]:not(.dark) {
+  --brand-navy: oklch(0.36 0.06 195);
+  --brand-navy-deep: oklch(0.26 0.05 195);
+  --brand-amber: oklch(0.72 0.11 70);
+  --background: oklch(0.975 0.012 80);
+  --sidebar: oklch(0.27 0.045 195);
+  --sidebar-foreground: oklch(0.96 0.015 80);
+  --sidebar-border: oklch(0.36 0.04 195);
+  --sidebar-accent: oklch(0.33 0.05 195);
+  --sidebar-accent-foreground: oklch(0.96 0.015 80);
+  --app-header-gradient: linear-gradient(to right, var(--brand-navy-deep), var(--brand-navy));
+  --app-footer-gradient: linear-gradient(to left, var(--brand-navy-deep), var(--brand-navy));
+  --radius: 1rem;
+}
+html[data-edition="hotel"] .font-display { font-family: "Lora", Georgia, serif; }
+html[data-edition="retail"]:not(.dark) {
+  --brand-navy: oklch(0.48 0.14 150);
+  --brand-navy-deep: oklch(0.36 0.11 150);
+  --brand-amber: oklch(0.7 0.19 40);
+  --background: oklch(0.985 0.004 140);
+  --sidebar: oklch(0.99 0.003 140);
+  --sidebar-foreground: oklch(0.22 0.03 150);
+  --sidebar-accent: oklch(0.94 0.04 150);
+  --sidebar-accent-foreground: oklch(0.3 0.08 150);
+  --app-header-gradient: linear-gradient(to right, var(--brand-navy), var(--brand-navy));
+  --app-footer-gradient: linear-gradient(to left, var(--brand-navy), var(--brand-navy));
+  --radius: 0.3rem;
+}
+html[data-edition="retail"] .font-display { font-family: "Space Grotesk", system-ui, sans-serif; letter-spacing: -0.02em; }
+html[data-edition="retail"] body { font-family: "Archivo", system-ui, sans-serif; }

@@ -1,3 +1,4 @@
+import { parseEdition } from "@/lib/editions";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -123,4 +124,11 @@ export function navEntryLocked(status: Status | undefined, key: string) {
 export function useNavLock(enabled = true) {
   const q = useQuery({ queryKey: ["plan-features"], enabled, staleTime: 60_000, queryFn: async () => { const { data, error } = await supabase.rpc("my_commercial_status"); if (error) throw error; return data as Status; } });
   return (key: string) => navEntryLocked(q.data, key);
+}
+
+/** Product edition from the company's HQ product (hotel / retail / contractor). */
+export function useEdition(enabled = true) {
+  const q = useQuery({ queryKey: ["plan-features"], enabled, staleTime: 60_000, queryFn: async () => { const { data, error } = await supabase.rpc("my_commercial_status"); if (error) throw error; return data as Status; } });
+  const d = q.data as (Status & { edition?: string; product_name?: string }) | undefined;
+  return { edition: parseEdition(d?.edition), productName: d?.product_name };
 }

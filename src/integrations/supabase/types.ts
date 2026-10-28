@@ -5318,6 +5318,7 @@ export type Database = {
           app_url: string
           created_at: string
           currency: string
+          engine_edition: string | null
           id: string
           modules: string[]
           name: string
@@ -5329,6 +5330,7 @@ export type Database = {
           app_url?: string
           created_at?: string
           currency?: string
+          engine_edition?: string | null
           id?: string
           modules?: string[]
           name: string
@@ -5340,6 +5342,7 @@ export type Database = {
           app_url?: string
           created_at?: string
           currency?: string
+          engine_edition?: string | null
           id?: string
           modules?: string[]
           name?: string
@@ -6747,6 +6750,7 @@ export type Database = {
         Args: { _company: string; _module: string }
         Returns: boolean
       }
+      company_product_id: { Args: { _company: string }; Returns: string }
       company_storage_usage: { Args: { _company: string }; Returns: Json }
       create_client_setup: { Args: { _details: Json }; Returns: Json }
       create_equipment_report_link: {
