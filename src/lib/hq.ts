@@ -13,8 +13,18 @@ export function isStorageAddon(item: { kind?: string; storage_gb?: number; modul
   return item.kind === "pack" && (item.storage_gb ?? 0) > 0 && (item.modules?.length ?? 0) === 0;
 }
 export const SAFE_RESET_MODULES = [
-  { key: "qs_pricing", label: "Pricing & QS", detail: "Unsent draft proposals without linked surveys" },
-  { key: "skills_dispatch", label: "Skills & Smart Dispatch", detail: "Unused skills only; assignments and dispatch remain" },
+  { key: "qs_pricing", label: "Pricing & QS drafts", detail: "Unsent draft proposals without linked surveys" },
+  { key: "skills_dispatch", label: "Unused skills", detail: "Skills not assigned to anyone or any job" },
+  { key: "crm", label: "CRM leads", detail: "All leads, activities and follow-ups" },
+  { key: "quotes", label: "Estimates, quotes & proposals", detail: "All customer quotes, proposals, lift estimates and costing sheets" },
+  { key: "surveys", label: "Site visits & surveys", detail: "All site visits, lift surveys and QS surveys" },
+  { key: "job_sheets", label: "Job sheets & dispatch", detail: "All jobs, job sheets, parts, time logs and client reports" },
+  { key: "time_tracking", label: "Shifts & time tracking", detail: "Clock-ins, daily work reports, overtime and GPS points" },
+  { key: "chat", label: "Team chat", detail: "All chat messages" },
+  { key: "expenses", label: "Expenses", detail: "All expense receipts" },
+  { key: "leave", label: "Leave requests", detail: "All leave requests" },
+  { key: "passport_photos", label: "Passport photos & handovers", detail: "Field submissions; saved passports remain" },
+  { key: "equipment_reports", label: "Equipment problem reports", detail: "Reported faults from QR links" },
 ] as const;
 export function canResetTestCompany(isTest: boolean, name: string, confirmation: string, modules: string[]) {
   return isTest && name === confirmation && modules.length > 0 && modules.every(m => SAFE_RESET_MODULES.some(s => s.key === m));
