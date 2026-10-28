@@ -71,11 +71,13 @@ function EquipmentPage() {
             <DocumentMasters companyId={profile.company_id} clientId={q.data.client_id} siteId={q.data.site_id ?? undefined} assetId={assetId} />
           )}
           {on("lift_pack") && (
+            <section id="passport" className="scroll-mt-20">
             <LiftPassport
               assetId={assetId}
               assetCategory={q.data.asset_category}
               canManage={isManager(profile)}
             />
+            </section>
           )}
           {on("lift_pack") && <LiftInspections assetId={assetId} canManage={isManager(profile)} />}
           {on("ppm_automation") && (
