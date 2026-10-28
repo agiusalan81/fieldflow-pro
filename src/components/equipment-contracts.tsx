@@ -25,7 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 /** Quick expiry choices, counted from the contract start date. */
 export const EXPIRY_PRESETS=[{label:'30 days',days:30},{label:'60 days',days:60},{label:'90 days',days:90},{label:'6 months',months:6},{label:'1 year',months:12},{label:'2 years',months:24}] as const;
-export function addPeriod(start:string,p:{days?:number;months?:number}){const [y,m,d]=start.split('-').map(Number);const dt=new Date(Date.UTC(y,m-1,d));if('days' in p&&p.days)dt.setUTCDate(dt.getUTCDate()+p.days);else if(p.months){const t=new Date(Date.UTC(y,m-1+p.months,1));const last=new Date(Date.UTC(t.getUTCFullYear(),t.getUTCMonth()+1,0)).getUTCDate();t.setUTCDate(Math.min(d,last));return t.toISOString().slice(0,10);}return dt.toISOString().slice(0,10);}
+export function addPeriod(start:string,p:{days?:number;months?:number}){const [y=1970,m=1,d=1]=start.split('-').map(Number);const dt=new Date(Date.UTC(y,m-1,d));if('days' in p&&p.days)dt.setUTCDate(dt.getUTCDate()+p.days);else if(p.months){const t=new Date(Date.UTC(y,m-1+p.months,1));const last=new Date(Date.UTC(t.getUTCFullYear(),t.getUTCMonth()+1,0)).getUTCDate();t.setUTCDate(Math.min(d,last));return t.toISOString().slice(0,10);}return dt.toISOString().slice(0,10);}
 export function useAgreementCoverage() {
   return useQuery({queryKey:['agreement-coverage'],queryFn:async()=>{const r=await supabase.from('agreement_assets').select('*, assets(reference_number), maintenance_agreements(title, client_id, site_id, status)');if(r.error)throw r.error;return r.data;}});
 }

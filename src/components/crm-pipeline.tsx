@@ -114,7 +114,7 @@ export function NewLeadDialog({ open, onOpenChange, company, onCreated }: { open
     const r = await supabase.rpc("crm_create_lead", { _lead: { title: f.title, client_id: f.client_id, site_id: f.site_id, contact_name: f.contact_name, contact_phone: f.contact_phone.trim() ? `${phoneCode} ${f.contact_phone.trim()}` : "", contact_email: f.contact_email, deal_type: f.deal_type, source: f.source.trim() || "phone", value: !f.valueUnknown && f.value.trim() ? f.value.replace(",", ".") : null }, _note: f.note, _followup: a && f.due ? { action_key: a.key, action_label: a.label, due_at: new Date(f.due).toISOString() } : null });
     setBusy(false);
     if (r.error) { toast.error(errMsg(r.error)); return; }
-    toast.success("Lead saved"); pushLead(typeof r.data === "string" ? r.data : (r.data as { id?: string } | null)?.id, "New lead"); setF(blank); onOpenChange(false);
+    toast.success("Lead saved"); pushLead(r.data as unknown, "New lead"); setF(blank); onOpenChange(false);
     await qc.invalidateQueries({ queryKey: ["crm-leads"] }); await qc.invalidateQueries({ queryKey: ["crm-followups"] });
     onCreated(r.data as string);
   };
