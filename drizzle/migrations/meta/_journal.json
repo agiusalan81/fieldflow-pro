@@ -1184,6 +1184,13 @@
       "when": 1793172649023,
       "tag": "0168_hq_reset_dependency_safety_and_clean_slate",
       "breakpoints": true
+    },
+    {
+      "idx": 169,
+      "version": "7",
+      "when": 1793172791289,
+      "tag": "0169_hq_company_system_defaults",
+      "breakpoints": true
     }
   ]
 }
