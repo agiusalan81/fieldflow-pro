@@ -6932,6 +6932,10 @@ export type Database = {
         Args: { _days?: number; _product: string }
         Returns: Json
       }
+      platform_clean_slate: {
+        Args: { _company: string; _confirmation: string; _preview?: boolean }
+        Returns: Json
+      }
       platform_company_directory: {
         Args: never
         Returns: {

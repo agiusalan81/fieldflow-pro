@@ -1177,6 +1177,13 @@
       "when": 1793172190545,
       "tag": "0167_hq_company_creation_and_superuser_invites",
       "breakpoints": true
+    },
+    {
+      "idx": 168,
+      "version": "7",
+      "when": 1793172649023,
+      "tag": "0168_hq_reset_dependency_safety_and_clean_slate",
+      "breakpoints": true
     }
   ]
 }
