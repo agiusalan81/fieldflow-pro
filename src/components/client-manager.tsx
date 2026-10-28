@@ -147,7 +147,7 @@ export function EquipmentManager({ clientId, companyId, siteId }: { clientId: st
             <div className="text-muted-foreground">Ref {a.reference_number} · S/N {a.serial_number ?? "—"}</div>
           </div>
           <EquipmentQr assetId={a.id} reference={a.reference_number}/>
-          <Button asChild size="sm" variant="outline"><Link to="/equipment/$assetId" params={{ assetId: a.id }} hash={hasPassport ? "passport" : undefined} aria-label={`${hasPassport ? "Passport" : "View equipment"} ${a.reference_number}`}><BookOpen className="mr-1 h-4 w-4" />{hasPassport ? "Passport" : "View equipment"}</Link></Button>
+          <Button asChild size="sm" variant="outline"><Link to="/equipment/$assetId" params={{ assetId: a.id }} hash={hasPassport ? "passport" : ""} aria-label={`${hasPassport ? "Passport" : "View equipment"} ${a.reference_number}`}><BookOpen className="mr-1 h-4 w-4" />{hasPassport ? "Passport" : "View equipment"}</Link></Button>
           <EquipmentContracts companyId={companyId} clientId={clientId} siteId={a.site_id ?? undefined} assetId={a.id} />
           {isOffice(profile) && <Button size="sm" variant="outline" aria-label={`Add document to equipment ${a.reference_number}`} onClick={() => setDocumentEquipment(a)}><Plus className="mr-1 h-4 w-4" />Add document</Button>}
           <Button size="icon" variant="ghost" aria-label="Edit" onClick={() => { const canonical = types.find(t=>labelKey(t)===labelKey(a.asset_category)); const known = !!canonical; setOther(known ? "" : a.asset_category); setF({ asset_category: canonical ?? "Other", reference_number: a.reference_number, serial_number: a.serial_number ?? "" }); setEditing(a.id); }}><Pencil className="h-4 w-4" /></Button>
