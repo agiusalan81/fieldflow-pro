@@ -34,7 +34,7 @@ BEGIN
   DELETE FROM public.companies WHERE id=_company;
  END IF;
  PERFORM set_config('request.jwt.claims',coalesce(jwt,''),true); PERFORM set_config('request.jwt.claim.sub',coalesce(sub,''),true);
- INSERT INTO public.platform_audit(actor_id,action,entity,entity_id,details) SELECT actor,'delete_test_company','company',coalesce(_company,_subscription),jsonb_build_object('name',_confirmation) WHERE EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='platform_audit' AND column_name='entity_id');
+ INSERT INTO public.platform_audit(actor_id,action,entity,entity_id,before_value) VALUES(actor,'delete_test_company','company',coalesce(_company,_subscription),jsonb_build_object('name',_confirmation));
 END $$;
 REVOKE ALL ON FUNCTION public.platform_delete_test_company(uuid,uuid,text) FROM public, anon;
 GRANT EXECUTE ON FUNCTION public.platform_delete_test_company(uuid,uuid,text) TO authenticated;
