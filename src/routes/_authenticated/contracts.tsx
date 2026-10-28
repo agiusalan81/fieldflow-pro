@@ -27,7 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/contracts")({ staticData: { sitemap: false },
-  validateSearch: (s: Record<string, unknown>): { tab?: string } => ({ tab: ["renewals", "agreements", "types", "masters", "checklists"].includes(String(s["tab"])) ? String(s["tab"]) : "renewals" }),
+  validateSearch: (s: Record<string, unknown>): { tab?: string } => ({ tab: ["renewals", "agreements", "types", "masters", "checklists"].includes(String(s["tab"])) ? String(s["tab"]) : "agreements" }),
   head: () => ({
     meta: [
       { title: "Contracts & checklists — FieldBridge" },
@@ -42,7 +42,7 @@ export const Route = createFileRoute("/_authenticated/contracts")({ staticData: 
 });
 
 function ContractsPage() {
-  const { tab = "renewals" } = Route.useSearch();
+  const { tab = "agreements" } = Route.useSearch();
   const navigate = useNavigate();
   const { data: profile } = useProfile();
   const access = useMemberWorkspaces();
@@ -51,10 +51,10 @@ function ContractsPage() {
   if (!office) return <AppShell title="Contracts & checklists"><p>Contracts & renewals capability required.</p></AppShell>;
   return (
     <AppShell title="Contracts & checklists">
-      <Tabs value={tab === "masters" && !office ? "renewals" : tab} onValueChange={tab => void navigate({ to: "/contracts", search: { tab }, replace: true })} className="mx-auto max-w-6xl">
+      <Tabs value={tab === "masters" && !office ? "agreements" : tab} onValueChange={tab => void navigate({ to: "/contracts", search: { tab }, replace: true })} className="mx-auto max-w-6xl">
         <TabsList className="h-auto flex-wrap">
-          <TabsTrigger value="renewals">Renewals due</TabsTrigger>
           <TabsTrigger value="agreements">Client agreements</TabsTrigger>
+          <TabsTrigger value="renewals">Renewals due</TabsTrigger>
           <TabsTrigger value="types">Service tiers</TabsTrigger>
           {isOffice(profile) && <TabsTrigger value="masters">Contracts & checklist masters</TabsTrigger>}
           <TabsTrigger value="checklists">Checklists</TabsTrigger>

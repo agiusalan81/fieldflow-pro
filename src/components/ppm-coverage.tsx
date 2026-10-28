@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CalendarClock, Pause, Play, RefreshCw } from "lucide-react";
@@ -148,6 +149,11 @@ export function PpmCoverage({
                     {PPM_CADENCES.find((c) => c.months === p.interval_months)?.label} · first{" "}
                     {p.first_due_date} · {p.active ? "Active" : "Paused"}
                   </p>
+                  {p.asset_id && (
+                    <Button asChild size="sm" variant="ghost" className="mt-1 h-7 px-2">
+                      <Link to="/equipment/$assetId" params={{ assetId: p.asset_id }}>Passport</Link>
+                    </Button>
+                  )}
                 </div>
                 {canManage && (
                   <div className="flex gap-1">
