@@ -6332,6 +6332,105 @@ export type Database = {
           },
         ]
       }
+      store_problem_reports: {
+        Row: {
+          category: string
+          company_id: string
+          created_at: string | null
+          id: string
+          location: string
+          problem: string
+          reporter_name: string | null
+          reporter_type: string
+          site_id: string
+          status: string
+        }
+        Insert: {
+          category: string
+          company_id: string
+          created_at?: string | null
+          id?: string
+          location: string
+          problem: string
+          reporter_name?: string | null
+          reporter_type?: string
+          site_id: string
+          status?: string
+        }
+        Update: {
+          category?: string
+          company_id?: string
+          created_at?: string | null
+          id?: string
+          location?: string
+          problem?: string
+          reporter_name?: string | null
+          reporter_type?: string
+          site_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_problem_reports_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_problem_reports_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_report_links: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          id: string
+          last_report_at: string | null
+          revoked_at: string | null
+          site_id: string
+          token_hash: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          id?: string
+          last_report_at?: string | null
+          revoked_at?: string | null
+          site_id: string
+          token_hash: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          id?: string
+          last_report_at?: string | null
+          revoked_at?: string | null
+          site_id?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_report_links_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_report_links_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supervisor_rosters: {
         Row: {
           company_id: string
@@ -6761,6 +6860,7 @@ export type Database = {
         Args: { _proposal: string }
         Returns: string
       }
+      create_store_report_link: { Args: { _site: string }; Returns: string }
       crm_can: { Args: { _min: string }; Returns: boolean }
       crm_create_lead: {
         Args: { _followup?: Json; _lead: Json; _note?: string }
@@ -6861,6 +6961,7 @@ export type Database = {
           trial_days: number
         }[]
       }
+      get_store_report_target: { Args: { _token: string }; Returns: Json }
       has_company_role: {
         Args: { _role: Database["public"]["Enums"]["user_role"] }
         Returns: boolean
@@ -7301,6 +7402,17 @@ export type Database = {
       submit_platform_feedback: {
         Args: { _category: string; _message: string; _rating: number }
         Returns: string
+      }
+      submit_store_problem: {
+        Args: {
+          _category: string
+          _location: string
+          _name: string
+          _problem: string
+          _reporter_type: string
+          _token: string
+        }
+        Returns: undefined
       }
       terminate_member_handover: {
         Args: { _choices: Json; _reason: string; _user: string }
