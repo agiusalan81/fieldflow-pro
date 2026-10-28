@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
+import { brandForHost, currentHost } from "@/lib/host-brand";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowRight, Check, ClipboardCheck, Mail, Menu, Users, Wallet, X } from "lucide-react";
 import fieldbridgeMark from "@/assets/fieldbridge-mark.png";
@@ -18,6 +19,9 @@ const catalogQueryOptions = queryOptions({
 });
 
 export const Route = createFileRoute("/")({ staticData: { sitemap: true },
+  beforeLoad: () => {
+    if (brandForHost(currentHost())=== "retail") throw redirect({ to: "/retail", replace: true });
+  },
   loader: ({ context }) => context.queryClient.ensureQueryData(catalogQueryOptions),
   head: () => ({
     meta: [
