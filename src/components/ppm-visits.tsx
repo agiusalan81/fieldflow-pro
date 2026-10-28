@@ -71,7 +71,7 @@ export function PpmVisits({
   return (
     <section className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="font-semibold">Planned maintenance</h2>
+        <h2 className="font-semibold">Scheduled maintenance visits (PPM)</h2>
         <span
           className={
             overdue.length
