@@ -4080,6 +4080,7 @@ export type Database = {
         Row: {
           annual_price: number
           client_id: string
+          collective_price: number | null
           company_id: string
           contract_document_id: string | null
           contract_kind: string
@@ -4089,6 +4090,7 @@ export type Database = {
           id: string
           notes: string | null
           price_confirmed_at: string | null
+          pricing_mode: string
           project_price: number
           renewal_sent_at: string | null
           renewal_signature: string | null
@@ -4103,6 +4105,7 @@ export type Database = {
         Insert: {
           annual_price?: number
           client_id: string
+          collective_price?: number | null
           company_id: string
           contract_document_id?: string | null
           contract_kind?: string
@@ -4112,6 +4115,7 @@ export type Database = {
           id?: string
           notes?: string | null
           price_confirmed_at?: string | null
+          pricing_mode?: string
           project_price?: number
           renewal_sent_at?: string | null
           renewal_signature?: string | null
@@ -4126,6 +4130,7 @@ export type Database = {
         Update: {
           annual_price?: number
           client_id?: string
+          collective_price?: number | null
           company_id?: string
           contract_document_id?: string | null
           contract_kind?: string
@@ -4135,6 +4140,7 @@ export type Database = {
           id?: string
           notes?: string | null
           price_confirmed_at?: string | null
+          pricing_mode?: string
           project_price?: number
           renewal_sent_at?: string | null
           renewal_signature?: string | null
@@ -6996,6 +7002,10 @@ export type Database = {
       save_client_contact: {
         Args: { _client: string; _contact: string; _details: Json }
         Returns: string
+      }
+      save_client_document_assignments: {
+        Args: { _assignments: Json; _client: string }
+        Returns: undefined
       }
       save_document_numbering: { Args: { _config: Json }; Returns: undefined }
       save_employee_payroll_setup: {
