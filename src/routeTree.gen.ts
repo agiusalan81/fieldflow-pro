@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AccessibilityRouteImport } from './routes/accessibility'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ClientPortalRouteImport } from './routes/client-portal'
+import { Route as DemoRouteImport } from './routes/demo'
 import { Route as HotelsRouteImport } from './routes/hotels'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -101,6 +102,11 @@ const AuthRoute = AuthRouteImport.update({
 const ClientPortalRoute = ClientPortalRouteImport.update({
   id: '/client-portal',
   path: '/client-portal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HotelsRoute = HotelsRouteImport.update({
@@ -450,6 +456,7 @@ export interface FileRoutesByFullPath {
   '/accessibility': typeof AccessibilityRoute
   '/auth': typeof AuthRoute
   '/client-portal': typeof ClientPortalRoute
+  '/demo': typeof DemoRoute
   '/hotels': typeof HotelsRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -520,6 +527,7 @@ export interface FileRoutesByTo {
   '/accessibility': typeof AccessibilityRoute
   '/auth': typeof AuthRoute
   '/client-portal': typeof ClientPortalRoute
+  '/demo': typeof DemoRoute
   '/hotels': typeof HotelsRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -592,6 +600,7 @@ export interface FileRoutesById {
   '/accessibility': typeof AccessibilityRoute
   '/auth': typeof AuthRoute
   '/client-portal': typeof ClientPortalRoute
+  '/demo': typeof DemoRoute
   '/hotels': typeof HotelsRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -664,6 +673,7 @@ export interface FileRouteTypes {
     | '/accessibility'
     | '/auth'
     | '/client-portal'
+    | '/demo'
     | '/hotels'
     | '/privacy'
     | '/reset-password'
@@ -734,6 +744,7 @@ export interface FileRouteTypes {
     | '/accessibility'
     | '/auth'
     | '/client-portal'
+    | '/demo'
     | '/hotels'
     | '/privacy'
     | '/reset-password'
@@ -805,6 +816,7 @@ export interface FileRouteTypes {
     | '/accessibility'
     | '/auth'
     | '/client-portal'
+    | '/demo'
     | '/hotels'
     | '/privacy'
     | '/reset-password'
@@ -877,6 +889,7 @@ export interface RootRouteChildren {
   AccessibilityRoute: typeof AccessibilityRoute
   AuthRoute: typeof AuthRoute
   ClientPortalRoute: typeof ClientPortalRoute
+  DemoRoute: typeof DemoRoute
   HotelsRoute: typeof HotelsRoute
   PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -932,6 +945,13 @@ declare module '@tanstack/react-router' {
       path: '/client-portal'
       fullPath: '/client-portal'
       preLoaderRoute: typeof ClientPortalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/hotels': {
@@ -1501,6 +1521,7 @@ const rootRouteChildren: RootRouteChildren = {
   AccessibilityRoute: AccessibilityRoute,
   AuthRoute: AuthRoute,
   ClientPortalRoute: ClientPortalRoute,
+  DemoRoute: DemoRoute,
   HotelsRoute: HotelsRoute,
   PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
