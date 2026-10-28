@@ -17,7 +17,7 @@
 - role-menu.ts exclusions are navigation-only. Legacy quote drafts default missing fields on read only.
 - Analytics: owner-only coarse counts; server-derived tenant. Product-scoped outreach/feedback; saved follow-ups send nothing.
 - HQ: product-scoped owner-only setup/invites/resets; ordered tenant deletes retain users/branding/platform bills and refuse issued payroll — why: no cross-tenant or financial-history loss.
-- Chrome: neutral surfaces/token controls; phone theme matches neutral bar, never gradients.
+- Chrome: neutral surfaces/token controls; phone bar neutral, no gradients.
 - Travel shares startJobTravel; arrival saves time before on-site status.
 - Invite functions/loaders use timeouts and middleware.
 - Tenant RLS uses company_id/current_company_id(); never UI company filters; 
@@ -84,4 +84,4 @@
 - CRM rules in tested src/lib/crm.ts; manager-only RLS guarded by guard_module_write_additional('crm_pipeline'); crm_mark_won/lost RPCs keep conversions atomic.
 - Lift costing: templates only seed sheet defaults (sheets copy values); access via member_costing_can()/can_lift_costing, mirrored by liftCostingAccess(); proposal branding follows branding_documents — why: saved quotes never change, supervisors cost only when enabled.
 - Editions: engine_edition + company_product_id() pick tenant product; editions.ts only reskins — why: one engine, DB access.
-- HQ test switcher: owner-only, test companies only, signs in as their Superuser; HQ session kept locally — why: owner membership never changes.
+- HQ test switcher: owner-only, test-only Superuser sign-in — why: owner membership unchanged.
