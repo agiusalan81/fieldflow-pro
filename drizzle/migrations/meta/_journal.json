@@ -1240,6 +1240,13 @@
       "when": 1793182008046,
       "tag": "0176_lift_costing_capability",
       "breakpoints": true
+    },
+    {
+      "idx": 177,
+      "version": "7",
+      "when": 1793203866681,
+      "tag": "0177_product_editions",
+      "breakpoints": true
     }
   ]
 }
