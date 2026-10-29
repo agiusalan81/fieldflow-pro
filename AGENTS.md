@@ -51,7 +51,7 @@
 - Plan access: DB write guards + plan-features.ts menu gating; legacy stays on. RFQ rules in lift-rfq.ts; 
 - Client reports use immutable DB-built safe snapshots and hashed expiring/revocable links; photo paths stay server-only; 
 - Sheet safety/checklist snapshots are checked at completion; safety keys share checklist_values; offline safety.
-- Clock-in shares plate/consent helpers. Fleet appends active-shift GPS with module/tenant guards; mileage excludes jitter/gaps; 
+- Clock-in policies/member defaults use shared rules and guarded shifts; only drivers feed fleet — why: no shared-van double mileage.
 - ExpenseCapture shares date/amount/category across stash/sheets; private receipts stay HQ-gated and immutable; post-signature notes never reach clients.
 - Technical library: private storage/RLS; publish checks real/displayed supervisor/superuser; AI reads approved pages as caller; 
 - Leave/profile/clock-out handover rules use tested field-rules.ts plus guard_leave_decision; UI and DB agree.
@@ -82,6 +82,6 @@
 - Protected per-member RPCs/RLS govern estimates, contracts and dispatch; field eligibility is separate, CRM levels persist — why: primary roles still drive payroll/rota.
 - CRM rules in tested src/lib/crm.ts; manager-only RLS guarded by guard_module_write_additional('crm_pipeline'); crm_mark_won/lost RPCs keep conversions atomic.
 - Lift costing: templates seed sheet copies; access via member_costing_can()/liftCostingAccess(); branding follows branding_documents — why: saved quotes never change.
-- Editions: engine_edition + company_product_id() pick tenant product; editions.ts only reskins — why: one engine, DB access.
+- Editions: DB selects product; one creatable sheet equipment selector excludes in-house Lift controls — why: no trial leakage.
 - HQ test switcher: owner-only, test-only Superuser sign-in — why: owner membership unchanged.
 - Inventory: tool/parts modes enforced by tool_sign_* RPCs + guard_inventory_stock, mirrored in inventory-control.ts — why: DB-enforced.
