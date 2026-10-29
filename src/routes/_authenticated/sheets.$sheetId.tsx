@@ -25,6 +25,7 @@ import { ReportSharing } from "@/components/report-sharing";
 import { scheduledInitials, assignmentFilter, hoursFromTimes, missingSignOff, missingChecklist, roundTo15, shiftTime, parsePhotos, createDraftSheet, type JobPhoto, technicianCount, labourHours, dayLabourHours } from "@/lib/jobsheets";
 import { JobPhotos } from "@/components/job-photos";
 import { SpecialNotes } from "@/components/special-notes";
+import { sheetLiftEnabled, unlistedEquipmentPatch } from "@/lib/sheet-equipment";
 import { VoiceDictation } from "@/components/voice-dictation";
 import { sendJobSheetEmail } from "@/lib/sendJobSheetEmail";
 import { TechnicianPicker } from "@/components/technician-picker";
@@ -259,7 +260,7 @@ function SheetForm() {
   const site = sites.find((s) => s.id === form.site_id);
   const assets = refs?.assets.filter((a) => a.client_id === form.client_id && (!form.site_id || !a.site_id || a.site_id === form.site_id)) ?? [];
   const asset = refs?.assets.find((a) => a.id === form.asset_id);
-  const liftOn = liftFeatures("lift_pack");
+  const liftOn = sheetLiftEnabled(inHouse, liftFeatures("lift_pack"));
   const liftProtocol = protocolForCategory(asset?.asset_category ?? (form.asset_type as string | null));
 
   const assetPatch = (id: string | null): Partial<Form> => {
@@ -269,8 +270,9 @@ function SheetForm() {
     const cat = (a.asset_category ?? "").toLowerCase();
     return {
       asset_id: a.id,
-      asset_type: cat.includes("escalator") ? "Escalator" : cat.includes("lift") ? "Lift" : "Other",
-      asset_type_other: cat.includes("lift") || cat.includes("escalator") ? null : a.asset_category,
+      unlisted_equipment: null,
+      asset_type: liftOn && cat.includes("escalator") ? "Escalator" : liftOn && cat.includes("lift") ? "Lift" : "Other",
+      asset_type_other: liftOn && (cat.includes("lift") || cat.includes("escalator")) ? null : a.asset_category,
       lift_model: (attrs["model"] as string) ?? form.lift_model,
       serial_number: a.serial_number ?? (attrs["serial"] as string) ?? form.serial_number,
     };
@@ -425,7 +427,7 @@ function SheetForm() {
       }}>Discard local changes &amp; reload</Button></div>}
       {readOnly && manager && !inHouse && <ReportSharing sheetId={sheetId} />}
       <JobReceipts userId={profile.id} companyId={profile.company_id} sheetId={sheetId} readOnly={busy} />
-      {!form.signature_data && sheet.departure_status !== "none" && (
+      {!inHouse && !form.signature_data && sheet.departure_status !== "none" && (
         <div className={`mx-auto mb-4 max-w-5xl rounded-xl border-2 p-4 text-sm ${sheet.departure_status === "approved" ? "border-success bg-success/10" : sheet.departure_status === "rejected" ? "border-destructive bg-destructive/10" : "border-warning bg-warning/15"}`}>
           <p className="font-medium text-foreground">{sheet.departure_status === "approved" ? "Client coordination complete — departure confirmed." : sheet.departure_status === "rejected" ? "Please remain on site while the office arranges client access." : "The office is coordinating with the client. Please remain on site for an update."}</p>
           {sheet.departure_reply && <p className="mt-1 text-foreground"><b>Office update:</b> “{sheet.departure_reply}”</p>}
@@ -459,12 +461,12 @@ function SheetForm() {
             </div>
             <div className="space-y-1.5">
               <Label>{word("equipment")}</Label>
-              <SearchSelect value={form.asset_id as string} placeholder="Type reference, type or serial…" disabled={readOnly}
-                options={assets.map((a) => ({ value: a.id, label: `${a.reference_number} · ${a.asset_category}`, hint: a.serial_number ?? undefined }))}
-                onChange={pickAsset} />
+              <SearchSelect value={form.asset_id as string || (form.unlisted_equipment ? '__unlisted' : null)} placeholder="Type reference, type or serial…" disabled={readOnly}
+                options={[...assets.map((a) => ({ value: a.id, label: `${a.reference_number} · ${a.asset_category}`, hint: a.serial_number ?? undefined })), ...(form.unlisted_equipment ? [{value: '__unlisted', label: form.unlisted_equipment as string, hint: 'Awaiting review'}] : [])]}
+                onChange={v => { if (v !== '__unlisted') pickAsset(v); }}
+                createLabel="Use unlisted equipment" onCreate={text => {const patch = unlistedEquipmentPatch(text); if (patch) set(patch);}} />
             </div>
             {site?.store_code&&<div className="space-y-1.5"><Label>Site / Branch ID</Label><Input readOnly value={site.store_code}/></div>}
-            {!form.asset_id&&<div className="space-y-1.5"><Label>Equipment not listed</Label><Input maxLength={500} placeholder="Please fill in equipment reference and details" value={(form.unlisted_equipment as string)??''} onChange={e=>set({unlisted_equipment:e.target.value,requires_admin_approval:true})}/></div>}
             <div className="space-y-1.5"><Label>{word("technician")}</Label><Input className="h-11" value={(form.technician_name as string) ?? ""} onChange={(e) => set({ technician_name: e.target.value })} /></div>
             <div className="space-y-1.5"><Label>Date</Label><Input className="h-11" readOnly value={new Date(sheet.created_at).toLocaleDateString()} /></div>
           </div>
