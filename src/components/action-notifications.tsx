@@ -1,4 +1,5 @@
 import { useOpenJobs } from "@/lib/open-jobs";
+import { incentiveAmount } from '@/lib/claim-incentive';
 import { useCrmAccess } from '@/lib/crm-access';
 import { crmAllows } from '@/lib/crm';
 import { Link } from '@tanstack/react-router';
@@ -137,7 +138,7 @@ export function ActionNotifications() {
           {decided.map(v=><Button key={v.id} asChild variant="outline" className={item}><Link to="/estimates" search={{quote:v.id}}><Row icon={AlertTriangle}>{v.status === 'awaiting_confirmation' ? `Awaiting client confirmation · ${v.reference}` : `Client ${v.status} quote ${v.reference}`}</Row></Link></Button>)}
         </TabsContent>
         <TabsContent value="field" className="space-y-2 pt-3">{!fieldCount && empty}
-          {openJobs.map(j=><Button key={j.id} asChild variant="outline" className={item}><Link to="/available-jobs" search={{job:j.id}}><Row icon={AlertTriangle}>Up for grabs · #{j.job_number} · {j.site_name ?? j.client_name}</Row></Link></Button>)}
+          {openJobs.map(j=><Button key={j.id} asChild variant="outline" className={item}><Link to="/available-jobs" search={{job:j.id}}><Row icon={AlertTriangle}>Up for grabs · #{j.job_number} · {j.site_name ?? j.client_name}{j.claim_incentive_cents>0?` · ${incentiveAmount(j.claim_incentive_cents)} incentive`:''}</Row></Link></Button>)}
           {problems.map(r=><Button key={r.id} asChild variant="outline" className={item}><Link to="/admin/jobs" search={{new:true,assetId:r.asset_id,problemId:r.id}}><Row icon={AlertTriangle}>Equipment problem: {r.problem}</Row></Link></Button>)}
           {surveys.map(v=><Button key={v.id} asChild variant="outline" className={item}><Link to="/surveys" search={{survey:v.id}}><Row icon={AlertTriangle}>Site survey to review{v.location_ref?`: ${v.location_ref}`:''}{v.reviewer_id?' (assigned to you)':''}</Row></Link></Button>)}
           {threads.map(t=><Button key={t.key} asChild variant="outline" className={item}><Link to="/messages" search={{thread:t.key}}><Row icon={MessageSquare}>{t.name} · {t.n} new</Row></Link></Button>)}
