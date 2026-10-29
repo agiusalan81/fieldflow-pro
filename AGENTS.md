@@ -85,3 +85,4 @@
 - Lift costing: templates only seed sheet defaults (sheets copy values); access via member_costing_can()/can_lift_costing, mirrored by liftCostingAccess(); proposal branding follows branding_documents — why: saved quotes never change, supervisors cost only when enabled.
 - Editions: engine_edition + company_product_id() pick tenant product; editions.ts only reskins — why: one engine, DB access.
 - HQ test switcher: owner-only, test-only Superuser sign-in — why: owner membership unchanged.
+- Inventory governance: company_settings tool_checkout_mode/parts_control_mode enforced by tool_sign_out/tool_sign_in RPCs and guard_inventory_stock, mirrored in tested inventory-control.ts — why: technician self-service is a tenant choice, never UI-only.
