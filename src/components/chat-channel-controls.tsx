@@ -17,7 +17,7 @@ export function useChatChannels() {
   return useQuery({queryKey:['chat-channels'],refetchInterval:15000,queryFn:async()=>{const r=await supabase.from('message_channels').select('id,name').eq('archived',false).order('name');if(r.error)throw r.error;return r.data;}});
 }
 
-export function ChatChannelControls({ channelId }: {channelId?:string}) {
+export function ChatChannelControls({ channelId }: {channelId?:string | undefined}) {
   const {data:p}=useProfile();
   const {data:users=[]}=useCompanyUsers();
   const {data:channels=[]}=useChatChannels();

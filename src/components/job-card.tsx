@@ -1,3 +1,4 @@
+import { useTerminology } from "@/lib/company";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { History } from "lucide-react";
@@ -55,12 +56,13 @@ export function AssetHistory({ assetId, label }: { assetId: string; label: strin
 }
 
 export function LiftHistoryButton({ assetId, label }: { assetId: string | null; label: string }) {
+  const word=useTerminology();
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button variant="outline" className="h-11" disabled={!assetId}><History className="mr-1 h-4 w-4" />Equipment history</Button></DialogTrigger>
+      <DialogTrigger asChild><Button variant="outline" className="h-11" disabled={!assetId}><History className="mr-1 h-4 w-4" />{word("equipment")} history</Button></DialogTrigger>
       <DialogContent>
-        <DialogHeader><DialogTitle>Equipment history</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{word("equipment")} history</DialogTitle></DialogHeader>
         {assetId && open && <AssetHistory assetId={assetId} label={label} />}
       </DialogContent>
     </Dialog>
