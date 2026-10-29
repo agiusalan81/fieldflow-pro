@@ -900,6 +900,7 @@ export type Database = {
           breaks_per_shift: number
           claim_incentive_cents: number
           claim_incentive_enabled: boolean
+          claim_incentive_staff_visible: boolean
           company_address: string | null
           company_email: string | null
           company_id: string
@@ -960,6 +961,7 @@ export type Database = {
           breaks_per_shift?: number
           claim_incentive_cents?: number
           claim_incentive_enabled?: boolean
+          claim_incentive_staff_visible?: boolean
           company_address?: string | null
           company_email?: string | null
           company_id: string
@@ -1020,6 +1022,7 @@ export type Database = {
           breaks_per_shift?: number
           claim_incentive_cents?: number
           claim_incentive_enabled?: boolean
+          claim_incentive_staff_visible?: boolean
           company_address?: string | null
           company_email?: string | null
           company_id?: string
@@ -7746,6 +7749,7 @@ export type Database = {
         Returns: undefined
       }
       snooze_standby_swap: { Args: { _swap: string }; Returns: undefined }
+      staff_incentives_visible: { Args: never; Returns: boolean }
       standby_swap_candidates: {
         Args: never
         Returns: {
