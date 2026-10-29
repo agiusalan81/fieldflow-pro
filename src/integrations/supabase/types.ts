@@ -4276,6 +4276,8 @@ export type Database = {
           contract_document_id: string | null
           contract_kind: string
           contract_type_id: string | null
+          coverage_details: string
+          coverage_kind: string
           created_at: string
           end_date: string
           id: string
@@ -4283,6 +4285,7 @@ export type Database = {
           price_confirmed_at: string | null
           pricing_mode: string
           project_price: number
+          renewal_history: Json
           renewal_sent_at: string | null
           renewal_signature: string | null
           renewal_signed_at: string | null
@@ -4292,6 +4295,8 @@ export type Database = {
           status: string
           terms_snapshot: Json
           title: string
+          vendor_contact: string
+          vendor_name: string
         }
         Insert: {
           annual_price?: number
@@ -4301,6 +4306,8 @@ export type Database = {
           contract_document_id?: string | null
           contract_kind?: string
           contract_type_id?: string | null
+          coverage_details?: string
+          coverage_kind?: string
           created_at?: string
           end_date: string
           id?: string
@@ -4308,6 +4315,7 @@ export type Database = {
           price_confirmed_at?: string | null
           pricing_mode?: string
           project_price?: number
+          renewal_history?: Json
           renewal_sent_at?: string | null
           renewal_signature?: string | null
           renewal_signed_at?: string | null
@@ -4317,6 +4325,8 @@ export type Database = {
           status?: string
           terms_snapshot?: Json
           title?: string
+          vendor_contact?: string
+          vendor_name?: string
         }
         Update: {
           annual_price?: number
@@ -4326,6 +4336,8 @@ export type Database = {
           contract_document_id?: string | null
           contract_kind?: string
           contract_type_id?: string | null
+          coverage_details?: string
+          coverage_kind?: string
           created_at?: string
           end_date?: string
           id?: string
@@ -4333,6 +4345,7 @@ export type Database = {
           price_confirmed_at?: string | null
           pricing_mode?: string
           project_price?: number
+          renewal_history?: Json
           renewal_sent_at?: string | null
           renewal_signature?: string | null
           renewal_signed_at?: string | null
@@ -4342,6 +4355,8 @@ export type Database = {
           status?: string
           terms_snapshot?: Json
           title?: string
+          vendor_contact?: string
+          vendor_name?: string
         }
         Relationships: [
           {
@@ -7351,6 +7366,7 @@ export type Database = {
         Args: { _options: Json; _subscription: string }
         Returns: undefined
       }
+      inhouse_contract_access: { Args: never; Returns: boolean }
       invite_client_contact: {
         Args: { _admin?: boolean; _client: string; _contact: string }
         Returns: string
@@ -7566,6 +7582,18 @@ export type Database = {
         }[]
       }
       release_bell_push_runner: { Args: never; Returns: undefined }
+      renew_contract_coverage: {
+        Args: {
+          _asset?: boolean
+          _end: string
+          _expected_end: string
+          _id: string
+          _name?: string
+          _signature?: string
+          _start: string
+        }
+        Returns: undefined
+      }
       review_passport_handover: {
         Args: { _approve: boolean; _id: string }
         Returns: undefined

@@ -1324,6 +1324,13 @@
       "when": 1793262876285,
       "tag": "0188_roi_leads",
       "breakpoints": true
+    },
+    {
+      "idx": 189,
+      "version": "7",
+      "when": 1793297326564,
+      "tag": "0189_vendor_coverage_manual_renewals",
+      "breakpoints": true
     }
   ]
 }
