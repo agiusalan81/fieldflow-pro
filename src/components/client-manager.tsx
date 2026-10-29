@@ -1,6 +1,6 @@
 import { EquipmentQr } from "@/components/equipment-qr";
 import { useEdition } from "@/lib/plan-features";
-import { editionEquipmentTypes } from "@/lib/editions";
+import { editionEquipmentTypes, editionAssetLabel, isInHouse } from "@/lib/editions";
 import { ClientPortalInvitationGate } from '@/components/client-portal-invitation-gate';
 import { useClientPortalAccess } from '@/lib/client-portal-access';
 import { usePlanFeatures } from '@/lib/plan-features';
@@ -85,7 +85,7 @@ const emptyEq: EqDraft = { asset_category: "", reference_number: "", serial_numb
 export function EquipmentManager({ clientId, companyId, siteId }: { clientId: string; companyId: string; siteId?: string }) {
   const qc = useQueryClient();
   const { data: profile } = useProfile();
-  const hasPassport = usePlanFeatures()("lift_pack");
+  const hasLiftPack = usePlanFeatures()("lift_pack");
   const [documentEquipment, setDocumentEquipment] = useState<{ id: string; site_id: string | null; reference_number: string } | null>(null);
   const key = ["client-assets", clientId];
   const { data: allAssets = [] } = useQuery({ queryKey: key, queryFn: async () => (await supabase.from("assets").select("*").eq("client_id", clientId).order("reference_number")).data ?? [] });
@@ -95,12 +95,15 @@ export function EquipmentManager({ clientId, companyId, siteId }: { clientId: st
   const [other, setOther] = useState("");
   const { data: learnt = [] } = useLookup(EQUIPMENT_TYPE);
   const { edition } = useEdition();
+  const equipment = editionAssetLabel(edition);
+  const hasPassport = !isInHouse(edition) && hasLiftPack;
   const baseTypes = editionEquipmentTypes(edition, EQUIPMENT_TYPES);
   const types = [...uniqueLabels([...baseTypes.filter(t=>t!=="Other"), ...learnt.filter(l=>l.is_approved).map(l=>l.label_value), ...allAssets.map(a=>a.asset_category)]).filter(t=>labelKey(t)!=="other"), "Other"];
   const refresh = () => { qc.invalidateQueries({ queryKey: key }); qc.invalidateQueries({ queryKey: ["assets"] }); qc.invalidateQueries({ queryKey: ["assets-all"] }); qc.invalidateQueries({ queryKey: ["entities-unified"] }); };
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!editing) return;
     if (!f.asset_category) { toast.error("Pick an equipment type"); return; }
     const raw = f.asset_category === "Other" ? other.trim() : f.asset_category;
     const category = types.find(t=>labelKey(t)===labelKey(raw)) ?? raw;
@@ -108,7 +111,7 @@ export function EquipmentManager({ clientId, companyId, siteId }: { clientId: st
     const row = { asset_category: category, reference_number: f.reference_number, serial_number: f.serial_number || null };
     const { error } = editing === "new"
       ? await supabase.from("assets").insert({ ...row, client_id: clientId, company_id: companyId, site_id: siteId ?? null })
-      : await supabase.from("assets").update(row).eq("id", editing!);
+      : await supabase.from("assets").update(row).eq("id", editing);
     if (error) { toast.error(error.message); return; }
     if (f.asset_category === "Other") { const { data: u } = await supabase.auth.getUser(); if (u.user) await learnLookup(EQUIPMENT_TYPE, category, companyId, u.user.id); setOther(""); }
     setEditing(null); refresh();
@@ -121,7 +124,7 @@ export function EquipmentManager({ clientId, companyId, siteId }: { clientId: st
 
   const form = (
     <form onSubmit={save} className="space-y-2 rounded-lg border bg-muted/30 p-3">
-      <div className="space-y-1"><Label>Equipment type *</Label>
+      <div className="space-y-1"><Label>{equipment} type *</Label>
         <Select value={f.asset_category} onValueChange={(v) => setF({ ...f, asset_category: v })}>
           <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
           <SelectContent>{types.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
@@ -139,11 +142,11 @@ export function EquipmentManager({ clientId, companyId, siteId }: { clientId: st
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <h3 className="font-medium">Equipment</h3>
-        {editing === null && <Button size="sm" variant="outline" onClick={() => { setF(emptyEq); setEditing("new"); }}><Plus className="mr-1 h-4 w-4" />Add equipment</Button>}
+        <h3 className="font-medium">{equipment}</h3>
+        {editing === null && <Button size="sm" variant="outline" onClick={() => { setF(emptyEq); setEditing("new"); }}><Plus className="mr-1 h-4 w-4" />Add {equipment.toLowerCase()}</Button>}
       </div>
       {editing === "new" && form}
-      {assets.length === 0 && editing !== "new" && <p className="text-sm text-muted-foreground">No equipment yet.</p>}
+      {assets.length === 0 && editing !== "new" && <p className="text-sm text-muted-foreground">No {equipment.toLowerCase()} yet.</p>}
       {assets.map((a) => editing === a.id ? <div key={a.id}>{form}</div> : (
         <div key={a.id} className="flex flex-wrap items-center gap-2 rounded-lg border p-2 text-sm">
           <div className="min-w-0 flex-1">
@@ -151,7 +154,7 @@ export function EquipmentManager({ clientId, companyId, siteId }: { clientId: st
             <div className="text-muted-foreground">Ref {a.reference_number} · S/N {a.serial_number ?? "—"}</div>
           </div>
           <EquipmentQr assetId={a.id} reference={a.reference_number}/>
-          <Button asChild size="sm" variant="outline"><Link to="/equipment/$assetId" params={{ assetId: a.id }} search={{view:hasPassport?'passport':'overview'}} aria-label={`${hasPassport ? "Passport" : "View equipment"} ${a.reference_number}`}><BookOpen className="mr-1 h-4 w-4" />{hasPassport ? "Passport" : "View equipment"}</Link></Button>
+          <Button asChild size="sm" variant="outline"><Link to="/equipment/$assetId" params={{ assetId: a.id }} search={{view:hasPassport?'passport':'overview'}} aria-label={`${hasPassport ? "Passport" : `View ${equipment.toLowerCase()}`} ${a.reference_number}`}><BookOpen className="mr-1 h-4 w-4" />{hasPassport ? "Passport" : `View ${equipment.toLowerCase()}`}</Link></Button>
           <EquipmentContracts companyId={companyId} clientId={clientId} siteId={a.site_id ?? undefined} assetId={a.id} />
           {isOffice(profile) && <Button size="sm" variant="outline" aria-label={`Add document to equipment ${a.reference_number}`} onClick={() => setDocumentEquipment(a)}><Plus className="mr-1 h-4 w-4" />Add document</Button>}
           <Button size="icon" variant="ghost" aria-label="Edit" onClick={() => { const canonical = types.find(t=>labelKey(t)===labelKey(a.asset_category)); const known = !!canonical; setOther(known ? "" : a.asset_category); setF({ asset_category: canonical ?? "Other", reference_number: a.reference_number, serial_number: a.serial_number ?? "" }); setEditing(a.id); }}><Pencil className="h-4 w-4" /></Button>
@@ -160,7 +163,7 @@ export function EquipmentManager({ clientId, companyId, siteId }: { clientId: st
       ))}
       <Dialog open={!!documentEquipment} onOpenChange={(open) => { if (!open) setDocumentEquipment(null); }}>
         <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-4xl">
-          <DialogHeader><DialogTitle>Equipment documents · {documentEquipment?.reference_number}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{equipment} documents · {documentEquipment?.reference_number}</DialogTitle></DialogHeader>
           {documentEquipment && <ClientContractDocuments key={documentEquipment.id} companyId={companyId} clientId={clientId} siteId={documentEquipment.site_id ?? undefined} assetId={documentEquipment.id} />}
         </DialogContent>
       </Dialog>

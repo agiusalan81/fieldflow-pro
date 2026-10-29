@@ -47,7 +47,7 @@ export const sendChatPush = createServerFn({ method: "POST" })
   .inputValidator((i) => z.object({ messageIds: z.array(z.string().uuid()).min(1).max(20) }).parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: msgs } = await supabase.from("internal_messages").select("id,receiver_id,job_sheet_id,message_text,attachments,contact_card").in("id", data.messageIds).eq("sender_id", userId);
+    const { data: msgs } = await supabase.from("internal_messages").select("id,receiver_id,job_sheet_id,channel_id,message_text,attachments,contact_card").in("id", data.messageIds).eq("sender_id", userId);
     const { data: me } = await supabase.from("users").select("full_name").eq("id", userId).maybeSingle();
     const who = me?.full_name ?? "FieldBridge";
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -56,6 +56,7 @@ export const sendChatPush = createServerFn({ method: "POST" })
       const recipients = new Set<string>();
       let thread: string;
       if (m.receiver_id) { recipients.add(m.receiver_id); thread = `user:${userId}`; }
+      else if (m.channel_id) { thread = `channel:${m.channel_id}`; const r = await supabase.rpc("chat_channel_recipients", {_channel:m.channel_id}); for(const member of r.data??[])recipients.add(member.user_id); }
       else if (m.job_sheet_id) {
         thread = `job:${m.job_sheet_id}`;
         const [{ data: sheet }, { data: posters }] = await Promise.all([
@@ -85,13 +86,16 @@ export const notifyOpenJob = createServerFn({ method: "POST" })
   .inputValidator((i) => z.object({ jobId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const {data: allowed} = await supabase.rpc("member_dispatch_can");
+    if (!allowed) throw new Error("Dispatch access required");
     const { data: me } = await supabase.from("users").select("company_id, role").eq("id", userId).maybeSingle();
-    if (!me || !["admin", "superuser", "supervisor"].includes(me.role)) throw new Error("Only office staff and supervisors can announce open jobs");
+    if (!me) throw new Error("Only office staff and supervisors can announce open jobs");
     const { data: job } = await supabase.from("jobs").select("id, job_number, open_to_claim, clients(name), sites(name)").eq("id", data.jobId).eq("company_id", me.company_id).maybeSingle();
     if (!job?.open_to_claim) return { sent: 0 };
     // Only currently clocked-in field staff are alerted; off-shift devices stay quiet.
-    const { data: shifts } = await supabase.from("shifts").select("user_id").eq("company_id", me.company_id).is("ended_at", null).in("shift_type", ["shift", "standby"]);
-    const recipients = [...new Set((shifts ?? []).map((s) => s.user_id).filter((id) => id !== userId))];
+    const {data: eligible, error: recipientError} = await supabase.rpc('open_job_recipients',{_job:data.jobId});
+    if(recipientError)throw new Error('Open-job recipients could not be checked');
+    const recipients = [...new Set((eligible??[]).map(s=>s.user_id).filter(id=>id!==userId))];
     if (!recipients.length) return { sent: 0 };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: subs } = await supabaseAdmin.from("push_subscriptions").select("endpoint,p256dh,auth").in("user_id", recipients);
@@ -99,7 +103,7 @@ export const notifyOpenJob = createServerFn({ method: "POST" })
     const sent = await deliver(supabaseAdmin, (subs ?? []) as Sub[], {
       title: `Job #${job.job_number} up for grabs`,
       body: `${where || "New open job"} — first to claim gets the place. Tap to view.`,
-      url: "/available-jobs", tag: `open-job:${job.id}`,
+      url: `/available-jobs?job=${job.id}`, tag: `open-job:${job.id}`,
     });
     return { sent };
   });
@@ -136,7 +140,8 @@ async function deliver(supabaseAdmin: any, subs: Sub[], alert: Alert) {
     const enc = new TextEncoder();
     const payload = enc.encode(JSON.stringify(pushPayload(alert)));
     let sent = 0;
-    await Promise.all(subs.map(async (s) => {
+    for (let offset = 0; offset < subs.length; offset += 6) {
+    await Promise.all(subs.slice(offset, offset + 6).map(async (s) => {
       const { endpoint } = s;
       const head = b64url(enc.encode(JSON.stringify({ typ: "JWT", alg: "ES256" })));
       const body = b64url(enc.encode(JSON.stringify({ aud: new URL(endpoint).origin, exp: Math.floor(Date.now() / 1000) + 43200, sub: "mailto:support@fieldbridgeapp.com" })));
@@ -150,6 +155,7 @@ async function deliver(supabaseAdmin: any, subs: Sub[], alert: Alert) {
         else console.error("push failed", res.status);
       } catch (e) { console.error("push error", e); }
     }));
+    }
   return sent;
 }
 

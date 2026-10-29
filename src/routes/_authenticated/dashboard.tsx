@@ -29,7 +29,7 @@ import { JobTravelActions } from "@/components/job-travel-actions";
 import { UnfinishedWorkDialog } from "@/components/unfinished-work";
 import { captureShiftLocation } from '@/lib/shift-location';
 import { usePlanFeatures } from "@/lib/plan-features";
-import { alarmJobs, chime, OPEN_JOB_ALARM_MS } from "@/lib/open-job-alarm";
+import { useOpenJobs } from "@/lib/open-jobs";
 import { Megaphone } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({ staticData: { sitemap: false },
@@ -147,37 +147,19 @@ function UpForGrabs({ profile }: { profile: Profile }) {
   const qc = useQueryClient();
   const feature = usePlanFeatures(true);
   const smart = feature("skills_dispatch");
-  const [dismissed, setDismissed] = useState<ReadonlySet<string>>(new Set());
   const [busy, setBusy] = useState<string | null>(null);
-  const clocked = useQuery({
-    queryKey: ["my-open-shift", profile.id],
-    refetchInterval: 30_000,
-    queryFn: async () => {
-      const { data } = await supabase.from("shifts").select("id").eq("user_id", profile.id).is("ended_at", null).in("shift_type", ["shift", "standby"]).limit(1);
-      return (data ?? []).length > 0;
-    },
-  });
-  const jobs = useQuery({
-    queryKey: ["open-jobs"],
-    enabled: smart,
-    refetchInterval: 30_000,
-    queryFn: async () => { const r = await supabase.rpc("open_jobs_for_me"); if (r.error) throw r.error; return (r.data ?? []) as OpenJob[]; },
-  });
-  const alerting = alarmJobs(jobs.data ?? [], dismissed);
-  const ringing = smart && clocked.data === true && alerting.length > 0;
-  useEffect(() => {
-    if (!ringing) return;
-    chime();
-    const t = setInterval(chime, OPEN_JOB_ALARM_MS);
-    return () => clearInterval(t);
-  }, [ringing, alerting.map((j) => j.id).join(",")]);
-  if (!smart || !(jobs.data ?? []).length) return null;
+  const openJobs = useOpenJobs();
+  const jobs = { data: openJobs.jobs };
+  const alerting = openJobs.alerting;
+  const ringing = alerting.length > 0;
+  const clocked = { data: true };
+  if (!smart || !jobs.data.length) return null;
   const claim = async (id: string) => {
     setBusy(id);
     const r = await supabase.rpc("claim_open_job", { _job: id });
     setBusy(null);
     if (r.error) toast.error(r.error.message);
-    else { toast.success(r.data === "lead" ? "Job claimed — you are the lead" : "You joined the crew"); setDismissed((s) => new Set([...s, id])); }
+    else { toast.success(r.data === "lead" ? "Job claimed — you are the lead" : "You joined the crew"); openJobs.dismiss(id); }
     qc.invalidateQueries({ queryKey: ["open-jobs"] }); qc.invalidateQueries({ queryKey: ["today-jobs"] }); qc.invalidateQueries({ queryKey: ["schedule"] });
   };
   return (
@@ -202,7 +184,7 @@ function UpForGrabs({ profile }: { profile: Profile }) {
             {smart && <div className="flex flex-wrap items-center gap-1"><span className="text-xs text-muted-foreground">Required skills:</span>{!j.skills?.length&&<span className="text-xs">None specified</span>}{(j.skills??[]).map((s) => <span key={s} className="rounded-full border px-2 py-0.5 text-xs">{s}</span>)}</div>}
             <div className="flex gap-2">
               <Button size="sm" className="flex-1" disabled={busy !== null || !clocked.data} onClick={() => claim(j.id)}>{busy === j.id ? "Claiming…" : "Claim job"}</Button>
-              <Button size="sm" variant="ghost" onClick={() => setDismissed((s) => new Set([...s, j.id]))}>Dismiss</Button>
+              <Button size="sm" variant="ghost" onClick={() => openJobs.dismiss(j.id)}>Dismiss</Button>
             </div>
           </li>
         ))}

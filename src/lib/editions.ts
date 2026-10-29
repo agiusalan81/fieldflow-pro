@@ -34,7 +34,7 @@ export const EDITION_SPEC: Record<Edition, EditionSpec> = {
     home: "/hotels",
     hiddenRoutes: CONTRACTOR_ONLY,
     labels: {
-      "Clients & assets": "Properties, rooms & assets",
+      "Clients & assets": "Properties, rooms & facility assets",
       "Job sheets": "Work orders",
       "My job sheets": "My work orders",
       "QR code generator": "Room QR codes",
@@ -60,7 +60,7 @@ export const EDITION_SPEC: Record<Edition, EditionSpec> = {
     home: "/retail",
     hiddenRoutes: CONTRACTOR_ONLY.filter((r) => r !== "/surveys"),
     labels: {
-      "Clients & assets": "Stores, sites & equipment",
+      "Clients & assets": "Stores, sites & equipment & fixtures",
       "Job sheets": "Maintenance tickets",
       "My job sheets": "My tickets",
       "QR code generator": "Equipment QR codes",
@@ -120,3 +120,8 @@ export const CHECKLIST_PRESETS: Partial<Record<Edition, Record<string, string[]>
     "Building fabric": ["Inspect floor and wall tiles", "Check walls and paint", "Check ceilings for leaks", "Check doors and frames", "Check windows and balcony railings"],
   },
 };
+
+/** Broad asset wording for in-house maintenance, without changing contractor terminology. */
+export function editionAssetLabel(edition: Edition) {
+  return edition === "retail" ? "Equipment & fixtures" : edition === "hotel" ? "Room & facility assets" : "Equipment";
+}

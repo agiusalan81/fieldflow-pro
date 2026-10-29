@@ -1,13 +1,13 @@
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-type Incoming = { sender_id: string; receiver_id: string | null; job_sheet_id: string | null; message_text: string };
+type Incoming = { channel_id?: string | null; sender_id: string; receiver_id: string | null; job_sheet_id: string | null; message_text: string };
 
 const preview = (t: string) => (t.length > 90 ? `${t.slice(0, 90)}…` : t);
 
 /** Shows an in-app banner, plus a device notification when the tab is in the background and permission was given. */
 export async function notifyChatMessage(m: Incoming, me: string) {
-  const thread = m.job_sheet_id && !m.receiver_id ? `job:${m.job_sheet_id}` : m.receiver_id === me ? `user:${m.sender_id}` : null;
+  const thread = m.channel_id ? `channel:${m.channel_id}` : m.job_sheet_id && !m.receiver_id ? `job:${m.job_sheet_id}` : m.receiver_id === me ? `user:${m.sender_id}` : null;
   if (!thread) return;
   const href = `/messages?thread=${encodeURIComponent(thread)}`;
   // Already reading this conversation — no banner needed.

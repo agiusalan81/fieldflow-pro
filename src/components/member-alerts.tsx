@@ -1,3 +1,4 @@
+import { useGlobalOpenJobAlarm } from "@/lib/open-jobs";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -77,6 +78,7 @@ export function ProfileCompletionGate({ profile }: { profile: Profile }) {
 const heard = new Set<string>();
 /** Plays a chime for new chat messages, leave decisions and (for managers) urgent unsigned-departure requests. */
 export function NotificationSounds({ profile }: { profile: Profile }) {
+  useGlobalOpenJobAlarm(profile.id);
   const qc = useQueryClient();
   const on=usePlanFeatures(!!profile);const core=on('core');
   useEffect(() => core ? listenForChimeUnlock() : undefined, [core]);

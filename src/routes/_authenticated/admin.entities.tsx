@@ -181,6 +181,7 @@ function ClientsTab({ q, onOpen }: TabProps) {
 type Row = { key: string; clientId: string; client: string; contact: string; whatsapp: boolean; site: string; address: string; asset: string; category: string; serial: string };
 
 function UnifiedTable({ q, onOpen, clients, onDelete }: { q: string; onOpen: (c: Open, tab: RecordTab) => void; clients: { id: string; name: string; billing_address: string | null }[]; onDelete: (id: string) => void }) {
+  const word = useTerminology();
   const [client, setClient] = useState("all");
   const [cat, setCat] = useState("all");
   const { data } = useQuery({
@@ -215,19 +216,19 @@ function UnifiedTable({ q, onOpen, clients, onDelete }: { q: string; onOpen: (c:
         <Select value={client} onValueChange={setClient}><SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent><SelectItem value="all">All clients</SelectItem>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select>
         <Select value={cat} onValueChange={setCat}><SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent><SelectItem value="all">All equipment types</SelectItem>{categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select>
+          <SelectContent><SelectItem value="all">All {word("equipment").toLowerCase()} types</SelectItem>{categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select>
       </div>
       {list.length === 0 ? <EmptyState>Nothing matches these filters.</EmptyState> : (
         <div className="overflow-x-auto rounded-xl border bg-card">
           <Table>
-            <TableHeader><TableRow><TableHead>Client</TableHead><TableHead>Primary contact</TableHead><TableHead>Site / address</TableHead><TableHead>Equipment</TableHead><TableHead /></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>Client</TableHead><TableHead>Primary contact</TableHead><TableHead>Site / address</TableHead><TableHead>{word("equipment")}</TableHead><TableHead /></TableRow></TableHeader>
             <TableBody>
               {list.map((r) => (
                 <TableRow key={r.key} className={ROW} onClick={() => onOpen({ id: r.clientId, name: r.client }, r.asset ? "equipment" : "sites")}>
                   <TableCell className="font-medium">{r.client}</TableCell>
                   <TableCell className="text-sm">{r.contact}{r.whatsapp && <WhatsAppBadge />}</TableCell>
                   <TableCell className="text-sm"><span className="text-foreground">{r.site}</span><span className="block text-xs text-muted-foreground">{r.address || "—"}</span></TableCell>
-                  <TableCell className="text-sm">{r.asset ? <><span className="font-mono">{r.asset}</span> <span className="rounded-full bg-secondary px-2 py-0.5 text-xs">{r.category}</span>{r.serial && <span className="block text-xs text-muted-foreground">S/N {r.serial}</span>}</> : <span className="text-muted-foreground">No equipment</span>}</TableCell>
+                  <TableCell className="text-sm">{r.asset ? <><span className="font-mono">{r.asset}</span> <span className="rounded-full bg-secondary px-2 py-0.5 text-xs">{r.category}</span>{r.serial && <span className="block text-xs text-muted-foreground">S/N {r.serial}</span>}</> : <span className="text-muted-foreground">No {word("equipment").toLowerCase()}</span>}</TableCell>
                   <TableCell className="text-right"><Button size="icon" variant="ghost" aria-label="Delete client" onClick={(e) => { e.stopPropagation(); onDelete(r.clientId); }}><Trash2 className="h-4 w-4" /></Button></TableCell>
                 </TableRow>
               ))}

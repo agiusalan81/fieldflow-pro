@@ -2428,6 +2428,8 @@ export type Database = {
       internal_messages: {
         Row: {
           attachments: Json
+          broadcast_channel_id: string | null
+          channel_id: string | null
           company_id: string
           contact_card: Json | null
           created_at: string
@@ -2439,6 +2441,8 @@ export type Database = {
         }
         Insert: {
           attachments?: Json
+          broadcast_channel_id?: string | null
+          channel_id?: string | null
           company_id: string
           contact_card?: Json | null
           created_at?: string
@@ -2450,6 +2454,8 @@ export type Database = {
         }
         Update: {
           attachments?: Json
+          broadcast_channel_id?: string | null
+          channel_id?: string | null
           company_id?: string
           contact_card?: Json | null
           created_at?: string
@@ -2460,6 +2466,20 @@ export type Database = {
           sender_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "internal_messages_broadcast_channel_id_fkey"
+            columns: ["broadcast_channel_id"]
+            isOneToOne: false
+            referencedRelation: "message_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "internal_messages_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "message_channels"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "internal_messages_company_id_fkey"
             columns: ["company_id"]
@@ -2951,6 +2971,7 @@ export type Database = {
           acknowledged_at: string | null
           asset_id: string | null
           assigned_technician_id: string | null
+          claim_hold: boolean
           client_id: string
           company_id: string
           created_at: string
@@ -2977,6 +2998,7 @@ export type Database = {
           acknowledged_at?: string | null
           asset_id?: string | null
           assigned_technician_id?: string | null
+          claim_hold?: boolean
           client_id: string
           company_id: string
           created_at?: string
@@ -3003,6 +3025,7 @@ export type Database = {
           acknowledged_at?: string | null
           asset_id?: string | null
           assigned_technician_id?: string | null
+          claim_hold?: boolean
           client_id?: string
           company_id?: string
           created_at?: string
@@ -4341,6 +4364,64 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_channel_members: {
+        Row: {
+          channel_id: string
+          user_id: string
+        }
+        Insert: {
+          channel_id: string
+          user_id: string
+        }
+        Update: {
+          channel_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_channel_members_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "message_channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_channels: {
+        Row: {
+          archived: boolean
+          company_id: string
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+        }
+        Insert: {
+          archived?: boolean
+          company_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          name: string
+        }
+        Update: {
+          archived?: boolean
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_channels_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -6956,7 +7037,18 @@ export type Database = {
         Returns: string
       }
       branding_offers: { Args: never; Returns: Json }
+      broadcast_message_channel: {
+        Args: { _channel: string; _text: string }
+        Returns: string[]
+      }
       can_read_chat_object: { Args: { _name: string }; Returns: boolean }
+      chat_channel_access: { Args: { _channel: string }; Returns: boolean }
+      chat_channel_recipients: {
+        Args: { _channel: string }
+        Returns: {
+          user_id: string
+        }[]
+      }
       chat_sheet_access: { Args: { _sheet: string }; Returns: boolean }
       claim_open_job: { Args: { _job: string }; Returns: string }
       client_contract_coverage: { Args: { _client: string }; Returns: Json }
@@ -7154,6 +7246,12 @@ export type Database = {
       next_document_number: {
         Args: { _company: string; _kind: string }
         Returns: string
+      }
+      open_job_recipients: {
+        Args: { _job: string }
+        Returns: {
+          user_id: string
+        }[]
       }
       open_jobs_for_me: {
         Args: never
@@ -7375,6 +7473,15 @@ export type Database = {
           _price: number
         }
         Returns: undefined
+      }
+      save_message_channel: {
+        Args: {
+          _archived?: boolean
+          _id: string
+          _members: string[]
+          _name: string
+        }
+        Returns: string
       }
       save_my_staff_signature: {
         Args: { _signature: string }
