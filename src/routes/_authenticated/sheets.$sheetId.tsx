@@ -1,4 +1,5 @@
 import {formatSiteDisplay} from "@/lib/site-display";
+import { JobIncentiveBadge } from '@/components/my-incentives';
 import { TravelPicker } from "@/components/travel-picker";
 import { LiftMaintenanceChecklist } from "@/components/lift-maintenance";
 import { protocolForCategory } from "@/lib/lift-maintenance";
@@ -439,6 +440,7 @@ function SheetForm() {
         {safetyItems.length > 0 && <Section n={0} title="Pre-work safety assessment"><div className="space-y-2">{safetyItems.map((i) => <label key={i} className="flex items-start gap-3 border p-3 text-sm"><Checkbox checked={!!checks[`safety:${i}`]} onCheckedChange={(v) => setChecks({ ...checks, [`safety:${i}`]: !!v })} />{i}</label>)}</div></Section>}
         <div className="flex flex-wrap items-center gap-2">
           <StatusBadge status={sheet.status} />
+          <JobIncentiveBadge jobId={sheet.job_id} />
           {sheet.status === "in_transit" && <Button type="button" className="h-11" disabled={busy || !localReady} onClick={() => arrive()}><MapPin className="mr-1 h-4 w-4" />Arrive on site</Button>}
           {readOnly && <span className="text-sm text-muted-foreground">Completed — read-only view</span>}
           {manager && form.requires_admin_approval && <span className="inline-flex items-center gap-1 rounded-full bg-warning/25 px-2.5 py-0.5 text-xs text-warning-foreground"><ShieldAlert className="h-3 w-3" />Needs admin approval</span>}

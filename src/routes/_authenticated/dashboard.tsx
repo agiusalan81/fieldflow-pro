@@ -32,6 +32,7 @@ import { usePlanFeatures } from "@/lib/plan-features";
 import { useOpenJobs } from "@/lib/open-jobs";
 import { Megaphone } from "lucide-react";
 import { incentiveAmount } from '@/lib/claim-incentive';
+import { JobIncentiveBadge, MyIncentives } from '@/components/my-incentives';
 
 export const Route = createFileRoute("/_authenticated/dashboard")({ staticData: { sitemap: false },
   head: () => ({
@@ -221,6 +222,7 @@ function TechToday({ profile, readOnly, switcher }: { profile: Profile; readOnly
       <div className="mx-auto max-w-4xl space-y-6">
         <ShiftTracker profile={profile} />{switcher && !readOnly && <DepartureRequests />}
         {!readOnly && <UpForGrabs profile={profile} />}
+        {!readOnly && <MyIncentives compact />}
         <InternalWorkCard key={profile.id} profile={profile} readOnly={readOnly} />
         <Button asChild variant="outline" className="h-12 w-full"><Link to="/technical-library"><ClipboardList className="mr-2 h-5 w-5" />Technical library</Link></Button>
         <ScanQr />
@@ -242,6 +244,7 @@ function TechToday({ profile, readOnly, switcher }: { profile: Profile; readOnly
                     <PriorityBadge p={j.priority} />
                   </div>
                   <p className="line-clamp-2 text-sm text-foreground">{j.problem_summary || "No problem summary"}</p>
+                  <JobIncentiveBadge jobId={j.id} />
                   <div className="grid grid-cols-2 gap-2">
                     <JobTravelActions profile={profile} jobId={j.id} address={j.sites?.address} readOnly={readOnly} assisting={isAssisting(j, profile.id)} />
                     <LiftHistoryButton assetId={j.asset_id} label={`${j.assets?.reference_number ?? ""} · ${j.sites?.name ?? j.clients?.name ?? ""}`} />
