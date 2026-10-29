@@ -22,7 +22,11 @@ export type PublicCatalog = { plans: PublicCatalogItem[]; packs: PublicCatalogIt
  * Public, unauthenticated read of the active pricing catalogue for the marketing site.
  * Rows are limited server-side by the `catalog_public_read` anon policy (state = 'active').
  */
-export const listPublicCatalog = createServerFn({ method: "GET" }).handler(async (): Promise<PublicCatalog> => {
+export const listPublicCatalog = createServerFn({ method: "GET" }).inputValidator((input?: { product?: string }) => {
+  const product = input?.product ?? "fieldbridge";
+  if (!["fieldbridge", "fieldbridge-retail", "fieldbridge-hotels"].includes(product)) throw new Error("Unknown product");
+  return { product };
+}).handler(async ({ data: input }): Promise<PublicCatalog> => {
   const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
   const supabasePublic = createClient<Database>(process.env["SUPABASE_URL"]!, key, {
     auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
@@ -36,19 +40,16 @@ export const listPublicCatalog = createServerFn({ method: "GET" }).handler(async
       },
     },
   });
+  const { data: product, error: productError } = await supabasePublic
+    .from("platform_products").select("id, trial_days").eq("slug", input.product).eq("active", true).maybeSingle();
+  const trialDays = product?.trial_days ?? 60;
+  if (!product || productError) return { plans: [], packs: [], trialDays, error: "Catalog unavailable" };
   const { data, error } = await supabasePublic
     .from("platform_catalog")
     .select("id, name, kind, sort_order, monthly_price, quarterly_price, yearly_price, included_seats, storage_gb, billing_basis, modules")
     .eq("state", "active")
+    .eq("product_id", product.id)
     .order("sort_order");
-  // Live product settings (trial length) so the marketing site always matches HQ.
-  const { data: product } = await supabasePublic
-    .from("platform_products")
-    .select("trial_days")
-    .eq("slug", "fieldbridge")
-    .eq("active", true)
-    .maybeSingle();
-  const trialDays = product?.trial_days ?? 60;
   if (error) return { plans: [], packs: [], trialDays, error: "Catalog unavailable" };
   const items: PublicCatalogItem[] = (data ?? []).map((r) => ({
     id: r.id,
