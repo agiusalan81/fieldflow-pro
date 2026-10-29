@@ -1,3 +1,4 @@
+import { useOpenJobs } from "@/lib/open-jobs";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -17,6 +18,7 @@ export const Route = createFileRoute("/_authenticated/available-jobs")({ staticD
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary" },
   ] }),
+  validateSearch: (s: Record<string, unknown>): {job?: string} => typeof s["job"] === "string" ? {job:s["job"]} : {},
   component: AvailableJobs,
 });
 
@@ -25,7 +27,10 @@ function AvailableJobs() {
   const feature = usePlanFeatures(!!p);
   const qc = useQueryClient();
   const [busy, setBusy] = useState<string | null>(null);
-  const jobs = useQuery({ queryKey: ["open-jobs"], refetchInterval: 30_000, queryFn: async () => { const r = await supabase.rpc("open_jobs_for_me"); if (r.error) throw r.error; return r.data ?? []; } });
+  const openJobs = useOpenJobs();
+  const jobs = {...openJobs, data: openJobs.jobs};
+  const {job: focus} = Route.useSearch();
+
   if (!feature("skills_dispatch")) return <AppShell title="Available jobs"><EmptyState>Not included in your plan. Open job claiming is part of Skills & Smart Dispatch.</EmptyState></AppShell>;
   const claim = async (id: string) => {
     setBusy(id);
@@ -39,7 +44,7 @@ function AvailableJobs() {
       <div className="space-y-3">
         <p className="text-sm text-muted-foreground">Jobs open to the team that match your skills. You must be clocked in to claim.</p>
         {jobs.isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : !(jobs.data ?? []).length ? <EmptyState>No open jobs right now. New open jobs appear here automatically.</EmptyState> : (jobs.data ?? []).map(j => (
-          <div key={j.id} className="rounded-xl border bg-card p-4">
+          <div key={j.id} id={`job-${j.id}`} className={`rounded-lg border bg-card p-4 ${focus === j.id ? "ring-2 ring-primary" : ""}`}>
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div><p className="font-medium">#{j.job_number} · {j.client_name ?? "Client"}{j.site_name ? ` · ${j.site_name}` : ""}</p>
                 <p className="text-sm text-muted-foreground">{j.scheduled_date}{j.window_start ? ` · ${j.window_start.slice(0, 5)}` : ""}{j.window_end ? `–${j.window_end.slice(0, 5)}` : ""} · <span className="capitalize">{j.priority}</span></p></div>
@@ -47,7 +52,7 @@ function AvailableJobs() {
             </div>
             {j.problem_summary && <p className="mt-2 text-sm">{j.problem_summary}</p>}
             {!!j.skills?.length && <div className="mt-2 flex flex-wrap gap-1">{j.skills.map(s => <span key={s} className="rounded-full border px-2 py-0.5 text-xs">{s}</span>)}</div>}
-            <Button className="mt-3 h-11 w-full sm:w-auto" disabled={busy !== null} onClick={() => claim(j.id)}>{busy === j.id ? "Claiming…" : "Claim job"}</Button>
+            <Button className="mt-3 h-11 w-full sm:w-auto" disabled={busy !== null} onClick={() => claim(j.id)}>{busy === j.id ? "Claiming…" : "Claim job"}</Button><Button variant="ghost" className="mt-3" disabled={openJobs.dismissed.has(j.id)} onClick={()=>openJobs.dismiss(j.id)}>{openJobs.dismissed.has(j.id) ? "Alarm dismissed" : "Dismiss alarm"}</Button>
           </div>
         ))}
       </div>
