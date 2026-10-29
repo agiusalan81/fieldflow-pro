@@ -17,7 +17,7 @@
 - role-menu.ts exclusions are navigation-only. Legacy quote drafts default missing fields on read only.
 - Analytics: owner-only coarse counts; server-derived tenant. Product-scoped outreach/feedback; saved follow-ups send nothing.
 - HQ: product-scoped owner-only setup/invites/resets; ordered tenant deletes retain users/branding/platform bills and refuse issued payroll — why: no cross-tenant/financial loss.
-- Chrome: neutral surfaces/token controls; phone bar neutral, no gradients.
+- Chrome: neutral tokens; root clips for sticky previews. Plaques share escaped preview/print messages and fonts.
 - Travel shares startJobTravel; arrival saves time before on-site status.
 - Invite functions/loaders use timeouts and middleware.
 - Tenant RLS uses company_id/current_company_id(); never UI company filters; 

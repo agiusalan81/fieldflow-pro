@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Approved: AisleOps/Hotels plaque headline/subtitle formatting and live preview, retain A6/A5/A4/A3 printing; repair sticky document branding preview.
+- [x] AisleOps/Hotels plaque headline/subtitle colour, bold, underline and shared fonts with live preview; A6/A5/A4/A3 dimensions retained. Signed-in retail formatting and real print window verified, Hotel editor checked, 710px fits; document preview pinned at y=80 across three scroll positions. Six tests pass; build OK; not published. Messages are session-only; physical printer output not tested.
 - [x] Approved batch: unified equipment selector, strict in-house Lift/client exclusion, company vehicle policy/member defaults, driver/passenger/on-site clock-in and fleet exclusions. 27 tests pass; signed-in company policy save/reload/restoration, no-vehicle clock-in/read-back/clock-out and existing sheet checked; build OK. Real passenger/member-override and hotel/retail sessions not exercised; not published.
 - [x] Lift costing sheets: supervisors need "Available for: Lift costing sheets" (Skills page / Individual capabilities); DB enforced. 6 tests pass.
 - [x] Extended MINAKEL test library: +4 clients, 8 sites, 16 equipment, 10 skills + assignments, 8 fault codes, 8 stock parts, 3 costing templates, 2 costing sheets, 4 lift surveys.
