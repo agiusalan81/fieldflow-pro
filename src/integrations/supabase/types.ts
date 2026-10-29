@@ -3052,6 +3052,7 @@ export type Database = {
           assigned_technician_id: string | null
           claim_hold: boolean
           claim_incentive_cents: number
+          claim_incentive_override: boolean
           client_id: string
           company_id: string
           created_at: string
@@ -3080,6 +3081,7 @@ export type Database = {
           assigned_technician_id?: string | null
           claim_hold?: boolean
           claim_incentive_cents?: number
+          claim_incentive_override?: boolean
           client_id: string
           company_id: string
           created_at?: string
@@ -3108,6 +3110,7 @@ export type Database = {
           assigned_technician_id?: string | null
           claim_hold?: boolean
           claim_incentive_cents?: number
+          claim_incentive_override?: boolean
           client_id?: string
           company_id?: string
           created_at?: string
