@@ -31,8 +31,7 @@
 - DWR: one canonical report/shift; retain corrected/superseded originals; filing clears held flags; 
 - Dispatch: lead/assistant share one sheet; lead edits, logs seed both. Null dates use Unscheduled queue; atomic quote conversion retains frozen billing prices — why: scheduling can wait. 
 - Overtime uses captured DWR intervals/rules; old reports show associated sites only; factual allocation.
-- Typography: applyTypography/AppShell; locale: locale.ts.
-- Branding shares asset-backed font IDs and preview/PDF decorations; DB/HQ locks protect saved values.
+- - Branding shares asset-backed font IDs and preview/PDF decorations; DB/HQ locks protect saved values.
 - Auth emails share auth-brand.tsx; the managed handler owns verification and dispatch for reliable account recovery.
 - Shared document-preview tabs serve desktop/mobile; no implicit draft saves.
 - Independent settings editors use settingsSectionPatch to write only owned columns; JSON styling saves merge current stored keys; 
@@ -68,7 +67,7 @@
 - Public catalog/legal use narrow reads; HQ stays private. Trust pages share renderers; sitemap uses explicit route decisions, no generated lastmod.
 - Staff signatures share staff-signature editors and own-user RPC; protected real roles govern eligibility and profile guards retain identity protection.
 - Sheet sync serializes per account/sheet, rebasing local versions only. Autosave uses dirty fingerprints; failures retain newer drafts.
-- PDF.js uses v4/canvasContext; newer Map APIs break field devices.
+- PDF.js v4/canvasContext; newer Map APIs break field devices.
 - Contracts: scope-ranked attachments seed new coverage; atomic matrix RPCs freeze work/prices with optional passport rates/collective totals; PPM/portal retain coverage — why: never rewrite agreed history.
 - StaffContacts/contact-editor own contact writes; portal scope is staff-only. HQ setup options save atomically; staff/portal access stays independent.
 - Delivery uses client_message_recipients; preferences choose recipients, not unsupported channel delivery.
@@ -85,4 +84,4 @@
 - Lift costing: templates only seed sheet defaults (sheets copy values); access via member_costing_can()/can_lift_costing, mirrored by liftCostingAccess(); proposal branding follows branding_documents — why: saved quotes never change, supervisors cost only when enabled.
 - Editions: engine_edition + company_product_id() pick tenant product; editions.ts only reskins — why: one engine, DB access.
 - HQ test switcher: owner-only, test-only Superuser sign-in — why: owner membership unchanged.
-- Inventory governance: company_settings tool_checkout_mode/parts_control_mode enforced by tool_sign_out/tool_sign_in RPCs and guard_inventory_stock, mirrored in tested inventory-control.ts — why: technician self-service is a tenant choice, never UI-only.
+- Inventory: tool/parts modes enforced by tool_sign_* RPCs + guard_inventory_stock, mirrored in inventory-control.ts — why: DB-enforced.
