@@ -1,0 +1,16 @@
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+const policies = [['flexible','Flexible'],['mandatory','Vehicle required'],['disabled','No vehicles']] as const;
+export function VehicleCompanySettings({companyId}: {companyId:string}) {
+  const qc = useQueryClient();
+  const q = useQuery({queryKey:['vehicle-company-settings'],queryFn:async()=>{const r=await supabase.from('company_settings').select('vehicle_clock_in_policy').eq('company_id',companyId).single();if(r.error)throw r.error;return r.data;}});
+  return <section className="space-y-3"><h3 className="font-medium">Vehicle use at clock-in</h3>{q.error && <p role="alert" className="text-destructive">{q.error.message}</p>}<Select value={q.data?.vehicle_clock_in_policy ?? 'flexible'} disabled={!q.data} onValueChange={async v=>{const r=await supabase.from('company_settings').update({vehicle_clock_in_policy:v}).eq('company_id',companyId);if(r.error){toast.error(r.error.message);return;}toast.success('Clock-in policy saved');await qc.invalidateQueries({queryKey:['vehicle-company-settings']});}}><SelectTrigger aria-label="Company vehicle policy"><SelectValue/></SelectTrigger><SelectContent>{policies.map(([v,l])=><SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent></Select></section>;
+}
+export function MemberVehicleSettings({userId,active}: {userId:string;active:boolean}) {
+  const qc=useQueryClient();
+  const q=useQuery({queryKey:['member-vehicle-settings',userId],queryFn:async()=>{const r=await supabase.from('users').select('vehicle_policy_override,default_work_mode').eq('id',userId).single();if(r.error)throw r.error;return r.data;}});
+  const save=async(patch:{vehicle_policy_override?:string|null;default_work_mode?:string})=>{const r=await supabase.from('users').update(patch).eq('id',userId);if(r.error){toast.error(r.error.message);return;}toast.success('Member clock-in settings saved');await qc.invalidateQueries({queryKey:['member-vehicle-settings',userId]});};
+  return <div className="mt-4 grid gap-3 border-t pt-3 sm:grid-cols-2"><div className="space-y-2"><p className="text-sm font-medium">Vehicle policy</p><Select value={q.data?.vehicle_policy_override ?? 'company'} disabled={!q.data||!active} onValueChange={v=>void save({vehicle_policy_override:v==='company'?null:v})}><SelectTrigger aria-label="Member vehicle policy"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="company">Company default</SelectItem>{policies.map(([v,l])=><SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent></Select></div><div className="space-y-2"><p className="text-sm font-medium">Usual work location</p><Select value={q.data?.default_work_mode ?? 'mobile'} disabled={!q.data||!active} onValueChange={v=>void save({default_work_mode:v})}><SelectTrigger aria-label="Usual work location"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="mobile">Mobile / travelling</SelectItem><SelectItem value="stationary">On-site / stores</SelectItem></SelectContent></Select></div></div>;
+}

@@ -10,6 +10,7 @@ import { EstimateSettings } from "@/components/estimate-settings";
 import { QuoteAcceptanceSetting } from "@/components/quote-acceptance-setting";
 import { PriceListSettings } from "@/components/price-list-settings";
 import { InventoryControlSettings } from "@/components/tool-register";
+import { VehicleCompanySettings } from "@/components/vehicle-settings";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -431,6 +432,7 @@ function SettingsSections({ superuser, companyId, userId, role }: { superuser: b
       { key: "profile", label: "Profile & details", render: () => <ProfileTab companyId={companyId} part="details" navigation={navigation} /> },
       { key: "industry", label: "Industry & trades", render: () => <IndustryTab companyId={companyId} /> },
       { key: "hours", label: "Hours & overtime", render: () => <HoursTab companyId={companyId} /> },
+      { key: "vehicles", label: "Clock-in & vehicles", render: () => <VehicleCompanySettings companyId={companyId} /> },
       { key: "inventory", label: "Inventory control", render: () => <InventoryControlSettings companyId={companyId} /> },
     ] },
     { title: "Branding & appearance", items: [

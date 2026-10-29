@@ -15,7 +15,7 @@ describe('shared shift clock-in', () => {
   it('stores the editable 3-letter 3-number plate on the shift', async () => {
     await clockInShift(profile, 'xyz 987');
     expect(from).toHaveBeenCalledWith('shifts');
-    expect(insert).toHaveBeenCalledWith({ shift_type: 'shift', company_id: 'company-1', user_id: 'tech-1', vehicle_reg: 'XYZ987' });
+    expect(insert).toHaveBeenCalledWith({ shift_type: 'shift', company_id: 'company-1', user_id: 'tech-1', vehicle_reg: 'XYZ987', vehicle_use: 'driver' });
   });
   it('does not clock in or ask for location without a valid plate', async () => {
     await expect(clockInShift(profile, '')).rejects.toThrow('3 letters and 3 numbers');

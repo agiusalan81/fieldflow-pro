@@ -93,14 +93,14 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
 
   const [plateOpen, setPlateOpen] = useState(false);
   const [closeOpen, setCloseOpen] = useState(false);
-  const toggle = async (type: "shift" | "travel", current?: { id: string; started_at: string }, vehicle?: string) => {
+  const toggle = async (type: "shift" | "travel", current?: { id: string; started_at: string }, vehicle?: string, vehicleUse: import('@/lib/vehicle-clock-in').VehicleUse = 'driver') => {
     if (readOnly) return;
     if(type==='shift'&&current)await captureShiftLocation(profile,current.id,'clock_out');
     const endedAt = new Date().toISOString();
     const res = current
       ? await supabase.from("shifts").update({ ended_at: endedAt }).eq("id", current.id)
       : type === "shift"
-        ? await clockInShift(profile, vehicle ?? "").then(() => ({ error: null }))
+        ? await clockInShift(profile, vehicle ?? "", vehicleUse).then(() => ({ error: null }))
         : await supabase.from("shifts").insert({ shift_type: type, company_id: profile.company_id, user_id: profile.id });
     if (res.error) { toast.error(res.error.message); return; }
     if (type === "shift" && current && travel) await supabase.from("shifts").update({ ended_at: endedAt }).eq("id", travel.id);
@@ -135,7 +135,7 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
         </Button>
       </div>
       {closeOpen && shift && <UnfinishedWorkDialog profile={profile} onCancel={() => setCloseOpen(false)} onDone={() => { setCloseOpen(false); void toggle("shift", shift); }} />}
-      <ShiftClockInDialog userId={profile.id} open={plateOpen} onOpenChange={setPlateOpen} onConfirm={plate => toggle("shift", undefined, plate)} />
+      <ShiftClockInDialog userId={profile.id} open={plateOpen} onOpenChange={setPlateOpen} onConfirm={(plate,use) => toggle("shift", undefined, plate,use)} />
     </section>
   );
 }

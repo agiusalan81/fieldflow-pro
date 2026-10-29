@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Approved batch: unified equipment selector; strict in-house Lift/client-section exclusion; company vehicle policy/member override; driver/passenger/on-site clock-in and fleet exclusions across all editions; tests and signed-in checks.
 - [x] Lift costing sheets: supervisors need "Available for: Lift costing sheets" (Skills page / Individual capabilities); DB enforced. 6 tests pass.
 - [x] Extended MINAKEL test library: +4 clients, 8 sites, 16 equipment, 10 skills + assignments, 8 fault codes, 8 stock parts, 3 costing templates, 2 costing sheets, 4 lift surveys.
 - [x] Approved HQ batch: creation-time test toggle and initial Superuser invite verified through real HQ creation; MINAKEL reset executed, users/roles/settings hashes unchanged; fictional clients/sites, six passports, draft contracts/checklists, CRM, estimates, jobs/sheets, inventory and VIS-0001 seeded and read back; passport/CRM shown signed-in, tests/build pass. Platform billing and uploaded files retained; no signatures/acceptances fabricated. Temporary HQ setup company remains marked test.

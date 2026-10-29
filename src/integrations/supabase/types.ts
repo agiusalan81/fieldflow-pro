@@ -908,6 +908,7 @@ export type Database = {
           trades: string[]
           updated_at: string
           vat_number: string
+          vehicle_clock_in_policy: string
           website: string | null
           whatsapp_phone: string | null
           work_days: number[]
@@ -965,6 +966,7 @@ export type Database = {
           trades?: string[]
           updated_at?: string
           vat_number?: string
+          vehicle_clock_in_policy?: string
           website?: string | null
           whatsapp_phone?: string | null
           work_days?: number[]
@@ -1022,6 +1024,7 @@ export type Database = {
           trades?: string[]
           updated_at?: string
           vat_number?: string
+          vehicle_clock_in_policy?: string
           website?: string | null
           whatsapp_phone?: string | null
           work_days?: number[]
@@ -6010,6 +6013,7 @@ export type Database = {
           started_at: string
           user_id: string
           vehicle_reg: string | null
+          vehicle_use: string | null
         }
         Insert: {
           auto_close_note?: string | null
@@ -6025,6 +6029,7 @@ export type Database = {
           started_at?: string
           user_id: string
           vehicle_reg?: string | null
+          vehicle_use?: string | null
         }
         Update: {
           auto_close_note?: string | null
@@ -6040,6 +6045,7 @@ export type Database = {
           started_at?: string
           user_id?: string
           vehicle_reg?: string | null
+          vehicle_use?: string | null
         }
         Relationships: [
           {
@@ -6875,6 +6881,7 @@ export type Database = {
           app_theme_preference: string
           company_id: string
           created_at: string
+          default_work_mode: string
           email: string
           employee_id: string | null
           full_name: string
@@ -6887,11 +6894,13 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
           signature_on_file: string | null
           technician_initials: string | null
+          vehicle_policy_override: string | null
         }
         Insert: {
           app_theme_preference?: string
           company_id: string
           created_at?: string
+          default_work_mode?: string
           email: string
           employee_id?: string | null
           full_name: string
@@ -6904,11 +6913,13 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
           signature_on_file?: string | null
           technician_initials?: string | null
+          vehicle_policy_override?: string | null
         }
         Update: {
           app_theme_preference?: string
           company_id?: string
           created_at?: string
+          default_work_mode?: string
           email?: string
           employee_id?: string | null
           full_name?: string
@@ -6921,6 +6932,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
           signature_on_file?: string | null
           technician_initials?: string | null
+          vehicle_policy_override?: string | null
         }
         Relationships: [
           {
@@ -7138,6 +7150,7 @@ export type Database = {
       my_member_capabilities: { Args: never; Returns: Json }
       my_registration_status: { Args: never; Returns: string }
       my_role: { Args: never; Returns: Database["public"]["Enums"]["app_role"] }
+      my_vehicle_clock_in_settings: { Args: never; Returns: Json }
       next_document_number: {
         Args: { _company: string; _kind: string }
         Returns: string
