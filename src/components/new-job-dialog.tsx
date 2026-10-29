@@ -107,7 +107,7 @@ export function NewJobDialog({pending,onClose}:{pending?:PendingDispatch;onClose
     savingRef.current = true; setSaving(true);
     try {
     const { data: job, error } = pending ? await (async()=>{
-      const r=await supabase.rpc('dispatch_pending_work',{_sheet:pending.id,_expected:pending.pending_status,_dispatch:{...f,teamSize,skills:smart?f.skills:[],crew:smart?f.crew:[],open:availability.open_to_claim,scheduled_date:availability.scheduled_date,window_start:f.tbd?null:f.window_start,window_end:f.tbd?null:f.window_end}});
+      const r=await supabase.rpc('dispatch_pending_work',{_sheet:pending.id,_expected:pending.pending_status,_dispatch:{...f,claim_incentive_cents:bonusCents,teamSize,skills:smart?f.skills:[],crew:smart?f.crew:[],open:availability.open_to_claim,scheduled_date:availability.scheduled_date,window_start:f.tbd?null:f.window_start,window_end:f.tbd?null:f.window_end}});
       return {data:r.data?{id:r.data,job_number:''}:null,error:r.error};
     })() : await supabase.from("jobs").insert({
       company_id: profile.company_id, client_id: f.client_id,
@@ -115,10 +115,10 @@ export function NewJobDialog({pending,onClose}:{pending?:PendingDispatch;onClose
       assigned_technician_id: uuidOrNull(f.tech), secondary_technician_id: uuidOrNull(f.assistant), ...availability,
       window_start: f.window_start || null, window_end: f.window_end || null, priority: f.priority, problem_summary: f.problem_summary || null,
       required_team_size: teamSize,
+      ...(bonusCents!==null?{claim_incentive_cents:bonusCents,claim_incentive_override:true}:{}),
       
     }).select("id, job_number").single();
     if (error) { toast.error(error.message); return; }
-    if(job&&bonusCents!==null){const r=await supabase.from('jobs').update({claim_incentive_cents:bonusCents}).eq('id',job.id);if(r.error)toast.warning('Job saved, but bonus override could not be saved');}
     const reportWarning = await closeDispatchedReport(search.problemId, uuidOrNull(f.asset_id));
     if (smart && job && !pending) {
       if (f.skills.length) { const r = await supabase.from("job_skills").insert(f.skills.map(skill_id => ({ job_id: job.id, skill_id, company_id: profile.company_id, mandatory: true }))); if (r.error) toast.error(r.error.message); }

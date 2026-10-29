@@ -11,7 +11,6 @@ export const savePushSubscription = createServerFn({ method: "POST" })
   .inputValidator((i) => z.object({ endpoint: z.string().url().startsWith("https://").max(1000), p256dh: z.string().min(10).max(200), auth: z.string().min(8).max(100) }).parse(i))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { deliver } = await import("@/lib/web-push-delivery.server");
     // A device moves to whoever signed in on it last.
     const { error } = await supabaseAdmin.from("push_subscriptions").upsert({ ...data, user_id: context.userId, updated_at: new Date().toISOString() }, { onConflict: "endpoint" });
     if (error) throw new Error("Could not save notification settings");
