@@ -13,7 +13,7 @@ import { RetailValue } from "@/components/retail-value";
 const retailCatalogQuery = queryOptions({ queryKey: ["public-catalog", "fieldbridge-retail"], queryFn: () => listPublicCatalog({ data: { product: "fieldbridge-retail" } }), staleTime: 60_000, refetchInterval: 60_000 });
 
 const TITLE = "AisleOps | Supermarket & Store Maintenance Software";
-const DESC = "AisleOps supermarket maintenance software: paperless work orders, QR fault reporting and dispatch. Compare team plans and estimate retail maintenance ROI with transparent assumptions.";
+const DESC = "AisleOps supermarket maintenance software: paperless work orders, QR fault reporting and dispatch. Compare team plans and estimate your retail maintenance ROI.";
 
 export const Route = createFileRoute("/retail")({
   staticData: { sitemap: true },
@@ -24,11 +24,35 @@ export const Route = createFileRoute("/retail")({
       { property: "og:title", content: TITLE }, { property: "og:description", content: DESC },
       { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" },
     ],
-    scripts: [{ type: "application/ld+json", children: JSON.stringify({ "@context": "https://schema.org", "@type": "SoftwareApplication", name: "AisleOps", applicationCategory: "BusinessApplication", operatingSystem: "Web", description: DESC, offers: (loaderData?.plans ?? []).map(p => ({ "@type": "Offer", name: p.name, price: p.monthly_price, priceCurrency: "EUR", description: `Monthly company plan with ${p.included_seats} team accounts and ${p.storage_gb} GB storage.` })) }) }],
+    scripts: [{ type: "application/ld+json", children: JSON.stringify({ "@context": "https://schema.org", "@type": "SoftwareApplication", name: "AisleOps", applicationCategory: "BusinessApplication", operatingSystem: "Web", description: DESC, offers: (loaderData?.plans ?? []).map(p => ({ "@type": "Offer", name: p.name, price: p.monthly_price, priceCurrency: "EUR", description: `Monthly company plan with ${p.included_seats} team accounts and fair-use cloud storage.` })) }) }],
   }),
   component: RetailPage,
   errorComponent: () => <div role="alert" className="p-8">AisleOps pricing is temporarily unavailable. Please try again shortly.</div>,
 });
+
+type Row = [string, string, "urgent" | "ok" | "info"];
+const MOCKS: Record<string, { screen: string; rows: Row[] }> = {
+  "Refrigeration & cold chain": { screen: "Cold-chain alerts", rows: [["Freezer island 3 · Mosta", "Urgent", "urgent"], ["Cold room B · Qormi", "Tech en route", "info"], ["Dairy chiller · Sliema", "Fixed 07:42", "ok"]] },
+  "In-store bakery & pastry": { screen: "Bakery PPM", rows: [["Deck oven 2 · door seal", "Due today", "urgent"], ["Proofer · humidity check", "Done", "ok"], ["Spiral mixer · belt", "Next week", "info"]] },
+  "Food production & packaging": { screen: "Production line", rows: [["Packing line 1", "Running", "ok"], ["Labeller · jam", "Assigned", "info"], ["Downtime this month", "3.2 h", "info"]] },
+  "Store fabric & public safety": { screen: "Fabric faults", rows: [["Cracked floor tile · Aisle 7", "Hazard", "urgent"], ["Auto door · entrance", "Repaired", "ok"], ["Washroom light", "Scheduled", "info"]] },
+  "Car parks & loading bays": { screen: "Outdoor assets", rows: [["Dock leveller · Bay 2", "Urgent", "urgent"], ["Barrier arm · exit", "Fixed", "ok"], ["Lighting column 14", "Planned", "info"]] },
+  "QR code fault reporting": { screen: "Report a problem", rows: [["Store", "Mosta Superstore", "info"], ["Equipment", "Freezer island 3", "info"], ["Photo + note", "Sent ✓", "ok"]] },
+  "Technician clock-in / out": { screen: "My shift", rows: [["Clocked in", "06:58", "ok"], ["Location", "Qormi Store", "info"], ["Jobs today", "4", "info"]] },
+  "Daily Work Reports (DWR)": { screen: "Daily work report", rows: [["Jobs completed", "5", "ok"], ["Hours · breaks", "8.0 h · 30 min", "info"], ["Supervisor sign-off", "Pending", "urgent"]] },
+};
+function Mock({ area }: { area: string }) {
+  const m = MOCKS[area]; if (!m) return null;
+  const tone = { urgent: "bg-destructive/10 text-destructive", ok: "bg-primary/10 text-primary", info: "bg-muted text-muted-foreground" } as const;
+  return (
+    <div aria-hidden="true" className="mx-auto w-full max-w-[260px] rounded-[2rem] border-4 border-foreground/80 bg-background p-3 shadow-xl">
+      <div className="mx-auto mb-3 h-1.5 w-16 rounded-full bg-foreground/20" />
+      <div className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground">AisleOps · {m.screen}</div>
+      <div className="mt-3 space-y-2">{m.rows.map(([a, b, t]) => <div key={a} className="flex items-center justify-between gap-2 rounded-md border bg-card px-2.5 py-2 text-[11px]"><span className="font-medium">{a}</span><span className={`shrink-0 rounded px-1.5 py-0.5 font-semibold ${tone[t]}`}>{b}</span></div>)}</div>
+      <div className="mt-3 rounded-md bg-brand-amber py-2 text-center text-[11px] font-bold text-foreground">{area === "QR code fault reporting" ? "Submit report" : "Open job"}</div>
+    </div>
+  );
+}
 
 const STATS = [["Superstores", "and express outlets on one map"], ["Bakeries", "pastry kitchens and factories"], ["1 scan", "from shop floor to engineer"]] as const;
 const AREAS = [
@@ -68,18 +92,30 @@ function RetailPage() {
         <img src={hero} alt="Technician checking a supermarket chiller aisle" width={1536} height={1024} className="h-[520px] w-full object-cover" />
         <div className="absolute inset-0 flex items-end bg-gradient-to-t from-foreground/80 to-transparent">
           <div className="mx-auto w-full max-w-6xl px-6 pb-12 text-background">
-            <h1 className="max-w-3xl font-display text-4xl font-bold uppercase leading-none sm:text-5xl">AisleOps supermarket maintenance software</h1>
-            <p className="mt-4 max-w-xl text-lg opacity-90">Every store. Every fridge. Every tile. Paperless work orders for your outlets, bakeries, factories and car parks.</p>
+            <p className="text-sm font-semibold uppercase tracking-wide opacity-80">AisleOps supermarket maintenance software</p>
+            <h1 className="mt-2 max-w-3xl font-display text-4xl font-bold uppercase leading-none sm:text-5xl">Cut Supermarket Downtime &amp; Spoilage Across Every Store.</h1>
+            <p className="mt-4 max-w-2xl text-lg opacity-90">The all-in-one maintenance platform built for retail chains. QR fault logging for shop-floor staff, automated cold-chain dispatch, and instant digital work orders (DWR)—without paperwork.</p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Button size="lg" onClick={() => setDemo(true)} className="bg-brand-amber text-foreground hover:bg-brand-amber/90"><Play className="mr-2 h-4 w-4" />Try the interactive demo</Button>
-              <Button asChild size="lg" variant="secondary"><a href="mailto:hello@fieldbridgeapp.com?subject=AisleOps%20demo">Book a call</a></Button>
-              <Button asChild size="lg" variant="secondary"><a href="#roi">Calculate your potential savings</a></Button>
+              <Button asChild size="lg" className="bg-brand-amber text-foreground hover:bg-brand-amber/90"><a href="mailto:hello@fieldbridgeapp.com?subject=Book%20a%2015-minute%20AisleOps%20demo">Book a 15-Minute Demo</a></Button>
+              <Button size="lg" variant="outline" onClick={() => setDemo(true)} className="border-background/60 bg-transparent text-background hover:bg-background/10 hover:text-background"><Play className="mr-2 h-4 w-4" />Try the Interactive Demo (No Sign-In Required)</Button>
             </div>
+            <a href="#roi" className="mt-4 inline-block text-sm underline underline-offset-4 opacity-90">See what you could save ↓</a>
           </div>
         </div>
       </section>
       <section className="mx-auto grid max-w-6xl gap-px bg-border sm:grid-cols-3">
         {STATS.map(([a, b]) => <div key={a} className="bg-background p-6"><p className="font-display text-3xl font-bold text-primary">{a}</p><p className="text-sm text-muted-foreground">{b}</p></div>)}
+      </section>
+      <section className="border-b bg-secondary" aria-labelledby="qr-title">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 px-6 py-14 md:grid-cols-2">
+          <div>
+            <p className="text-sm font-semibold uppercase text-primary">QR code fault reporting</p>
+            <h2 id="qr-title" className="mt-2 font-display text-3xl font-bold sm:text-4xl">Zero apps, zero accounts for shop floor staff — just scan and submit.</h2>
+            <p className="mt-4 text-muted-foreground">Print a plaque for every chiller, oven or aisle. Staff scan, describe the fault, add a photo and send — the report lands with the right store and equipment already filled in.</p>
+            <Button className="mt-6" onClick={() => setDemo(true)}>Watch a chiller fault get fixed</Button>
+          </div>
+          <Mock area="QR code fault reporting" />
+        </div>
       </section>
       <section className="mx-auto max-w-6xl px-6 py-16">
         <h2 className="font-display text-3xl font-bold uppercase">Built for the whole estate</h2>
@@ -92,8 +128,11 @@ function RetailPage() {
                 <p className="mt-1 text-sm text-muted-foreground">{f.text}</p>
               </Button>
               <div className={open === f.title ? "px-5 pb-5" : "hidden"}>
-                <ul className="list-disc space-y-1 pl-5 text-sm">{f.more.map((m) => <li key={m}>{m}</li>)}</ul>
-                <Button size="sm" variant="outline" className="mt-4" onClick={() => setDemo(true)}>See it in the demo</Button>
+                <div className="grid items-center gap-6 md:grid-cols-2">
+                  <div><ul className="list-disc space-y-1 pl-5 text-sm">{f.more.map((m) => <li key={m}>{m}</li>)}</ul>
+                  <Button size="sm" variant="outline" className="mt-4" onClick={() => setDemo(true)}>See it in the demo</Button></div>
+                  <Mock area={f.title} />
+                </div>
               </div>
             </div>
           ))}
