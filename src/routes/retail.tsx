@@ -92,7 +92,7 @@ function RetailPage() {
         <div className="mx-auto grid max-w-6xl items-center gap-8 px-6 py-12 md:grid-cols-2 md:py-16">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide opacity-80">AisleOps supermarket maintenance software</p>
-            <h1 className="mt-2 font-display text-4xl font-bold uppercase leading-none sm:text-5xl">Cut Supermarket Downtime &amp; Spoilage Across Every Store.</h1>
+            <h1 className="mt-2 break-words font-display text-3xl font-bold uppercase leading-tight sm:text-5xl sm:leading-none">Cut Supermarket Downtime &amp; Spoilage Across Every Store.</h1>
             <p className="mt-4 max-w-xl text-lg opacity-90">The all-in-one maintenance platform built for retail chains. QR fault logging for shop-floor staff, automated cold-chain dispatch, and instant digital work orders (DWR)—without paperwork.</p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button asChild size="lg" className="bg-brand-amber text-foreground hover:bg-brand-amber/90"><a href="mailto:hello@fieldbridgeapp.com?subject=Book%20a%2015-minute%20AisleOps%20demo">Book a 15-Minute Demo</a></Button>
