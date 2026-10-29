@@ -62,7 +62,7 @@
 - Chat: tenant-assigned channels/RPCs, private broadcast copies; reuse RLS/attachment/unread/push rules. Push uses /push/ and gesture audio; acceptance is not delivery proof.
 - FieldBridge subscription invoices live in platform_invoices (frozen once issued by trigger) with rules in tested saas-billing.ts; storage usage via company_storage_usage RPC; 
 - Payments: superuser RLS checkout; signed webhook settles exact amounts idempotently; billing-daily runs renewals/charges/reminders; company_invoice_lapsed drives read-only.
-- Public catalog/legal use narrow reads; HQ stays private. Trust pages share renderers; sitemap uses explicit route decisions, no generated lastmod.
+- Public catalog selects active product before rows; retail ROI uses tested live-cadence math, no FX or unquoted seats; narrow legal reads/shared trust renderers/explicit sitemap — why: HQ stays authoritative, savings auditable.
 - Staff signatures share staff-signature editors and own-user RPC; protected real roles govern eligibility and profile guards retain identity protection.
 - Sheet sync serializes per account/sheet, rebasing local versions only. Autosave uses dirty fingerprints; failures retain newer drafts.
 - Contracts: scope-ranked attachments seed new coverage; atomic matrix RPCs freeze work/prices with optional passport rates/collective totals; PPM/portal retain coverage — why: never rewrite agreed history.
