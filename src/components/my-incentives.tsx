@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { supabase } from '@/integrations/supabase/client';
-import { useProfile } from '@/lib/profile';
+import { usePreviewProfile } from '@/lib/impersonation';
 import { incentiveAmount, incentiveTotals } from '@/lib/claim-incentive';
 
 function useMyIncentives() {
-  const { data: profile } = useProfile();
+  const { data: profile } = usePreviewProfile();
   const visibility = useQuery({
     queryKey: ['staff-incentive-visibility', profile?.id, profile?.company_id],
     enabled: !!profile, refetchInterval: 15000,
@@ -26,11 +26,12 @@ function useMyIncentives() {
       const first = await fetchPage(0);
       if (first.error) throw first.error;
       const rows = [...(first.data ?? [])];
-      for (let offset = 500; (offset === 500 ? first.data?.length : rows.length % 500 === 0 ? 500 : 0) === 500; offset += 500) {
+      let pageSize = first.data?.length ?? 0;
+      for (let offset = 500; pageSize === 500; offset += 500) {
         const page = await fetchPage(offset);
         if (page.error) throw page.error;
         rows.push(...(page.data ?? []));
-        if ((page.data?.length ?? 0) < 500) break;
+        pageSize = page.data?.length ?? 0;
       }
       return rows;
     },
