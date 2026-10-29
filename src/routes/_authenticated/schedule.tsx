@@ -17,6 +17,7 @@ import { canDeleteVisit } from "@/lib/record-deletion";
 import { usePlanFeatures } from "@/lib/plan-features";
 import { PpmVisits } from "@/components/ppm-visits";
 import { ppmStatus } from "@/lib/ppm";
+import { JobIncentiveBadge } from '@/components/my-incentives';
 
 export const Route = createFileRoute("/_authenticated/schedule")({ staticData: { sitemap: false },
   head: () => ({
@@ -123,6 +124,7 @@ function Schedule() {
                     <div className="flex flex-col items-end gap-1"><PriorityBadge p={j.priority} /><span className={`rounded-full px-2 py-0.5 text-xs font-medium ${schedStatus(j)[1]}`}>{schedStatus(j)[0]}</span></div>
                   </div>
                   <p className="line-clamp-2 text-sm text-muted-foreground">{j.problem_summary || "No summary"}</p>
+                  <JobIncentiveBadge jobId={j.id} />
                   {j.ppm_due_date && <p className="text-xs font-medium text-primary">PPM · {ppmStatus(j.ppm_due_date, j.ppm_deadline ?? j.ppm_due_date, j.sheet?.status === 'completed', today)}</p>}
                   <Actions j={j} />
                 </li>
@@ -174,6 +176,7 @@ function Schedule() {
                 <dt className="text-muted-foreground">Problem</dt><dd>{detail.problem_summary || "—"}</dd>
               </dl>
               <Actions j={detail} />
+              <JobIncentiveBadge jobId={detail.id} />
             </>
           )}
         </DialogContent>

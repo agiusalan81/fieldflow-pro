@@ -5,6 +5,7 @@ import { usePreviewProfile } from "@/lib/impersonation";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { OvertimeCard } from "@/components/work-extras";
 import { ShiftTracker } from "./dashboard";
+import { MyIncentives } from '@/components/my-incentives';
 
 export const Route = createFileRoute("/_authenticated/hours")({ staticData: { sitemap: false },
   head: () => ({
@@ -38,6 +39,7 @@ function HoursPage() {
     <AppShell title="My hours">
       <div className="mx-auto max-w-4xl space-y-5">
         <ShiftTracker profile={profile} />
+        <MyIncentives />
         <OvertimeCard userId={profile.id} />
         <section className="rounded-xl border bg-card">
           <div className="flex items-center justify-between border-b px-5 py-3"><h2 className="font-medium text-foreground">Day by day</h2><Link to="/dwr" className="text-sm text-primary">Daily reports</Link></div>
