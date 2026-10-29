@@ -2951,6 +2951,7 @@ export type Database = {
           acknowledged_at: string | null
           asset_id: string | null
           assigned_technician_id: string | null
+          claim_hold: boolean
           client_id: string
           company_id: string
           created_at: string
@@ -2977,6 +2978,7 @@ export type Database = {
           acknowledged_at?: string | null
           asset_id?: string | null
           assigned_technician_id?: string | null
+          claim_hold?: boolean
           client_id: string
           company_id: string
           created_at?: string
@@ -3003,6 +3005,7 @@ export type Database = {
           acknowledged_at?: string | null
           asset_id?: string | null
           assigned_technician_id?: string | null
+          claim_hold?: boolean
           client_id?: string
           company_id?: string
           created_at?: string
@@ -7154,6 +7157,12 @@ export type Database = {
       next_document_number: {
         Args: { _company: string; _kind: string }
         Returns: string
+      }
+      open_job_recipients: {
+        Args: { _job: string }
+        Returns: {
+          user_id: string
+        }[]
       }
       open_jobs_for_me: {
         Args: never
