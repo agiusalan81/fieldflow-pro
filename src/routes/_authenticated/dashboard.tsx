@@ -31,6 +31,7 @@ import { captureShiftLocation } from '@/lib/shift-location';
 import { usePlanFeatures } from "@/lib/plan-features";
 import { useOpenJobs } from "@/lib/open-jobs";
 import { Megaphone } from "lucide-react";
+import { incentiveAmount } from '@/lib/claim-incentive';
 
 export const Route = createFileRoute("/_authenticated/dashboard")({ staticData: { sitemap: false },
   head: () => ({
@@ -181,6 +182,7 @@ function UpForGrabs({ profile }: { profile: Profile }) {
               <span className="shrink-0 rounded-md border bg-muted px-2 py-1 text-xs">{j.places_left} of {j.required_team_size} left</span>
             </div>
             {j.problem_summary && <p className="line-clamp-2 text-sm text-foreground">{j.problem_summary}</p>}
+            {j.claim_incentive_cents>0&&<p className="text-sm font-medium text-primary">Claim incentive: {incentiveAmount(j.claim_incentive_cents)}</p>}
             {smart && <div className="flex flex-wrap items-center gap-1"><span className="text-xs text-muted-foreground">Required skills:</span>{!j.skills?.length&&<span className="text-xs">None specified</span>}{(j.skills??[]).map((s) => <span key={s} className="rounded-full border px-2 py-0.5 text-xs">{s}</span>)}</div>}
             <div className="flex gap-2">
               <Button size="sm" className="flex-1" disabled={busy !== null || !clocked.data} onClick={() => claim(j.id)}>{busy === j.id ? "Claiming…" : "Claim job"}</Button>
@@ -195,15 +197,18 @@ function UpForGrabs({ profile }: { profile: Profile }) {
 
 function TechToday({ profile, readOnly, switcher }: { profile: Profile; readOnly: boolean; switcher?: ReactNode }) {
   const navigate = useNavigate();
+  const qc=useQueryClient();
+  useEffect(()=>{const ch=supabase.channel(`assigned-jobs-${profile.id}-${Math.random().toString(36).slice(2)}`).on('postgres_changes',{event:'*',schema:'public',table:'jobs',filter:`company_id=eq.${profile.company_id}`},()=>{void qc.invalidateQueries({queryKey:['today-jobs',profile.id]});}).on('postgres_changes',{event:'*',schema:'public',table:'job_crew',filter:`user_id=eq.${profile.id}`},()=>{void qc.invalidateQueries({queryKey:['today-jobs',profile.id]});}).subscribe();return()=>{void supabase.removeChannel(ch);};},[profile.id,profile.company_id,qc]);
   const today = new Date().toISOString().slice(0, 10);
   const { data: jobs = [] } = useQuery({
     queryKey: ["today-jobs", profile.id, today],
+    refetchInterval: 15000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("jobs")
         .select("id, assigned_technician_id, secondary_technician_id, job_number, asset_id, window_start, window_end, problem_summary, priority, acknowledged_at, clients(name), sites(name, address), assets(reference_number, asset_category)")
         .or(assignmentFilter(profile.id))
-        .eq("scheduled_date", today)
+        .or(`scheduled_date.eq.${today},and(priority.eq.urgent,scheduled_date.lte.${today})`)
         .order("window_start");
       if (error) throw error;
       return data;
@@ -227,7 +232,7 @@ function TechToday({ profile, readOnly, switcher }: { profile: Profile; readOnly
           ) : (
             <ul className="grid gap-3 md:grid-cols-2">
               {jobs.map((j) => (
-                <li key={j.id} className="space-y-3 rounded-xl border bg-card p-4">
+                 <li key={j.id} id={`assigned-job-${j.id}`} className="space-y-3 rounded-xl border bg-card p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="text-xs font-medium text-primary">{isAssisting(j, profile.id) ? "Assisting" : "Lead"}</p><p className="text-xs text-muted-foreground">Job #{j.job_number} · {timeWindow(j.window_start, j.window_end)}</p>

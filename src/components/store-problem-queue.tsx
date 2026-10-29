@@ -19,7 +19,7 @@ export function StoreProblemQueue() {
   return <section className="space-y-3">
     <h2 className="font-medium">Reported store problems</h2>
     {q.error && <p role="alert" className="text-destructive">Could not load store reports.</p>}
-    <ul className="space-y-2">{q.data?.map((r) => <li key={r.id} className="rounded-lg border bg-card p-4">
+    <ul className="space-y-2">{q.data?.map((r) => <li key={r.id} id={`store-report-${r.id}`} className="rounded-lg border bg-card p-4">
       <p className="font-medium">{r.sites?.name} · {r.category} · {r.location}</p>
       <p className="text-xs text-muted-foreground">{r.reporter_type === "visitor" ? "Customer / visitor" : "Store staff"}{r.reporter_name ? ` · ${r.reporter_name}` : ""} · {new Date(r.created_at ?? "").toLocaleString()}</p>
       <p className="my-3 whitespace-pre-wrap text-sm">{r.problem}</p>

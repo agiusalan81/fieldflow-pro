@@ -23,7 +23,8 @@ export function useOpenJobs() {
     const ch = supabase.channel(`open-jobs-${p.id}-${Math.random().toString(36).slice(2)}`).on('postgres_changes', {event:'*',schema:'public',table:'jobs'}, () => { void qc.invalidateQueries({queryKey:['open-jobs']}); }).on('postgres_changes', {event:'*',schema:'public',table:'shifts',filter:`user_id=eq.${p.id}`}, () => { void qc.invalidateQueries({queryKey:['open-jobs']}); }).subscribe();
     return () => { void supabase.removeChannel(ch); };
   }, [p?.id, locked, qc]);
-  const jobs = locked ? [] : q.data ?? [];
+  const bonuses=useQuery({queryKey:['open-job-bonuses',p?.id],enabled:!!p&&!locked,refetchInterval:15000,queryFn:async()=>{const r=await supabase.rpc('open_job_incentives');if(r.error)throw r.error;return r.data??[];}});
+  const jobs = locked ? [] : (q.data ?? []).map(j=>({...j,claim_incentive_cents:bonuses.data?.find(b=>b.job_id===j.id)?.amount_cents??0}));
   return { ...q, jobs, alerting: alarmJobs(jobs, dismissed), dismissed, dismiss };
 }
 

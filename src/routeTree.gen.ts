@@ -75,6 +75,7 @@ import { Route as AuthenticatedPrintSheetIdRouteImport } from './routes/_authent
 import { Route as AuthenticatedSheetsIndexRouteImport } from './routes/_authenticated/sheets.index'
 import { Route as AuthenticatedSheetsSheetIdRouteImport } from './routes/_authenticated/sheets.$sheetId'
 import { Route as AuthenticatedSheetsNewRouteImport } from './routes/_authenticated/sheets.new'
+import { Route as ApiPublicJobsBellPushRouteImport } from './routes/api/public/jobs/bell-push'
 import { Route as ApiPublicJobsBillingDailyRouteImport } from './routes/api/public/jobs/billing-daily'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
@@ -428,6 +429,11 @@ const AuthenticatedSheetsNewRoute = AuthenticatedSheetsNewRouteImport.update({
   path: '/sheets/new',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicJobsBellPushRoute = ApiPublicJobsBellPushRouteImport.update({
+  id: '/api/public/jobs/bell-push',
+  path: '/api/public/jobs/bell-push',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicJobsBillingDailyRoute =
   ApiPublicJobsBillingDailyRouteImport.update({
     id: '/api/public/jobs/billing-daily',
@@ -523,6 +529,7 @@ export interface FileRoutesByFullPath {
   '/sheets/$sheetId': typeof AuthenticatedSheetsSheetIdRoute
   '/sheets/new': typeof AuthenticatedSheetsNewRoute
   '/sheets/': typeof AuthenticatedSheetsIndexRoute
+  '/api/public/jobs/bell-push': typeof ApiPublicJobsBellPushRoute
   '/api/public/jobs/billing-daily': typeof ApiPublicJobsBillingDailyRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -595,6 +602,7 @@ export interface FileRoutesByTo {
   '/sheets/$sheetId': typeof AuthenticatedSheetsSheetIdRoute
   '/sheets/new': typeof AuthenticatedSheetsNewRoute
   '/sheets': typeof AuthenticatedSheetsIndexRoute
+  '/api/public/jobs/bell-push': typeof ApiPublicJobsBellPushRoute
   '/api/public/jobs/billing-daily': typeof ApiPublicJobsBillingDailyRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -669,6 +677,7 @@ export interface FileRoutesById {
   '/_authenticated/sheets/$sheetId': typeof AuthenticatedSheetsSheetIdRoute
   '/_authenticated/sheets/new': typeof AuthenticatedSheetsNewRoute
   '/_authenticated/sheets/': typeof AuthenticatedSheetsIndexRoute
+  '/api/public/jobs/bell-push': typeof ApiPublicJobsBellPushRoute
   '/api/public/jobs/billing-daily': typeof ApiPublicJobsBillingDailyRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -743,6 +752,7 @@ export interface FileRouteTypes {
     | '/sheets/$sheetId'
     | '/sheets/new'
     | '/sheets/'
+    | '/api/public/jobs/bell-push'
     | '/api/public/jobs/billing-daily'
     | '/api/public/payments/webhook'
     | '/lovable/email/auth/preview'
@@ -815,6 +825,7 @@ export interface FileRouteTypes {
     | '/sheets/$sheetId'
     | '/sheets/new'
     | '/sheets'
+    | '/api/public/jobs/bell-push'
     | '/api/public/jobs/billing-daily'
     | '/api/public/payments/webhook'
     | '/lovable/email/auth/preview'
@@ -888,6 +899,7 @@ export interface FileRouteTypes {
     | '/_authenticated/sheets/$sheetId'
     | '/_authenticated/sheets/new'
     | '/_authenticated/sheets/'
+    | '/api/public/jobs/bell-push'
     | '/api/public/jobs/billing-daily'
     | '/api/public/payments/webhook'
     | '/lovable/email/auth/preview'
@@ -916,6 +928,7 @@ export interface RootRouteChildren {
   ReferralCodeRoute: typeof ReferralCodeRoute
   ReportTokenRoute: typeof ReportTokenRoute
   StoreReportTokenRoute: typeof StoreReportTokenRoute
+  ApiPublicJobsBellPushRoute: typeof ApiPublicJobsBellPushRoute
   ApiPublicJobsBillingDailyRoute: typeof ApiPublicJobsBillingDailyRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -1387,6 +1400,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSheetsNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/jobs/bell-push': {
+      id: '/api/public/jobs/bell-push'
+      path: '/api/public/jobs/bell-push'
+      fullPath: '/api/public/jobs/bell-push'
+      preLoaderRoute: typeof ApiPublicJobsBellPushRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/jobs/billing-daily': {
       id: '/api/public/jobs/billing-daily'
       path: '/api/public/jobs/billing-daily'
@@ -1556,6 +1576,7 @@ const rootRouteChildren: RootRouteChildren = {
   ReferralCodeRoute: ReferralCodeRoute,
   ReportTokenRoute: ReportTokenRoute,
   StoreReportTokenRoute: StoreReportTokenRoute,
+  ApiPublicJobsBellPushRoute: ApiPublicJobsBellPushRoute,
   ApiPublicJobsBillingDailyRoute: ApiPublicJobsBillingDailyRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,

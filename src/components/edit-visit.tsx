@@ -1,4 +1,5 @@
 import { dispatchAvailability } from "@/lib/dispatch-availability";
+import { incentiveCents } from "@/lib/claim-incentive";
 import { notifyOpenJob } from "@/lib/web-push.functions";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -32,6 +33,7 @@ export function EditVisit({ visit }: { visit: Visit }) {
   const staff = users.filter(u => isDispatchable(u.role, u.registration_status === "active", !!fieldIds?.has(u.id)));
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [bonus,setBonus]=useState('0.00');
   const [d, setD] = useState<Draft | null>(null);
   const { data: skillList = [] } = useQuery({ queryKey: ["company-skills"], enabled: smart && open, queryFn: async () => (await supabase.from("company_skills").select("id,name,category,archived").order("name")).data ?? [] });
   const { data: memberSkills = [] } = useQuery({ queryKey: ["member-skills"], enabled: smart && open, queryFn: async () => (await supabase.from("member_skills").select("user_id,skill_id")).data ?? [] });
@@ -39,15 +41,17 @@ export function EditVisit({ visit }: { visit: Visit }) {
   const load = async () => {
     setOpen(true); setD(null);
     const [{ data, error }, { data: js }] = await Promise.all([
-      supabase.from("jobs").select("scheduled_date, window_start, window_end, priority, problem_summary, assigned_technician_id, secondary_technician_id, required_team_size, open_to_claim, claim_hold").eq("id", visit.id).maybeSingle(),
+      supabase.from("jobs").select("scheduled_date, window_start, window_end, priority, problem_summary, assigned_technician_id, secondary_technician_id, required_team_size, open_to_claim, claim_hold, claim_incentive_cents").eq("id", visit.id).maybeSingle(),
       smart ? supabase.from("job_skills").select("skill_id").eq("job_id", visit.id) : Promise.resolve({ data: [] as { skill_id: string }[] }),
     ]);
     if (error || !data) { toast.error("Visit could not be loaded."); setOpen(false); return; }
+    setBonus((data.claim_incentive_cents/100).toFixed(2));
     setD({ scheduled_date: data.scheduled_date ?? "", tbd: !data.scheduled_date, hold: data.claim_hold, window_start: data.window_start?.slice(0, 5) ?? "", window_end: data.window_end?.slice(0, 5) ?? "", priority: data.priority, problem_summary: data.problem_summary ?? "", tech: data.assigned_technician_id ?? "none", assistant: data.secondary_technician_id ?? "none", teamSize: data.required_team_size ?? 1, open: data.open_to_claim ?? false, skills: (js ?? []).map(x => x.skill_id) });
   };
   const set = (patch: Partial<Draft>) => setD(v => v ? { ...v, ...patch } : v);
   const save = async () => {
     if (!d || busy || !profile) return;
+    const cents=incentiveCents(bonus);if(cents===null){toast.error('Enter a valid euro bonus with up to two decimals');return;}
     if (!d.tbd && !d.scheduled_date) { toast.error("Choose a date"); return; }
     if (d.assistant !== "none" && (d.tech === "none" || d.assistant === d.tech)) { toast.error("Choose a lead and a different assistant"); return; }
     if (d.window_start && d.window_end && d.window_end <= d.window_start) { toast.error("End time must be after start time"); return; }
@@ -56,7 +60,7 @@ export function EditVisit({ visit }: { visit: Visit }) {
     setBusy(true);
     try {
       const availability = dispatchAvailability(d.tbd ? null : d.scheduled_date, d.tech, smart, d.hold, d.open && named < d.teamSize);
-      const { error } = await supabase.from("jobs").update({ ...availability, window_start: d.window_start || null, window_end: d.window_end || null, priority: d.priority, problem_summary: d.problem_summary.trim() || null, assigned_technician_id: d.tech === "none" ? null : d.tech, secondary_technician_id: d.assistant === "none" ? null : d.assistant, ...(smart ? { required_team_size: d.teamSize, open_to_claim: availability.open_to_claim } : {}) } as never).eq("id", visit.id);
+      const { error } = await supabase.from("jobs").update({ ...availability, claim_incentive_cents:cents, window_start: d.window_start || null, window_end: d.window_end || null, priority: d.priority, problem_summary: d.problem_summary.trim() || null, assigned_technician_id: d.tech === "none" ? null : d.tech, secondary_technician_id: d.assistant === "none" ? null : d.assistant, ...(smart ? { required_team_size: d.teamSize, open_to_claim: availability.open_to_claim } : {}) }).eq("id", visit.id);
       if (error) { toast.error(error.message); return; }
       if (smart) {
         const del = await supabase.from("job_skills").delete().eq("job_id", visit.id);
@@ -87,6 +91,7 @@ export function EditVisit({ visit }: { visit: Visit }) {
         {person(d.tech, v => set({ tech: v, assistant: v === "none" ? "none" : d.assistant }), "Lead")}
         {person(d.assistant, v => set({ assistant: v }), "Assistant")}
         <div className="space-y-1 sm:col-span-2"><Label htmlFor="ev-sum">Instructions</Label><Textarea id="ev-sum" maxLength={2000} value={d.problem_summary} onChange={e => set({ problem_summary: e.target.value })} /></div>
+        {smart&&<div className="space-y-1"><Label htmlFor="edit-claim-bonus">Claim bonus (€)</Label><Input id="edit-claim-bonus" type="number" min="0" step="0.01" value={bonus} onChange={e=>setBonus(e.target.value)}/></div>}
         {smart && <fieldset className="space-y-3 rounded-lg border p-3 sm:col-span-2">
           <legend className="px-1 text-sm font-medium">Skills & Smart Dispatch</legend>
           <div className="grid gap-3 sm:grid-cols-2">

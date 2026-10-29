@@ -8,6 +8,7 @@ import { AppShell, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { usePlanFeatures } from "@/lib/plan-features";
 import { useProfile } from "@/lib/profile";
+import { incentiveAmount } from '@/lib/claim-incentive';
 
 export const Route = createFileRoute("/_authenticated/available-jobs")({ staticData: { sitemap: false },
   head: () => ({ meta: [
@@ -30,6 +31,11 @@ function AvailableJobs() {
   const openJobs = useOpenJobs();
   const jobs = {...openJobs, data: openJobs.jobs};
   const {job: focus} = Route.useSearch();
+  const eligible=useQuery({queryKey:['claim-eligible',p?.id],enabled:!!p,queryFn:async()=>{
+    if(!p)return false;
+    const [field,shift]=await Promise.all([supabase.rpc('is_dispatchable_member',{_user:p.id,_company:p.company_id}),supabase.from('shifts').select('id').eq('user_id',p.id).is('ended_at',null).in('shift_type',['shift','standby']).limit(1)]);
+    return field.data===true&&!!shift.data?.length;
+  },refetchInterval:15000});
 
   if (!feature("skills_dispatch")) return <AppShell title="Available jobs"><EmptyState>Not included in your plan. Open job claiming is part of Skills & Smart Dispatch.</EmptyState></AppShell>;
   const claim = async (id: string) => {
@@ -51,8 +57,9 @@ function AvailableJobs() {
               <span className="rounded-md border bg-muted px-2 py-1 text-sm">{j.places_left} of {j.required_team_size} places left</span>
             </div>
             {j.problem_summary && <p className="mt-2 text-sm">{j.problem_summary}</p>}
+            {j.claim_incentive_cents>0&&<p className="mt-2 text-sm font-medium text-primary">Claim incentive: {incentiveAmount(j.claim_incentive_cents)}</p>}
             {!!j.skills?.length && <div className="mt-2 flex flex-wrap gap-1">{j.skills.map(s => <span key={s} className="rounded-full border px-2 py-0.5 text-xs">{s}</span>)}</div>}
-            <Button className="mt-3 h-11 w-full sm:w-auto" disabled={busy !== null} onClick={() => claim(j.id)}>{busy === j.id ? "Claiming…" : "Claim job"}</Button><Button variant="ghost" className="mt-3" disabled={openJobs.dismissed.has(j.id)} onClick={()=>openJobs.dismiss(j.id)}>{openJobs.dismissed.has(j.id) ? "Alarm dismissed" : "Dismiss alarm"}</Button>
+            <Button className="mt-3 h-11 w-full sm:w-auto" disabled={busy !== null||!eligible.data} onClick={() => claim(j.id)}>{busy === j.id ? "Claiming…" : "Claim job"}</Button><Button variant="ghost" className="mt-3" disabled={openJobs.dismissed.has(j.id)} onClick={()=>openJobs.dismiss(j.id)}>{openJobs.dismissed.has(j.id) ? "Alarm dismissed" : "Dismiss alarm"}</Button>
           </div>
         ))}
       </div>

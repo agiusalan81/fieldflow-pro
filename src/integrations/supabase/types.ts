@@ -216,6 +216,39 @@ export type Database = {
           },
         ]
       }
+      bell_push_deliveries: {
+        Row: {
+          delivered_at: string
+          event_key: string
+          user_id: string
+        }
+        Insert: {
+          delivered_at?: string
+          event_key: string
+          user_id: string
+        }
+        Update: {
+          delivered_at?: string
+          event_key?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      bell_push_runner: {
+        Row: {
+          id: boolean
+          lease_until: string
+        }
+        Insert: {
+          id?: boolean
+          lease_until: string
+        }
+        Update: {
+          id?: boolean
+          lease_until?: string
+        }
+        Relationships: []
+      }
       chat_reads: {
         Row: {
           last_read_at: string
@@ -865,6 +898,8 @@ export type Database = {
           break_enabled: boolean
           break_minutes: number
           breaks_per_shift: number
+          claim_incentive_cents: number
+          claim_incentive_enabled: boolean
           company_address: string | null
           company_email: string | null
           company_id: string
@@ -923,6 +958,8 @@ export type Database = {
           break_enabled?: boolean
           break_minutes?: number
           breaks_per_shift?: number
+          claim_incentive_cents?: number
+          claim_incentive_enabled?: boolean
           company_address?: string | null
           company_email?: string | null
           company_id: string
@@ -981,6 +1018,8 @@ export type Database = {
           break_enabled?: boolean
           break_minutes?: number
           breaks_per_shift?: number
+          claim_incentive_cents?: number
+          claim_incentive_enabled?: boolean
           company_address?: string | null
           company_email?: string | null
           company_id?: string
@@ -2602,6 +2641,61 @@ export type Database = {
           },
         ]
       }
+      job_claim_incentives: {
+        Row: {
+          amount_cents: number
+          claimed_at: string
+          company_id: string
+          earned_at: string | null
+          id: string
+          job_id: string
+          sheet_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          claimed_at?: string
+          company_id: string
+          earned_at?: string | null
+          id?: string
+          job_id: string
+          sheet_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          claimed_at?: string
+          company_id?: string
+          earned_at?: string | null
+          id?: string
+          job_id?: string
+          sheet_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_claim_incentives_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_claim_incentives_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_claim_incentives_sheet_id_fkey"
+            columns: ["sheet_id"]
+            isOneToOne: false
+            referencedRelation: "job_sheets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_crew: {
         Row: {
           added_by: string | null
@@ -2972,6 +3066,8 @@ export type Database = {
           asset_id: string | null
           assigned_technician_id: string | null
           claim_hold: boolean
+          claim_incentive_cents: number
+          claim_incentive_override: boolean
           client_id: string
           company_id: string
           created_at: string
@@ -2999,6 +3095,8 @@ export type Database = {
           asset_id?: string | null
           assigned_technician_id?: string | null
           claim_hold?: boolean
+          claim_incentive_cents?: number
+          claim_incentive_override?: boolean
           client_id: string
           company_id: string
           created_at?: string
@@ -3026,6 +3124,8 @@ export type Database = {
           asset_id?: string | null
           assigned_technician_id?: string | null
           claim_hold?: boolean
+          claim_incentive_cents?: number
+          claim_incentive_override?: boolean
           client_id?: string
           company_id?: string
           created_at?: string
@@ -7036,6 +7136,15 @@ export type Database = {
         Args: { _first_name: string; _surname: string; _token: string }
         Returns: string
       }
+      acquire_bell_push_runner: { Args: never; Returns: boolean }
+      bell_role_can: {
+        Args: {
+          _company: string
+          _module: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
       branding_offers: { Args: never; Returns: Json }
       broadcast_message_channel: {
         Args: { _channel: string; _text: string }
@@ -7247,6 +7356,13 @@ export type Database = {
         Args: { _company: string; _kind: string }
         Returns: string
       }
+      open_job_incentives: {
+        Args: never
+        Returns: {
+          amount_cents: number
+          job_id: string
+        }[]
+      }
       open_job_recipients: {
         Args: { _job: string }
         Returns: {
@@ -7268,6 +7384,15 @@ export type Database = {
           skills: string[]
           window_end: string
           window_start: string
+        }[]
+      }
+      pending_bell_push: {
+        Args: never
+        Returns: {
+          event_key: string
+          title: string
+          url: string
+          user_id: string
         }[]
       }
       platform_analytics_summary: {
@@ -7413,6 +7538,7 @@ export type Database = {
           termination_reason: string
         }[]
       }
+      release_bell_push_runner: { Args: never; Returns: undefined }
       review_passport_handover: {
         Args: { _approve: boolean; _id: string }
         Returns: undefined

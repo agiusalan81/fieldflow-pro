@@ -1,4 +1,5 @@
 import { dispatchAvailability } from "@/lib/dispatch-availability";
+import { incentiveCents } from "@/lib/claim-incentive";
 import { useTerminology } from "@/lib/company";
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
@@ -58,6 +59,7 @@ export function NewJobDialog({pending,onClose}:{pending?:PendingDispatch;onClose
   const [open, setOpenRaw] = useState(!!pending || !!search.new);
   const setOpen = (o: boolean) => { setOpenRaw(o); if (!o) { onClose?.(); prefilled.current = null; if (search.new || search.assetId || search.problemId) navigate({ to: "/admin/jobs", search: {}, replace: true }); } };
   const [saving, setSaving] = useState(false);
+  const [bonus,setBonus]=useState<string>('');
   const savingRef = useRef(false);
   const empty = { client_id: "", site_id: "none", asset_id: "none", tech: "none", assistant: "none", scheduled_date: new Date().toISOString().slice(0, 10), window_start: "", window_end: "", priority: "normal", problem_summary: "", teamSize: 1, open: false, tbd: false, hold: false, skills: [] as string[], crew: [] as string[] };
   const [f, setF] = useState({...empty,...(pending?{client_id:pending.client_id,site_id:pending.site_id??'none',asset_id:pending.asset_id??'none',problem_summary:`Follow-up from #${pending.jobsheet_number}: ${pending.pending_works_future_jobs??''}`}:{})});
@@ -100,10 +102,12 @@ export function NewJobDialog({pending,onClose}:{pending?:PendingDispatch;onClose
     if (named > teamSize) { toast.error(`You picked ${named} people for a team of ${teamSize}`); return; }
     if (!f.open && f.tech === "none" && f.crew.length) { toast.error("Choose a lead technician"); return; }
     const availability = dispatchAvailability(f.tbd ? null : f.scheduled_date, f.tech, smart, f.hold, f.open && named < teamSize);
+    const bonusCents=bonus===''?null:incentiveCents(bonus);
+    if(bonus!==''&&bonusCents===null){toast.error('Enter a valid bonus in euros, up to two decimal places');return;}
     savingRef.current = true; setSaving(true);
     try {
     const { data: job, error } = pending ? await (async()=>{
-      const r=await supabase.rpc('dispatch_pending_work',{_sheet:pending.id,_expected:pending.pending_status,_dispatch:{...f,teamSize,skills:smart?f.skills:[],crew:smart?f.crew:[],open:availability.open_to_claim,scheduled_date:availability.scheduled_date,window_start:f.tbd?null:f.window_start,window_end:f.tbd?null:f.window_end}});
+      const r=await supabase.rpc('dispatch_pending_work',{_sheet:pending.id,_expected:pending.pending_status,_dispatch:{...f,claim_incentive_cents:bonusCents,teamSize,skills:smart?f.skills:[],crew:smart?f.crew:[],open:availability.open_to_claim,scheduled_date:availability.scheduled_date,window_start:f.tbd?null:f.window_start,window_end:f.tbd?null:f.window_end}});
       return {data:r.data?{id:r.data,job_number:''}:null,error:r.error};
     })() : await supabase.from("jobs").insert({
       company_id: profile.company_id, client_id: f.client_id,
@@ -111,6 +115,7 @@ export function NewJobDialog({pending,onClose}:{pending?:PendingDispatch;onClose
       assigned_technician_id: uuidOrNull(f.tech), secondary_technician_id: uuidOrNull(f.assistant), ...availability,
       window_start: f.window_start || null, window_end: f.window_end || null, priority: f.priority, problem_summary: f.problem_summary || null,
       required_team_size: teamSize,
+      ...(bonusCents!==null?{claim_incentive_cents:bonusCents,claim_incentive_override:true}:{}),
       
     }).select("id, job_number").single();
     if (error) { toast.error(error.message); return; }
@@ -133,7 +138,7 @@ export function NewJobDialog({pending,onClose}:{pending?:PendingDispatch;onClose
     }
     toast.success(f.tbd ? "Job saved in TBD" : "Visit scheduled");
     if (reportWarning) toast.warning(reportWarning);
-    setOpen(false); setF(empty);
+    setOpen(false); setF(empty); setBonus('');
     await Promise.all([...DISPATCH_REFRESH_KEYS,"pending-works","attention-overview"].map(key => qc.invalidateQueries({ queryKey: [key] })));
     } finally { savingRef.current = false; setSaving(false); }
   };
@@ -182,6 +187,7 @@ export function NewJobDialog({pending,onClose}:{pending?:PendingDispatch;onClose
           </div>}
           <label className="flex items-center gap-2 text-sm"><Checkbox checked={f.tbd} onCheckedChange={v => setF({...f,tbd:v===true})}/>Date to be decided (TBD)</label>
           {smart && f.tech === "none" && !f.tbd && <label className="flex items-center gap-2 text-sm"><Checkbox checked={f.hold} onCheckedChange={v => setF({...f,hold:v===true})}/>Hold off Up for grabs</label>}
+          {smart&&<div className="space-y-1.5"><Label htmlFor="new-claim-bonus">Claim bonus override (€)</Label><Input id="new-claim-bonus" type="number" min="0" step="0.01" placeholder="Company default" value={bonus} onChange={e=>setBonus(e.target.value)}/></div>}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 [&>*:first-child]:col-span-2 sm:[&>*:first-child]:col-span-1">
             <div className="space-y-1.5"><Label>Date</Label><Input type="date" required={!f.tbd} disabled={f.tbd} value={f.tbd ? "" : f.scheduled_date} onChange={(e) => setF({ ...f, scheduled_date: e.target.value })} /></div>
             <div className="space-y-1.5"><Label>Arrive from (optional)</Label><Input type="time" disabled={f.tbd} value={f.window_start} onChange={(e) => setF({ ...f, window_start: e.target.value })} /></div>
