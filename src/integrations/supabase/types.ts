@@ -216,6 +216,24 @@ export type Database = {
           },
         ]
       }
+      bell_push_deliveries: {
+        Row: {
+          delivered_at: string
+          event_key: string
+          user_id: string
+        }
+        Insert: {
+          delivered_at?: string
+          event_key: string
+          user_id: string
+        }
+        Update: {
+          delivered_at?: string
+          event_key?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       chat_reads: {
         Row: {
           last_read_at: string
@@ -7100,6 +7118,14 @@ export type Database = {
         Args: { _first_name: string; _surname: string; _token: string }
         Returns: string
       }
+      bell_role_can: {
+        Args: {
+          _company: string
+          _module: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
       branding_offers: { Args: never; Returns: Json }
       broadcast_message_channel: {
         Args: { _channel: string; _text: string }
@@ -7339,6 +7365,15 @@ export type Database = {
           skills: string[]
           window_end: string
           window_start: string
+        }[]
+      }
+      pending_bell_push: {
+        Args: never
+        Returns: {
+          event_key: string
+          title: string
+          url: string
+          user_id: string
         }[]
       }
       platform_analytics_summary: {
