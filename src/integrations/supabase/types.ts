@@ -234,6 +234,21 @@ export type Database = {
         }
         Relationships: []
       }
+      bell_push_runner: {
+        Row: {
+          id: boolean
+          lease_until: string
+        }
+        Insert: {
+          id?: boolean
+          lease_until: string
+        }
+        Update: {
+          id?: boolean
+          lease_until?: string
+        }
+        Relationships: []
+      }
       chat_reads: {
         Row: {
           last_read_at: string
@@ -7121,6 +7136,7 @@ export type Database = {
         Args: { _first_name: string; _surname: string; _token: string }
         Returns: string
       }
+      acquire_bell_push_runner: { Args: never; Returns: boolean }
       bell_role_can: {
         Args: {
           _company: string
@@ -7522,6 +7538,7 @@ export type Database = {
           termination_reason: string
         }[]
       }
+      release_bell_push_runner: { Args: never; Returns: undefined }
       review_passport_handover: {
         Args: { _approve: boolean; _id: string }
         Returns: undefined
