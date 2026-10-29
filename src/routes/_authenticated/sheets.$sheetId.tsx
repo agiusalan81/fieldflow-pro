@@ -281,7 +281,7 @@ function SheetForm() {
   const pickSite = (id: string) => {
     const here = refs?.assets.filter((a) => a.client_id === form.client_id && a.site_id === id) ?? [];
     const only = here.length === 1 ? here[0] : undefined;
-    set({ site_id: id, ...(only ? assetPatch(only.id) : { asset_id: null }) });
+    set({ site_id: id, ...(only ? assetPatch(only.id) : { asset_id: null, unlisted_equipment: null }) });
   };
 
   const persist = async (status?: string, savedLogs = logs) => {
@@ -451,7 +451,7 @@ function SheetForm() {
               <Label>{word("client")}</Label>
               <SearchSelect value={form.client_id as string} placeholder="Choose client" disabled={readOnly}
                 options={(refs?.clients ?? []).map((c) => ({ value: c.id, label: c.name, hint: c.billing_address ?? undefined }))}
-                onChange={(v) => set({ client_id: v, site_id: null, asset_id: null })} />
+                onChange={(v) => set({ client_id: v, site_id: null, asset_id: null, unlisted_equipment: null })} />
             </div>
             <div className="space-y-1.5">
               <Label>{word("site")}</Label>
