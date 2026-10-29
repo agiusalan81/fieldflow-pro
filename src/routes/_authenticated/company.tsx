@@ -9,6 +9,7 @@ import { CrmSettings } from "@/components/crm-settings";
 import { EstimateSettings } from "@/components/estimate-settings";
 import { QuoteAcceptanceSetting } from "@/components/quote-acceptance-setting";
 import { PriceListSettings } from "@/components/price-list-settings";
+import { InventoryControlSettings } from "@/components/tool-register";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -430,6 +431,7 @@ function SettingsSections({ superuser, companyId, userId, role }: { superuser: b
       { key: "profile", label: "Profile & details", render: () => <ProfileTab companyId={companyId} part="details" navigation={navigation} /> },
       { key: "industry", label: "Industry & trades", render: () => <IndustryTab companyId={companyId} /> },
       { key: "hours", label: "Hours & overtime", render: () => <HoursTab companyId={companyId} /> },
+      { key: "inventory", label: "Inventory control", render: () => <InventoryControlSettings companyId={companyId} /> },
     ] },
     { title: "Branding & appearance", items: [
       { key: "branding", label: "Branding & PDF styling", render: () => <div className="space-y-6"><AppearanceSettings companyId={companyId} /><ProfileTab companyId={companyId} part="fonts" /><DocumentSettings companyId={companyId} part="branding" /></div> },
