@@ -96,7 +96,7 @@ function RetailPage() {
             <p className="mt-4 max-w-xl text-lg opacity-90">The all-in-one maintenance platform built for retail chains. QR fault logging for shop-floor staff, automated cold-chain dispatch, and instant digital work orders (DWR)—without paperwork.</p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button asChild size="lg" className="bg-brand-amber text-foreground hover:bg-brand-amber/90"><a href="mailto:hello@fieldbridgeapp.com?subject=Book%20a%2015-minute%20AisleOps%20demo">Book a 15-Minute Demo</a></Button>
-              <Button size="lg" variant="outline" onClick={() => setDemo(true)} className="border-primary-foreground/60 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"><Play className="mr-2 h-4 w-4" />Try the Interactive Demo (No Sign-In Required)</Button>
+              <Button size="lg" variant="outline" onClick={() => setDemo(true)} className="h-auto max-w-full whitespace-normal border-primary-foreground/60 bg-transparent py-3 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"><Play className="mr-2 h-4 w-4 shrink-0" />Try the Interactive Demo (No Sign-In Required)</Button>
             </div>
             <a href="#roi" className="mt-4 inline-block text-sm underline underline-offset-4 opacity-90">See what you could save ↓</a>
           </div>
