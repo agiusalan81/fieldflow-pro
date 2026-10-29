@@ -1,3 +1,4 @@
+import { useTerminology } from "@/lib/company";
 import { useMemo, useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
@@ -24,6 +25,7 @@ export const Route = createFileRoute('/_authenticated/qr-codes')({ staticData: {
 type Asset = { id: string; reference_number: string; asset_category: string | null; site_id: string | null; sites: { name: string | null; client_id: string | null; clients: { name: string | null } | null } | null };
 
 function QrPage() {
+  const word = useTerminology();
   const { data: p } = useProfile();
   const [client, setClient] = useState('');
   const [site, setSite] = useState('');
@@ -46,7 +48,7 @@ function QrPage() {
     <AppShell title="QR code generator">
       <div className="mx-auto max-w-4xl space-y-5">
         <StorePlaques />
-        <p className="text-sm text-muted-foreground">Pick a lift or asset, then tap the QR button to preview and print branded stickers: Technical data & history for your team, or Report a fault for building occupants.</p>
+
         <div className="grid gap-3 sm:grid-cols-3">
           <NativeSelect aria-label="Client" value={client} onValueChange={v => { setClient(v); setSite(""); }}>
             <option value="">All clients</option>{clients.map(([id, n]) => <option key={id} value={id}>{n}</option>)}
@@ -54,9 +56,9 @@ function QrPage() {
           <NativeSelect aria-label="Site" value={site} onValueChange={setSite}>
             <option value="">All sites</option>{sites.map(([id, n]) => <option key={id} value={id}>{n}</option>)}
           </NativeSelect>
-          <Input aria-label="Search equipment" placeholder="Search reference…" value={q} onChange={e => setQ(e.target.value)} />
+          <Input aria-label={`Search ${word("equipment").toLowerCase()}`} placeholder="Search reference…" value={q} onChange={e => setQ(e.target.value)} />
         </div>
-        {assets.isPending ? <p>Loading equipment…</p> : assets.error ? <p role="alert" className="text-destructive">Could not load equipment.</p> : !list.length ? <EmptyState>No equipment matches.</EmptyState> : (
+        {assets.isPending ? <p>Loading {word("equipment").toLowerCase()}…</p> : assets.error ? <p role="alert" className="text-destructive">Could not load {word("equipment").toLowerCase()}.</p> : !list.length ? <EmptyState>No {word("equipment").toLowerCase()} matches.</EmptyState> : (
           <ul className="divide-y rounded-lg border bg-card">
             {list.map(a => (
               <li key={a.id} className="flex items-center justify-between gap-3 p-3">

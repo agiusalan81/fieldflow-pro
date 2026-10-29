@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useProfile } from '@/lib/profile';
 import { useNavLock } from '@/lib/plan-features';
@@ -29,13 +29,14 @@ export function useOpenJobs() {
 
 export function useGlobalOpenJobAlarm(uid: string) {
   const { alerting } = useOpenJobs();
+  const lastPlayed = useRef(0);
+  useEffect(() => { lastPlayed.current = 0; }, [uid]);
   const signature = alerting.map(j => j.id).sort().join(',');
   useEffect(() => {
     if (!signature) return;
-    let last = 0;
     const tick = async () => {
-      if (Date.now() - last < OPEN_JOB_ALARM_MS) return;
-      if (await playChime('urgent', uid)) last = Date.now();
+      if (Date.now() - lastPlayed.current < OPEN_JOB_ALARM_MS) return;
+      if (await playChime('urgent', uid)) lastPlayed.current = Date.now();
     };
     void tick();
     const timer = window.setInterval(() => void tick(), 1000);

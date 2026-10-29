@@ -14,8 +14,6 @@
 - Company settings: four tabs keep visited editors mounted; client related records are bounded RLS read-only lists — why: preserve unsaved edits.
 - Email identity resolves server-side via company_email_branding plus HQ override; managed sends keep verified From, Gmail keeps its mailbox From — why: no forced-identity bypass or spoofing.
 - Quote photos: private immutable storage, frozen snapshot IDs/captions, URLs only after token/portal auth — why: no unrelated path exposure.
-- role-menu.ts exclusions are navigation-only. Legacy quote drafts default missing fields on read only.
-- Analytics: owner-only coarse counts; server-derived tenant. Product-scoped outreach/feedback; saved follow-ups send nothing.
 - HQ: product-scoped owner-only setup/invites/resets; ordered tenant deletes retain users/branding/platform bills and refuse issued payroll — why: no cross-tenant/financial loss.
 - Chrome: neutral tokens; root clips for sticky previews. Plaques share escaped preview/print messages and fonts.
 - Travel shares startJobTravel; arrival saves time before on-site status.
@@ -29,7 +27,7 @@
 - Payroll routes share payroll-page.tsx. Opening leave/payslips save atomically with issued-slip/totals guards; year-qualified carry-forward prevents double consumption; 
 - Sign-off/leave/overtime/checklist/renewals use tested jobsheets.ts; shared rules.
 - DWR: one canonical report/shift; retain corrected/superseded originals; filing clears held flags; 
-- Dispatch: lead/assistant share one sheet; lead edits, logs seed both. Null dates use Unscheduled queue; atomic quote conversion retains frozen billing prices — why: scheduling can wait. 
+- Dispatch: lead/assistant share sheet/logs. DB availability guards keep TBD off board; shared open-jobs drives bell/global five-minute audio/account dismissal. Atomic quote conversion freezes prices. 
 - Overtime uses captured DWR intervals/rules; old reports show associated sites only; factual allocation.
 - - Typography via applyTypography/AppShell, locale via locale.ts. Branding shares asset-backed font IDs and preview/PDF decorations; DB/HQ locks protect saved values.
 - Auth emails share auth-brand.tsx; the managed handler owns verification and dispatch for reliable account recovery.
@@ -61,13 +59,12 @@
 - Equipment: focused passports prefill new records; private field handovers merge via manager-only RPCs; QR stays hashed/revocable/bounded — why: preserve engineering evidence.
 - Deletion shares record-deletion/DeleteVisit; office sheet and manager visit RLS apply; visit deletion keeps sheets, client-report FKs retain shared evidence.
 - QR dispatch closes only its matching report after visit insert, refreshes attention and clears URL state; failures warn against duplicate dispatch.
-- Chat compresses photos only. Push: dedicated /push/ worker, encrypted previews; acceptance is not delivery proof. Audio unlocks on gestures.
+- Chat: tenant-assigned channels/RPCs, private broadcast copies; reuse RLS/attachment/unread/push rules. Push uses /push/ and gesture audio; acceptance is not delivery proof.
 - FieldBridge subscription invoices live in platform_invoices (frozen once issued by trigger) with rules in tested saas-billing.ts; storage usage via company_storage_usage RPC; 
 - Payments: superuser RLS checkout; signed webhook settles exact amounts idempotently; billing-daily runs renewals/charges/reminders; company_invoice_lapsed drives read-only.
 - Public catalog/legal use narrow reads; HQ stays private. Trust pages share renderers; sitemap uses explicit route decisions, no generated lastmod.
 - Staff signatures share staff-signature editors and own-user RPC; protected real roles govern eligibility and profile guards retain identity protection.
 - Sheet sync serializes per account/sheet, rebasing local versions only. Autosave uses dirty fingerprints; failures retain newer drafts.
-- PDF.js v4/canvasContext; newer Map APIs break field devices.
 - Contracts: scope-ranked attachments seed new coverage; atomic matrix RPCs freeze work/prices with optional passport rates/collective totals; PPM/portal retain coverage — why: never rewrite agreed history.
 - StaffContacts/contact-editor own contact writes; portal scope is staff-only. HQ setup options save atomically; staff/portal access stays independent.
 - Delivery uses client_message_recipients; preferences choose recipients, not unsupported channel delivery.

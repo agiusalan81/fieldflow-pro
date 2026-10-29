@@ -17,17 +17,19 @@ export function useChatChannels() {
   return useQuery({queryKey:['chat-channels'],refetchInterval:15000,queryFn:async()=>{const r=await supabase.from('message_channels').select('id,name').eq('archived',false).order('name');if(r.error)throw r.error;return r.data;}});
 }
 
-export function ChatChannelControls({ channelId }: {channelId?:string}) {
+export function ChatChannelControls({ channelId }: {channelId?:string | undefined}) {
   const {data:p}=useProfile();
   const {data:users=[]}=useCompanyUsers();
   const {data:channels=[]}=useChatChannels();
+  const {data:skills=[]}=useQuery({queryKey:['channel-skills'],queryFn:async()=>{const r=await supabase.from('company_skills').select('id,name').eq('archived',false).order('name');if(r.error)throw r.error;return r.data;}});
+  const {data:assignments=[]}=useQuery({queryKey:['channel-skill-members'],queryFn:async()=>{const r=await supabase.from('member_skills').select('user_id,skill_id');if(r.error)throw r.error;return r.data;}});
   const qc=useQueryClient();
   const [editor,setEditor]=useState(false),[broadcast,setBroadcast]=useState(false),[busy,setBusy]=useState(false);
   const [id,setId]=useState<string|null>(null),[name,setName]=useState(''),[members,setMembers]=useState<string[]>([]),[target,setTarget]=useState(''),[text,setText]=useState('');
   const active=users.filter(u=>u.registration_status==='active');
   const load=async(edit:boolean)=>{
     setId(edit&&channelId?channelId:null);setName(edit?channels.find(c=>c.id===channelId)?.name??'':'');setMembers([]);
-    if(edit&&channelId){const r=await supabase.from('message_channel_members').select('user_id').eq('channel_id',channelId);if(r.error){toast.error(r.error.message);return;}setMembers(r.data.map(m=>m.user_id));}
+    if(edit&&channelId){const r=await supabase.from('message_channel_members').select('user_id').eq('channel_id',channelId);if(r.error){toast.error(r.error.message);return;}setMembers(r.data.filter(m=>active.some(u=>u.id===m.user_id)).map(m=>m.user_id));}
     setEditor(true);
   };
   const save=async(archive=false)=>{
@@ -47,6 +49,7 @@ export function ChatChannelControls({ channelId }: {channelId?:string}) {
     <Dialog open={editor} onOpenChange={v=>{if(!busy)setEditor(v);}}><DialogContent className="max-h-[90dvh] overflow-y-auto"><DialogHeader><DialogTitle>{id?'Manage channel':'New channel'}</DialogTitle></DialogHeader>
       <Label htmlFor="channel-name">Channel name</Label><Input id="channel-name" value={name} maxLength={80} onChange={e=>setName(e.target.value)}/>
       <div className="flex flex-wrap gap-2"><Button size="sm" variant="outline" onClick={()=>setMembers(active.map(u=>u.id))}>All active staff</Button><Button size="sm" variant="outline" onClick={()=>setMembers(active.filter(u=>['technician','maintenance'].includes(u.role)).map(u=>u.id))}>All field staff</Button><Button size="sm" variant="ghost" onClick={()=>setMembers([])}>Clear</Button></div>
+      {!!skills.length&&<Select value="" onValueChange={skill=>setMembers(current=>[...new Set([...current,...assignments.filter(a=>a.skill_id===skill&&active.some(u=>u.id===a.user_id)).map(a=>a.user_id)])])}><SelectTrigger aria-label="Add members by skill"><SelectValue placeholder="Add members by skill"/></SelectTrigger><SelectContent>{skills.map(s=><SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select>}
       <fieldset className="max-h-72 space-y-2 overflow-y-auto"><legend className="mb-2 text-sm font-medium">Members ({members.filter(id=>active.some(u=>u.id===id)).length})</legend>{active.map(u=><label key={u.id} className="flex min-h-10 items-center gap-2"><Checkbox checked={members.includes(u.id)} onCheckedChange={v=>setMembers(v===true?[...members,u.id]:members.filter(id=>id!==u.id))}/><span className="text-sm">{u.full_name}</span></label>)}</fieldset>
       <DialogFooter>{id&&<Button variant="destructive" disabled={busy} onClick={()=>void save(true)}>Archive</Button>}<Button variant="outline" disabled={busy} onClick={()=>setEditor(false)}>Cancel</Button><Button disabled={busy||!name.trim()} onClick={()=>void save()}>Save channel</Button></DialogFooter>
     </DialogContent></Dialog>
