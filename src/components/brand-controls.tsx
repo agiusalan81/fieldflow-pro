@@ -28,7 +28,7 @@ export function BrandControls({ template: t, onChange, logo, companyId }: { temp
       <BrandingLock allowed={on("branding_documents")} feature="branding_documents"><TextLayerControls template={t} onChange={onChange} /></BrandingLock>
       <details className="border-t pt-3"><summary className="cursor-pointer font-medium">Field names</summary><div className="mt-3 grid gap-3 sm:grid-cols-2">{Object.entries(FIELD_LABELS).map(([key, label]) => <div key={key} className="space-y-1"><Label htmlFor={`word-${key}`}>{label}</Label><Input id={`word-${key}`} maxLength={80} placeholder={label} value={t.labels[key] ?? ""} onChange={(e) => onChange({ ...t, labels: { ...t.labels, [key]: e.target.value } })} /></div>)}</div></details>
     </div>
-    <DocumentPreviewTabs template={t} logo={logo} className="hidden lg:sticky lg:top-4 lg:block lg:max-h-[calc(100dvh-2rem)] lg:self-start lg:overflow-y-auto" />
+    <DocumentPreviewTabs template={t} logo={logo} className="hidden lg:sticky lg:top-20 lg:block lg:max-h-[calc(100dvh-6rem)] lg:self-start lg:overflow-y-auto" />
   </section>;
 }
 

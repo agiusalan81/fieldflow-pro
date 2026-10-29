@@ -143,7 +143,7 @@ export function DocumentSettings({ companyId, part }: { companyId: string; part:
           <div className="space-y-1.5"><Label>Footer text</Label><p className="text-xs text-muted-foreground">Multiple lines allowed. Email addresses and web links become clickable.</p><Textarea rows={4} maxLength={1000} placeholder={"e.g. Thank you for choosing us\noffice@yourcompany.com · www.yourcompany.com"} value={t.footer} onChange={(e) => setT({ ...t, footer: e.target.value })} /></div>
         </section>
 
-        <section className="hidden rounded-xl border bg-card p-5 lg:sticky lg:top-4 lg:block lg:max-h-[calc(100dvh-2rem)] lg:self-start lg:overflow-y-auto">
+        <section className="hidden rounded-xl border bg-card p-5 lg:sticky lg:top-20 lg:block lg:max-h-[calc(100dvh-6rem)] lg:self-start lg:overflow-y-auto">
           <div className="mb-3 flex items-center justify-between">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Live preview — what the client receives</p>
             <Button size="sm" variant="outline" onClick={downloadSample}><Download className="mr-1 h-3.5 w-3.5" />Sample PDF</Button>

@@ -233,7 +233,10 @@ main label {
 .map-pin-technician { background: var(--primary); }
 .map-pin-supervisor { background: var(--chart-2); }
 .map-pin-stale { opacity: 0.5; }
-html, body { overflow-x: hidden; }
+/* Clip horizontal overflow without creating a document scroll container that breaks sticky previews. */
+html, body { overflow-x: clip; }
+.plaque-preview { aspect-ratio: var(--plaque-ratio); background: var(--document-paper); }
+.plaque-preview-frame { width: var(--plaque-width); height: var(--plaque-height); border: 0; transform-origin: top left; transform: scale(var(--plaque-scale)); }
 
 .fieldbridge-header {
   background: var(--card);
