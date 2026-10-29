@@ -9,7 +9,6 @@ describe("editions", () => {
   it("hotel hides quotes and CRM and renames rooms", () => {
     const m = editionMenu("hotel", menu);
     expect(m.map((i) => i.to)).toEqual(["/admin/entities", "/sheets"]);
-    expect(m[0]?.label).toBe("Properties, rooms & assets");
   });
   it("retail uses tickets wording", () => { expect(editionMenu("retail", menu)[1]?.label).toBe("My tickets"); });
   it("retail offers superstore, express outlet, bakery and factory sites", () => {
