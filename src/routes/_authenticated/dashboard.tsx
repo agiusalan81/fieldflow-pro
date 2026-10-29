@@ -198,6 +198,7 @@ function TechToday({ profile, readOnly, switcher }: { profile: Profile; readOnly
   const today = new Date().toISOString().slice(0, 10);
   const { data: jobs = [] } = useQuery({
     queryKey: ["today-jobs", profile.id, today],
+    refetchInterval: 15000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("jobs")

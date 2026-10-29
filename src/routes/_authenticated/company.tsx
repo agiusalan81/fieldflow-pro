@@ -10,6 +10,7 @@ import { EstimateSettings } from "@/components/estimate-settings";
 import { QuoteAcceptanceSetting } from "@/components/quote-acceptance-setting";
 import { PriceListSettings } from "@/components/price-list-settings";
 import { InventoryControlSettings } from "@/components/tool-register";
+import { ClaimIncentiveSettings } from "@/components/claim-incentive-settings";
 import { VehicleCompanySettings } from "@/components/vehicle-settings";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
@@ -434,6 +435,7 @@ function SettingsSections({ superuser, companyId, userId, role }: { superuser: b
       { key: "hours", label: "Hours & overtime", render: () => <HoursTab companyId={companyId} /> },
       { key: "vehicles", label: "Clock-in & vehicles", render: () => <VehicleCompanySettings companyId={companyId} /> },
       { key: "inventory", label: "Inventory control", render: () => <InventoryControlSettings companyId={companyId} /> },
+      { key: "dispatch-incentives", label: "Dispatch incentives", render: () => <ClaimIncentiveSettings companyId={companyId} /> },
     ] },
     { title: "Branding & appearance", items: [
       { key: "branding", label: "Branding & PDF styling", render: () => <div className="space-y-6"><AppearanceSettings companyId={companyId} /><ProfileTab companyId={companyId} part="fonts" /><DocumentSettings companyId={companyId} part="branding" /></div> },

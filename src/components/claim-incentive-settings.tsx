@@ -37,11 +37,15 @@ export function ClaimIncentiveLedger({ companyId }: { companyId: string }) {
   const [month,setMonth]=useState(new Date().toISOString().slice(0,7));
   const from=`${month}-01`, next=new Date(`${from}T00:00:00Z`); next.setUTCMonth(next.getUTCMonth()+1);
   const q=useQuery({queryKey:['claim-incentive-ledger',companyId,month],enabled:!!month,queryFn:async()=>{
-    const rows=[];
-    for(let offset=0;;offset+=500){const r=await supabase.from('job_claim_incentives').select('id,user_id,amount_cents,claimed_at,earned_at,jobs(job_number),users: user_id(*)' as 'id').gte('claimed_at',from).lt('claimed_at',next.toISOString()).order('claimed_at',{ascending:false}).range(offset,offset+499);if(r.error)throw r.error;rows.push(...(r.data??[]));if((r.data?.length??0)<500)break;}
-    return rows;
+    const rows: {id:string;user_id:string;amount_cents:number;earned_at:string|null;jobs:{job_number:number}|null}[]=[];
+    for(let offset=0;;offset+=500){const r=await supabase.from('job_claim_incentives').select('id,user_id,amount_cents,earned_at,jobs(job_number)').gte('claimed_at',from).lt('claimed_at',next.toISOString()).order('claimed_at',{ascending:false}).range(offset,offset+499);if(r.error)throw r.error;rows.push(...(r.data??[]));if((r.data?.length??0)<500)break;}
+    const users=await supabase.from('users').select('id,full_name').in('id',[...new Set(rows.map(r=>r.user_id))]);
+    return rows.map(r=>({...r,name:users.data?.find(u=>u.id===r.user_id)?.full_name??'Team member'}));
   }});
   return <div className="space-y-3"><Label htmlFor="incentive-month">Claim ledger month</Label><Input id="incentive-month" className="max-w-xs" type="month" value={month} onChange={e=>setMonth(e.target.value)}/>
-    {q.error?<p role="alert" className="text-destructive">Could not load claim ledger</p>:<p className="text-sm">{q.data?.length??0} claims</p>}
+    {q.error?<p role="alert" className="text-destructive">Could not load claim ledger</p>:<>
+    <p className="text-sm">Earned: {incentiveAmount((q.data??[]).filter(r=>r.earned_at).reduce((n,r)=>n+r.amount_cents,0))} · Pending completion: {incentiveAmount((q.data??[]).filter(r=>!r.earned_at).reduce((n,r)=>n+r.amount_cents,0))}</p>
+    <ul className="divide-y">{q.data?.map(r=><li key={r.id} className="flex flex-wrap justify-between gap-2 py-2 text-sm"><span>#{r.jobs?.job_number} · {r.name}</span><span>{incentiveAmount(r.amount_cents)} · {r.earned_at?'Earned':'Pending completion'}</span></li>)}</ul>
+    </>}
   </div>;
 }
