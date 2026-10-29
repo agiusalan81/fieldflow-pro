@@ -88,18 +88,21 @@ function RetailPage() {
           <div className="flex items-center gap-2"><Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex"><a href="#roi">Savings calculator</a></Button><Button asChild variant="secondary" size="sm"><Link to="/auth">Sign in</Link></Button></div>
         </div>
       </header>
-      <section className="relative">
-        <img src={hero} alt="Technician checking a supermarket chiller aisle" width={1536} height={1024} className="h-[520px] w-full object-cover" />
-        <div className="absolute inset-0 flex items-end bg-gradient-to-t from-foreground/80 to-transparent">
-          <div className="mx-auto w-full max-w-6xl px-6 pb-12 text-background">
+      <section className="bg-primary text-primary-foreground">
+        <div className="mx-auto grid max-w-6xl items-center gap-8 px-6 py-12 md:grid-cols-2 md:py-16">
+          <div>
             <p className="text-sm font-semibold uppercase tracking-wide opacity-80">AisleOps supermarket maintenance software</p>
-            <h1 className="mt-2 max-w-3xl font-display text-4xl font-bold uppercase leading-none sm:text-5xl">Cut Supermarket Downtime &amp; Spoilage Across Every Store.</h1>
-            <p className="mt-4 max-w-2xl text-lg opacity-90">The all-in-one maintenance platform built for retail chains. QR fault logging for shop-floor staff, automated cold-chain dispatch, and instant digital work orders (DWR)—without paperwork.</p>
+            <h1 className="mt-2 font-display text-4xl font-bold uppercase leading-none sm:text-5xl">Cut Supermarket Downtime &amp; Spoilage Across Every Store.</h1>
+            <p className="mt-4 max-w-xl text-lg opacity-90">The all-in-one maintenance platform built for retail chains. QR fault logging for shop-floor staff, automated cold-chain dispatch, and instant digital work orders (DWR)—without paperwork.</p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button asChild size="lg" className="bg-brand-amber text-foreground hover:bg-brand-amber/90"><a href="mailto:hello@fieldbridgeapp.com?subject=Book%20a%2015-minute%20AisleOps%20demo">Book a 15-Minute Demo</a></Button>
-              <Button size="lg" variant="outline" onClick={() => setDemo(true)} className="border-background/60 bg-transparent text-background hover:bg-background/10 hover:text-background"><Play className="mr-2 h-4 w-4" />Try the Interactive Demo (No Sign-In Required)</Button>
+              <Button size="lg" variant="outline" onClick={() => setDemo(true)} className="border-primary-foreground/60 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"><Play className="mr-2 h-4 w-4" />Try the Interactive Demo (No Sign-In Required)</Button>
             </div>
             <a href="#roi" className="mt-4 inline-block text-sm underline underline-offset-4 opacity-90">See what you could save ↓</a>
+          </div>
+          <div className="relative overflow-hidden rounded-lg border border-primary-foreground/20 shadow-xl">
+            <img src={hero} alt="Technician checking a supermarket chiller aisle" width={1536} height={1024} className="h-64 w-full object-cover md:h-80" />
+            <div className="absolute inset-x-0 bottom-0 bg-foreground/85 px-4 py-2 text-xs font-medium text-background">Cold-chain faults dispatched before stock is lost.</div>
           </div>
         </div>
       </section>
