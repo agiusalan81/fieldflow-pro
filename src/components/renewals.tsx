@@ -57,7 +57,7 @@ export function RenewalList({ office, limit }: { office: boolean; limit?: number
             <div className="min-w-0">
               <p className="truncate font-medium text-foreground">{a.clients?.name}{a.sites?.name ? ` · ${a.sites.name}` : ""}</p>
               <p className="text-sm text-muted-foreground">{a.contract_types?.name ?? "Custom"} · €{Number(a.annual_price).toFixed(2)}/yr · ends {a.end_date} · <span className={d < 0 ? "text-destructive" : "text-foreground"}>{d < 0 ? `expired ${-d} days ago` : `${d} days left`}</span></p>
-              <p className="text-xs text-muted-foreground">{a.price_confirmed_at ? `Price confirmed ${new Date(a.price_confirmed_at).toLocaleDateString()}` : "Price not confirmed yet"}{a.renewal_sent_at ? ` · Renewal sent ${new Date(a.renewal_sent_at).toLocaleDateString()}` : ""}</p>
+              {!inhouse&&<p className="text-xs text-muted-foreground">{a.price_confirmed_at ? `Price confirmed ${new Date(a.price_confirmed_at).toLocaleDateString()}` : "Price not confirmed yet"}{a.renewal_sent_at ? ` · Renewal sent ${new Date(a.renewal_sent_at).toLocaleDateString()}` : ""}</p>}
             </div>
             {office && (
               <div className="flex flex-wrap gap-2">
