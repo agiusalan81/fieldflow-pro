@@ -34,7 +34,7 @@ export const EDITION_SPEC: Record<Edition, EditionSpec> = {
     home: "/hotels",
     hiddenRoutes: CONTRACTOR_ONLY,
     labels: {
-      "Clients & assets": "Properties, rooms & facility assets",
+      "Clients & assets": "Properties, rooms & facility items",
       "Job sheets": "Work orders",
       "My job sheets": "My work orders",
       "QR code generator": "Room QR codes",
@@ -123,5 +123,5 @@ export const CHECKLIST_PRESETS: Partial<Record<Edition, Record<string, string[]>
 
 /** Broad asset wording for in-house maintenance, without changing contractor terminology. */
 export function editionAssetLabel(edition: Edition) {
-  return edition === "retail" ? "Equipment & fixtures" : edition === "hotel" ? "Room & facility assets" : "Equipment";
+  return edition === "retail" ? "Equipment & fixtures" : edition === "hotel" ? "Room & facility items" : "Equipment";
 }

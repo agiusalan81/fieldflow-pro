@@ -152,7 +152,7 @@ function UpForGrabs({ profile }: { profile: Profile }) {
   const jobs = { data: openJobs.jobs };
   const alerting = openJobs.alerting;
   const ringing = alerting.length > 0;
-  const clocked = { data: true };
+  const clocked = useQuery({ queryKey: ['open-job-clocked', profile.id], refetchInterval: 15000, queryFn: async () => { const r = await supabase.from('shifts').select('id').eq('user_id', profile.id).is('clock_out', null).limit(1); if (r.error) throw r.error; return !!r.data.length; } });
   if (!smart || !jobs.data.length) return null;
   const claim = async (id: string) => {
     setBusy(id);
