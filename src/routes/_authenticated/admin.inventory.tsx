@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/admin/inventory")({ static
       { property: "og:description", content: "Parts stock control." },
     ],
   }),
-  validateSearch: (s: Record<string, unknown>) => ({ tab: s.tab === "tools" ? "tools" as const : undefined }),
+  validateSearch: (s: Record<string, unknown>) => ({ tab: s["tab"] === "tools" ? "tools" as const : undefined }),
   component: Inventory,
 });
 

@@ -55,7 +55,7 @@ export function ToolRegister({ profile }: { profile: Profile }) {
   const remove = async (t: Tool) => {
     if (!confirm(`Delete ${t.tag} ${t.name}? Its custody history will also be removed. Use "Retired" status to keep history.`)) return;
     const { error } = await supabase.from("company_tools").delete().eq("id", t.id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     refresh();
   };
 
@@ -111,7 +111,7 @@ function ToolEditor({ tool, companyId, onClose, onSaved }: { tool: Partial<Tool>
     const { error } = f.id
       ? await supabase.from("company_tools").update({ ...row, ...(status ? { status } : {}) }).eq("id", f.id)
       : await supabase.from("company_tools").insert({ ...row, company_id: companyId });
-    if (error) return toast.error(error.message.includes("duplicate") ? "That tag is already used" : error.message);
+    if (error) { toast.error(error.message.includes("duplicate") ? "That tag is already used" : error.message); return; }
     toast.success("Tool saved"); onSaved(); onClose();
   };
   return (
@@ -130,7 +130,7 @@ function ToolEditor({ tool, companyId, onClose, onSaved }: { tool: Partial<Tool>
             <div className="space-y-1.5"><Label>Store location</Label><Input placeholder="Central store · Shelf B" value={f.default_location ?? ""} onChange={(e) => set("default_location", e.target.value)} /></div>
             <div className="space-y-1.5"><Label>Inspection / calibration due</Label><Input type="date" value={f.inspection_due ?? ""} onChange={(e) => set("inspection_due", e.target.value)} /></div>
             {f.id && f.status !== "checked_out" && <div className="space-y-1.5"><Label>Status</Label>
-              <Select value={f.status} onValueChange={(v) => set("status", v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{(["available", "in_maintenance", "decommissioned"] as ToolStatus[]).map((s) => <SelectItem key={s} value={s}>{TOOL_STATUS_LABEL[s]}</SelectItem>)}</SelectContent></Select>
+              <Select value={f.status ?? "available"} onValueChange={(v) => set("status", v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{(["available", "in_maintenance", "decommissioned"] as ToolStatus[]).map((s) => <SelectItem key={s} value={s}>{TOOL_STATUS_LABEL[s]}</SelectItem>)}</SelectContent></Select>
             </div>}
           </div>
           <div className="space-y-1.5"><Label>Notes</Label><Textarea rows={2} value={f.notes ?? ""} onChange={(e) => set("notes", e.target.value)} /></div>
@@ -150,7 +150,7 @@ function SignOutDialog({ tool, profile, manager, team, onClose, onDone }: { tool
     setBusy(true);
     const { error } = await supabase.rpc("tool_sign_out", { _tool: tool.id, _holder: holder, _destination: dest, _expected: due || null as never });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success(`${tool.tag} signed out`); onDone(); onClose();
   };
   return (
@@ -175,11 +175,11 @@ function SignInDialog({ tool, onClose, onDone }: { tool: Tool; onClose: () => vo
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
   const submit = async () => {
-    if (cond === "needs_maintenance" && !notes.trim()) return toast.error("Describe the defect");
+    if (cond === "needs_maintenance" && !notes.trim()) { toast.error("Describe the defect"); return; }
     setBusy(true);
     const { error } = await supabase.rpc("tool_sign_in", { _tool: tool.id, _condition: cond, _notes: notes });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success(cond === "good" ? `${tool.tag} back in store` : `${tool.tag} flagged for repair`); onDone(); onClose();
   };
   return (
@@ -224,8 +224,8 @@ export function InventoryControlSettings({ companyId }: { companyId: string }) {
   const qc = useQueryClient();
   const modes = useInventoryModes(companyId).data;
   const save = async (k: "tool_checkout_mode" | "parts_control_mode", v: ControlMode) => {
-    const { error } = await supabase.from("company_settings").update({ [k]: v }).eq("company_id", companyId);
-    if (error) return toast.error(error.message);
+    const { error } = await supabase.from("company_settings").update(k === "tool_checkout_mode" ? { tool_checkout_mode: v } : { parts_control_mode: v }).eq("company_id", companyId);
+    if (error) { toast.error(error.message); return; }
     toast.success("Inventory control saved");
     qc.invalidateQueries({ queryKey: ["inventory-modes"] });
   };
