@@ -60,10 +60,8 @@ export function EditVisit({ visit }: { visit: Visit }) {
     setBusy(true);
     try {
       const availability = dispatchAvailability(d.tbd ? null : d.scheduled_date, d.tech, smart, d.hold, d.open && named < d.teamSize);
-      const { error } = await supabase.from("jobs").update({ ...availability, window_start: d.window_start || null, window_end: d.window_end || null, priority: d.priority, problem_summary: d.problem_summary.trim() || null, assigned_technician_id: d.tech === "none" ? null : d.tech, secondary_technician_id: d.assistant === "none" ? null : d.assistant, ...(smart ? { required_team_size: d.teamSize, open_to_claim: availability.open_to_claim } : {}) } as never).eq("id", visit.id);
+      const { error } = await supabase.from("jobs").update({ ...availability, claim_incentive_cents:cents, window_start: d.window_start || null, window_end: d.window_end || null, priority: d.priority, problem_summary: d.problem_summary.trim() || null, assigned_technician_id: d.tech === "none" ? null : d.tech, secondary_technician_id: d.assistant === "none" ? null : d.assistant, ...(smart ? { required_team_size: d.teamSize, open_to_claim: availability.open_to_claim } : {}) }).eq("id", visit.id);
       if (error) { toast.error(error.message); return; }
-      const bonusSave=await supabase.from('jobs').update({claim_incentive_cents:cents}).eq('id',visit.id);
-      if(bonusSave.error){toast.error(bonusSave.error.message);return;}
       if (smart) {
         const del = await supabase.from("job_skills").delete().eq("job_id", visit.id);
         if (del.error) { toast.error(del.error.message); return; }

@@ -208,7 +208,7 @@ function TechToday({ profile, readOnly, switcher }: { profile: Profile; readOnly
         .from("jobs")
         .select("id, assigned_technician_id, secondary_technician_id, job_number, asset_id, window_start, window_end, problem_summary, priority, acknowledged_at, clients(name), sites(name, address), assets(reference_number, asset_category)")
         .or(assignmentFilter(profile.id))
-        .eq("scheduled_date", today)
+        .or(`scheduled_date.eq.${today},and(priority.eq.urgent,scheduled_date.lte.${today})`)
         .order("window_start");
       if (error) throw error;
       return data;
