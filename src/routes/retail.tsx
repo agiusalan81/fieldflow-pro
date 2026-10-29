@@ -6,20 +6,28 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import hero from "@/assets/retail-hero.jpg";
 import { Button } from "@/components/ui/button";
 import { EDITION_SPEC } from "@/lib/editions";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { listPublicCatalog } from "@/lib/public-catalog.functions";
+import { RetailValue } from "@/components/retail-value";
+
+const retailCatalogQuery = queryOptions({ queryKey: ["public-catalog", "fieldbridge-retail"], queryFn: () => listPublicCatalog({ data: { product: "fieldbridge-retail" } }), staleTime: 60_000, refetchInterval: 60_000 });
 
 const TITLE = "AisleOps | Supermarket & Store Maintenance Software";
-const DESC = "Maintenance software for supermarket chains: refrigeration, bakeries, factories, store fabric and car parks across every outlet, with QR fault reporting.";
+const DESC = "AisleOps supermarket maintenance software: paperless work orders, QR fault reporting and dispatch. Compare team plans and estimate retail maintenance ROI with transparent assumptions.";
 
 export const Route = createFileRoute("/retail")({
   staticData: { sitemap: true },
-  head: () => ({
+  loader: ({ context }) => context.queryClient.ensureQueryData(retailCatalogQuery),
+  head: ({ loaderData }) => ({
     meta: [
       { title: TITLE }, { name: "description", content: DESC },
       { property: "og:title", content: TITLE }, { property: "og:description", content: DESC },
       { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" },
     ],
+    scripts: [{ type: "application/ld+json", children: JSON.stringify({ "@context": "https://schema.org", "@type": "SoftwareApplication", name: "AisleOps", applicationCategory: "BusinessApplication", operatingSystem: "Web", description: DESC, offers: (loaderData?.plans ?? []).map(p => ({ "@type": "Offer", name: p.name, price: p.monthly_price, priceCurrency: "EUR", description: `Monthly company plan with ${p.included_seats} team accounts and ${p.storage_gb} GB storage.` })) }) }],
   }),
   component: RetailPage,
+  errorComponent: () => <div role="alert" className="p-8">AisleOps pricing is temporarily unavailable. Please try again shortly.</div>,
 });
 
 const STATS = [["Superstores", "and express outlets on one map"], ["Bakeries", "pastry kitchens and factories"], ["1 scan", "from shop floor to engineer"]] as const;
@@ -43,6 +51,7 @@ const AREAS = [
 ];
 
 function RetailPage() {
+  const { data: catalog } = useSuspenseQuery(retailCatalogQuery);
   useEffect(() => { document.documentElement.dataset["edition"] = "retail"; return () => { delete document.documentElement.dataset["edition"]; }; }, []);
   const spec = EDITION_SPEC.retail;
   const [open, setOpen] = useState<string | null>(null);
@@ -51,19 +60,20 @@ function RetailPage() {
     <div className="min-h-screen bg-background text-foreground">
       <header className="border-b bg-primary text-primary-foreground">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <p className="font-display text-xl font-bold uppercase tracking-tight">{spec.product}</p>
-          <Button asChild variant="secondary" size="sm"><Link to="/auth">Sign in</Link></Button>
+          <p className="font-display text-xl font-bold uppercase">{spec.product}</p>
+          <div className="flex items-center gap-2"><Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex"><a href="#roi">Savings calculator</a></Button><Button asChild variant="secondary" size="sm"><Link to="/auth">Sign in</Link></Button></div>
         </div>
       </header>
       <section className="relative">
         <img src={hero} alt="Technician checking a supermarket chiller aisle" width={1536} height={1024} className="h-[520px] w-full object-cover" />
         <div className="absolute inset-0 flex items-end bg-gradient-to-t from-foreground/80 to-transparent">
           <div className="mx-auto w-full max-w-6xl px-6 pb-12 text-background">
-            <h1 className="max-w-2xl font-display text-4xl font-bold uppercase leading-none sm:text-6xl">Every store. Every fridge. Every tile.</h1>
-            <p className="mt-4 max-w-xl text-lg opacity-90">One maintenance system for your supermarket chain — outlets, bakeries, factories and car parks.</p>
+            <h1 className="max-w-3xl font-display text-4xl font-bold uppercase leading-none sm:text-5xl">AisleOps supermarket maintenance software</h1>
+            <p className="mt-4 max-w-xl text-lg opacity-90">Every store. Every fridge. Every tile. Paperless work orders for your outlets, bakeries, factories and car parks.</p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button size="lg" onClick={() => setDemo(true)} className="bg-brand-amber text-foreground hover:bg-brand-amber/90"><Play className="mr-2 h-4 w-4" />Try the interactive demo</Button>
               <Button asChild size="lg" variant="secondary"><a href="mailto:hello@fieldbridgeapp.com?subject=AisleOps%20demo">Book a call</a></Button>
+              <Button asChild size="lg" variant="secondary"><a href="#roi">Calculate your potential savings</a></Button>
             </div>
           </div>
         </div>
@@ -76,11 +86,11 @@ function RetailPage() {
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {AREAS.map((f) => (
             <div key={f.title} className={`border-l-4 border-primary bg-card transition ${open === f.title ? "sm:col-span-2 lg:col-span-3" : ""}`}>
-              <button type="button" aria-expanded={open === f.title} onClick={() => setOpen(open === f.title ? null : f.title)} className="w-full p-5 text-left">
+              <Button type="button" variant="ghost" aria-expanded={open === f.title} onClick={() => setOpen(open === f.title ? null : f.title)} className="block h-auto w-full whitespace-normal rounded-none p-5 text-left">
                 <div className="flex items-center justify-between"><f.icon className="h-6 w-6 text-brand-amber" /><ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${open === f.title ? "rotate-180" : ""}`} /></div>
                 <h3 className="mt-2 font-display text-lg font-bold">{f.title}</h3>
                 <p className="mt-1 text-sm text-muted-foreground">{f.text}</p>
-              </button>
+              </Button>
               <div className={open === f.title ? "px-5 pb-5" : "hidden"}>
                 <ul className="list-disc space-y-1 pl-5 text-sm">{f.more.map((m) => <li key={m}>{m}</li>)}</ul>
                 <Button size="sm" variant="outline" className="mt-4" onClick={() => setDemo(true)}>See it in the demo</Button>
@@ -90,6 +100,7 @@ function RetailPage() {
         </div>
         <p className="mt-10 text-sm text-muted-foreground">Site types ready to use: {spec.siteTypes.join(" · ")}</p>
       </section>
+      <RetailValue catalog={catalog} onDemo={() => setDemo(true)} />
       <Dialog open={demo} onOpenChange={setDemo}>
         <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
           <DialogHeader><DialogTitle>AisleOps interactive demo</DialogTitle></DialogHeader>
@@ -97,7 +108,7 @@ function RetailPage() {
           <Link to="/demo" className="text-sm text-primary underline">Open the demo on its own page</Link>
         </DialogContent>
       </Dialog>
-      <footer className="bg-foreground py-6 text-center text-sm text-background">{spec.product} · powered by FieldBridge</footer>
+      <footer className="bg-foreground py-6 text-center text-sm text-background">{spec.product} · powered by FieldBridge · <a href="mailto:sales@fieldbridgeapp.com" className="underline">Contact sales</a></footer>
     </div>
   );
 }
