@@ -10,13 +10,13 @@
 <!-- LOVABLE:END -->
 
 ## Rules
-- Navigation consumes authorized menu items; flyouts/touch shortcuts share workspace-shortcuts.ts with URL-selected tabs — why: tier/Coming soon guards stay authoritative without duplicate screens.
+- Navigation consumes authorized menu items; flyouts/touch shortcuts share workspace-shortcuts.ts with URL-selected tabs — why: tier guards stay authoritative.
 - Company settings: four tabs keep visited editors mounted; client related records are bounded RLS read-only lists — why: preserve unsaved edits.
 - Email identity resolves server-side via company_email_branding plus HQ override; managed sends keep verified From, Gmail keeps its mailbox From — why: no forced-identity bypass or spoofing.
 - Quote photos: private immutable storage, frozen snapshot IDs/captions, URLs only after token/portal auth — why: no unrelated path exposure.
 - role-menu.ts exclusions are navigation-only. Legacy quote drafts default missing fields on read only.
 - Analytics: owner-only coarse counts; server-derived tenant. Product-scoped outreach/feedback; saved follow-ups send nothing.
-- HQ: product-scoped owner-only setup/invites/resets; ordered tenant deletes retain users/branding/platform bills and refuse issued payroll — why: no cross-tenant or financial-history loss.
+- HQ: product-scoped owner-only setup/invites/resets; ordered tenant deletes retain users/branding/platform bills and refuse issued payroll — why: no cross-tenant/financial loss.
 - Chrome: neutral surfaces/token controls; phone bar neutral, no gradients.
 - Travel shares startJobTravel; arrival saves time before on-site status.
 - Invite functions/loaders use timeouts and middleware.
@@ -31,7 +31,7 @@
 - DWR: one canonical report/shift; retain corrected/superseded originals; filing clears held flags; 
 - Dispatch: lead/assistant share one sheet; lead edits, logs seed both. Null dates use Unscheduled queue; atomic quote conversion retains frozen billing prices — why: scheduling can wait. 
 - Overtime uses captured DWR intervals/rules; old reports show associated sites only; factual allocation.
-- - Branding shares asset-backed font IDs and preview/PDF decorations; DB/HQ locks protect saved values.
+- - Typography via applyTypography/AppShell, locale via locale.ts. Branding shares asset-backed font IDs and preview/PDF decorations; DB/HQ locks protect saved values.
 - Auth emails share auth-brand.tsx; the managed handler owns verification and dispatch for reliable account recovery.
 - Shared document-preview tabs serve desktop/mobile; no implicit draft saves.
 - Independent settings editors use settingsSectionPatch to write only owned columns; JSON styling saves merge current stored keys; 
@@ -43,7 +43,7 @@
 - Daily time logs keep technician_count separate from initials; labour uses headcount, DWR personal elapsed time; correct hours.
 - Combined PDFs use email builder/RLS; office combines completed sheets for one client; 
 - Client notices use client-notices.functions.ts and tested client-notices.ts; guard_departure prevents self-approval; 
-- job_sheets embeds use users!job_sheets_assigned_technician_id_fkey; two users FKs.
+- job_sheets embeds use users!job_sheets_assigned_technician_id_fkey (two users FKs).
 - Signing batches: creator-owned, finalized transactionally; store delivery before sending via shared PDF builder; atomic, retry-safe delivery.
 - Offline: account-scoped IndexedDB/optimistic RPC/PWA; confirmed discard atomically removes only that account/sheet draft/photos/cache; retain inaccessible drafts.
 - Masters immutable except names; shared document-blocks pricing/tags/copies; site/equipment buttons reuse DocumentMasters with targets preselected; copy audience never blocks equipment — why: one attachment workflow.
