@@ -7,7 +7,7 @@ export function distanceKm(a: FleetPoint, b: FleetPoint) {
   return 6371*2*Math.atan2(Math.sqrt(d),Math.sqrt(Math.max(0,1-d)));
 }
 export function fleetSummary(points: FleetPoint[], vehicles: FleetVehicle[]) {
-  const sorted = [...points].sort((a,b)=>Date.parse(a.recorded_at)-Date.parse(b.recorded_at));
+  const sorted = points.filter(p=>!!p.plate).sort((a,b)=>Date.parse(a.recorded_at)-Date.parse(b.recorded_at));
   const segments: FleetPoint[][] = []; let km=0, litres=0, cost=0, gaps=0, unconfiguredKm=0;
   for(let i=1;i<sorted.length;i++) {
     const a=sorted[i-1],b=sorted[i]; if(!a||!b)continue;

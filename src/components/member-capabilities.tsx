@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { commercialAccess } from '@/lib/member-workspaces';
 import { crmDefaultLevel } from '@/lib/crm';
 import { LiftCostingAvailability } from "@/components/lift-costing-availability";
+import { MemberVehicleSettings } from "@/components/vehicle-settings";
 import { canEditCapabilities, showsFieldDispatchToggle } from "@/lib/member-capabilities";
 
 /** Secondary capabilities on top of a member's primary role. Primary role keeps payroll and rota. */
@@ -41,5 +42,6 @@ export function MemberCapabilities({ userId, role, actorRole, active }: { userId
     </div>
     {crm !== 'none' && <div className="mt-3"><Select value={crm} disabled={role === "superuser" || busy || !active || !data} onValueChange={v => void toggle({ crm: v })}><SelectTrigger aria-label="CRM permission level"><SelectValue /></SelectTrigger><SelectContent>{['viewer','contributor','closer','manager'].map(level => <SelectItem key={level} value={level}>{level}</SelectItem>)}</SelectContent></Select></div>}
     {active && <LiftCostingAvailability userId={userId} role={role} />}
+    <MemberVehicleSettings userId={userId} active={active} />
   </div>;
 }

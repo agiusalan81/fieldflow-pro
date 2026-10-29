@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-const { from } = vi.hoisted(() => ({ from: vi.fn() }));
-vi.mock('@/integrations/supabase/client', () => ({ supabase: { from } }));
+const { from, rpc } = vi.hoisted(() => ({ from: vi.fn(), rpc: vi.fn().mockResolvedValue({data:{policy:'flexible',work_mode:'mobile'},error:null}) }));
+vi.mock('@/integrations/supabase/client', () => ({ supabase: { from,rpc } }));
 import { ShiftClockInDialog } from './shift-clock-in-dialog';
 afterEach(cleanup);
 describe('shared vehicle plate prompt', () => {
@@ -31,7 +31,7 @@ describe('shared vehicle plate prompt', () => {
     expect(screen.getByRole('button', { name: 'Clock in & start' })).toBeDisabled();
     fireEvent.change(input, { target: { value: 'XYZ987' } });
     fireEvent.click(screen.getByRole('button', { name: 'Clock in & start' }));
-    await waitFor(() => expect(confirm).toHaveBeenCalledWith('XYZ987'));
+    await waitFor(() => expect(confirm).toHaveBeenCalledWith('XYZ987','driver'));
     expect(close).toHaveBeenCalledWith(false);
   });
 });

@@ -1,12 +1,12 @@
 import { supabase } from '@/integrations/supabase/client';
-import { normalizePlate, validPlate } from '@/lib/dwr';
+import { vehicleShiftFields, type VehicleUse } from '@/lib/vehicle-clock-in';
 import type { Profile } from '@/lib/profile';
 import { toast } from 'sonner';
 import { captureShiftLocation } from '@/lib/shift-location';
 
-export async function clockInShift(profile: Profile, plate: string) {
-  if (!validPlate(plate)) throw new Error('Enter 3 letters and 3 numbers for your vehicle registration.');
-  const { error } = await supabase.from('shifts').insert({ shift_type: 'shift', company_id: profile.company_id, user_id: profile.id, vehicle_reg: normalizePlate(plate) });
+export async function clockInShift(profile: Profile, plate: string, use: VehicleUse = 'driver') {
+  const fields = vehicleShiftFields('flexible', use, plate);
+  const { error } = await supabase.from('shifts').insert({ shift_type: 'shift', company_id: profile.company_id, user_id: profile.id, ...fields });
   if (error) throw error;
   if (['technician','supervisor','maintenance'].includes(profile.real_role) && navigator.geolocation) {
     const access=await Promise.resolve(supabase.rpc('company_module_access',{_company:profile.company_id,_module:'tracking'})).catch(()=>null);

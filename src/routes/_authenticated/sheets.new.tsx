@@ -60,9 +60,9 @@ function NewSheet() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile]);
 
-  const clockInAndStart = async (plate: string) => {
+  const clockInAndStart = async (plate: string, use: import('@/lib/vehicle-clock-in').VehicleUse) => {
     if (!profile) return;
-    await clockInShift(profile, plate);
+    await clockInShift(profile, plate,use);
     qc.invalidateQueries({ queryKey: ["open-shifts"] });
     toast.success("Clocked in");
     setOffShift(false);
