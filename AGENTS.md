@@ -81,7 +81,7 @@
 - Per-member CRM access: user_roles.crm_access (null = role default) via my_crm_access()/crm_can(), enforced by RLS/RPCs, mirrored in crm.ts — why: CRM powers vary without changing primary role.
 - Protected per-member RPCs/RLS govern estimates, contracts and dispatch; field eligibility is separate, CRM levels persist — why: primary roles still drive payroll/rota.
 - CRM rules in tested src/lib/crm.ts; manager-only RLS guarded by guard_module_write_additional('crm_pipeline'); crm_mark_won/lost RPCs keep conversions atomic.
-- Lift costing: templates only seed sheet defaults (sheets copy values); access via member_costing_can()/can_lift_costing, mirrored by liftCostingAccess(); proposal branding follows branding_documents — why: saved quotes never change, supervisors cost only when enabled.
+- Lift costing: templates seed sheet copies; access via member_costing_can()/liftCostingAccess(); branding follows branding_documents — why: saved quotes never change.
 - Editions: engine_edition + company_product_id() pick tenant product; editions.ts only reskins — why: one engine, DB access.
 - HQ test switcher: owner-only, test-only Superuser sign-in — why: owner membership unchanged.
 - Inventory: tool/parts modes enforced by tool_sign_* RPCs + guard_inventory_stock, mirrored in inventory-control.ts — why: DB-enforced.
