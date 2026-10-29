@@ -12,6 +12,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ToolRegister, useInventoryModes } from "@/components/tool-register";
+import { canAdjustStock, isInventoryManager } from "@/lib/inventory-control";
 
 export const Route = createFileRoute("/_authenticated/admin/inventory")({ staticData: { sitemap: false },
   head: () => ({
@@ -24,11 +27,16 @@ export const Route = createFileRoute("/_authenticated/admin/inventory")({ static
       { property: "og:description", content: "Parts stock control." },
     ],
   }),
+  validateSearch: (s: Record<string, unknown>) => ({ tab: s["tab"] === "tools" ? "tools" as const : undefined }),
   component: Inventory,
 });
 
 function Inventory() {
   const { data: profile } = useProfile();
+  const { tab } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const manager = isInventoryManager(profile?.role);
+  const partsMode = useInventoryModes(profile?.company_id).data?.parts ?? "managed";
   const qc = useQueryClient();
   const [lowOnly, setLowOnly] = useState(false);
   const [open, setOpen] = useState(false);
@@ -62,7 +70,7 @@ function Inventory() {
   return (
     <AppShell
       title="Inventory"
-      actions={
+      actions={manager && tab !== "tools" &&
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button size="sm"><Plus className="mr-1 h-4 w-4" />Add part</Button></DialogTrigger>
           <DialogContent>
@@ -81,6 +89,9 @@ function Inventory() {
         </Dialog>
       }
     >
+      <Tabs value={tab ?? "parts"} onValueChange={(v) => navigate({ search: { tab: v === "tools" ? "tools" : undefined } })}>
+        <TabsList className="mb-4"><TabsTrigger value="parts">Parts & consumables</TabsTrigger><TabsTrigger value="tools">Tool register</TabsTrigger></TabsList>
+        <TabsContent value="parts">
       {low.length > 0 && (
         <div className="mb-4 flex items-center gap-3 rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm">
           <AlertTriangle className="h-5 w-5 shrink-0 text-destructive" />
@@ -102,13 +113,13 @@ function Inventory() {
                     <TableCell className="text-right tabular-nums">{i.min_stock_level}</TableCell>
                     <TableCell>
                       <div className="flex items-center justify-center gap-1">
-                        <Button size="icon" variant="outline" className="h-8 w-8" aria-label="Decrease" onClick={() => adjust(i.id, i.current_stock - 1)}><Minus className="h-3 w-3" /></Button>
+                        <Button size="icon" variant="outline" className="h-8 w-8" aria-label="Decrease" disabled={!canAdjustStock(profile?.role, partsMode, i.requires_approval)} onClick={() => adjust(i.id, i.current_stock - 1)}><Minus className="h-3 w-3" /></Button>
                         <span className="w-10 text-center tabular-nums">{i.current_stock}</span>
-                        <Button size="icon" variant="outline" className="h-8 w-8" aria-label="Increase" onClick={() => adjust(i.id, i.current_stock + 1)}><Plus className="h-3 w-3" /></Button>
+                        <Button size="icon" variant="outline" className="h-8 w-8" aria-label="Increase" disabled={!canAdjustStock(profile?.role, partsMode, i.requires_approval)} onClick={() => adjust(i.id, i.current_stock + 1)}><Plus className="h-3 w-3" /></Button>
                       </div>
                     </TableCell>
                     <TableCell>{isLow ? <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs text-destructive">Low stock</span> : <span className="rounded-full bg-success/15 px-2 py-0.5 text-xs text-success">OK</span>}</TableCell>
-                    <TableCell className="text-right"><Button size="icon" variant="ghost" aria-label="Delete" onClick={() => remove(i.id)}><Trash2 className="h-4 w-4" /></Button></TableCell>
+                    <TableCell className="text-right">{manager && <Button size="icon" variant="ghost" aria-label="Delete" onClick={() => remove(i.id)}><Trash2 className="h-4 w-4" /></Button>}</TableCell>
                   </TableRow>
                 );
               })}
@@ -116,6 +127,9 @@ function Inventory() {
           </Table>
         </div>
       )}
+        </TabsContent>
+        <TabsContent value="tools">{profile && <ToolRegister profile={profile} />}</TabsContent>
+      </Tabs>
     </AppShell>
   );
 }

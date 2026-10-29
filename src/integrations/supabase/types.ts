@@ -886,6 +886,7 @@ export type Database = {
           numbering: Json
           office_address: Json
           office_phone: string | null
+          parts_control_mode: string
           payroll_mode: string
           pdf_template: Json
           pe_number: string | null
@@ -903,6 +904,7 @@ export type Database = {
           technical_structure: Json
           terms: Json
           theme: Json
+          tool_checkout_mode: string
           trades: string[]
           updated_at: string
           vat_number: string
@@ -941,6 +943,7 @@ export type Database = {
           numbering?: Json
           office_address?: Json
           office_phone?: string | null
+          parts_control_mode?: string
           payroll_mode?: string
           pdf_template?: Json
           pe_number?: string | null
@@ -958,6 +961,7 @@ export type Database = {
           technical_structure?: Json
           terms?: Json
           theme?: Json
+          tool_checkout_mode?: string
           trades?: string[]
           updated_at?: string
           vat_number?: string
@@ -996,6 +1000,7 @@ export type Database = {
           numbering?: Json
           office_address?: Json
           office_phone?: string | null
+          parts_control_mode?: string
           payroll_mode?: string
           pdf_template?: Json
           pe_number?: string | null
@@ -1013,6 +1018,7 @@ export type Database = {
           technical_structure?: Json
           terms?: Json
           theme?: Json
+          tool_checkout_mode?: string
           trades?: string[]
           updated_at?: string
           vat_number?: string
@@ -1065,6 +1071,62 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "company_skills_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_tools: {
+        Row: {
+          category: string
+          company_id: string
+          created_at: string
+          default_location: string | null
+          holder_id: string | null
+          id: string
+          inspection_due: string | null
+          model: string | null
+          name: string
+          notes: string | null
+          serial_number: string | null
+          status: string
+          tag: string
+        }
+        Insert: {
+          category?: string
+          company_id?: string
+          created_at?: string
+          default_location?: string | null
+          holder_id?: string | null
+          id?: string
+          inspection_due?: string | null
+          model?: string | null
+          name: string
+          notes?: string | null
+          serial_number?: string | null
+          status?: string
+          tag: string
+        }
+        Update: {
+          category?: string
+          company_id?: string
+          created_at?: string
+          default_location?: string | null
+          holder_id?: string | null
+          id?: string
+          inspection_due?: string | null
+          model?: string | null
+          name?: string
+          notes?: string | null
+          serial_number?: string | null
+          status?: string
+          tag?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_tools_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
@@ -6629,6 +6691,66 @@ export type Database = {
           },
         ]
       }
+      tool_custody_logs: {
+        Row: {
+          checked_out_at: string
+          company_id: string
+          destination: string | null
+          expected_return: string | null
+          holder_id: string
+          id: string
+          issued_by: string
+          received_by: string | null
+          return_condition: string | null
+          return_notes: string | null
+          returned_at: string | null
+          tool_id: string
+        }
+        Insert: {
+          checked_out_at?: string
+          company_id: string
+          destination?: string | null
+          expected_return?: string | null
+          holder_id: string
+          id?: string
+          issued_by: string
+          received_by?: string | null
+          return_condition?: string | null
+          return_notes?: string | null
+          returned_at?: string | null
+          tool_id: string
+        }
+        Update: {
+          checked_out_at?: string
+          company_id?: string
+          destination?: string | null
+          expected_return?: string | null
+          holder_id?: string
+          id?: string
+          issued_by?: string
+          received_by?: string | null
+          return_condition?: string | null
+          return_notes?: string | null
+          returned_at?: string | null
+          tool_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tool_custody_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tool_custody_logs_tool_id_fkey"
+            columns: ["tool_id"]
+            isOneToOne: false
+            referencedRelation: "company_tools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_leave_balances: {
         Row: {
           base_entitlement_hours: number
@@ -7416,6 +7538,19 @@ export type Database = {
       }
       terminate_member_handover: {
         Args: { _choices: Json; _reason: string; _user: string }
+        Returns: undefined
+      }
+      tool_sign_in: {
+        Args: { _condition: string; _notes: string; _tool: string }
+        Returns: undefined
+      }
+      tool_sign_out: {
+        Args: {
+          _destination: string
+          _expected: string
+          _holder: string
+          _tool: string
+        }
         Returns: undefined
       }
       user_initials: {

@@ -10,13 +10,13 @@
 <!-- LOVABLE:END -->
 
 ## Rules
-- Navigation consumes authorized menu items; flyouts/touch shortcuts share workspace-shortcuts.ts with URL-selected tabs — why: tier/Coming soon guards stay authoritative without duplicate screens.
+- Navigation consumes authorized menu items; flyouts/touch shortcuts share workspace-shortcuts.ts with URL-selected tabs — why: tier guards stay authoritative.
 - Company settings: four tabs keep visited editors mounted; client related records are bounded RLS read-only lists — why: preserve unsaved edits.
 - Email identity resolves server-side via company_email_branding plus HQ override; managed sends keep verified From, Gmail keeps its mailbox From — why: no forced-identity bypass or spoofing.
 - Quote photos: private immutable storage, frozen snapshot IDs/captions, URLs only after token/portal auth — why: no unrelated path exposure.
 - role-menu.ts exclusions are navigation-only. Legacy quote drafts default missing fields on read only.
 - Analytics: owner-only coarse counts; server-derived tenant. Product-scoped outreach/feedback; saved follow-ups send nothing.
-- HQ: product-scoped owner-only setup/invites/resets; ordered tenant deletes retain users/branding/platform bills and refuse issued payroll — why: no cross-tenant or financial-history loss.
+- HQ: product-scoped owner-only setup/invites/resets; ordered tenant deletes retain users/branding/platform bills and refuse issued payroll — why: no cross-tenant/financial loss.
 - Chrome: neutral surfaces/token controls; phone bar neutral, no gradients.
 - Travel shares startJobTravel; arrival saves time before on-site status.
 - Invite functions/loaders use timeouts and middleware.
@@ -31,8 +31,7 @@
 - DWR: one canonical report/shift; retain corrected/superseded originals; filing clears held flags; 
 - Dispatch: lead/assistant share one sheet; lead edits, logs seed both. Null dates use Unscheduled queue; atomic quote conversion retains frozen billing prices — why: scheduling can wait. 
 - Overtime uses captured DWR intervals/rules; old reports show associated sites only; factual allocation.
-- Typography: applyTypography/AppShell; locale: locale.ts.
-- Branding shares asset-backed font IDs and preview/PDF decorations; DB/HQ locks protect saved values.
+- - Typography via applyTypography/AppShell, locale via locale.ts. Branding shares asset-backed font IDs and preview/PDF decorations; DB/HQ locks protect saved values.
 - Auth emails share auth-brand.tsx; the managed handler owns verification and dispatch for reliable account recovery.
 - Shared document-preview tabs serve desktop/mobile; no implicit draft saves.
 - Independent settings editors use settingsSectionPatch to write only owned columns; JSON styling saves merge current stored keys; 
@@ -44,7 +43,7 @@
 - Daily time logs keep technician_count separate from initials; labour uses headcount, DWR personal elapsed time; correct hours.
 - Combined PDFs use email builder/RLS; office combines completed sheets for one client; 
 - Client notices use client-notices.functions.ts and tested client-notices.ts; guard_departure prevents self-approval; 
-- job_sheets embeds use users!job_sheets_assigned_technician_id_fkey; two users FKs.
+- job_sheets embeds use users!job_sheets_assigned_technician_id_fkey (two users FKs).
 - Signing batches: creator-owned, finalized transactionally; store delivery before sending via shared PDF builder; atomic, retry-safe delivery.
 - Offline: account-scoped IndexedDB/optimistic RPC/PWA; confirmed discard atomically removes only that account/sheet draft/photos/cache; retain inaccessible drafts.
 - Masters immutable except names; shared document-blocks pricing/tags/copies; site/equipment buttons reuse DocumentMasters with targets preselected; copy audience never blocks equipment — why: one attachment workflow.
@@ -68,7 +67,7 @@
 - Public catalog/legal use narrow reads; HQ stays private. Trust pages share renderers; sitemap uses explicit route decisions, no generated lastmod.
 - Staff signatures share staff-signature editors and own-user RPC; protected real roles govern eligibility and profile guards retain identity protection.
 - Sheet sync serializes per account/sheet, rebasing local versions only. Autosave uses dirty fingerprints; failures retain newer drafts.
-- PDF.js uses v4/canvasContext; newer Map APIs break field devices.
+- PDF.js v4/canvasContext; newer Map APIs break field devices.
 - Contracts: scope-ranked attachments seed new coverage; atomic matrix RPCs freeze work/prices with optional passport rates/collective totals; PPM/portal retain coverage — why: never rewrite agreed history.
 - StaffContacts/contact-editor own contact writes; portal scope is staff-only. HQ setup options save atomically; staff/portal access stays independent.
 - Delivery uses client_message_recipients; preferences choose recipients, not unsupported channel delivery.
@@ -82,6 +81,7 @@
 - Per-member CRM access: user_roles.crm_access (null = role default) via my_crm_access()/crm_can(), enforced by RLS/RPCs, mirrored in crm.ts — why: CRM powers vary without changing primary role.
 - Protected per-member RPCs/RLS govern estimates, contracts and dispatch; field eligibility is separate, CRM levels persist — why: primary roles still drive payroll/rota.
 - CRM rules in tested src/lib/crm.ts; manager-only RLS guarded by guard_module_write_additional('crm_pipeline'); crm_mark_won/lost RPCs keep conversions atomic.
-- Lift costing: templates only seed sheet defaults (sheets copy values); access via member_costing_can()/can_lift_costing, mirrored by liftCostingAccess(); proposal branding follows branding_documents — why: saved quotes never change, supervisors cost only when enabled.
+- Lift costing: templates seed sheet copies; access via member_costing_can()/liftCostingAccess(); branding follows branding_documents — why: saved quotes never change.
 - Editions: engine_edition + company_product_id() pick tenant product; editions.ts only reskins — why: one engine, DB access.
 - HQ test switcher: owner-only, test-only Superuser sign-in — why: owner membership unchanged.
+- Inventory: tool/parts modes enforced by tool_sign_* RPCs + guard_inventory_stock, mirrored in inventory-control.ts — why: DB-enforced.

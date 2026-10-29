@@ -54,6 +54,7 @@ const techNav: NavItem[] = [
   { group: "Field work", to: "/technical-library", label: "Technical library", icon: FileText, feature: "technical_library" },
   { group: "Field work", to: "/available-jobs", label: "Available jobs", icon: Hammer, feature: "skills_dispatch" },
   { group: "Field work", to: "/messages", label: "Team chat", icon: MessageSquare },
+  { group: "Field work", to: "/admin/inventory", search: { tab: "tools" }, label: "Tool register", icon: Package },
   { group: "Field work", to: "/as-built", label: "Site survey", icon: Calculator, feature: "qs_pricing" },
   { group: "Time & roster", to: "/dwr", label: "My daily reports", icon: FileText },
   { group: "Time & roster", to: "/standby", label: "On-call rota", icon: PhoneCall, feature: "standby" },
