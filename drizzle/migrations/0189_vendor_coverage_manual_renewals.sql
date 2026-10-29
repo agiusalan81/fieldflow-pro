@@ -1,0 +1,27 @@
+ALTER TABLE public.maintenance_agreements ADD COLUMN vendor_name text NOT NULL DEFAULT '', ADD COLUMN vendor_contact text NOT NULL DEFAULT '', ADD COLUMN coverage_kind text NOT NULL DEFAULT 'maintenance', ADD COLUMN coverage_details text NOT NULL DEFAULT '', ADD COLUMN renewal_history jsonb NOT NULL DEFAULT '[]';
+CREATE FUNCTION public.guard_vendor_coverage() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN
+IF NEW.coverage_kind NOT IN ('maintenance','vendor_sla','warranty') THEN RAISE EXCEPTION 'Invalid coverage kind'; END IF;
+IF NEW.coverage_kind <> 'maintenance' AND NOT EXISTS (SELECT 1 FROM public.platform_products WHERE id=public.company_product_id(NEW.company_id) AND engine_edition IN ('retail','hotel')) THEN RAISE EXCEPTION 'Vendor coverage is for in-house products'; END IF;
+IF TG_OP='UPDATE' THEN IF (NEW.start_date,NEW.end_date) IS DISTINCT FROM (OLD.start_date,OLD.end_date) THEN NEW.renewal_history=OLD.renewal_history || jsonb_build_array(jsonb_build_object('start',OLD.start_date,'end',OLD.end_date,'renewed_at',now(),'renewed_by',auth.uid())); ELSE NEW.renewal_history=OLD.renewal_history; END IF; END IF;
+RETURN NEW; END $$;
+CREATE TRIGGER zzz_vendor_coverage_guard BEFORE INSERT OR UPDATE ON public.maintenance_agreements FOR EACH ROW EXECUTE FUNCTION public.guard_vendor_coverage();
+DO $$ DECLARE d text; BEGIN SELECT pg_get_functiondef('public.save_equipment_contract(jsonb,jsonb,uuid)'::regprocedure) INTO d;
+d=replace(d,'notes,pricing_mode,collective_price) VALUES','notes,pricing_mode,collective_price,vendor_name,vendor_contact,coverage_kind,coverage_details) VALUES');
+d=replace(d,'nullif(_header->>''collective_price'','''')::numeric) RETURNING','nullif(_header->>''collective_price'','''')::numeric,coalesce(_header->>''vendor_name'',''''),coalesce(_header->>''vendor_contact'',''''),coalesce(_header->>''coverage_kind'',''maintenance''),coalesce(_header->>''coverage_details'','''')) RETURNING'); EXECUTE d; END $$;
+CREATE FUNCTION public.renew_contract_coverage(_id uuid,_expected_end date,_start date,_end date,_asset boolean DEFAULT false,_signature text DEFAULT NULL,_name text DEFAULT NULL) RETURNS void LANGUAGE plpgsql SET search_path=public AS $$ DECLARE a public.maintenance_agreements; x public.agreement_assets; inhouse boolean; BEGIN
+IF NOT public.member_commercial_can('contracts') OR NOT public.company_module_access(public.current_company_id(),'core') THEN RAISE EXCEPTION 'Contract access required'; END IF;
+IF _start IS NULL OR _end IS NULL OR _end<=_start THEN RAISE EXCEPTION 'Expiry must be after start date'; END IF;
+IF _asset THEN SELECT * INTO x FROM public.agreement_assets WHERE id=_id AND company_id=public.current_company_id() FOR UPDATE; IF x.id IS NULL OR x.end_date IS DISTINCT FROM _expected_end THEN RAISE EXCEPTION 'Coverage changed; reload before renewing'; END IF; SELECT * INTO a FROM public.maintenance_agreements WHERE id=x.agreement_id AND company_id=public.current_company_id() FOR UPDATE;
+ELSE SELECT * INTO a FROM public.maintenance_agreements WHERE id=_id AND company_id=public.current_company_id() FOR UPDATE; IF a.id IS NULL OR a.end_date IS DISTINCT FROM _expected_end THEN RAISE EXCEPTION 'Agreement changed; reload before renewing'; END IF; IF EXISTS(SELECT 1 FROM public.agreement_assets WHERE agreement_id=a.id) THEN RAISE EXCEPTION 'Renew covered items individually'; END IF; END IF;
+IF a.status<>'active' THEN RAISE EXCEPTION 'Only active coverage can be renewed'; END IF;
+SELECT engine_edition IN ('retail','hotel') INTO inhouse FROM public.platform_products WHERE id=public.company_product_id(a.company_id);
+IF NOT _asset AND NOT coalesce(inhouse,false) AND (nullif(trim(_signature),'') IS NULL OR nullif(trim(_name),'') IS NULL) THEN RAISE EXCEPTION 'Client name and signature required'; END IF;
+IF _asset THEN UPDATE public.agreement_assets SET start_date=_start,end_date=_end WHERE id=x.id;
+ELSE UPDATE public.maintenance_agreements SET start_date=_start,end_date=_end,price_confirmed_at=NULL,renewal_sent_at=NULL,renewal_signature=CASE WHEN inhouse THEN NULL ELSE _signature END,renewal_signed_by=CASE WHEN inhouse THEN NULL ELSE trim(_name) END,renewal_signed_at=CASE WHEN inhouse THEN NULL ELSE now() END WHERE id=a.id; END IF;
+END $$;
+REVOKE ALL ON FUNCTION public.renew_contract_coverage(uuid,date,date,date,boolean,text,text) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.renew_contract_coverage(uuid,date,date,date,boolean,text,text) TO authenticated;
+CREATE FUNCTION public.inhouse_contract_access() RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$ SELECT NOT EXISTS(SELECT 1 FROM public.platform_products WHERE id=public.company_product_id(public.current_company_id()) AND engine_edition IN ('retail','hotel')) OR EXISTS(SELECT 1 FROM public.user_roles WHERE user_id=auth.uid() AND company_id=public.current_company_id() AND role IN ('superuser','admin','supervisor') AND public.member_is_active(user_id)) $$;
+REVOKE ALL ON FUNCTION public.inhouse_contract_access() FROM PUBLIC,anon; GRANT EXECUTE ON FUNCTION public.inhouse_contract_access() TO authenticated;
+CREATE POLICY inhouse_contract_managers ON public.maintenance_agreements AS RESTRICTIVE FOR ALL TO authenticated USING(public.inhouse_contract_access()) WITH CHECK(public.inhouse_contract_access());
+CREATE POLICY inhouse_coverage_managers ON public.agreement_assets AS RESTRICTIVE FOR ALL TO authenticated USING(public.inhouse_contract_access()) WITH CHECK(public.inhouse_contract_access());

@@ -1,3 +1,7 @@
+import { useEdition } from '@/lib/plan-features';
+import { isInHouse } from '@/lib/editions';
+import { defaultRenewalDates, renewalDatesValid } from '@/lib/renewal-dates';
+import { CoverageDatePicker } from '@/components/coverage-date-picker';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +28,7 @@ export function useAgreements() {
 }
 
 export function RenewalList({ office, limit }: { office: boolean; limit?: number }) {
+  const inhouse=isInHouse(useEdition().edition);
   const { data = [] } = useAgreements();
   const { data: c } = useCompanyRules();
   const qc = useQueryClient();
@@ -36,13 +41,13 @@ export function RenewalList({ office, limit }: { office: boolean; limit?: number
     qc.invalidateQueries({ queryKey: ["agreements"] });
   };
   const [pack, setPack] = useState<(typeof data)[number] | null>(null);
-  const renew = (a: (typeof data)[number], sig: { signature: string; name: string }) => {
-    const s = new Date(a.end_date + "T00:00:00Z"); s.setUTCDate(s.getUTCDate() + 1);
-    const e = new Date(s); e.setUTCFullYear(e.getUTCFullYear() + 1); e.setUTCDate(e.getUTCDate() - 1);
-    act(a.id, { start_date: s.toISOString().slice(0, 10), end_date: e.toISOString().slice(0, 10), price_confirmed_at: null, renewal_sent_at: null,
-      renewal_signature: sig.signature, renewal_signed_by: sig.name, renewal_signed_at: new Date().toISOString() }, "Signed — agreement renewed for another year");
+  const [busy,setBusy]=useState(false);
+  const renew = async (a: (typeof data)[number], values: { signature: string; name: string; start: string; end: string }) => {
+    setBusy(true);
+    try { const r=await supabase.rpc('renew_contract_coverage',{_id:a.id,_expected_end:a.end_date,_start:values.start,_end:values.end,_signature:values.signature,_name:values.name}); if(r.error)throw r.error; await qc.invalidateQueries({queryKey:['agreements']}); setPack(null); toast.success('Coverage renewed with selected dates'); }
+    catch(e){toast.error((e as {message?:string}).message??'Could not renew coverage');} finally{setBusy(false);}
   };
-  if (!due.length) return <EmptyState>No contracts expiring in the next {c?.renewalDays ?? 30} days.</EmptyState>;
+  if (!due.length) return <EmptyState>No coverage expiring in the next {c?.renewalDays ?? 30} days.</EmptyState>;
   return (
     <ul className="space-y-2">
       {due.slice(0, limit).map((a) => {
@@ -56,37 +61,38 @@ export function RenewalList({ office, limit }: { office: boolean; limit?: number
             </div>
             {office && (
               <div className="flex flex-wrap gap-2">
-                {!a.price_confirmed_at && <Button size="sm" onClick={() => act(a.id, { price_confirmed_at: new Date().toISOString() }, "Price confirmed")}>Confirm price</Button>}
-                {a.price_confirmed_at && !a.renewal_sent_at && <Button size="sm" onClick={() => act(a.id, { renewal_sent_at: new Date().toISOString() }, "Marked as sent to client")}>Mark renewal sent</Button>}
-                <Button size="sm" variant="outline" onClick={() => setPack(a)}>Renewal pack & signature</Button>
-                <CommercialRecipients clientId={a.client_id} siteId={a.site_id} purpose="contract" title={`Contract renewal · ${a.clients?.name??''}`} body={`Contract renewal for ${a.clients?.name??''}${a.sites?.name?` · ${a.sites.name}`:''}. Current agreement ends ${a.end_date}. Annual price €${Number(a.annual_price).toFixed(2)}.`}/>
+                {!inhouse && !a.price_confirmed_at && <Button size="sm" onClick={() => act(a.id, { price_confirmed_at: new Date().toISOString() }, "Price confirmed")}>Confirm price</Button>}
+                {!inhouse && a.price_confirmed_at && !a.renewal_sent_at && <Button size="sm" onClick={() => act(a.id, { renewal_sent_at: new Date().toISOString() }, "Marked as sent to client")}>Mark renewal sent</Button>}
+                <Button size="sm" variant="outline" onClick={() => setPack(a)}>{inhouse?'Renew coverage':'Renewal pack & signature'}</Button>
+                {!inhouse&&<CommercialRecipients clientId={a.client_id} siteId={a.site_id} purpose="contract" title={`Contract renewal · ${a.clients?.name??''}`} body={`Contract renewal for ${a.clients?.name??''}${a.sites?.name?` · ${a.sites.name}`:''}. Current agreement ends ${a.end_date}. Annual price €${Number(a.annual_price).toFixed(2)}.`}/> }
               </div>
             )}
           </li>
         );
       })}
-      {pack && <RenewalPack a={pack} onClose={() => setPack(null)} onSign={(sig) => { renew(pack, sig); setPack(null); }} />}
+      {pack && <RenewalPack a={pack} onClose={() => setPack(null)} busy={busy} inhouse={inhouse} onSign={values => renew(pack, values)} />}
     </ul>
   );
 }
 
 type Agreement = NonNullable<ReturnType<typeof useAgreements>["data"]>[number];
 /** Unchanged contract + equipment checklist shown to the client, who signs digitally to renew. */
-function RenewalPack({ a, onClose, onSign }: { a: Agreement; onClose: () => void; onSign: (s: { signature: string; name: string }) => void }) {
+function RenewalPack({ a, onClose, onSign, busy, inhouse }: { a: Agreement; onClose: () => void; busy:boolean; inhouse:boolean; onSign: (s: { signature: string; name: string; start:string; end:string }) => Promise<void> }) {
   const cat = a.contract_types?.equipment_category;
   const { data: lists = [] } = useQuery({ queryKey: ["renewal-checklist", cat], enabled: !!cat,
-    queryFn: async () => (await supabase.from("checklist_templates").select("name, items").eq("equipment_category", cat!)).data ?? [] });
+    queryFn: async () => (await supabase.from("checklist_templates").select("name, items").eq("equipment_category", cat??'')).data ?? [] });
   const [sig, setSig] = useState<string | null>(null);
   const [name, setName] = useState("");
+  const [dates,setDates]=useState(()=>defaultRenewalDates(a.end_date));
   const items = (l: { items: unknown }) => (Array.isArray(l.items) ? l.items : []).map((i) => (typeof i === "string" ? i : (i as { label?: string })?.label ?? "")).filter(Boolean);
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Contract renewal — {a.clients?.name}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{inhouse?'Coverage renewal':'Contract renewal'} — {a.title||a.clients?.name}</DialogTitle></DialogHeader>
         <section className="space-y-1 rounded-lg border p-3 text-sm">
           <p className="font-medium">Same terms as the current contract</p>
           <p>{a.contract_types?.name ?? "Custom"}{a.contract_types?.tier ? ` · ${a.contract_types.tier}` : ""}{a.sites?.name ? ` · ${a.sites.name}` : ""}</p>
-          <p>€{Number(a.annual_price).toFixed(2)} per year · renews from {a.end_date} for 12 months</p>
+          <p>€{Number(a.annual_price).toFixed(2)} annual price · {dates.start} → {dates.end}</p>
           {a.notes && <p className="whitespace-pre-wrap text-muted-foreground">{a.notes}</p>}
         </section>
         <section className="space-y-1 rounded-lg border p-3 text-sm">
@@ -95,9 +101,10 @@ function RenewalPack({ a, onClose, onSign }: { a: Agreement; onClose: () => void
             <div key={l.name}><p className="text-muted-foreground">{l.name}</p><ul className="list-disc pl-5">{items(l).map((i) => <li key={i}>{i}</li>)}</ul></div>
           ))}
         </section>
-        <div className="space-y-1.5"><Label>Client full name *</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
-        <div className="space-y-1.5"><Label>Client signature *</Label><SignaturePad value={sig} onChange={setSig} /></div>
-        <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button disabled={!sig || !name.trim()} onClick={() => onSign({ signature: sig!, name: name.trim() })}>Sign & renew</Button></DialogFooter>
+        <CoverageDatePicker label="Renewal start date" value={dates.start} onChange={start=>setDates({...dates,start})}/><CoverageDatePicker label="Renewal expiry date" value={dates.end} onChange={end=>setDates({...dates,end})}/>{!renewalDatesValid(dates.start,dates.end)&&<p role="alert" className="text-destructive">Expiry must be after start date.</p>}
+        {!inhouse&&<><div className="space-y-1.5"><Label>Client full name *</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+        <div className="space-y-1.5"><Label>Client signature *</Label><SignaturePad value={sig} onChange={setSig} /></div></>}
+        <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button disabled={busy||!renewalDatesValid(dates.start,dates.end)||(!inhouse&&(!sig||!name.trim()))} onClick={() => {if(!inhouse&&(!sig||!name.trim()))return;void onSign({ signature: sig??'', name: name.trim(), ...dates });}}>{busy?'Saving…':inhouse?'Confirm renewal':'Sign & renew'}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
