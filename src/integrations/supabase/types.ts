@@ -6118,6 +6118,30 @@ export type Database = {
           },
         ]
       }
+      roi_leads: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          inputs: Json
+          product: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          inputs?: Json
+          product?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          inputs?: Json
+          product?: string
+        }
+        Relationships: []
+      }
       role_permissions: {
         Row: {
           company_id: string
