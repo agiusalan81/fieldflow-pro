@@ -65,7 +65,7 @@
 - Public catalog selects active product before rows; retail ROI uses tested live-cadence math, no FX or unquoted seats; narrow legal reads/shared trust renderers/explicit sitemap — why: HQ stays authoritative, savings auditable.
 - Staff signatures share staff-signature editors and own-user RPC; protected real roles govern eligibility and profile guards retain identity protection.
 - Sheet sync serializes per account/sheet, rebasing local versions only. Autosave uses dirty fingerprints; failures retain newer drafts.
-- Contracts: scope-ranked attachments seed new coverage; atomic matrix RPCs freeze work/prices with optional passport rates/collective totals; PPM/portal retain coverage — why: never rewrite agreed history.
+- Contracts: atomic matrix freezes terms/prices; manager-only in-house vendor coverage shares PPM; guarded expected-expiry renewals retain history — why: preserve agreement and concurrent-edit safety.
 - StaffContacts/contact-editor own contact writes; portal scope is staff-only. HQ setup options save atomically; staff/portal access stays independent.
 - Delivery uses client_message_recipients; preferences choose recipients, not unsupported channel delivery.
 - Own-shift RPC captures one-time GPS; failure never blocks clock-out; history distinguishes action fixes from breadcrumbs.

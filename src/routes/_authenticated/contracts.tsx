@@ -15,7 +15,7 @@ import { useMemberWorkspaces } from "@/lib/member-workspaces";
 import { useProfile, isOffice } from "@/lib/profile";
 import { EQUIPMENT_CATEGORIES as CONTRACTOR_CATEGORIES } from "@/lib/company";
 import { useEdition } from "@/lib/plan-features";
-import { isInHouse, EDITION_SPEC, CHECKLIST_PRESETS } from "@/lib/editions";
+import { isInHouse, EDITION_SPEC, CHECKLIST_PRESETS, editionLabel } from "@/lib/editions";
 function useEquipmentCategories() { const { edition } = useEdition(); return isInHouse(edition) ? [...EDITION_SPEC[edition].assetGroups.map((g) => g.group), "Custom"] : CONTRACTOR_CATEGORIES; }
 import { daysUntil, visitsForTier, contractName } from "@/lib/jobsheets";
 import { LookupInput, learnLookup, CONTRACT_CATEGORY } from "@/components/role-combobox";
@@ -47,26 +47,27 @@ export const Route = createFileRoute("/_authenticated/contracts")({ staticData: 
 
 function ContractsPage() {
   const { tab = "agreements" } = Route.useSearch();
+  const {edition}=useEdition();const inhouse=isInHouse(edition);const title=inhouse?editionLabel(edition,"Contracts"):"Contracts & checklists";const activeTab=inhouse&&(tab==="types"||tab==="masters")?"agreements":tab;
   const navigate = useNavigate();
   const { data: profile } = useProfile();
   const access = useMemberWorkspaces();
   const office = !!access.data?.contracts;
-  if (access.isPending) return <AppShell title="Contracts & checklists"><p>Loading…</p></AppShell>;
-  if (!office) return <AppShell title="Contracts & checklists"><p>Contracts & renewals capability required.</p></AppShell>;
+  if (access.isPending) return <AppShell title={title}><p>Loading…</p></AppShell>;
+  if (!office) return <AppShell title={title}><p>Contracts & renewals capability required.</p></AppShell>;
   return (
-    <AppShell title="Contracts & checklists">
-      <Tabs value={tab === "masters" && !office ? "agreements" : tab} onValueChange={tab => void navigate({ to: "/contracts", search: { tab }, replace: true })} className="mx-auto max-w-6xl">
+    <AppShell title={title}>
+      <Tabs value={activeTab} onValueChange={tab => void navigate({ to: "/contracts", search: { tab }, replace: true })} className="mx-auto max-w-6xl">
         <TabsList className="h-auto flex-wrap">
-          <TabsTrigger value="agreements">Client agreements</TabsTrigger>
+          <TabsTrigger value="agreements">{inhouse?"Vendor coverage & warranties":"Client agreements"}</TabsTrigger>
           <TabsTrigger value="renewals">Renewals due</TabsTrigger>
-          <TabsTrigger value="types">Service tiers</TabsTrigger>
-          {isOffice(profile) && <TabsTrigger value="masters">Contracts & checklist masters</TabsTrigger>}
+          {!inhouse&&<TabsTrigger value="types">Service tiers</TabsTrigger>}
+          {!inhouse&&isOffice(profile) && <TabsTrigger value="masters">Contracts & checklist masters</TabsTrigger>}
           <TabsTrigger value="checklists">Checklists</TabsTrigger>
         </TabsList>
         <TabsContent value="renewals" className="mt-4"><Renewals office={office} /></TabsContent>
         <TabsContent value="agreements" className="mt-4"><Agreements office={office} companyId={profile?.company_id} /></TabsContent>
-        <TabsContent value="types" className="mt-4">{office && profile ? <ContractTiers companyId={profile.company_id} /> : <Types office={office} companyId={profile?.company_id} />}</TabsContent>
-        {office && profile && <TabsContent value="masters" className="mt-4"><DocumentMasters companyId={profile.company_id} /></TabsContent>}
+        {!inhouse&&<TabsContent value="types" className="mt-4">{office && profile ? <ContractTiers companyId={profile.company_id} /> : <Types office={office} companyId={profile?.company_id} />}</TabsContent>}
+        {!inhouse&&office && profile && <TabsContent value="masters" className="mt-4"><DocumentMasters companyId={profile.company_id} /></TabsContent>}
         <TabsContent value="checklists" className="mt-4"><Checklists office={office} companyId={profile?.company_id} /></TabsContent>
       </Tabs>
     </AppShell>
@@ -76,7 +77,6 @@ function ContractsPage() {
 function Renewals({ office }: { office: boolean }) {
   return (
     <div className="space-y-3">
-      <p className="text-sm text-muted-foreground">Confirm the price is still the same, send the renewal to the client, then renew once they sign. Automatic client emails and e-signatures will be connected in a later step.</p>
       <RenewalList office={office} />
       {office && <AgreementAssetLines renewalsOnly />}
     </div>
@@ -84,17 +84,19 @@ function Renewals({ office }: { office: boolean }) {
 }
 
 function Agreements({ office, companyId }: { office: boolean; companyId?: string | undefined }) {
+  const inhouse=isInHouse(useEdition().edition);
   const on = usePlanFeatures();
   const { data = [] } = useAgreements();
   return (
     <div className="space-y-4">
       {companyId && office && <EquipmentContracts companyId={companyId} central />}
       {companyId&&office&&<AssignedEquipmentWork companyId={companyId}/>}
-      {!data.length ? <EmptyState>No client agreements yet.</EmptyState> : (
+      {!data.length ? <EmptyState>{inhouse?"No vendor coverage or warranties yet.":"No client agreements yet."}</EmptyState> : (
         <ul className="divide-y rounded-xl border bg-card">
           {data.map((a) => (
             <li key={a.id} className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm">
               <div className="min-w-0 flex-1"><p className="break-words font-medium text-foreground">{a.title || a.clients?.name}</p><p className="text-muted-foreground">{a.clients?.name} · {a.sites?.name} · {a.contract_kind === 'installation' ? 'Installation project' : a.contract_types?.name ?? "Maintenance"} · {a.start_date} → {a.end_date} · €{Number(a.annual_price).toFixed(2)}</p></div>
+              {inhouse&&<div className="w-full text-muted-foreground"><p>{a.coverage_kind==='warranty'?'Warranty':'Vendor SLA'}{a.vendor_name?` · ${a.vendor_name}`:''}</p>{a.vendor_contact&&<p>{a.vendor_contact}</p>}{a.coverage_details&&<p className="whitespace-pre-wrap">{a.coverage_details}</p>}</div>}
               <span className="text-xs text-muted-foreground">{daysUntil(a.end_date) < 0 ? "Expired" : `${daysUntil(a.end_date)} days left`}</span>
               {on('ppm_automation') && <PpmCoverage agreementId={a.id} clientId={a.client_id} start={a.start_date} end={a.end_date} canManage={office} />}
               <div className="w-full"><AgreementAssetLines agreementId={a.id} /></div>
