@@ -464,7 +464,7 @@ function SheetForm() {
               <SearchSelect value={form.asset_id as string || (form.unlisted_equipment ? '__unlisted' : null)} placeholder="Type reference, type or serial…" disabled={readOnly}
                 options={[...assets.map((a) => ({ value: a.id, label: `${a.reference_number} · ${a.asset_category}`, hint: a.serial_number ?? undefined })), ...(form.unlisted_equipment ? [{value: '__unlisted', label: form.unlisted_equipment as string, hint: 'Awaiting review'}] : [])]}
                 onChange={v => { if (v !== '__unlisted') pickAsset(v); }}
-                createLabel="Use unlisted equipment" onCreate={text => {const patch = unlistedEquipmentPatch(text); if (patch) set(patch);}} />
+                createLabel={`Use unlisted ${word("equipment").toLowerCase()}`} onCreate={text => {const patch = unlistedEquipmentPatch(text); if (patch) set(patch);}} />
             </div>
             {site?.store_code&&<div className="space-y-1.5"><Label>Site / Branch ID</Label><Input readOnly value={site.store_code}/></div>}
             <div className="space-y-1.5"><Label>{word("technician")}</Label><Input className="h-11" value={(form.technician_name as string) ?? ""} onChange={(e) => set({ technician_name: e.target.value })} /></div>
@@ -695,7 +695,7 @@ function SheetForm() {
               <p><span className="text-muted-foreground">{inHouse ? "Location:" : "Client:"}</span> {client?.name ?? "—"}</p>
               <p><span className="text-muted-foreground">Date:</span> {new Date(sheet.created_at).toLocaleDateString()}</p>
               <p className="sm:col-span-2"><span className="text-muted-foreground">Address:</span> {address || "—"}</p>
-              <p><span className="text-muted-foreground">Equipment:</span> {asset ? `${asset.reference_number} · ${asset.asset_category}` : (form.asset_type as string)}</p>
+              <p><span className="text-muted-foreground">{word("equipment")}:</span> {asset ? `${asset.reference_number} · ${asset.asset_category}` : (form.asset_type as string)}</p>
               <p><span className="text-muted-foreground">Serial:</span> {(form.serial_number as string) || "—"}</p>
             </div>
             {form.reported_fault && <div><p className="font-medium">Reported fault</p><p className="whitespace-pre-wrap text-muted-foreground">{form.reported_fault as string}</p></div>}

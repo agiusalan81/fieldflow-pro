@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export type ChatMsg = { sender_id: string; receiver_id: string | null; job_sheet_id: string | null; created_at: string };
+export type ChatMsg = { channel_id?: string | null; sender_id: string; receiver_id: string | null; job_sheet_id: string | null; created_at: string };
 
 /** Thread a message belongs to, from the viewer's side: "user:<other>" or "job:<sheet>". */
 export function threadKeyOf(m: ChatMsg, me: string): string | null {
+  if (m.channel_id) return `channel:${m.channel_id}`;
   if (m.job_sheet_id && !m.receiver_id) return `job:${m.job_sheet_id}`;
   if (m.job_sheet_id) return null;
   if (m.receiver_id === me) return `user:${m.sender_id}`;
@@ -45,8 +46,9 @@ export function useUnreadChatTotal(uid?: string) {
     enabled: !!uid,
     refetchInterval: 30000,
     queryFn: async () => {
+      if (!uid) return [];
       const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
-      const { data, error } = await supabase.from("internal_messages").select("sender_id,receiver_id,job_sheet_id,created_at").neq("sender_id", uid!).gte("created_at", since);
+      const { data, error } = await supabase.from("internal_messages").select("sender_id,receiver_id,job_sheet_id,channel_id,created_at").neq("sender_id", uid).gte("created_at", since);
       if (error) throw error;
       return data as ChatMsg[];
     },

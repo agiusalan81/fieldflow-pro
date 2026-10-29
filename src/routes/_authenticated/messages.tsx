@@ -1,3 +1,4 @@
+import { ChatChannelControls, useChatChannels } from "@/components/chat-channel-controls";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -34,14 +35,15 @@ export const Route = createFileRoute("/_authenticated/messages")({ staticData: {
   component: Messages,
 });
 
-type Thread = { kind: "user"; id: string; label: string } | { kind: "job"; id: string; label: string };
+type Thread = { kind: "channel"; id: string; label: string } | { kind: "user"; id: string; label: string } | { kind: "job"; id: string; label: string };
 
 function Messages() {
   const { data: profile } = useProfile();
   const { data: users = [] } = useCompanyUsers();
+  const {data: channels = []} = useChatChannels();
   const qc = useQueryClient();
   const { thread: linked } = Route.useSearch();
-  const [filter, setFilter] = useState<"all" | "people" | "jobs">("people");
+  const [filter, setFilter] = useState<"channels" | "people" | "jobs">("people");
   const [active, setActive] = useState<Thread | null>(null);
   const [text, setText] = useState("");
   const [files, setFiles] = useState<File[]>([]);
@@ -86,13 +88,13 @@ function Messages() {
   const threads: Thread[] = useMemo(() => {
     const people = users.filter((u) => u.id !== profile?.id && chatContactVisible(u.registration_status)).map((u) => ({ kind: "user" as const, id: u.id, label: u.full_name }));
     const js = jobs.map((j) => ({ kind: "job" as const, id: j.id, label: `${j.clients?.name ?? "Job"} · #${j.id.slice(0, 4)}` }));
-    return filter === "people" ? people : filter === "jobs" ? js : [...people, ...js];
-  }, [users, jobs, profile, filter]);
+    return filter === "people" ? people : filter === "jobs" ? js : channels.map(c=>({kind:"channel" as const,id:c.id,label:c.name}));
+  }, [users, jobs, profile, filter, channels]);
 
   const inThread = (t: Thread, m: (typeof msgs)[number]) =>
-    t.kind === "job"
+    t.kind === "channel" ? m.channel_id === t.id : t.kind === "job"
       ? m.job_sheet_id === t.id && !m.receiver_id
-      : !m.job_sheet_id && ((m.sender_id === profile?.id && m.receiver_id === t.id) || (m.sender_id === t.id && m.receiver_id === profile?.id));
+      : !m.channel_id && !m.job_sheet_id && ((m.sender_id === profile?.id && m.receiver_id === t.id) || (m.sender_id === t.id && m.receiver_id === profile?.id));
 
   const lastOf = (t: Thread) => [...msgs].reverse().find((m) => inThread(t, m));
   const current = active ? msgs.filter((m) => inThread(active, m)) : [];
@@ -109,9 +111,9 @@ function Messages() {
   useEffect(() => {
     if (!linked || active) return;
     const [kind,id]=linked.split(":");
-    const t:Thread|undefined=kind==="job" ? jobs.filter(j=>j.id===id).map(j=>({kind:"job" as const,id:j.id,label:`${j.clients?.name??"Job"} · #${j.id.slice(0,4)}`}))[0] : users.filter(u=>u.id===id).map(u=>({kind:"user" as const,id:u.id,label:u.full_name}))[0];
+    const t:Thread|undefined=kind==="channel" ? channels.filter(c=>c.id===id).map(c=>({kind:"channel" as const,id:c.id,label:c.name}))[0] : kind==="job" ? jobs.filter(j=>j.id===id).map(j=>({kind:"job" as const,id:j.id,label:`${j.clients?.name??"Job"} · #${j.id.slice(0,4)}`}))[0] : users.filter(u=>u.id===id).map(u=>({kind:"user" as const,id:u.id,label:u.full_name}))[0];
     if (t) setActive(t);
-  }, [linked, jobs, users, active]);
+  }, [linked, jobs, users, active, channels]);
 
   // Mark the open thread read whenever new messages arrive in it.
   useEffect(() => {
@@ -146,7 +148,7 @@ function Messages() {
       const { data: sentRow, error } = await supabase.from("internal_messages").insert({
         company_id: profile.company_id, sender_id: profile.id, message_text: text.trim(),
         receiver_id: active.kind === "user" ? active.id : null, job_sheet_id: active.kind === "job" ? active.id : null,
-        attachments: uploaded, contact_card: contact,
+        attachments: uploaded, contact_card: contact, channel_id: active.kind === "channel" ? active.id : null,
       }).select("id").single();
       if (error) throw error;
       pushChatMessages([sentRow.id]); setText(""); setFiles([]); setContact(null);
@@ -164,12 +166,13 @@ function Messages() {
         <aside className={`${active ? "hidden md:flex" : "flex"} min-h-0 flex-col border-r`}>
           {askAlerts && <div className="flex items-center gap-2 border-b bg-muted/50 p-2 text-xs text-foreground"><Bell className="h-4 w-4 shrink-0" /><span className="flex-1">Get alerts when the app is in the background</span><Button size="sm" variant="secondary" onClick={() => void allowAlerts()}>Allow</Button></div>}
           <div className="flex gap-1 border-b p-2">
-            {(["people", "jobs", "all"] as const).map((f) => (
+            {(["people", "jobs", "channels"] as const).map((f) => (
               <Button key={f} size="sm" variant={filter === f ? "secondary" : "ghost"} className="flex-1 capitalize" onClick={() => setFilter(f)}>
                 {f === "jobs" ? "Job threads" : f}
               </Button>
             ))}
           </div>
+          {filter === "channels" && <ChatChannelControls channelId={active?.kind === "channel" ? active.id : undefined}/>}
           <ul className="min-h-0 flex-1 overflow-y-auto">
             {threads.map((t) => {
               const last = lastOf(t);
@@ -177,7 +180,7 @@ function Messages() {
                 <li key={t.kind + t.id}>
                   <Button variant="ghost" disabled={sending} onClick={() => pickThread(t)} className={`grid h-auto w-full grid-cols-[auto_minmax(0,1fr)_auto] whitespace-normal rounded-none items-center gap-3 px-4 py-3 text-left hover:bg-accent ${active?.id === t.id ? "bg-accent" : ""}`}>
                     <span className="grid h-9 w-9 place-items-center rounded-full bg-muted text-muted-foreground">
-                      {t.kind === "job" ? <Hash className="h-4 w-4" /> : <User className="h-4 w-4" />}
+                      {t.kind !== "user" ? <Hash className="h-4 w-4" /> : <User className="h-4 w-4" />}
                     </span>
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-medium text-foreground">{t.label}{t.kind === "user" && roleOf(t.id) && <span className="ml-2 rounded bg-muted px-1.5 text-xs font-normal text-muted-foreground">{roleOf(t.id)}</span>}</span>
@@ -212,8 +215,8 @@ function Messages() {
                     {needsGapMarker(prev, m.created_at) && <p className="my-2 text-center text-[11px] text-muted-foreground">{chatClock(m.created_at)}</p>}
                     <div className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                       <div className={`min-w-0 max-w-[85%] rounded-lg px-3.5 py-2 text-sm shadow-sm ${mine ? "rounded-br-sm bg-primary text-primary-foreground" : "rounded-bl-sm bg-card text-foreground"}`}>
-                        {!mine && active.kind === "job" && <p className="mb-0.5 text-xs font-medium text-primary">{nameOf(m.sender_id)}</p>}
-                        <p className="whitespace-pre-wrap break-words">{m.message_text}</p><ChatAttachments files={m.attachments} contact={m.contact_card}/>
+                        {!mine && active.kind !== "user" && <p className="mb-0.5 text-xs font-medium text-primary">{nameOf(m.sender_id)}</p>}
+                        <p className="whitespace-pre-wrap break-words">{m.broadcast_channel_id && <span className="mb-1 block text-xs font-medium">Broadcast announcement</span>}{m.message_text}</p><ChatAttachments files={m.attachments} contact={m.contact_card}/>
                         <p title={chatFullStamp(m.created_at)} className={`mt-0.5 text-right text-[10px] ${mine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
                           <time dateTime={m.created_at}>{chatClock(m.created_at)}</time>
                         </p>

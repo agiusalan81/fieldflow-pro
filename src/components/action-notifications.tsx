@@ -1,3 +1,4 @@
+import { useOpenJobs } from "@/lib/open-jobs";
 import { useCrmAccess } from '@/lib/crm-access';
 import { crmAllows } from '@/lib/crm';
 import { Link } from '@tanstack/react-router';
@@ -29,7 +30,7 @@ function useUnreadThreads(uid?: string) {
   const q = useQuery({ queryKey: ['bell-threads', uid], enabled: !!uid, refetchInterval: 30000, queryFn: async () => {
     if (!uid) return { msgs: [] as ChatMsg[], names: {} as Record<string,string> };
     const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
-    const m = await supabase.from('internal_messages').select('sender_id,receiver_id,job_sheet_id,created_at').neq('sender_id', uid).gte('created_at', since);
+    const m = await supabase.from('internal_messages').select('sender_id,receiver_id,job_sheet_id,channel_id,created_at').neq('sender_id', uid).gte('created_at', since);
     if (m.error) throw m.error;
     const msgs = m.data as ChatMsg[];
     const ids = [...new Set(msgs.map(x => x.sender_id))];
@@ -40,6 +41,8 @@ function useUnreadThreads(uid?: string) {
     ]);
     const names = Object.fromEntries((u.data ?? []).map(x => [`user:${x.id}`, x.full_name]));
     for (const x of s.data ?? []) names[`job:${x.id}`] = `Job sheet #${x.jobsheet_number ?? ''}`;
+    const channelIds = [...new Set(msgs.map(m=>m.channel_id).filter(Boolean))] as string[];
+    if (channelIds.length) { const r=await supabase.from("message_channels").select("id,name").in("id",channelIds); for(const c of r.data??[])names[`channel:${c.id}`]=c.name; }
     return { msgs, names };
   } });
   if (!uid || !reads.data || !q.data) return [];
@@ -78,10 +81,11 @@ export function useActionQueues() {
       catsOn?supabase.from('expense_categories').select('id,name').eq('status','pending').limit(20):zero,
     ]);if(incoming.error||approval.error||leave.error||responses.error)throw incoming.error||approval.error||leave.error||responses.error;return {categories:(cats.data??[]) as {id:string;name:string}[],incoming:incoming.data??[],approval:approval.data??[],leave:leave.data??[],responses:responses.data??[],problems:problems.data??[]};
   }});
+  const openJobs=useOpenJobs().alerting;
   const chat=threads.reduce((a,t)=>a+t.n,0);
   const problems=data?.problems??[];
-  const count=passports.length+crm.length+decided.length+surveys.length+chat+(data?.incoming.length??0)+(data?.approval.length??0)+(data?.leave.length??0)+(data?.responses.length??0)+problems.length+(data?.categories.length??0);
-  return { passports, threads, crm, decided, surveys, problems, data, count, chat };
+  const count=openJobs.length+passports.length+crm.length+decided.length+surveys.length+chat+(data?.incoming.length??0)+(data?.approval.length??0)+(data?.leave.length??0)+(data?.responses.length??0)+problems.length+(data?.categories.length??0);
+  return { openJobs, passports, threads, crm, decided, surveys, problems, data, count, chat };
 }
 
 export function QueueBadge({ path }: { path: string }) {
@@ -107,11 +111,11 @@ export function QueueBadge({ path }: { path: string }) {
 }
 
 export function ActionNotifications() {
-  const { passports, threads, crm, decided, surveys, problems, data, count } = useActionQueues();
+  const { openJobs, passports, threads, crm, decided, surveys, problems, data, count } = useActionQueues();
   const [open, setOpen] = useState(false);
   const approvalCount = passports.length+(data?.incoming.length ?? 0) + (data?.approval.length ?? 0) + (data?.leave.length ?? 0) + (data?.responses.length ?? 0) + (data?.categories.length ?? 0);
   const commercialCount = crm.length + decided.length;
-  const fieldCount = problems.length + surveys.length + threads.reduce((n, t) => n + t.n, 0);
+  const fieldCount = openJobs.length + problems.length + surveys.length + threads.reduce((n, t) => n + t.n, 0);
   const item="h-auto w-full justify-start whitespace-normal py-3 [&_span]:whitespace-normal [&_span]:break-words [&_span]:text-wrap";
   const empty = <p className="py-6 text-sm text-muted-foreground">Nothing awaiting your attention here.</p>;
   return <Sheet open={open} onOpenChange={setOpen}>
@@ -133,6 +137,7 @@ export function ActionNotifications() {
           {decided.map(v=><Button key={v.id} asChild variant="outline" className={item}><Link to="/estimates" search={{quote:v.id}}><Row icon={AlertTriangle}>{v.status === 'awaiting_confirmation' ? `Awaiting client confirmation · ${v.reference}` : `Client ${v.status} quote ${v.reference}`}</Row></Link></Button>)}
         </TabsContent>
         <TabsContent value="field" className="space-y-2 pt-3">{!fieldCount && empty}
+          {openJobs.map(j=><Button key={j.id} asChild variant="outline" className={item}><Link to="/available-jobs" search={{job:j.id}}><Row icon={AlertTriangle}>Up for grabs · #{j.job_number} · {j.site_name ?? j.client_name}</Row></Link></Button>)}
           {problems.map(r=><Button key={r.id} asChild variant="outline" className={item}><Link to="/admin/jobs" search={{new:true,assetId:r.asset_id,problemId:r.id}}><Row icon={AlertTriangle}>Equipment problem: {r.problem}</Row></Link></Button>)}
           {surveys.map(v=><Button key={v.id} asChild variant="outline" className={item}><Link to="/surveys" search={{survey:v.id}}><Row icon={AlertTriangle}>Site survey to review{v.location_ref?`: ${v.location_ref}`:''}{v.reviewer_id?' (assigned to you)':''}</Row></Link></Button>)}
           {threads.map(t=><Button key={t.key} asChild variant="outline" className={item}><Link to="/messages" search={{thread:t.key}}><Row icon={MessageSquare}>{t.name} · {t.n} new</Row></Link></Button>)}

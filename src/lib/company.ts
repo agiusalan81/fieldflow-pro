@@ -1,3 +1,5 @@
+import { useEdition } from "@/lib/plan-features";
+import { editionAssetLabel } from "@/lib/editions";
 import { parseOfficeAddress } from "@/lib/contact-details";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,8 +48,9 @@ export function useCompanyRules() {
 
 export function useTerminology() {
   const { data } = useCompanyRules();
+  const {edition} = useEdition();
   const t = parseTemplate(data?.documentTemplate);
-  return (key: string) => documentLabel(t, key);
+  return (key: string) => key === "equipment" && edition !== "contractor" ? editionAssetLabel(edition) : documentLabel(t, key);
 }
 
 export const EQUIPMENT_CATEGORIES = ["Elevator", "Escalator", "Custom"];
