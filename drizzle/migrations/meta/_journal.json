@@ -1282,6 +1282,13 @@
       "when": 1793253114627,
       "tag": "0182_tenant_chat_channels",
       "breakpoints": true
+    },
+    {
+      "idx": 183,
+      "version": "7",
+      "when": 1793255226362,
+      "tag": "0183_claim_incentives_and_open_view",
+      "breakpoints": true
     }
   ]
 }

@@ -865,6 +865,8 @@ export type Database = {
           break_enabled: boolean
           break_minutes: number
           breaks_per_shift: number
+          claim_incentive_cents: number
+          claim_incentive_enabled: boolean
           company_address: string | null
           company_email: string | null
           company_id: string
@@ -923,6 +925,8 @@ export type Database = {
           break_enabled?: boolean
           break_minutes?: number
           breaks_per_shift?: number
+          claim_incentive_cents?: number
+          claim_incentive_enabled?: boolean
           company_address?: string | null
           company_email?: string | null
           company_id: string
@@ -981,6 +985,8 @@ export type Database = {
           break_enabled?: boolean
           break_minutes?: number
           breaks_per_shift?: number
+          claim_incentive_cents?: number
+          claim_incentive_enabled?: boolean
           company_address?: string | null
           company_email?: string | null
           company_id?: string
@@ -2602,6 +2608,61 @@ export type Database = {
           },
         ]
       }
+      job_claim_incentives: {
+        Row: {
+          amount_cents: number
+          claimed_at: string
+          company_id: string
+          earned_at: string | null
+          id: string
+          job_id: string
+          sheet_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          claimed_at?: string
+          company_id: string
+          earned_at?: string | null
+          id?: string
+          job_id: string
+          sheet_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          claimed_at?: string
+          company_id?: string
+          earned_at?: string | null
+          id?: string
+          job_id?: string
+          sheet_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_claim_incentives_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_claim_incentives_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_claim_incentives_sheet_id_fkey"
+            columns: ["sheet_id"]
+            isOneToOne: false
+            referencedRelation: "job_sheets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_crew: {
         Row: {
           added_by: string | null
@@ -2972,6 +3033,7 @@ export type Database = {
           asset_id: string | null
           assigned_technician_id: string | null
           claim_hold: boolean
+          claim_incentive_cents: number
           client_id: string
           company_id: string
           created_at: string
@@ -2999,6 +3061,7 @@ export type Database = {
           asset_id?: string | null
           assigned_technician_id?: string | null
           claim_hold?: boolean
+          claim_incentive_cents?: number
           client_id: string
           company_id: string
           created_at?: string
@@ -3026,6 +3089,7 @@ export type Database = {
           asset_id?: string | null
           assigned_technician_id?: string | null
           claim_hold?: boolean
+          claim_incentive_cents?: number
           client_id?: string
           company_id?: string
           created_at?: string
@@ -7246,6 +7310,13 @@ export type Database = {
       next_document_number: {
         Args: { _company: string; _kind: string }
         Returns: string
+      }
+      open_job_incentives: {
+        Args: never
+        Returns: {
+          amount_cents: number
+          job_id: string
+        }[]
       }
       open_job_recipients: {
         Args: { _job: string }
