@@ -7,11 +7,11 @@ export type ProductAppearance = { palette: Palette; zones: Record<ZoneKey, TextS
 
 export const ZONES: { key: ZoneKey; label: string; selector: string }[] = [
   { key: "heading", label: "Page & card headings", selector: "main h1, main h2, main h3, .fieldbridge-header h1" },
-  { key: "fieldTitle", label: "Field titles", selector: "label, [data-slot=label]" },
+  { key: "fieldTitle", label: "Field titles", selector: "main label" },
   { key: "fieldText", label: "Field entries", selector: "input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=range]), textarea, select, button[role=combobox]" },
   { key: "menuHeader", label: "Menu section titles", selector: ".tenant-menu button" },
   { key: "menuLink", label: "Menu links", selector: ".tenant-menu a" },
-  { key: "button", label: "Buttons", selector: "main button[data-slot=button]:not([data-variant=outline]):not([data-variant=ghost]):not([data-variant=link])" },
+  { key: "button", label: "Buttons", selector: "main button.bg-primary" },
 ];
 
 export const FONTS = [
