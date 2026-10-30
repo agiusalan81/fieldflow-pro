@@ -10,8 +10,9 @@ import { clearUserPreview } from '@/lib/impersonation';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { SearchSelect } from '@/components/search-select';
+import { TEST_RETURN_KEY } from '@/lib/shift-session';
 
-const KEY = 'fb-test-return-session';
+const KEY = TEST_RETURN_KEY;
 export const clearTestReturnSession = () => sessionStorage.removeItem(KEY);
 type ReturnSession = { access_token: string; refresh_token: string; targetId: string; name: string };
 

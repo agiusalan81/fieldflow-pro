@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { shouldAutoLogout, clampIdle } from "@/lib/idle";
+import { isLoadedTestSession, TEST_RETURN_KEY } from '@/lib/shift-session';
 import { setViewAs } from "@/lib/profile";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -22,24 +23,32 @@ export function IdleLogout({ userId, realRole, timeoutMin }: { userId: string; r
     const bump = () => { if (!warnRef.current) last.current = Date.now(); };
     const evs = ["click", "keydown", "touchstart", "scroll", "mousemove"];
     evs.forEach((e) => window.addEventListener(e, bump, { passive: true }));
+    let checking = false;
+    let disposed = false;
     const iv = setInterval(async () => {
+      if (checking || disposed) return;
       const idleMs = Date.now() - last.current;
       if (idleMs < t * 60_000 - WARN_MS) return;
-      let clockedIn = false;
-      if (realRole === "technician") {
-        const { data } = await supabase.from("shifts").select("id").eq("user_id", userId).eq("shift_type", "shift").is("ended_at", null).limit(1);
-        clockedIn = !!data?.length;
-      }
-      if (shouldAutoLogout({ idleMs: idleMs + WARN_MS, timeoutMin: t, isTechnician: realRole === "technician", clockedIn })) {
-        if (idleMs >= t * 60_000) {
+      if (isLoadedTestSession(userId, sessionStorage.getItem(TEST_RETURN_KEY))) { stay(); return; }
+      checking = true;
+      try {
+      const { data, error } = await supabase.from("shifts").select("id").eq("user_id", userId).in("shift_type", ["shift", "standby"]).is("ended_at", null).limit(1);
+      if (disposed) return;
+      // Failed reads must not turn an active shift into a presumed clock-out.
+      if (error || !data || data.length > 0) { stay(); return; }
+      const freshIdleMs = Date.now() - last.current;
+      if (shouldAutoLogout({ idleMs: freshIdleMs + WARN_MS, timeoutMin: t, isTechnician: realRole === "technician", clockedIn: false })) {
+        if (freshIdleMs >= t * 60_000) {
           setViewAs(null);
           await qc.cancelQueries(); qc.clear();
           await supabase.auth.signOut();
           navigate({ to: "/auth", search: { reason: "idle" } as never, replace: true });
-        } else { warnRef.current = true; setWarn(true); setLeft(Math.ceil((t * 60_000 - idleMs) / 1000)); }
+        } else { warnRef.current = true; setWarn(true); setLeft(Math.ceil((t * 60_000 - freshIdleMs) / 1000)); }
       }
+      } catch { if (!disposed) stay(); }
+      finally { checking = false; }
     }, 5_000);
-    return () => { evs.forEach((e) => window.removeEventListener(e, bump)); clearInterval(iv); };
+    return () => { disposed = true; evs.forEach((e) => window.removeEventListener(e, bump)); clearInterval(iv); };
   }, [t, userId, realRole, navigate, qc]);
 
   const warnRef = useRef(false);

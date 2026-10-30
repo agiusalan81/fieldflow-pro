@@ -12,6 +12,12 @@ describe("inactivity logout", () => {
   it("logs out a technician who is not clocked in", () => {
     expect(shouldAutoLogout({ idleMs: 16 * min, timeoutMin: 15, isTechnician: true, clockedIn: false })).toBe(true);
   });
+  it("keeps any clocked-in field worker signed in, including supervisors", () => {
+    expect(shouldAutoLogout({ idleMs: 500 * min, timeoutMin: 15, isTechnician: false, clockedIn: true })).toBe(false);
+  });
+  it("keeps a loaded test session signed in even without a shift", () => {
+    expect(shouldAutoLogout({ idleMs: 500 * min, timeoutMin: 15, isTechnician: true, clockedIn: false, testing: true })).toBe(false);
+  });
   it("caps timeout at 3 hours", () => {
     expect(clampIdle(600)).toBe(180);
   });
