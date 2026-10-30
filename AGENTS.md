@@ -82,3 +82,4 @@
 - Editions: DB product; site-creatable dispatch/sheet equipment; jobs-first field welcome, menu-only QR/library — why: no leakage.
 - Test sessions: HQ-owner entry; tenant real-Superuser, active same-tenant non-Superuser, test-only, audited, per-tab return — why: no claim bypass.
 - Inventory: tool/parts modes enforced by tool_sign_* RPCs + guard_inventory_stock, mirrored in inventory-control.ts — why: DB-enforced.
+- Product appearance: HQ-owned per-edition settings in product_appearances, rendered by product-appearance.ts as hex-validated, edition-scoped CSS — why: one safe styling source per app without code changes.
