@@ -5892,6 +5892,24 @@ export type Database = {
           },
         ]
       }
+      product_appearances: {
+        Row: {
+          edition: string
+          settings: Json
+          updated_at: string
+        }
+        Insert: {
+          edition: string
+          settings?: Json
+          updated_at?: string
+        }
+        Update: {
+          edition?: string
+          settings?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       proposal_approvals: {
         Row: {
           company_id: string
