@@ -4,6 +4,7 @@ import { Snowflake, Store, Croissant, Factory, ParkingSquare, QrCode, Clock, Fil
 import { AisleOpsDemo } from "@/components/aisleops-demo";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import hero from "@/assets/retail-hero.jpg";
+import logo from "@/assets/aisleops-logo.png";
 import { Button } from "@/components/ui/button";
 import { EDITION_SPEC } from "@/lib/editions";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
@@ -84,7 +85,7 @@ function RetailPage() {
     <div className="min-h-screen bg-background text-foreground">
       <header className="border-b bg-primary text-primary-foreground">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <p className="font-display text-xl font-bold uppercase">{spec.product}</p>
+          <span className="rounded-md bg-card px-2 py-1"><img src={logo} alt={spec.product} className="h-8 w-auto sm:h-9" /></span>
           <div className="flex items-center gap-2"><Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex"><a href="#roi">Savings calculator</a></Button><Button asChild variant="secondary" size="sm"><Link to="/auth">Sign in</Link></Button></div>
         </div>
       </header>

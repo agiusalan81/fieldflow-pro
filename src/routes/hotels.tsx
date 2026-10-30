@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { BedDouble, QrCode, Wrench, CalendarClock, ShieldCheck, Sparkles } from "lucide-react";
 import hero from "@/assets/hotels-hero.jpg";
+import logo from "@/assets/hotels-logo.png";
 import { Button } from "@/components/ui/button";
 import { EDITION_SPEC } from "@/lib/editions";
 
@@ -35,7 +36,7 @@ function HotelsPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
-        <p className="font-display text-2xl italic text-primary">{spec.product}</p>
+        <img src={logo} alt={spec.product} className="h-10 w-auto sm:h-12" />
         <Button asChild variant="outline" className="rounded-full"><Link to="/auth">Sign in</Link></Button>
       </header>
       <section className="mx-auto grid max-w-6xl items-center gap-10 px-6 pb-16 pt-6 lg:grid-cols-2">
