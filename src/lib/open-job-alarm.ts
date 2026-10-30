@@ -2,6 +2,11 @@
 
 export const OPEN_JOB_ALARM_MS = 5 * 60_000;
 
+/** Office inspection and UI-only View As never opt an account into field alarms. */
+export function canReceiveOpenJobAlarm(realRole: string | undefined, clockedIn: boolean | undefined): boolean {
+  return clockedIn === true && ['technician', 'maintenance', 'supervisor'].includes(realRole ?? '');
+}
+
 /** Jobs that still have free places and have not been dismissed in this session. */
 export function alarmJobs<T extends { id: string; places_left: number }>(jobs: T[], dismissed: ReadonlySet<string>): T[] {
   return jobs.filter((j) => j.places_left > 0 && !dismissed.has(j.id));
