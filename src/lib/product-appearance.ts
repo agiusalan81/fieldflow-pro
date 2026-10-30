@@ -58,8 +58,8 @@ export function appearanceCss(edition: Edition, a: ProductAppearance): string {
   const vars = [["--background", c(p.background)], ["--card", c(p.background)], ["--primary", c(p.primary)], ["--ring", c(p.primary)], ["--sidebar", c(p.menuBackground)], ["--tenant-input-background", c(p.fieldBackground)], ["--input", c(p.fieldBorder)]].filter(([, v]) => v);
   if (vars.length) out.push(`${root}{${vars.map(([k, v]) => `${k}:${v} !important`).join(";")}}`);
   if (c(p.menuBackground)) out.push(`${root} .tenant-menu{background-color:${p.menuBackground};background-image:none}`);
-  if (c(p.buttonBackground)) out.push(`${root} ${ZONES[5].selector}{background-color:${p.buttonBackground}}`);
-  if (c(p.fieldBorder)) out.push(`${root} ${ZONES[2].selector}{border-color:${p.fieldBorder}}`);
+  if (c(p.buttonBackground)) out.push(`${root} ${ZONES[5]!.selector}{background-color:${p.buttonBackground}}`);
+  if (c(p.fieldBorder)) out.push(`${root} ${ZONES[2]!.selector}{border-color:${p.fieldBorder}}`);
   for (const z of ZONES) {
     const s = a.zones[z.key]; const font = FONTS.find(f => f.id === s.font);
     const color = z.key === "button" ? c(p.buttonText) || c(s.color) : c(s.color);

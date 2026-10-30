@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Bold, Italic, Underline, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
@@ -36,25 +36,30 @@ function Toolbar({ s, onChange }: { s: TextStyle; onChange: (p: Partial<TextStyl
 export function HQAppearanceStudio() {
   const [edition, setEdition] = useState<Edition>("hotel");
   const { data } = useProductAppearance(edition);
-  const [a, setA] = useState<ProductAppearance | null>(null);
+  return <div className="space-y-5">
+    <div className="flex flex-wrap items-center gap-2">
+      {EDITIONS.map(e => <Button key={e} variant={e === edition ? "default" : "outline"} onClick={() => setEdition(e)}>{EDITION_SPEC[e].product}</Button>)}
+    </div>
+    {data ? <Editor key={edition} edition={edition} initial={data} /> : <p className="text-sm text-muted-foreground">Loading appearance…</p>}
+  </div>;
+}
+
+function Editor({ edition, initial }: { edition: Edition; initial: ProductAppearance }) {
+  const [a, setA] = useState<ProductAppearance | null>(() => structuredClone(initial));
   const [saving, setSaving] = useState(false);
   const qc = useQueryClient();
-  useEffect(() => { if (data) setA(structuredClone(data)); }, [data]);
-  if (!a) return <p className="text-sm text-muted-foreground">Loading appearance…</p>;
+  if (!a) return null;
   const zone = (k: ZoneKey, p: Partial<TextStyle>) => setA({ ...a, zones: { ...a.zones, [k]: { ...a.zones[k], ...p } } });
   const save = async () => {
     setSaving(true);
     const { error } = await supabase.from("product_appearances").upsert({ edition, settings: a as never, updated_at: new Date().toISOString() });
     setSaving(false);
-    if (error) return toast.error("Could not save appearance");
+    if (error) { toast.error("Could not save appearance"); return; }
     toast.success(`${EDITION_SPEC[edition].product} appearance saved`);
     void qc.invalidateQueries({ queryKey: ["product-appearance", edition] });
   };
   const previewCss = appearanceCss(edition, a).replaceAll(`html[data-edition="${edition}"]:not(.dark)`, ".appearance-preview");
-  return <div className="space-y-5">
-    <div className="flex flex-wrap items-center gap-2">
-      {EDITIONS.map(e => <Button key={e} variant={e === edition ? "default" : "outline"} onClick={() => { setA(null); setEdition(e); }}>{EDITION_SPEC[e].product}</Button>)}
-    </div>
+  return <div>
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
       <div className="min-w-0 space-y-5">
         <section className="space-y-3 rounded-md border bg-card p-4"><h3 className="font-semibold">Colour palette</h3>
