@@ -54,7 +54,7 @@ function Editor({ edition, initial }: { edition: Edition; initial: ProductAppear
     setSaving(true);
     const { error } = await supabase.from("product_appearances").upsert({ edition, settings: a as never, updated_at: new Date().toISOString() });
     setSaving(false);
-    if (error) return toast.error("Could not save appearance");
+    if (error) { toast.error("Could not save appearance"); return; }
     toast.success(`${EDITION_SPEC[edition].product} appearance saved`);
     void qc.invalidateQueries({ queryKey: ["product-appearance", edition] });
   };
