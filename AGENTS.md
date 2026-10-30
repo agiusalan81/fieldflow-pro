@@ -16,8 +16,8 @@
 - Quote photos: private immutable storage, frozen snapshot IDs/captions, URLs only after token/portal auth — why: no unrelated path exposure.
 - HQ: product-scoped owner-only setup/invites/resets; ordered tenant deletes retain users/branding/platform bills and refuse issued payroll — why: no cross-tenant/financial loss.
 - Chrome: neutral tokens; root clips for sticky previews. Plaques share escaped preview/print messages and fonts.
-- Travel shares startJobTravel; arrival saves time before on-site status.
-- Invite functions/loaders use timeouts and middleware.
+- Travel: startJobTravel; arrival time before on-site.
+- Invites: timeouts/middleware.
 - Tenant RLS uses company_id/current_company_id(); never UI company filters; 
 - Roles: protected user_roles; users.role is display-only. Manager-only MemberSkills uses module guards; additions never assign; removal archives for history.
 - Atomic handover reviews jobs/rotas/shifts, preserving history; active-only rota choices share day validation. Snooze is recipient-only; alerts target each request.
@@ -79,6 +79,6 @@
 - Protected per-member RPCs/RLS govern estimates, contracts and dispatch; field eligibility is separate, CRM levels persist — why: primary roles still drive payroll/rota.
 - CRM rules in tested src/lib/crm.ts; manager-only RLS guarded by guard_module_write_additional('crm_pipeline'); crm_mark_won/lost RPCs keep conversions atomic.
 - Lift costing: templates seed sheet copies; access via member_costing_can()/liftCostingAccess(); branding follows branding_documents — why: saved quotes never change.
-- Editions: DB selects product; one creatable sheet equipment selector excludes in-house Lift controls — why: no trial leakage.
-- HQ test switcher: owner-only, test-only Superuser sign-in — why: owner membership unchanged.
+- Editions: DB product; site-creatable dispatch/sheet equipment; jobs-first field welcome, menu-only QR/library — why: no leakage.
+- Test sessions: HQ-owner entry; tenant real-Superuser, active same-tenant non-Superuser, test-only, audited, per-tab return — why: no claim bypass.
 - Inventory: tool/parts modes enforced by tool_sign_* RPCs + guard_inventory_stock, mirrored in inventory-control.ts — why: DB-enforced.
