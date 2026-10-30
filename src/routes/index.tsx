@@ -20,7 +20,9 @@ const catalogQueryOptions = queryOptions({
 
 export const Route = createFileRoute("/")({ staticData: { sitemap: true },
   beforeLoad: () => {
-    if (brandForHost(currentHost())=== "retail") throw redirect({ to: "/retail", replace: true });
+    const brand = brandForHost(currentHost());
+    if (brand === "retail") throw redirect({ to: "/retail", replace: true });
+    if (brand === "hotels") throw redirect({ to: "/hotels", replace: true });
   },
   loader: ({ context }) => context.queryClient.ensureQueryData(catalogQueryOptions),
   head: () => ({

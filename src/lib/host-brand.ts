@@ -1,10 +1,16 @@
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { getRequestHost } from "@tanstack/react-start/server";
 
-/** Which marketing site a hostname belongs to. */
-export function brandForHost(host: string | null | undefined): "retail" | "fieldbridge" {
+export type HostBrand = "retail" | "hotels" | "fieldbridge";
+
+const matches = (h: string, root: string) => h === root || h.endsWith(`.${root}`);
+
+/** Which product site a hostname belongs to. */
+export function brandForHost(host: string | null | undefined): HostBrand {
   const h = (host ?? "").toLowerCase().split(":")[0] ?? "";
-  return h === "aisleopsapp.com" || h.endsWith(".aisleopsapp.com") ? "retail" : "fieldbridge";
+  if (matches(h, "aisleopsapp.com")) return "retail";
+  if (matches(h, "fieldbridgehotels.com") || matches(h, "suiteopsapp.com")) return "hotels";
+  return "fieldbridge";
 }
 
 export const currentHost = createIsomorphicFn()
