@@ -10,7 +10,7 @@ import { TEST_RETURN_KEY, canSignOutAfterShiftCheck, isLoadedTestSession } from 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
-export function ShiftSignOut({ userId, onClockOut }: { userId?: string; onClockOut: () => void }) {
+export function ShiftSignOut({ userId, onClockOut }: { userId: string | undefined; onClockOut: () => void }) {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
