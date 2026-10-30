@@ -3,13 +3,26 @@ import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useProfile } from '@/lib/profile';
 import { useNavLock } from '@/lib/plan-features';
-import { alarmJobs, OPEN_JOB_ALARM_MS } from '@/lib/open-job-alarm';
+import { alarmJobs, canReceiveOpenJobAlarm, OPEN_JOB_ALARM_MS } from '@/lib/open-job-alarm';
 import { playChime } from '@/lib/chime';
 
 export function useOpenJobs() {
   const { data: p } = useProfile();
   const locked = useNavLock(!!p)('skills_dispatch').locked;
   const qc = useQueryClient();
+  const fieldActor = canReceiveOpenJobAlarm(p?.real_role, true);
+  const clocked = useQuery({
+    queryKey: ['open-job-clocked', p?.id],
+    enabled: !!p && !locked && fieldActor,
+    refetchInterval: 15000,
+    queryFn: async () => {
+      if (!p) return false;
+      const r = await supabase.from('shifts').select('id').eq('user_id', p.id).is('ended_at', null).in('shift_type', ['shift', 'standby']).limit(1);
+      if (r.error) throw r.error;
+      return !!r.data?.length;
+    },
+  });
+  const canAlarm = !locked && !clocked.isError && canReceiveOpenJobAlarm(p?.real_role, clocked.data);
   const [dismissed, setDismissed] = useState<ReadonlySet<string>>(new Set());
   useEffect(() => {
     const load = () => { try { setDismissed(new Set(JSON.parse(sessionStorage.getItem(`open-job-dismissed:${p?.id}`) ?? '[]'))); } catch { setDismissed(new Set()); } };
@@ -20,19 +33,19 @@ export function useOpenJobs() {
   const dismiss = (id: string) => { const next = [...new Set([...dismissed, id])]; sessionStorage.setItem(`open-job-dismissed:${p?.id}`, JSON.stringify(next)); window.dispatchEvent(new Event('open-job-dismissed')); };
   useEffect(() => {
     if (!p || locked) return;
-    const ch = supabase.channel(`open-jobs-${p.id}-${Math.random().toString(36).slice(2)}`).on('postgres_changes', {event:'*',schema:'public',table:'jobs'}, () => { void qc.invalidateQueries({queryKey:['open-jobs']}); }).on('postgres_changes', {event:'*',schema:'public',table:'shifts',filter:`user_id=eq.${p.id}`}, () => { void qc.invalidateQueries({queryKey:['open-jobs']}); }).subscribe();
+    const ch = supabase.channel(`open-jobs-${p.id}-${Math.random().toString(36).slice(2)}`).on('postgres_changes', {event:'*',schema:'public',table:'jobs'}, () => { void qc.invalidateQueries({queryKey:['open-jobs']}); }).on('postgres_changes', {event:'*',schema:'public',table:'shifts',filter:`user_id=eq.${p.id}`}, () => { void qc.invalidateQueries({queryKey:['open-jobs']}); void qc.invalidateQueries({queryKey:['open-job-clocked',p.id]}); }).subscribe();
     return () => { void supabase.removeChannel(ch); };
   }, [p?.id, locked, qc]);
   const bonuses=useQuery({queryKey:['open-job-bonuses',p?.id],enabled:!!p&&!locked,refetchInterval:15000,queryFn:async()=>{const visibility=await supabase.rpc('staff_incentives_visible');if(visibility.error)throw visibility.error;if(!visibility.data)return [];const r=await supabase.rpc('open_job_incentives');if(r.error)throw r.error;return r.data??[];}});
   const jobs = locked ? [] : (q.data ?? []).map(j=>({...j,claim_incentive_cents:bonuses.data?.find(b=>b.job_id===j.id)?.amount_cents??0}));
-  return { ...q, jobs, alerting: alarmJobs(jobs, dismissed), dismissed, dismiss };
+  return { ...q, jobs, alerting: alarmJobs(jobs, dismissed), canAlarm, dismissed, dismiss };
 }
 
 export function useGlobalOpenJobAlarm(uid: string) {
-  const { alerting } = useOpenJobs();
+  const { alerting, canAlarm } = useOpenJobs();
   const lastPlayed = useRef(0);
   useEffect(() => { lastPlayed.current = 0; }, [uid]);
-  const signature = alerting.map(j => j.id).sort().join(',');
+  const signature = canAlarm ? alerting.map(j => j.id).sort().join(',') : '';
   useEffect(() => {
     if (!signature) return;
     const tick = async () => {

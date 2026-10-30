@@ -27,7 +27,7 @@
 - Payroll routes share payroll-page.tsx. Opening leave/payslips save atomically with issued-slip/totals guards; year-qualified carry-forward prevents double consumption; 
 - Sign-off/leave/overtime/checklist/renewals use tested jobsheets.ts; shared rules.
 - DWR: one canonical report/shift; retain corrected/superseded originals; filing clears held flags; 
-- Dispatch: DB guards TBD/claims; cent bonuses freeze on claim, earn on completion; staff ledger follows company visibility; staff-only badges never reach client documents; bell reconciliation derives recipients server-side.
+- Dispatch: DB guards TBD/claims; bonuses freeze/earn on claim/completion; staff ledger follows visibility; no staff badges in client documents; bell recipients server-derived. Global open-job audio gates real field roles + own shift/standby, fails closed and refreshes on shift changes; office board visibility stays separate.
 - Overtime uses captured DWR intervals/rules; old reports show associated sites only; factual allocation.
 - - Typography via applyTypography/AppShell, locale via locale.ts. Branding shares asset-backed font IDs and preview/PDF decorations; DB/HQ locks protect saved values.
 - Auth emails share auth-brand.tsx; the managed handler owns verification and dispatch for reliable account recovery.
