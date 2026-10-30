@@ -1,3 +1,4 @@
+import { platformCredit } from "@/lib/platform-credit";
 /** Client proposal PDF (A4): letterhead, specification, priced lines, offer and commercial terms. */
 import { lineTotal } from "./price-list";
 import { proposalTotals, visibleSections, type Line, type Spec, type Terms } from "./proposals";
@@ -120,6 +121,7 @@ export async function buildProposalPdf(d: ProposalPdfInput): Promise<Uint8Array>
   pages.forEach((p, i) => {
     p.drawLine({ start: { x: M, y: M + 16 }, end: { x: W - M, y: M + 16 }, thickness: 0.4, color: grey });
     if (foot) p.drawText(foot, { x: M, y: M + 4, size: 7.5, font, color: grey });
+    p.drawText(platformCredit(), { x: M, y: M - 6, size: 6, font, color: grey });
     const n = `Page ${i + 1} of ${pages.length}`; p.drawText(n, { x: W - M - font.widthOfTextAtSize(n, 7.5), y: M + 4, size: 7.5, font, color: grey });
   });
   return doc.save();

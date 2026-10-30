@@ -1,3 +1,4 @@
+import { platformCredit } from "@/lib/platform-credit";
 import { customerQuoteDocument, quoteLineTotals, quoteTotals, type QuoteSnapshot } from './customer-quotes';
 
 /** Same safe document projection as preview and delivery; no internal fields accepted. */
@@ -49,6 +50,6 @@ export async function buildCustomerQuotePdf(s: QuoteSnapshot, photoUrls: Record<
     page.drawImage(image, { x: 42 + (511 - image.width * scale) / 2, y: y - height, width: image.width * scale, height });
     y -= height + 22; if (photo.caption) write(photo.caption);
   }
-  doc.getPages().forEach((p, i) => { p.drawText(safe(s.company.footer ?? '').slice(0, 100), { x: 42, y: 40, size: 8, font, color: grey }); p.drawText(`${i + 1} / ${doc.getPageCount()}`, { x: 515, y: 40, size: 8, font, color: grey }); });
+  doc.getPages().forEach((p, i) => { p.drawText(safe(s.company.footer ?? '').slice(0, 100), { x: 42, y: 40, size: 8, font, color: grey }); p.drawText(platformCredit(), { x: 42, y: 30, size: 6, font, color: grey }); p.drawText(`${i + 1} / ${doc.getPageCount()}`, { x: 515, y: 40, size: 8, font, color: grey }); });
   return doc.save();
 }
