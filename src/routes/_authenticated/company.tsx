@@ -19,7 +19,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, isOffice, ROLE_LABEL, type Role } from "@/lib/profile";
-import { usePlanFeatures } from "@/lib/plan-features";
+import { usePlanFeatures, useEdition } from "@/lib/plan-features";
+import { SpaceConfigurator } from "@/components/space-configurator";
 import { MODULES, ROLES, canSee, usePermRows, type ModuleKey } from "@/lib/permissions";
 import { useCompanyRules, FONT_CHOICES, applyTypography, DEFAULT_THEME, type Typography, type TextStyle } from "@/lib/company";
 import { PhoneInput, splitPhone, COUNTRIES } from "@/components/client-manager";
@@ -428,6 +429,7 @@ function SettingsSections({ superuser, companyId, userId, role }: { superuser: b
     heading.current?.scrollIntoView({ block: "start", behavior: "instant" });
     heading.current?.focus({ preventScroll: true });
   }, [active]);
+  const { edition } = useEdition();
   const groups: { title: string; items: SectionItem[] }[] = [
     { title: "General & trade", items: [
       { key: "profile", label: "Profile & details", render: () => <ProfileTab companyId={companyId} part="details" navigation={navigation} /> },
@@ -436,6 +438,7 @@ function SettingsSections({ superuser, companyId, userId, role }: { superuser: b
       { key: "vehicles", label: "Clock-in & vehicles", render: () => <VehicleCompanySettings companyId={companyId} /> },
       { key: "inventory", label: "Inventory control", render: () => <InventoryControlSettings companyId={companyId} /> },
       { key: "dispatch-incentives", label: "Dispatch incentives", render: () => <ClaimIncentiveSettings companyId={companyId} /> },
+      ...(edition === "hotel" || edition === "retail" ? [{ key: "configurator", label: edition === "hotel" ? "Room & floor configurator" : "Store & department configurator", render: () => <SpaceConfigurator companyId={companyId} edition={edition} /> }] : []),
     ] },
     { title: "Branding & appearance", items: [
       { key: "branding", label: "Branding & PDF styling", render: () => <div className="space-y-6"><AppearanceSettings companyId={companyId} /><ProfileTab companyId={companyId} part="fonts" /><DocumentSettings companyId={companyId} part="branding" /></div> },
