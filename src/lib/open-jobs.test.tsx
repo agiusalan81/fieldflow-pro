@@ -1,4 +1,4 @@
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const state = vi.hoisted(() => ({
@@ -31,13 +31,14 @@ describe('global open-job sound', () => {
   });
 
   it('starts on clock-in and stops repeating after clock-out', async () => {
+    vi.useFakeTimers();
     state.clocked = false;
     const { rerender } = renderHook(() => useGlobalOpenJobAlarm('actor'));
     expect(state.play).not.toHaveBeenCalled();
     state.clocked = true;
     rerender();
-    await waitFor(() => expect(state.play).toHaveBeenCalledWith('urgent', 'actor'));
-    vi.useFakeTimers();
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(state.play).toHaveBeenCalledWith('urgent', 'actor');
     await act(async () => { await vi.advanceTimersByTimeAsync(300_000); });
     expect(state.play).toHaveBeenCalledTimes(2);
     state.clocked = false;
