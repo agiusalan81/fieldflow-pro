@@ -106,3 +106,5 @@
 - [ ] Editions follow-ups: public self-signup per product, room/equipment QR guest reporting form, edition-aware asset category picker, real domains.
 - [ ] Queued: Document preview & send from preview (estimates, proposals, lift costing).
 - [x] HQ App appearance studio (palette, per-zone font/size/bold/italic/underline/colour, live preview) applied per app; Hotel default white fields, navy titles, light-blue entries, slate buttons; Up for grabs mobile overflow fixes. 3 tests; HQ hotel save verified. Hotel in-app mobile view not checked; not published.
+- [ ] Domain-aware sign-in + domain connection for aisleopsapp.com and fieldbridgehotels.com (suiteops.com forward) with per-product Google OAuth — waiting on user to connect DNS.
+- [x] Receipt crop: four-corner drag pins, auto-detect with full-photo fallback, perspective straighten, rotate.
