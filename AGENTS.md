@@ -27,7 +27,7 @@
 - Payroll routes share payroll-page.tsx. Opening leave/payslips save atomically with issued-slip/totals guards; year-qualified carry-forward prevents double consumption; 
 - Sign-off/leave/overtime/checklist/renewals use tested jobsheets.ts; shared rules.
 - DWR: one canonical report/shift; retain corrected/superseded originals; filing clears held flags; 
-- Dispatch: DB guards TBD/claims; cent bonuses freeze on claim and earn on completion; staff own-ledger access respects the company visibility setting, office review persists. Shared staff-only badges never enter client documents; scheduled bell reconciliation derives tenant recipients server-side — why: no client audiences or payroll assumptions.
+- Dispatch: DB guards TBD/claims; cent bonuses freeze on claim, earn on completion; staff ledger follows company visibility; staff-only badges never reach client documents; bell reconciliation derives recipients server-side.
 - Overtime uses captured DWR intervals/rules; old reports show associated sites only; factual allocation.
 - - Typography via applyTypography/AppShell, locale via locale.ts. Branding shares asset-backed font IDs and preview/PDF decorations; DB/HQ locks protect saved values.
 - Auth emails share auth-brand.tsx; the managed handler owns verification and dispatch for reliable account recovery.
@@ -44,7 +44,7 @@
 - job_sheets embeds use users!job_sheets_assigned_technician_id_fkey (two users FKs).
 - Signing batches: creator-owned, finalized transactionally; store delivery before sending via shared PDF builder; atomic, retry-safe delivery.
 - Offline: account-scoped IndexedDB/optimistic RPC/PWA; confirmed discard atomically removes only that account/sheet draft/photos/cache; retain inaccessible drafts.
-- Masters immutable except names; shared document-blocks pricing/tags/copies; site/equipment buttons reuse DocumentMasters with targets preselected; copy audience never blocks equipment — why: one attachment workflow.
+- Masters immutable except names; shared document-blocks; site/equipment buttons reuse DocumentMasters preselected — why: one attachment workflow.
 - Platform authority is protected separately in user_roles; HQ uses a narrow directory RPC, not tenant reads; 
 - Plan access: DB write guards + plan-features.ts menu gating; legacy stays on. RFQ rules in lift-rfq.ts; 
 - Client reports use immutable DB-built safe snapshots and hashed expiring/revocable links; photo paths stay server-only; 
@@ -62,7 +62,7 @@
 - Chat: tenant-assigned channels/RPCs, private broadcast copies; reuse RLS/attachment/unread/push rules. Push uses /push/ and gesture audio; acceptance is not delivery proof.
 - FieldBridge subscription invoices live in platform_invoices (frozen once issued by trigger) with rules in tested saas-billing.ts; storage usage via company_storage_usage RPC; 
 - Payments: superuser RLS checkout; signed webhook settles exact amounts idempotently; billing-daily runs renewals/charges/reminders; company_invoice_lapsed drives read-only.
-- Public catalog selects active product before rows; retail ROI uses tested live-cadence math, no FX or unquoted seats; narrow legal reads/shared trust renderers/explicit sitemap — why: HQ stays authoritative, savings auditable.
+- Public catalog selects active product first; retail ROI uses tested live-cadence math; narrow legal reads, explicit sitemap — why: HQ authoritative.
 - Staff signatures share staff-signature editors and own-user RPC; protected real roles govern eligibility and profile guards retain identity protection.
 - Sheet sync serializes per account/sheet, rebasing local versions only. Autosave uses dirty fingerprints; failures retain newer drafts.
 - Contracts: atomic matrix freezes terms/prices; manager-only in-house vendor coverage shares PPM; guarded expected-expiry renewals retain history — why: preserve agreement and concurrent-edit safety.
@@ -82,4 +82,4 @@
 - Editions: DB product; site-creatable dispatch/sheet equipment; jobs-first field welcome, menu-only QR/library — why: no leakage.
 - Test sessions: HQ-owner entry; tenant real-Superuser, active same-tenant non-Superuser, test-only, audited, per-tab return — why: no claim bypass.
 - Inventory: tool/parts modes enforced by tool_sign_* RPCs + guard_inventory_stock, mirrored in inventory-control.ts — why: DB-enforced.
-- Product appearance: HQ-owned per-edition settings in product_appearances, rendered by product-appearance.ts as hex-validated, edition-scoped CSS — why: one safe styling source per app without code changes.
+- Appearance: HQ per-edition product_appearances → hex-validated edition-scoped CSS — why: safe no-code styling.
