@@ -88,21 +88,27 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   staticData: { sitemap: false },
-  head: () => ({
+  head: () => {
+    // Each product domain shows its own tab icon, title and installed-app identity.
+    const host = brandForHost(currentHost());
+    const app = host === "retail" ? { name: "AisleOps", icon: "/favicon-retail.png", touch: "/app-icon-retail-192.png", manifest: "/manifest-retail.webmanifest" }
+      : host === "hotels" ? { name: "FieldBridge Hotels", icon: "/favicon-hotels.png", touch: "/app-icon-hotels-192.png", manifest: "/manifest-hotels.webmanifest" }
+      : { name: "FieldBridge", icon: "/favicon.png", touch: "/app-icon-192.png", manifest: "/manifest.webmanifest" };
+    return {
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { name: "theme-color", content: "#ffffff" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
-      { title: "FieldBridge" },
-      { name: "apple-mobile-web-app-title", content: "FieldBridge" },
-      { name: "application-name", content: "FieldBridge" },
+      { title: app.name },
+      { name: "apple-mobile-web-app-title", content: app.name },
+      { name: "application-name", content: app.name },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "description", content: "Field service management" },
-      { property: "og:title", content: "FieldBridge" },
+      { property: "og:title", content: app.name },
       { property: "og:description", content: "Field service management" },
       { property: "og:type", content: "website" },
-      { property: "og:site_name", content: "FieldBridge App" },
+      { property: "og:site_name", content: app.name },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
@@ -112,11 +118,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..800;1,9..144,400..800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Space+Grotesk:wght@400..700&family=Lora:ital,wght@0,400..700;1,400..700&family=IBM+Plex+Mono:ital,wght@0,400;0,600;1,400&family=Archivo:ital,wght@0,400..800;1,400..800&display=swap" },
-      { rel: "icon", href: "/favicon.png", type: "image/png" },
-      { rel: "manifest", href: "/manifest.webmanifest" },
-      { rel: "apple-touch-icon", href: "/app-icon-192.png" },
+      { rel: "icon", href: app.icon, type: "image/png" },
+      { rel: "manifest", href: app.manifest },
+      { rel: "apple-touch-icon", href: app.touch },
     ],
-  }),
+    };
+  },
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,

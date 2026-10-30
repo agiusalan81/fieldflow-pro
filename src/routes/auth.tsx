@@ -133,10 +133,14 @@ function AuthPage() {
   return (
     <main className="grid min-h-screen place-items-center bg-background px-6 py-12">
       <div className="w-full max-w-md">
-      <div className="flex items-center gap-3">
-        <img src={brand.logo} alt={`${brand.name} logo`} className="h-10 w-10 object-contain" width={40} height={40} />
-        <p className="font-display text-2xl text-foreground">{brand.name}</p>
-      </div>
+      {brandKey === "fieldbridge" ? (
+        <div className="flex items-center gap-3 sm:gap-4">
+          <img src={brand.logo} alt={`${brand.name} logo`} className="h-[clamp(3.5rem,14vw,5rem)] w-auto object-contain" />
+          <p className="font-display text-[clamp(1.75rem,7vw,2.5rem)] leading-none text-foreground">{brand.name}</p>
+        </div>
+      ) : (
+        <img src={brand.logo} alt={brand.name} className="h-auto w-full max-w-[min(100%,26rem)] object-contain" />
+      )}
         <h1 className="mt-6 font-display text-4xl leading-tight text-foreground">
           {mode === "signup" ? "Set up your company" : "Welcome back"}
         </h1>
