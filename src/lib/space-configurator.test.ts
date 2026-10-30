@@ -10,6 +10,6 @@ describe("space configurator", () => {
   it("builds one asset per room per equipment item", () => {
     const rows = assetRows(buildSpaces([f1], "Room "), ["TV", "Safe"]);
     expect(rows).toHaveLength(6);
-    expect(rows[0].reference_number).toBe("Room 101 · TV");
+    expect(rows[0]?.reference_number).toBe("Room 101 · TV");
   });
 });
