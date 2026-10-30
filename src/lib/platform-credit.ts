@@ -8,7 +8,7 @@ export function platformCredit(edition: Edition = "contractor"): string {
 }
 
 /** Contact lines for the letterhead middle column; empty values are dropped. */
-export function letterheadContact(c: { address?: string; phone?: string; email?: string; website?: string }): string[] {
+export function letterheadContact(c: { address?: string | undefined; phone?: string | undefined; email?: string | undefined; website?: string | undefined }): string[] {
   return [c.address, [c.phone && `T ${c.phone}`, c.email].filter(Boolean).join(" · "), c.website]
     .map((v) => (v ?? "").trim()).filter(Boolean);
 }
