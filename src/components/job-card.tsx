@@ -40,7 +40,7 @@ export function AssetHistory({ assetId, label }: { assetId: string; label: strin
         <ul className="max-h-[60vh] space-y-2 overflow-y-auto">
           {data.map((s) => (
             <li key={s.id} className="rounded-lg border p-3 text-sm">
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
                 <span className="font-mono text-primary">#{s.jobsheet_number}</span>
                 <StatusBadge status={s.status} />
               </div>
