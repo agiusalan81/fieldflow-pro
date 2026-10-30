@@ -33,6 +33,7 @@ import { useOpenJobs } from "@/lib/open-jobs";
 import { Megaphone } from "lucide-react";
 import { incentiveAmount } from '@/lib/claim-incentive';
 import { JobIncentiveBadge, MyIncentives } from '@/components/my-incentives';
+import { canClaimFieldJob } from '@/lib/member-capabilities';
 
 export const Route = createFileRoute("/_authenticated/dashboard")({ staticData: { sitemap: false },
   head: () => ({
@@ -172,6 +173,7 @@ function UpForGrabs({ profile }: { profile: Profile }) {
         {ringing && <span className="rounded-full bg-warning px-2 py-0.5 text-xs font-medium text-warning-foreground">Alarm every 5 min until claimed</span>}
       </div>
       {!clocked.data && <p className="text-sm text-muted-foreground">Clock in to claim these jobs.</p>}
+      {!canClaimFieldJob(profile.real_role) && <p className="text-sm text-muted-foreground">View as does not change your sign-in. Use Test account to claim as a technician.</p>}
       <ul className="grid gap-3 md:grid-cols-2">
         {(jobs.data ?? []).map((j) => (
           <li key={j.id} className="space-y-2 rounded-lg border bg-card p-3">
@@ -186,7 +188,7 @@ function UpForGrabs({ profile }: { profile: Profile }) {
             {j.claim_incentive_cents>0&&<p className="text-sm font-medium text-primary">Claim incentive: {incentiveAmount(j.claim_incentive_cents)}</p>}
             {smart && <div className="flex flex-wrap items-center gap-1"><span className="text-xs text-muted-foreground">Required skills:</span>{!j.skills?.length&&<span className="text-xs">None specified</span>}{(j.skills??[]).map((s) => <span key={s} className="rounded-full border px-2 py-0.5 text-xs">{s}</span>)}</div>}
             <div className="flex gap-2">
-              <Button size="sm" className="flex-1" disabled={busy !== null || !clocked.data} onClick={() => claim(j.id)}>{busy === j.id ? "Claiming…" : "Claim job"}</Button>
+              <Button size="sm" className="flex-1" disabled={busy !== null || !clocked.data || !canClaimFieldJob(profile.real_role)} onClick={() => claim(j.id)}>{busy === j.id ? "Claiming…" : "Claim job"}</Button>
               <Button size="sm" variant="ghost" onClick={() => openJobs.dismiss(j.id)}>Dismiss</Button>
             </div>
           </li>
