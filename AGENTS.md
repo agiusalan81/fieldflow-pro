@@ -84,3 +84,4 @@
 - Shift sessions: shared sign-out checks own open shift/standby and fails closed; inactivity keeps active/test sessions, test return bypasses logout — why: retain shift workflow without weakening auth.
 - Inventory: tool/parts modes enforced by tool_sign_* RPCs + guard_inventory_stock, mirrored in inventory-control.ts — why: DB-enforced.
 - Appearance: HQ per-edition product_appearances → hex-validated edition-scoped CSS — why: safe no-code styling.
+- Document letterheads/footers use platform-credit.ts (edition-aware credit + contact lines) — why: one consistent credit across products.
