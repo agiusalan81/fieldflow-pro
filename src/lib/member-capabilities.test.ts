@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { canEditCapabilities, isDispatchable, showsFieldDispatchToggle } from "./member-capabilities";
+import { canEditCapabilities, isDispatchable, showsFieldDispatchToggle, canClaimFieldJob } from "./member-capabilities";
 
 describe("member capabilities", () => {
+  it('Superusers never claim jobs, while a real test technician can', () => {
+    expect(canClaimFieldJob('superuser')).toBe(false);
+    expect(canClaimFieldJob('technician')).toBe(true);
+  });
   it("office admin without the toggle is not dispatchable", () => expect(isDispatchable("admin", true, false)).toBe(false));
   it("office admin with field dispatch is dispatchable", () => expect(isDispatchable("admin", true, true)).toBe(true));
   it("technicians are dispatchable by primary role", () => expect(isDispatchable("technician", true, false)).toBe(true));

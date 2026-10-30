@@ -1,8 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { rankActions } from "./quick-actions";
+import { rankActions, MENU_ONLY } from "./quick-actions";
 import { searchCountries } from "@/components/client-manager";
 
 describe("quick actions", () => {
+  it('keeps technical library and QR lookup menu-only for every role', () => {
+    for (const role of ['superuser', 'admin', 'supervisor', 'technician', 'maintenance'] as const) {
+      const allowed = ['/technical-library', '/qr-reader', '/schedule'].filter(path => !MENU_ONLY[role]?.includes(path));
+      expect(rankActions([], allowed, { '/technical-library': 100, '/qr-reader': 100 }, 6)).toEqual(['/schedule']);
+    }
+  });
   it("uses role defaults with no taps", () => {
     expect(rankActions(["/a", "/b", "/c"], ["/a", "/b", "/c", "/d"], {}, 3)).toEqual(["/a", "/b", "/c"]);
   });

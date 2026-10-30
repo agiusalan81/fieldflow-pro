@@ -33,6 +33,7 @@ import { useOpenJobs } from "@/lib/open-jobs";
 import { Megaphone } from "lucide-react";
 import { incentiveAmount } from '@/lib/claim-incentive';
 import { JobIncentiveBadge, MyIncentives } from '@/components/my-incentives';
+import { canClaimFieldJob } from '@/lib/member-capabilities';
 
 export const Route = createFileRoute("/_authenticated/dashboard")({ staticData: { sitemap: false },
   head: () => ({
@@ -172,6 +173,7 @@ function UpForGrabs({ profile }: { profile: Profile }) {
         {ringing && <span className="rounded-full bg-warning px-2 py-0.5 text-xs font-medium text-warning-foreground">Alarm every 5 min until claimed</span>}
       </div>
       {!clocked.data && <p className="text-sm text-muted-foreground">Clock in to claim these jobs.</p>}
+      {!canClaimFieldJob(profile.real_role) && <p className="text-sm text-muted-foreground">View as does not change your sign-in. Use Test account to claim as a technician.</p>}
       <ul className="grid gap-3 md:grid-cols-2">
         {(jobs.data ?? []).map((j) => (
           <li key={j.id} className="space-y-2 rounded-lg border bg-card p-3">
@@ -186,7 +188,7 @@ function UpForGrabs({ profile }: { profile: Profile }) {
             {j.claim_incentive_cents>0&&<p className="text-sm font-medium text-primary">Claim incentive: {incentiveAmount(j.claim_incentive_cents)}</p>}
             {smart && <div className="flex flex-wrap items-center gap-1"><span className="text-xs text-muted-foreground">Required skills:</span>{!j.skills?.length&&<span className="text-xs">None specified</span>}{(j.skills??[]).map((s) => <span key={s} className="rounded-full border px-2 py-0.5 text-xs">{s}</span>)}</div>}
             <div className="flex gap-2">
-              <Button size="sm" className="flex-1" disabled={busy !== null || !clocked.data} onClick={() => claim(j.id)}>{busy === j.id ? "Claiming…" : "Claim job"}</Button>
+              <Button size="sm" className="flex-1" disabled={busy !== null || !clocked.data || !canClaimFieldJob(profile.real_role)} onClick={() => claim(j.id)}>{busy === j.id ? "Claiming…" : "Claim job"}</Button>
               <Button size="sm" variant="ghost" onClick={() => openJobs.dismiss(j.id)}>Dismiss</Button>
             </div>
           </li>
@@ -220,13 +222,7 @@ function TechToday({ profile, readOnly, switcher }: { profile: Profile; readOnly
   return (
     <AppShell title={`Hi, ${profile.full_name.split(" ")[0]}`} actions={switcher}>
       <div className="mx-auto max-w-4xl space-y-6">
-        <ShiftTracker profile={profile} />{switcher && !readOnly && <DepartureRequests />}
-        {!readOnly && <UpForGrabs profile={profile} />}
-        {!readOnly && <MyIncentives compact />}
-        <InternalWorkCard key={profile.id} profile={profile} readOnly={readOnly} />
-        <Button asChild variant="outline" className="h-12 w-full"><Link to="/technical-library"><ClipboardList className="mr-2 h-5 w-5" />Technical library</Link></Button>
-        <ScanQr />
-        {!readOnly && <NoAccessButton profile={profile} jobs={jobs} />}
+        <ShiftTracker profile={profile} />
         <section data-tour="today-jobs">
           <h2 className="mb-3 font-medium text-foreground">Today's jobs ({jobs.length})</h2>
           {jobs.length === 0 ? (
@@ -239,7 +235,7 @@ function TechToday({ profile, readOnly, switcher }: { profile: Profile; readOnly
                     <div className="min-w-0">
                       <p className="text-xs font-medium text-primary">{isAssisting(j, profile.id) ? "Assisting" : "Lead"}</p><p className="text-xs text-muted-foreground">Job #{j.job_number} · {timeWindow(j.window_start, j.window_end)}</p>
                       <p className="truncate font-medium text-foreground">{j.clients?.name}</p>
-                      <p className="truncate text-sm text-muted-foreground">{j.sites?.name ?? "No site"} · {j.assets?.reference_number ?? "No lift"}</p>
+                      <p className="truncate text-sm text-muted-foreground">{j.sites?.name ?? "No site"} · {j.assets?.reference_number ?? "No item selected"}</p>
                     </div>
                     <PriorityBadge p={j.priority} />
                   </div>
@@ -254,34 +250,13 @@ function TechToday({ profile, readOnly, switcher }: { profile: Profile; readOnly
             </ul>
           )}
         </section>
+        {!readOnly && <UpForGrabs profile={profile} />}
+        {!readOnly && <MyIncentives compact />}
+        <InternalWorkCard key={profile.id} profile={profile} readOnly={readOnly} />
+        {!readOnly && <NoAccessButton profile={profile} jobs={jobs} />}
+        {switcher && !readOnly && <DepartureRequests />}
       </div>
     </AppShell>
-  );
-}
-
-function ScanQr() {
-  const [open, setOpen] = useState(false);
-  const [code, setCode] = useState("");
-  const [found, setFound] = useState<{ id: string; label: string } | null | "none">(null);
-  const lookup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const { data } = await supabase.from("assets").select("id, reference_number, asset_category, clients(name)").ilike("reference_number", code.trim()).maybeSingle();
-    setFound(data ? { id: data.id, label: `${data.reference_number} · ${data.asset_category} · ${data.clients?.name}` } : "none");
-  };
-  return (
-    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setFound(null); setCode(""); } }}>
-      <DialogTrigger asChild><Button variant="outline" className="h-12 w-full"><QrCode className="mr-2 h-5 w-5" />Scan QR Code</Button></DialogTrigger>
-      <DialogContent>
-        <DialogHeader><DialogTitle>Site lookup</DialogTitle></DialogHeader>
-        <form onSubmit={lookup} className="flex gap-2">
-          <Input autoFocus className="h-11" placeholder="Scan or type lift reference" value={code} onChange={(e) => setCode(e.target.value)} />
-          <Button type="submit" className="h-11">Look up</Button>
-        </form>
-        <p className="text-xs text-muted-foreground">Camera scanning is simulated — enter the reference printed under the QR code.</p>
-        {found === "none" && <p className="text-sm text-destructive">No lift found with that reference.</p>}
-        {found && found !== "none" && <AssetHistory assetId={found.id} label={found.label} />}
-      </DialogContent>
-    </Dialog>
   );
 }
 

@@ -12,6 +12,10 @@ export function isDispatchable(role: string, active: boolean, canFieldDispatch: 
   if (!active) return false;
   return (FIELD_ROLES as string[]).includes(role) || canFieldDispatch;
 }
+/** Superusers administer companies; field testing uses a separate actual account. */
+export function canClaimFieldJob(realRole: string): boolean {
+  return realRole !== 'superuser';
+}
 
 /** Only office roles get the field-dispatch toggle (field roles already have it). */
 export function showsFieldDispatchToggle(memberRole: string): boolean {

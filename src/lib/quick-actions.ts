@@ -23,7 +23,13 @@ export function resetUsage(uid: string) { localStorage.removeItem(KEY(uid)); }
 
 /** Most-tapped first (ties keep role default order); only allowed destinations; returns `count` items. */
 /** Menu-only screens that never appear as quick-action buttons for a role. */
-export const MENU_ONLY: Partial<Record<Role, string[]>> = { technician: ["/hours", "/leave"] };
+export const MENU_ONLY: Partial<Record<Role, string[]>> = {
+  technician: ['/hours', '/leave', '/technical-library', '/qr-reader'],
+  maintenance: ['/technical-library', '/qr-reader'],
+  supervisor: ['/technical-library', '/qr-reader'],
+  admin: ['/technical-library', '/qr-reader'],
+  superuser: ['/technical-library', '/qr-reader'],
+};
 
 export function rankActions(defaults: string[], allowed: string[], usage: Record<string, number>, count = 6): string[] {
   const pool = [...new Set([...defaults, ...allowed])].filter((t) => allowed.includes(t));

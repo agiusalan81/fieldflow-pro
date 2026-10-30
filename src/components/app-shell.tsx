@@ -39,6 +39,7 @@ import { QUICK_DEFAULTS, MENU_ONLY, rankActions, readUsage, recordUsage, resetUs
 import { useUserPreview, clearUserPreview } from "@/lib/impersonation";
 import { UserPreviewControl, UserPreviewBanner } from "@/components/user-preview";
 import { ReturnToHqBanner } from "@/components/test-company-switch";
+import { TestSessionSwitch, ReturnToSuperuserBanner, clearTestReturnSession } from '@/components/test-session-switch';
 import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { PlatformFeedback } from "@/components/platform-feedback";
 import { LockedModule, ModulePreview, MODULE_ROUTE } from '@/components/module-preview';
@@ -52,6 +53,7 @@ const techNav: NavItem[] = [
   { group: "Field work", to: "/schedule", label: "My schedule", icon: CalendarClock },
   { group: "Field work", to: "/expenses", label: "Log expense", icon: FileText, feature: "receipts" },
   { group: "Field work", to: "/technical-library", label: "Technical library", icon: FileText, feature: "technical_library" },
+  { group: "Field work", to: "/qr-reader", label: "Scan / look up QR", icon: QrCode, feature: "core" },
   { group: "Field work", to: "/available-jobs", label: "Available jobs", icon: Hammer, feature: "skills_dispatch" },
   { group: "Field work", to: "/messages", label: "Team chat", icon: MessageSquare },
   { group: "Field work", to: "/admin/inventory", search: { tab: "tools" }, label: "Tool register", icon: Package },
@@ -65,6 +67,7 @@ const techNav: NavItem[] = [
 ];
 
 const adminNav: NavItem[] = [
+  { group: "Field work", to: "/qr-reader", label: "Scan / look up QR", icon: QrCode, feature: "core" },
   { group: "Operations", to: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { group: "Operations", to: "/admin/jobs", search: { view: "sheets" }, label: "Job sheets", icon: ClipboardList },
   { group: "Operations", to: "/pending-works", label: "Pending Works", icon: Hammer, module: "pending_works" },
@@ -106,6 +109,7 @@ const adminNav: NavItem[] = [
 
 /** Supervisors follow the technician menu for their own day, plus a team section. */
 const supervisorNav: NavItem[] = [
+  { group: "Field work", to: "/qr-reader", label: "Scan / look up QR", icon: QrCode, feature: "core" },
   { group: "Field work", to: "/dashboard", label: "Today & team", icon: LayoutDashboard },
   { group: "Field work", to: "/sheets", label: "My job sheets", icon: ClipboardList },
   { group: "Field work", to: "/surveys", label: "Site surveys", icon: ClipboardList, feature: "site_surveys" },
@@ -274,6 +278,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   useEffect(() => { if (!actor || preview.active) return; const sync = () => { void syncReceipts(actor.id).catch(() => {}); }; sync(); window.addEventListener("online", sync); return () => window.removeEventListener("online", sync); }, [actor?.id, preview.active]);
 
   const signOut = async () => {
+    clearTestReturnSession();
     clearUserPreview();
     setViewAs(null);
     await qc.cancelQueries();
@@ -338,6 +343,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
             <AnalyticsTracker />
             {actor && !preview.active && actor.role === actor.real_role && <WelcomeGuide profile={actor} allowed={items.map(i=>i.to)} />}
             <UserPreviewControl />
+            <TestSessionSwitch />
             {canSwitch && (
               <Select value={profile.role} onValueChange={(v) => { setViewAs(v === profile.real_role ? null : (v as ViewAs)); navigate({ to: "/dashboard" }); }}>
                 <SelectTrigger className="h-9 w-[150px] border-dashed text-xs" aria-label="View As mode"><span className="hidden text-muted-foreground xl:inline">View as:&nbsp;</span><SelectValue /></SelectTrigger>
@@ -354,11 +360,12 @@ export function AppShell({ title, actions, children }: { title: string; actions?
           </div>
         </header>
         <UserPreviewBanner />
+        <ReturnToSuperuserBanner />
         <ReturnToHqBanner />
         {actor && !preview.active && <ProfileCompletionGate profile={actor} />}
         <main className="tenant-workspace flex-1 px-4 pt-5 pb-24 sm:px-6 lg:px-8 lg:py-8">
           {actor && !preview.active && <DepartureAlerts userId={actor.id} />}
-          {profile && path === "/dashboard" && !preview.active && <QuickActions items={items.filter(i => !i.locked)} uid={profile.id} role={profile.role} manager={manager} />}
+          {profile && path === "/dashboard" && !preview.active && office && <QuickActions items={items.filter(i => !i.locked)} uid={profile.id} role={profile.role} manager={manager} />}
           {!preview.active && <LocationSharing />}
           
           {lockedFeature && (!planOn(lockedFeature) || lockedSoon) ? <ModulePreview feature={lockedFeature} title={title} comingSoon={lockedSoon}/> : children}

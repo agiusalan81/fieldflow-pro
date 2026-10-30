@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { usePlanFeatures } from "@/lib/plan-features";
 import { useProfile } from "@/lib/profile";
 import { incentiveAmount } from '@/lib/claim-incentive';
+import { canClaimFieldJob } from '@/lib/member-capabilities';
 
 export const Route = createFileRoute("/_authenticated/available-jobs")({ staticData: { sitemap: false },
   head: () => ({ meta: [
@@ -32,7 +33,7 @@ function AvailableJobs() {
   const jobs = {...openJobs, data: openJobs.jobs};
   const {job: focus} = Route.useSearch();
   const eligible=useQuery({queryKey:['claim-eligible',p?.id],enabled:!!p,queryFn:async()=>{
-    if(!p)return false;
+    if(!p || !canClaimFieldJob(p.real_role))return false;
     const [field,shift]=await Promise.all([supabase.rpc('is_dispatchable_member',{_user:p.id,_company:p.company_id}),supabase.from('shifts').select('id').eq('user_id',p.id).is('ended_at',null).in('shift_type',['shift','standby']).limit(1)]);
     return field.data===true&&!!shift.data?.length;
   },refetchInterval:15000});
@@ -49,6 +50,7 @@ function AvailableJobs() {
     <AppShell title="Available jobs">
       <div className="space-y-3">
         <p className="text-sm text-muted-foreground">Jobs open to the team that match your skills. You must be clocked in to claim.</p>
+        {p?.real_role === 'superuser' && <p className="text-sm text-muted-foreground">Use Test account to test claiming as a technician; View as keeps your Superuser sign-in.</p>}
         {jobs.isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : !(jobs.data ?? []).length ? <EmptyState>No open jobs right now. New open jobs appear here automatically.</EmptyState> : (jobs.data ?? []).map(j => (
           <div key={j.id} id={`job-${j.id}`} className={`rounded-lg border bg-card p-4 ${focus === j.id ? "ring-2 ring-primary" : ""}`}>
             <div className="flex flex-wrap items-start justify-between gap-2">

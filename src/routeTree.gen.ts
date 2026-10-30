@@ -45,6 +45,7 @@ import { Route as AuthenticatedPendingWorksRouteImport } from './routes/_authent
 import { Route as AuthenticatedPlatformRouteImport } from './routes/_authenticated/platform'
 import { Route as AuthenticatedProposalsRouteImport } from './routes/_authenticated/proposals'
 import { Route as AuthenticatedQrCodesRouteImport } from './routes/_authenticated/qr-codes'
+import { Route as AuthenticatedQrReaderRouteImport } from './routes/_authenticated/qr-reader'
 import { Route as AuthenticatedScheduleRouteImport } from './routes/_authenticated/schedule'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSkillsRouteImport } from './routes/_authenticated/skills'
@@ -263,6 +264,11 @@ const AuthenticatedProposalsRoute = AuthenticatedProposalsRouteImport.update({
 const AuthenticatedQrCodesRoute = AuthenticatedQrCodesRouteImport.update({
   id: '/qr-codes',
   path: '/qr-codes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedQrReaderRoute = AuthenticatedQrReaderRouteImport.update({
+  id: '/qr-reader',
+  path: '/qr-reader',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedScheduleRoute = AuthenticatedScheduleRouteImport.update({
@@ -499,6 +505,7 @@ export interface FileRoutesByFullPath {
   '/platform': typeof AuthenticatedPlatformRoute
   '/proposals': typeof AuthenticatedProposalsRoute
   '/qr-codes': typeof AuthenticatedQrCodesRoute
+  '/qr-reader': typeof AuthenticatedQrReaderRoute
   '/schedule': typeof AuthenticatedScheduleRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/skills': typeof AuthenticatedSkillsRoute
@@ -572,6 +579,7 @@ export interface FileRoutesByTo {
   '/platform': typeof AuthenticatedPlatformRoute
   '/proposals': typeof AuthenticatedProposalsRoute
   '/qr-codes': typeof AuthenticatedQrCodesRoute
+  '/qr-reader': typeof AuthenticatedQrReaderRoute
   '/schedule': typeof AuthenticatedScheduleRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/skills': typeof AuthenticatedSkillsRoute
@@ -647,6 +655,7 @@ export interface FileRoutesById {
   '/_authenticated/platform': typeof AuthenticatedPlatformRoute
   '/_authenticated/proposals': typeof AuthenticatedProposalsRoute
   '/_authenticated/qr-codes': typeof AuthenticatedQrCodesRoute
+  '/_authenticated/qr-reader': typeof AuthenticatedQrReaderRoute
   '/_authenticated/schedule': typeof AuthenticatedScheduleRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/skills': typeof AuthenticatedSkillsRoute
@@ -722,6 +731,7 @@ export interface FileRouteTypes {
     | '/platform'
     | '/proposals'
     | '/qr-codes'
+    | '/qr-reader'
     | '/schedule'
     | '/settings'
     | '/skills'
@@ -795,6 +805,7 @@ export interface FileRouteTypes {
     | '/platform'
     | '/proposals'
     | '/qr-codes'
+    | '/qr-reader'
     | '/schedule'
     | '/settings'
     | '/skills'
@@ -869,6 +880,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform'
     | '/_authenticated/proposals'
     | '/_authenticated/qr-codes'
+    | '/_authenticated/qr-reader'
     | '/_authenticated/schedule'
     | '/_authenticated/settings'
     | '/_authenticated/skills'
@@ -1190,6 +1202,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedQrCodesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/qr-reader': {
+      id: '/_authenticated/qr-reader'
+      path: '/qr-reader'
+      fullPath: '/qr-reader'
+      preLoaderRoute: typeof AuthenticatedQrReaderRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/schedule': {
       id: '/_authenticated/schedule'
       path: '/schedule'
@@ -1484,6 +1503,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformRoute: typeof AuthenticatedPlatformRoute
   AuthenticatedProposalsRoute: typeof AuthenticatedProposalsRoute
   AuthenticatedQrCodesRoute: typeof AuthenticatedQrCodesRoute
+  AuthenticatedQrReaderRoute: typeof AuthenticatedQrReaderRoute
   AuthenticatedScheduleRoute: typeof AuthenticatedScheduleRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSkillsRoute: typeof AuthenticatedSkillsRoute
@@ -1530,6 +1550,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformRoute: AuthenticatedPlatformRoute,
   AuthenticatedProposalsRoute: AuthenticatedProposalsRoute,
   AuthenticatedQrCodesRoute: AuthenticatedQrCodesRoute,
+  AuthenticatedQrReaderRoute: AuthenticatedQrReaderRoute,
   AuthenticatedScheduleRoute: AuthenticatedScheduleRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSkillsRoute: AuthenticatedSkillsRoute,
