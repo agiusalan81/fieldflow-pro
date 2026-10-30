@@ -12,7 +12,7 @@
 ## Rules
 - Navigation consumes authorized menu items; flyouts/touch shortcuts share workspace-shortcuts.ts with URL-selected tabs — why: tier guards stay authoritative.
 - Company settings: four tabs keep visited editors mounted; client related records are bounded RLS read-only lists — why: preserve unsaved edits.
-- Email identity resolves server-side via company_email_branding plus HQ override; managed sends keep verified From, Gmail keeps its mailbox From — why: no forced-identity bypass or spoofing.
+- Email identity resolves server-side (company_email_branding + HQ override); managed sends keep verified From, Gmail its mailbox From.
 - Quote photos: private immutable storage, frozen snapshot IDs/captions, URLs only after token/portal auth — why: no unrelated path exposure.
 - HQ: product-scoped owner-only setup/invites/resets; ordered tenant deletes retain users/branding/platform bills and refuse issued payroll — why: no cross-tenant/financial loss.
 - Chrome: neutral tokens; root clips for sticky previews. Plaques share escaped preview/print messages and fonts.
@@ -65,7 +65,7 @@
 - Public catalog selects active product first; retail ROI uses tested live-cadence math; narrow legal reads, explicit sitemap — why: HQ authoritative.
 - Staff signatures share staff-signature editors and own-user RPC; protected real roles govern eligibility and profile guards retain identity protection.
 - Sheet sync serializes per account/sheet, rebasing local versions only. Autosave uses dirty fingerprints; failures retain newer drafts.
-- Contracts: atomic matrix freezes terms/prices; manager-only in-house vendor coverage shares PPM; guarded expected-expiry renewals retain history — why: preserve agreement and concurrent-edit safety.
+- Contracts: atomic matrix freezes terms/prices; in-house vendor coverage is manager-only; expected-expiry renewals keep history.
 - StaffContacts/contact-editor own contact writes; portal scope is staff-only. HQ setup options save atomically; staff/portal access stays independent.
 - Delivery uses client_message_recipients; preferences choose recipients, not unsupported channel delivery.
 - Own-shift RPC captures one-time GPS; failure never blocks clock-out; history distinguishes action fixes from breadcrumbs.
@@ -73,9 +73,9 @@
 - Surveys: guard_site_survey protects manager pricing/trade_review; field_details snapshots contacts/sites atomically; supplier quotes stay internal.
 - Sites render via site-display.ts; portal edits only store_code. Approvals use category/object links; completed field-sheet history is company-controlled restrictive RLS.
 - Asset limits: platform_catalog.asset_limit (plan NULL=unlimited, pack=extra) enforced by assets_guard_limit trigger; trials/legacy unlimited.
-- Core quotes use safe frozen snapshots and atomic RPCs; phone acceptance permits token confirmation without portal access — why: require written confirmation without blocking Core jobs.
-- HQ module composition uses shared layer/domain taxonomy and one tier-or-pack matrix; customer_quotes inherits Core entitlement so the display split never creates a new paid gate.
-- Per-member CRM access: user_roles.crm_access (null = role default) via my_crm_access()/crm_can(), enforced by RLS/RPCs, mirrored in crm.ts — why: CRM powers vary without changing primary role.
+- Core quotes: frozen snapshots, atomic RPCs; phone acceptance allows token confirmation without portal.
+- HQ modules: shared layer/domain taxonomy, one tier-or-pack matrix; customer_quotes inherits Core entitlement.
+- CRM access: user_roles.crm_access (null=role default) via crm_can(), RLS/RPC enforced, mirrored in crm.ts.
 - Protected per-member RPCs/RLS govern estimates, contracts and dispatch; field eligibility is separate, CRM levels persist — why: primary roles still drive payroll/rota.
 - CRM rules in tested src/lib/crm.ts; manager-only RLS guarded by guard_module_write_additional('crm_pipeline'); crm_mark_won/lost RPCs keep conversions atomic.
 - Lift costing: templates seed sheet copies; access via member_costing_can()/liftCostingAccess(); branding follows branding_documents — why: saved quotes never change.
