@@ -108,6 +108,7 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
     if (res.error) { toast.error(res.error.message); return; }
     if (type === "shift" && current && travel) await supabase.from("shifts").update({ ended_at: endedAt }).eq("id", travel.id);
     qc.invalidateQueries({ queryKey: ["open-shifts", profile.id] });
+    qc.invalidateQueries({ queryKey: ["open-job-clocked", profile.id] });
     toast.success(current ? (type === "shift" ? "Clocked out" : "Travel stopped") : type === "shift" ? "Clocked in" : "Travel started");
     if (type === "shift" && !current && company) {
       reconcileShifts({ userId: profile.id, companyId: profile.company_id, company, companyName: profile.companies?.name ?? "", force: true }).then((m) => m.forEach((x) => toast.info(x))).catch(() => {});
