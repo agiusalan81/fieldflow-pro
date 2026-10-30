@@ -242,7 +242,7 @@ function TechToday({ profile, readOnly, switcher }: { profile: Profile; readOnly
                   </div>
                   <p className="line-clamp-2 text-sm text-foreground">{j.problem_summary || "No problem summary"}</p>
                   <JobIncentiveBadge jobId={j.id} />
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 [&_a]:min-w-0 [&_button]:min-w-0 [&_button]:whitespace-normal [&_a]:whitespace-normal">
                     <JobTravelActions profile={profile} jobId={j.id} address={j.sites?.address} readOnly={readOnly} assisting={isAssisting(j, profile.id)} />
                     <LiftHistoryButton assetId={j.asset_id} label={`${j.assets?.reference_number ?? ""} · ${j.sites?.name ?? j.clients?.name ?? ""}`} />
                   </div>
