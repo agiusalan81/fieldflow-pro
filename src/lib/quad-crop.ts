@@ -25,7 +25,7 @@ export function detectQuad(gray: ArrayLike<number>, w: number, h: number): Quad 
   if (w<16||h<16||gray.length!==w*h) return FULL_QUAD;
   let lo=255,hi=0; for(let i=0;i<gray.length;i++){const v=gray[i]??0;lo=Math.min(lo,v);hi=Math.max(hi,v);}
   if(hi-lo<25) return FULL_QUAD;
-  const t=otsu(gray); let mask=new Uint8Array(w*h); for(let i=0;i<w*h;i++) mask[i]=(gray[i]??0)>t?1:0;
+  const t=otsu(gray); let mask: Uint8Array=new Uint8Array(w*h); for(let i=0;i<w*h;i++) mask[i]=(gray[i]??0)>t?1:0;
   const r=Math.max(2,Math.round(Math.max(w,h)/60));
   mask=morph(morph(mask,w,h,r,true),w,h,r,false); // close text, creases, shadows
   mask=morph(morph(mask,w,h,1,false),w,h,1,true); // drop speckles
