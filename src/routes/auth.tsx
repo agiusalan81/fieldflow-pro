@@ -1,5 +1,8 @@
 import { InstallAppCard } from "@/components/install-app";
 import fieldbridgeMark from "@/assets/fieldbridge-mark.png";
+import aisleopsLogo from "@/assets/aisleops-logo.png";
+import hotelsLogo from "@/assets/hotels-logo.png";
+import { brandForHost, currentHost } from "@/lib/host-brand";
 import { SocialSignin } from "@/components/social-signin";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
@@ -13,21 +16,35 @@ import { Label } from "@/components/ui/label";
 import { PasswordInput } from '@/components/password-input';
 import { passwordsMatch } from '@/lib/testing-rules';
 
+const AUTH_NAMES = { fieldbridge: "FieldBridge", retail: "AisleOps", hotels: "FieldBridge Hotels" } as const;
+
 export const Route = createFileRoute("/auth")({ staticData: { sitemap: false },
-  head: () => ({
-    meta: [
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { title: "Sign in or create your company — FieldBridge" },
-      { name: "description", content: "Create your field service company workspace or sign in." },
-      { property: "og:title", content: "Sign in — FieldBridge" },
-      { property: "og:description", content: "Create your field service company workspace or sign in." },
-    ],
-  }),
+  loader: () => ({ brand: brandForHost(currentHost()) }),
+  head: ({ loaderData }) => {
+    const name = AUTH_NAMES[loaderData?.brand ?? "fieldbridge"];
+    return {
+      meta: [
+        { property: "og:type", content: "website" },
+        { name: "twitter:card", content: "summary" },
+        { title: `Sign in or create your company — ${name}` },
+        { name: "description", content: `Create your ${name} workspace or sign in.` },
+        { property: "og:title", content: `Sign in — ${name}` },
+        { property: "og:description", content: `Create your ${name} workspace or sign in.` },
+      ],
+    };
+  },
   component: AuthPage,
 });
 
+const AUTH_BRANDS = {
+  fieldbridge: { name: "FieldBridge", logo: fieldbridgeMark },
+  retail: { name: "AisleOps", logo: aisleopsLogo },
+  hotels: { name: "FieldBridge Hotels", logo: hotelsLogo },
+} as const;
+
 function AuthPage() {
+  const { brand: brandKey } = Route.useLoaderData();
+  const brand = AUTH_BRANDS[brandKey];
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const continueSignedIn = async () => {
@@ -117,8 +134,8 @@ function AuthPage() {
     <main className="grid min-h-screen place-items-center bg-background px-6 py-12">
       <div className="w-full max-w-md">
       <div className="flex items-center gap-3">
-        <img src={fieldbridgeMark} alt="FieldBridge logo" className="h-10 w-10" width={40} height={40} />
-        <p className="font-display text-2xl text-foreground">FieldBridge</p>
+        <img src={brand.logo} alt={`${brand.name} logo`} className="h-10 w-10 object-contain" width={40} height={40} />
+        <p className="font-display text-2xl text-foreground">{brand.name}</p>
       </div>
         <h1 className="mt-6 font-display text-4xl leading-tight text-foreground">
           {mode === "signup" ? "Set up your company" : "Welcome back"}
