@@ -166,17 +166,17 @@ function UpForGrabs({ profile }: { profile: Profile }) {
     qc.invalidateQueries({ queryKey: ["open-jobs"] }); qc.invalidateQueries({ queryKey: ["today-jobs"] }); qc.invalidateQueries({ queryKey: ["schedule"] });
   };
   return (
-    <section className="space-y-3 rounded-xl border-2 border-warning bg-warning/10 p-4" aria-label="Jobs up for grabs">
-      <div className="flex items-center gap-2">
-        <Megaphone className={`h-5 w-5 text-warning ${ringing ? "animate-pulse" : ""}`} />
+    <section className="min-w-0 space-y-3 overflow-hidden rounded-xl border-2 border-warning bg-warning/10 p-3 sm:p-4" aria-label="Jobs up for grabs">
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
+        <Megaphone className={`h-5 w-5 shrink-0 text-warning ${ringing ? "animate-pulse" : ""}`} />
         <h2 className="font-medium text-foreground">Up for grabs ({alerting.length || (jobs.data ?? []).length})</h2>
         {ringing && <span className="rounded-full bg-warning px-2 py-0.5 text-xs font-medium text-warning-foreground">Alarm every 5 min until claimed</span>}
       </div>
       {!clocked.data && <p className="text-sm text-muted-foreground">Clock in to claim these jobs.</p>}
       {!canClaimFieldJob(profile.real_role) && <p className="text-sm text-muted-foreground">View as does not change your sign-in. Use Test account to claim as a technician.</p>}
-      <ul className="grid gap-3 md:grid-cols-2">
+      <ul className="grid min-w-0 gap-3 md:grid-cols-2">
         {(jobs.data ?? []).map((j) => (
-          <li key={j.id} className="space-y-2 rounded-lg border bg-card p-3">
+          <li key={j.id} className="min-w-0 space-y-2 break-words rounded-lg border bg-card p-3">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="truncate font-medium text-foreground">#{j.job_number} · {j.client_name ?? "Client"}{j.site_name ? ` · ${j.site_name}` : ""}</p>
