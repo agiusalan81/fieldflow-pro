@@ -297,7 +297,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   );
 
   const second = manager ? { to: "/team", label: "Team", icon: UserCheck } : { to: "/schedule", label: "Schedule", icon: CalendarClock };
-  const tab = "flex min-w-0 flex-col items-center gap-1 rounded-md bg-card/95 py-2.5 text-[11px] text-muted-foreground";
+  const tab = "flex h-14 min-w-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-md bg-card/95 px-0.5 text-[11px] leading-tight text-muted-foreground [&>span]:block [&>span]:w-full [&>span]:truncate [&>span]:text-center [&>svg]:shrink-0";
 
   return (
     <div style={appearanceVariables(appearance)} data-icons={appearance.iconPreset} data-company-font={company?.theme.customFontData ? "on" : undefined} className="tenant-experience min-h-screen bg-background lg:grid lg:grid-cols-[240px_minmax(0,1fr)]">
@@ -363,12 +363,12 @@ export function AppShell({ title, actions, children }: { title: string; actions?
         </main>
       </div>
 
-      <nav aria-label="Quick navigation" className="fieldbridge-bottom fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 items-end gap-1 border-t lg:hidden">
-        <Link to="/dashboard" className={tab} activeProps={{ className: "text-primary font-medium" }} activeOptions={{ exact: true }}><LayoutDashboard className="h-5 w-5" />{editionLabel(edition, isOffice(profile) ? "Overview" : "Today & team")}</Link>
-        <Link to={manager ? "/admin/jobs" : "/sheets"} search={manager ? { view: "sheets" } : {}} className={tab} activeProps={{ className: "text-primary font-medium" }}><ClipboardList className="h-5 w-5" />{editionLabel(edition, "Job sheets")}</Link>
-        {preview.active ? <Link to="/hours" className={tab}><Clock className="h-5 w-5" />Hours</Link> : <WorkspaceCreate {...createProps} mobile />}
-        <Link to={second.to} className={tab} activeProps={{ className: "text-primary font-medium" }}><second.icon className="h-5 w-5" />{second.label}</Link>
-        <Button type="button" variant="ghost" className={`${tab} h-auto hover:bg-card`} onClick={() => setMenuOpen(true)}><MoreHorizontal className="h-5 w-5" />More</Button>
+      <nav aria-label="Quick navigation" className="fieldbridge-bottom fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 items-stretch gap-1 border-t lg:hidden">
+        <Link to="/dashboard" className={tab} activeProps={{ className: "text-primary font-medium" }} activeOptions={{ exact: true }}><LayoutDashboard className="h-5 w-5" /><span>{isOffice(profile) ? "Overview" : "Today"}</span></Link>
+        <Link to={manager ? "/admin/jobs" : "/sheets"} search={manager ? { view: "sheets" } : {}} className={tab} activeProps={{ className: "text-primary font-medium" }}><ClipboardList className="h-5 w-5" /><span>{edition === "retail" ? "Tickets" : "Sheets"}</span></Link>
+        {preview.active ? <Link to="/hours" className={tab}><Clock className="h-5 w-5" /><span>Hours</span></Link> : <WorkspaceCreate {...createProps} mobile />}
+        <Link to={second.to} className={tab} activeProps={{ className: "text-primary font-medium" }}><second.icon className="h-5 w-5" /><span>{second.label.split(" ")[0]}</span></Link>
+        <Button type="button" variant="ghost" className={`${tab} h-auto hover:bg-card`} onClick={() => setMenuOpen(true)}><MoreHorizontal className="h-5 w-5" /><span>More</span></Button>
       </nav>
     </div>
   );

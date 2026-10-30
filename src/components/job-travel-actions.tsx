@@ -66,7 +66,7 @@ export function JobTravelActions({ profile, jobId, address, readOnly = false, as
   };
   const openSheet = (id?: string) => readOnly ? <Button disabled className="h-11"><FileText className="mr-1 h-4 w-4" />Open job sheet</Button> : <Button asChild variant="outline" className="h-11">{id ? <Link to="/sheets/$sheetId" params={{ sheetId: id }}><FileText className="mr-1 h-4 w-4" />Open job sheet</Link> : <Link to="/sheets/new" search={{ jobId }}><FileText className="mr-1 h-4 w-4" />Open job sheet</Link>}</Button>;
   return <>
-    <div className="grid gap-2">
+    <div className="grid min-w-0 gap-2 [&_a]:w-full [&_button]:w-full [&_a]:min-w-0 [&_button]:min-w-0 [&_a]:whitespace-normal [&_button]:whitespace-normal">
       {!finished && !assisting && <Button data-tour="start-travel" className="h-11" disabled={readOnly || busy || isPending || isError || travelling} onClick={start}><Car className="mr-1 h-4 w-4" />{busy ? "Starting…" : travelling ? `In transit${eta ? ` · ${etaBadge(eta)}` : ""}` : "Start travel"}</Button>}
       {assisting ? sheet ? openSheet(sheet.id) : <span className="text-xs text-muted-foreground">Waiting for the lead to start</span> : openSheet(sheet?.id)}
       {isError && <Button variant="ghost" onClick={() => qc.invalidateQueries({ queryKey: ["job-travel-sheet", jobId] })}>Retry job status</Button>}

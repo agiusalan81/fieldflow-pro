@@ -224,14 +224,14 @@ function TechToday({ profile, readOnly, switcher }: { profile: Profile; readOnly
     <AppShell title={`Hi, ${profile.full_name.split(" ")[0]}`} actions={switcher}>
       <div className="mx-auto max-w-4xl space-y-6">
         <ShiftTracker profile={profile} />
-        <section data-tour="today-jobs">
+        <section data-tour="today-jobs" className="min-w-0">
           <h2 className="mb-3 font-medium text-foreground">Today's jobs ({jobs.length})</h2>
           {jobs.length === 0 ? (
             <EmptyState>No jobs scheduled for you today.</EmptyState>
           ) : (
-            <ul className="grid gap-3 md:grid-cols-2">
+            <ul className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2">
               {jobs.map((j) => (
-                 <li key={j.id} id={`assigned-job-${j.id}`} className="space-y-3 rounded-xl border bg-card p-4">
+                 <li key={j.id} id={`assigned-job-${j.id}`} className="w-full min-w-0 space-y-3 overflow-hidden rounded-xl border bg-card p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="text-xs font-medium text-primary">{isAssisting(j, profile.id) ? "Assisting" : "Lead"}</p><p className="text-xs text-muted-foreground">Job #{j.job_number} · {timeWindow(j.window_start, j.window_end)}</p>
