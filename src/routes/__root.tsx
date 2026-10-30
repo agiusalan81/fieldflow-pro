@@ -7,7 +7,9 @@ import {
   HeadContent,
   Scripts,
   type ErrorComponentProps,
+  useRouterState,
 } from "@tanstack/react-router";
+import { brandForHost, currentHost } from "@/lib/host-brand";
 import { useEffect, type ReactNode } from "react";
 
 import { Toaster } from "@/components/ui/sonner";
@@ -122,8 +124,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
+  // Pick the edition colours during the server render so product sites never flash the default theme.
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const brand = brandForHost(currentHost());
+  const edition = pathname.startsWith("/retail") || pathname.startsWith("/demo") || (brand === "retail" && pathname === "/") ? "retail"
+    : pathname.startsWith("/hotels") || (brand === "hotels" && pathname === "/") ? "hotel" : undefined;
   return (
-    <html lang="en">
+    <html lang="en" data-edition={edition} suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
