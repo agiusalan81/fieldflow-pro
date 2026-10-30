@@ -81,5 +81,6 @@
 - Lift costing: templates seed sheet copies; access via member_costing_can()/liftCostingAccess(); branding follows branding_documents — why: saved quotes never change.
 - Editions: DB product; site-creatable dispatch/sheet equipment; jobs-first field welcome, menu-only QR/library — why: no leakage.
 - Test sessions: HQ-owner entry; tenant real-Superuser, active same-tenant non-Superuser, test-only, audited, per-tab return — why: no claim bypass.
+- Shift sessions: shared sign-out checks own open shift/standby and fails closed; inactivity keeps active/test sessions, test return bypasses logout — why: retain shift workflow without weakening auth.
 - Inventory: tool/parts modes enforced by tool_sign_* RPCs + guard_inventory_stock, mirrored in inventory-control.ts — why: DB-enforced.
 - Appearance: HQ per-edition product_appearances → hex-validated edition-scoped CSS — why: safe no-code styling.

@@ -9,9 +9,9 @@ export function clampIdle(min: number | null | undefined): number {
 }
 
 /** Should an idle user be signed out? Technicians with a running clock-in are never signed out. */
-export function shouldAutoLogout(opts: { idleMs: number; timeoutMin: number; isTechnician: boolean; clockedIn: boolean }): boolean {
+export function shouldAutoLogout(opts: { idleMs: number; timeoutMin: number; isTechnician: boolean; clockedIn: boolean; testing?: boolean }): boolean {
   const t = clampIdle(opts.timeoutMin);
   if (t === 0) return false;
-  if (opts.isTechnician && opts.clockedIn) return false;
+  if (opts.clockedIn || opts.testing) return false;
   return opts.idleMs >= t * 60_000;
 }

@@ -40,7 +40,8 @@ import { QUICK_DEFAULTS, MENU_ONLY, rankActions, readUsage, recordUsage, resetUs
 import { useUserPreview, clearUserPreview } from "@/lib/impersonation";
 import { UserPreviewControl, UserPreviewBanner } from "@/components/user-preview";
 import { ReturnToHqBanner } from "@/components/test-company-switch";
-import { TestSessionSwitch, ReturnToSuperuserBanner, clearTestReturnSession } from '@/components/test-session-switch';
+import { TestSessionSwitch, ReturnToSuperuserBanner } from '@/components/test-session-switch';
+import { ShiftSignOut } from '@/components/shift-sign-out';
 import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { PlatformFeedback } from "@/components/platform-feedback";
 import { LockedModule, ModulePreview, MODULE_ROUTE } from '@/components/module-preview';
@@ -278,16 +279,6 @@ export function AppShell({ title, actions, children }: { title: string; actions?
 
   useEffect(() => { if (!actor || preview.active) return; const sync = () => { void syncReceipts(actor.id).catch(() => {}); }; sync(); window.addEventListener("online", sync); return () => window.removeEventListener("online", sync); }, [actor?.id, preview.active]);
 
-  const signOut = async () => {
-    clearTestReturnSession();
-    clearUserPreview();
-    setViewAs(null);
-    await qc.cancelQueries();
-    qc.clear();
-    await supabase.auth.signOut();
-    navigate({ to: "/auth" });
-  };
-
   const brand = (
     <div className="flex items-center gap-3 px-3">
       {company?.logo && <img src={company.logo} alt="" className="h-10 w-10 shrink-0 rounded-md bg-card object-contain p-0.5" />}
@@ -301,9 +292,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
     <div className="mt-auto border-t border-sidebar-border px-3 pt-4">
       <p className="truncate text-sm font-medium text-sidebar-foreground">{profile?.full_name}</p>
       <p className="text-xs capitalize text-sidebar-foreground/60">{profile ? ROLE_LABEL[profile.role] : ""}</p>
-      <Button variant="ghost" size="sm" className="mt-2 -ml-2" onClick={signOut}>
-        <LogOut className="mr-2 h-4 w-4" /> Sign out
-      </Button>
+      <ShiftSignOut userId={actor?.id} onClockOut={() => setMenuOpen(false)} />
     </div>
   );
 
