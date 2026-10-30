@@ -17,9 +17,9 @@ const PALETTE: { key: keyof Palette; label: string }[] = [
 
 function ColorPick({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) {
   return <div className="flex flex-wrap items-center gap-1" aria-label={label}>
+    <button type="button" aria-pressed={!value} disabled={!value} onClick={e => { e.preventDefault(); e.stopPropagation(); onChange(""); }} className={`rounded border px-1.5 py-0.5 text-xs ${!value ? "bg-muted font-medium text-foreground" : "text-muted-foreground hover:bg-muted"}`}>Default</button>
     {SWATCHES.map(s => <button key={s} type="button" title={s} aria-label={`${label} ${s}`} onClick={() => onChange(s)} className={`h-5 w-5 rounded border ${value === s ? "ring-2 ring-ring ring-offset-1" : ""}`} style={{ backgroundColor: s }} />)}
-    <input type="color" aria-label={`${label} custom`} value={value || "#000000"} onChange={e => onChange(e.target.value)} className="h-6 w-8 cursor-pointer rounded border" />
-    {value && <button type="button" className="text-xs text-muted-foreground underline" onClick={() => onChange("")}>Default</button>}
+    <input type="color" aria-label={`${label} custom`} value={value || "#000000"} onChange={e => onChange(e.target.value)} className={`h-6 w-8 cursor-pointer rounded border ${value && !SWATCHES.includes(value) ? "ring-2 ring-ring ring-offset-1" : ""}`} />
   </div>;
 }
 
