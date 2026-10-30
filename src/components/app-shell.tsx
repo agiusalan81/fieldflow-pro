@@ -368,7 +368,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
         <Link to={manager ? "/admin/jobs" : "/sheets"} search={manager ? { view: "sheets" } : {}} className={tab} activeProps={{ className: "text-primary font-medium" }}><ClipboardList className="h-5 w-5" /><span>{edition === "retail" ? "Tickets" : "Sheets"}</span></Link>
         {preview.active ? <Link to="/hours" className={tab}><Clock className="h-5 w-5" /><span>Hours</span></Link> : <WorkspaceCreate {...createProps} mobile />}
         <Link to={second.to} className={tab} activeProps={{ className: "text-primary font-medium" }}><second.icon className="h-5 w-5" /><span>{second.label.split(" ")[0]}</span></Link>
-        <Button type="button" variant="ghost" className={`${tab} h-auto hover:bg-card`} onClick={() => setMenuOpen(true)}><MoreHorizontal className="h-5 w-5" /><span>More</span></Button>
+        <Button type="button" variant="ghost" className={`${tab} h-14 hover:bg-card`} onClick={() => setMenuOpen(true)}><MoreHorizontal className="h-5 w-5" /><span>More</span></Button>
       </nav>
     </div>
   );
