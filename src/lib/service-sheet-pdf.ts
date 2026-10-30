@@ -1,3 +1,4 @@
+import { platformCredit } from "@/lib/platform-credit";
 import { documentLabel, visibleBlocks } from "./documents";
 import type { PdfSheetData } from "./service-sheet";
 import { pdfFonts, pdfLayerFonts, pdfPageDecoration } from "./branding-assets";
@@ -92,5 +93,6 @@ export async function buildServicePdf(d: PdfSheetData) {
   if(d.terms){label("Terms & conditions");for(const term of d.terms.split("\n").filter(v=>v.trim()))para(`- ${term.replace(/^\s*[-•]\s*/,"")}`);}
   if(d.template.footer){label("");d.template.footer.split("\n").forEach(para);}
   if(d.portalUrl){label('Client portal');para(d.portalUrl);}
+  const grey = rgb(0.45,0.45,0.45); doc.getPages().forEach((pg) => pg.drawText(platformCredit(), { x: M, y: 16, size: 6, font, color: grey }));
   return doc.save();
 }
