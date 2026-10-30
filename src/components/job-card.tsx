@@ -60,7 +60,7 @@ export function LiftHistoryButton({ assetId, label }: { assetId: string | null; 
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button variant="outline" className="h-11" disabled={!assetId}><History className="mr-1 h-4 w-4" />{word("equipment")} history</Button></DialogTrigger>
+      <DialogTrigger asChild><Button variant="outline" className="h-auto min-h-11 w-full min-w-0 whitespace-normal text-center" disabled={!assetId}><History className="mr-1 h-4 w-4" />{word("equipment")} history</Button></DialogTrigger>
       <DialogContent>
         <DialogHeader><DialogTitle>{word("equipment")} history</DialogTitle></DialogHeader>
         {assetId && open && <AssetHistory assetId={assetId} label={label} />}
