@@ -29,3 +29,17 @@ it('handles rejected audio permission without an unhandled failure', async () =>
   expect(await lib.playChime('message', 'alice')).toBe(false);
   expect(start).not.toHaveBeenCalled();
 });
+it('does not wait on blocked audio before the first gesture', async () => {
+  const { lib, context, start } = await audio('suspended');
+  expect(await lib.playChime('urgent')).toBe(false);
+  expect(context.resume).not.toHaveBeenCalled();
+  expect(start).not.toHaveBeenCalled();
+});
+it('unlocks on mobile touch and then plays the dispatch alarm', async () => {
+  const { lib, context, start } = await audio('suspended');
+  const stop = lib.listenForChimeUnlock();
+  document.dispatchEvent(new Event('touchend')); await Promise.resolve();
+  expect(context.state).toBe('running');
+  expect(await lib.playChime('urgent')).toBe(true);
+  expect(start).toHaveBeenCalledTimes(3); stop();
+});

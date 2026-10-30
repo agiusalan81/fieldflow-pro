@@ -42,6 +42,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ClientSitePicker } from "@/components/client-site-picker";
 import { isDispatchable, useFieldDispatchIds } from "@/lib/member-capabilities";
+import { DispatchEquipmentSelect } from '@/components/dispatch-equipment-select';
 
 export type PendingDispatch = {id:string;pending_status:string;client_id:string;site_id:string|null;asset_id:string|null;pending_works_future_jobs:string|null;jobsheet_number:string};
 export function NewJobDialog({pending,onClose}:{pending?:PendingDispatch;onClose?:()=>void}) {
@@ -151,11 +152,8 @@ export function NewJobDialog({pending,onClose}:{pending?:PendingDispatch;onClose
         <DialogHeader><DialogTitle>{pending?`Dispatch pending work — #${pending.jobsheet_number}`:"Team dispatch — New job"}</DialogTitle></DialogHeader>
         <form onSubmit={save} className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-2">
-            <ClientSitePicker disabled={!!pending} clientId={f.client_id || null} siteId={f.site_id === "none" ? null : f.site_id} onChange={(client, site) => setF((cur) => ({ ...cur, client_id: client ?? "", site_id: site ?? "none", asset_id: client === cur.client_id ? cur.asset_id : "none" }))} />
-            <Select disabled={!!pending} value={f.asset_id} onValueChange={(v) => { if (v) setF((cur) => ({ ...cur, asset_id: v })); }}>
-              <SelectTrigger aria-label={word("equipment")}><SelectValue placeholder={word("equipment")} /></SelectTrigger>
-              <SelectContent><SelectItem value="none">No {word("equipment").toLowerCase()}</SelectItem>{assets.filter((a) => a.client_id === f.client_id).map((a) => <SelectItem key={a.id} value={a.id}>{a.reference_number} · {a.asset_category}</SelectItem>)}</SelectContent>
-            </Select>
+            <ClientSitePicker disabled={!!pending} clientId={f.client_id || null} siteId={f.site_id === "none" ? null : f.site_id} onChange={(client, site) => setF((cur) => ({ ...cur, client_id: client ?? "", site_id: site ?? "none", asset_id: client === cur.client_id && (site ?? 'none') === cur.site_id ? cur.asset_id : "none" }))} />
+            <DispatchEquipmentSelect assets={assets} companyId={profile?.company_id ?? ''} clientId={f.client_id} siteId={uuidOrNull(f.site_id)} value={f.asset_id} onChange={asset_id => setF(cur => ({ ...cur, asset_id }))} disabled={!!pending}/>
             <div className="space-y-1"><Label>Lead technician</Label><Select value={f.tech} onValueChange={(v) => setF({ ...f, tech: v, assistant: v === f.assistant || v === "none" ? "none" : f.assistant, crew: f.crew.filter(c => c !== v) })}>
               <SelectTrigger aria-label="Lead technician"><SelectValue /></SelectTrigger>
               <SelectContent><SelectItem value="none">{smart && f.open ? "First to claim" : "Unassigned"}</SelectItem>{ranked.map((u) => <SelectItem key={u.id} value={u.id}>{label(u)}</SelectItem>)}</SelectContent>

@@ -220,13 +220,7 @@ function TechToday({ profile, readOnly, switcher }: { profile: Profile; readOnly
   return (
     <AppShell title={`Hi, ${profile.full_name.split(" ")[0]}`} actions={switcher}>
       <div className="mx-auto max-w-4xl space-y-6">
-        <ShiftTracker profile={profile} />{switcher && !readOnly && <DepartureRequests />}
-        {!readOnly && <UpForGrabs profile={profile} />}
-        {!readOnly && <MyIncentives compact />}
-        <InternalWorkCard key={profile.id} profile={profile} readOnly={readOnly} />
-        <Button asChild variant="outline" className="h-12 w-full"><Link to="/technical-library"><ClipboardList className="mr-2 h-5 w-5" />Technical library</Link></Button>
-        <ScanQr />
-        {!readOnly && <NoAccessButton profile={profile} jobs={jobs} />}
+        <ShiftTracker profile={profile} />
         <section data-tour="today-jobs">
           <h2 className="mb-3 font-medium text-foreground">Today's jobs ({jobs.length})</h2>
           {jobs.length === 0 ? (
@@ -239,7 +233,7 @@ function TechToday({ profile, readOnly, switcher }: { profile: Profile; readOnly
                     <div className="min-w-0">
                       <p className="text-xs font-medium text-primary">{isAssisting(j, profile.id) ? "Assisting" : "Lead"}</p><p className="text-xs text-muted-foreground">Job #{j.job_number} · {timeWindow(j.window_start, j.window_end)}</p>
                       <p className="truncate font-medium text-foreground">{j.clients?.name}</p>
-                      <p className="truncate text-sm text-muted-foreground">{j.sites?.name ?? "No site"} · {j.assets?.reference_number ?? "No lift"}</p>
+                      <p className="truncate text-sm text-muted-foreground">{j.sites?.name ?? "No site"} · {j.assets?.reference_number ?? "No item selected"}</p>
                     </div>
                     <PriorityBadge p={j.priority} />
                   </div>
@@ -254,6 +248,11 @@ function TechToday({ profile, readOnly, switcher }: { profile: Profile; readOnly
             </ul>
           )}
         </section>
+        {!readOnly && <UpForGrabs profile={profile} />}
+        {!readOnly && <MyIncentives compact />}
+        <InternalWorkCard key={profile.id} profile={profile} readOnly={readOnly} />
+        {!readOnly && <NoAccessButton profile={profile} jobs={jobs} />}
+        {switcher && !readOnly && <DepartureRequests />}
       </div>
     </AppShell>
   );

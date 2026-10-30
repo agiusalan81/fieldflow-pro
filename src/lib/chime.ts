@@ -14,20 +14,31 @@ function audioContext() {
 }
 /** Called synchronously from a trusted tap/key press, before realtime alerts arrive. */
 export function unlockChimes(): void {
-  try { const audio = audioContext(); if (audio?.state === 'suspended') void audio.resume().catch(() => undefined); } catch { /* unavailable */ }
+  try {
+    const audio = audioContext();
+    if (!audio) return;
+    // A zero-volume buffer started in the gesture also unlocks older iOS Web Audio.
+    if (typeof audio.createBufferSource === 'function') {
+      const source = audio.createBufferSource();
+      source.buffer = audio.createBuffer(1, 1, 22050);
+      source.connect(audio.destination); source.start(0);
+    }
+    if (audio.state !== 'running') void audio.resume().catch(() => undefined);
+  } catch { /* unavailable */ }
 }
 export function listenForChimeUnlock(): () => void {
   const unlock = () => unlockChimes();
   document.addEventListener('pointerdown', unlock, { capture: true });
   document.addEventListener('keydown', unlock, { capture: true });
-  return () => { document.removeEventListener('pointerdown', unlock, true); document.removeEventListener('keydown', unlock, true); };
+  document.addEventListener('touchend', unlock, { capture: true, passive: true });
+  return () => { document.removeEventListener('pointerdown', unlock, true); document.removeEventListener('keydown', unlock, true); document.removeEventListener('touchend', unlock, true); };
 }
 export async function playChime(kind: ChimeKind, uid?: string): Promise<boolean> {
   if (uid && !soundsOn(uid)) return false;
   try {
     const audio = audioContext();
     if (!audio) return false;
-    if (audio.state === "suspended") await audio.resume();
+    // Never wait indefinitely on a resume outside a user gesture.
     if (audio.state !== 'running') return false;
     const t0 = audio.currentTime;
     NOTES[kind].forEach((f, i) => {
