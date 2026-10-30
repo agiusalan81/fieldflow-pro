@@ -1338,6 +1338,13 @@
       "when": 1793341015751,
       "tag": "0190_superuser_claim_restriction",
       "breakpoints": true
+    },
+    {
+      "idx": 191,
+      "version": "7",
+      "when": 1793341980124,
+      "tag": "0191_product_appearances",
+      "breakpoints": true
     }
   ]
 }

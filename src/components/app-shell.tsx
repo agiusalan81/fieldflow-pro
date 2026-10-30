@@ -1,3 +1,4 @@
+import { ProductAppearanceStyle } from "@/components/product-appearance-style";
 import { QrCode } from "lucide-react";
 import { ActionNotifications, ChatBadge, OnCallBadge, QueueBadge } from "@/components/action-notifications";
 import { usePlanFeatures, useLockedVisibility, useNavLock, resolveAppTitle, useEdition } from "@/lib/plan-features";
@@ -313,6 +314,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
     <div style={appearanceVariables(appearance)} data-icons={appearance.iconPreset} data-company-font={company?.theme.customFontData ? "on" : undefined} className="tenant-experience min-h-screen bg-background lg:grid lg:grid-cols-[240px_minmax(0,1fr)]">
       {actor && !preview.active && <NotificationSounds profile={actor} />}
       {profile && company && <IdleLogout userId={profile.id} realRole={profile.real_role} timeoutMin={company.idleTimeout} />}
+      <ProductAppearanceStyle edition={edition} />
       <aside data-tour="menu" className="tenant-menu sticky top-0 hidden h-screen flex-col gap-6 border-r border-sidebar-border bg-sidebar py-6 px-3 lg:flex">
         {brand}
         <WorkspaceNavigation items={items} role={profile?.role} uid={profile?.id} />
