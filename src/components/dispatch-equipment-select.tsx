@@ -40,7 +40,7 @@ export function DispatchEquipmentSelect({ assets, companyId, clientId, siteId, v
   return <>
     <SearchSelect value={value} disabled={disabled || !clientId} placeholder={label} onChange={onChange}
       options={[{ value: 'none', label: `No ${label.toLowerCase()}` }, ...choices.map(a => ({ value: a.id, label: `${a.reference_number} · ${a.asset_category}` }))]}
-      createLabel={`Add ${label.toLowerCase()}`} onCreate={disabled ? undefined : typed => { setReference(typed); setCategory(''); setSerial(''); setAdding(true); }}/>
+      createLabel={`Add ${label.toLowerCase()}`} onCreate={typed => { if (disabled) return; setReference(typed); setCategory(''); setSerial(''); setAdding(true); }}/>
     <Dialog open={adding} onOpenChange={open => { if (!busy) setAdding(open); }}>
       <DialogContent><DialogHeader><DialogTitle>Add {label.toLowerCase()}</DialogTitle></DialogHeader>
         <div className="space-y-3">

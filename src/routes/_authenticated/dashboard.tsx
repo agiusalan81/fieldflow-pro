@@ -258,32 +258,6 @@ function TechToday({ profile, readOnly, switcher }: { profile: Profile; readOnly
   );
 }
 
-function ScanQr() {
-  const [open, setOpen] = useState(false);
-  const [code, setCode] = useState("");
-  const [found, setFound] = useState<{ id: string; label: string } | null | "none">(null);
-  const lookup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const { data } = await supabase.from("assets").select("id, reference_number, asset_category, clients(name)").ilike("reference_number", code.trim()).maybeSingle();
-    setFound(data ? { id: data.id, label: `${data.reference_number} · ${data.asset_category} · ${data.clients?.name}` } : "none");
-  };
-  return (
-    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setFound(null); setCode(""); } }}>
-      <DialogTrigger asChild><Button variant="outline" className="h-12 w-full"><QrCode className="mr-2 h-5 w-5" />Scan QR Code</Button></DialogTrigger>
-      <DialogContent>
-        <DialogHeader><DialogTitle>Site lookup</DialogTitle></DialogHeader>
-        <form onSubmit={lookup} className="flex gap-2">
-          <Input autoFocus className="h-11" placeholder="Scan or type lift reference" value={code} onChange={(e) => setCode(e.target.value)} />
-          <Button type="submit" className="h-11">Look up</Button>
-        </form>
-        <p className="text-xs text-muted-foreground">Camera scanning is simulated — enter the reference printed under the QR code.</p>
-        {found === "none" && <p className="text-sm text-destructive">No lift found with that reference.</p>}
-        {found && found !== "none" && <AssetHistory assetId={found.id} label={found.label} />}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 function Card({ to, title, icon: Icon, sub, value }: { to: string; title: string; icon: typeof Car; sub: string; value: string | number }) {
   return (
     <Link to={to} className="rounded-xl border bg-card p-4">
