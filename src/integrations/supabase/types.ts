@@ -747,6 +747,7 @@ export type Database = {
       company_identifier_rules: {
         Row: {
           company_id: string
+          equipment_prefixes: Json
           kind: string
           padding: number
           pattern: string
@@ -755,9 +756,11 @@ export type Database = {
           separator: string
           strict: boolean
           uppercase: boolean
+          use_equipment_prefixes: boolean
         }
         Insert: {
           company_id: string
+          equipment_prefixes?: Json
           kind: string
           padding?: number
           pattern?: string
@@ -766,9 +769,11 @@ export type Database = {
           separator?: string
           strict?: boolean
           uppercase?: boolean
+          use_equipment_prefixes?: boolean
         }
         Update: {
           company_id?: string
+          equipment_prefixes?: Json
           kind?: string
           padding?: number
           pattern?: string
@@ -777,6 +782,7 @@ export type Database = {
           separator?: string
           strict?: boolean
           uppercase?: boolean
+          use_equipment_prefixes?: boolean
         }
         Relationships: [
           {

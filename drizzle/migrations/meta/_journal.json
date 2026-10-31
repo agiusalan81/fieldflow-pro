@@ -1380,6 +1380,13 @@
       "when": 1793427073838,
       "tag": "0196_identifier_strict_column_qualification",
       "breakpoints": true
+    },
+    {
+      "idx": 197,
+      "version": "7",
+      "when": 1793429977526,
+      "tag": "0197_equipment_id_prefixes",
+      "breakpoints": true
     }
   ]
 }
