@@ -6,6 +6,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { isStorageAddon } from "@/lib/hq";
 import { sortModules, moduleLabel } from "@/lib/module-categories";
 import { Button } from "@/components/ui/button";
+import { CompanySeatStatus } from '@/components/company-seat-status';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 type Catalog = Database["public"]["Tables"]["platform_catalog"]["Row"];
@@ -25,7 +26,7 @@ export function HQCompanyEntitlements({ subscription: s, catalog, money, company
   const extraGb = storagePacks.reduce((t, p) => t + (p.storage_gb ?? 0), 0);
   const usage = useQuery({
     queryKey: ["hq-storage-usage", s.company_id], enabled: open && !!s.company_id,
-    queryFn: async () => { const r = await supabase.rpc("company_storage_usage", { _company: s.company_id! }); if (r.error) throw r.error; return r.data as { used_bytes: number; allowance_gb: number } | null; },
+    queryFn: async () => { if (!s.company_id) return null; const r = await supabase.rpc("company_storage_usage", { _company: s.company_id }); if (r.error) throw r.error; return r.data as { used_bytes: number; allowance_gb: number } | null; },
   });
   const trialEnded = new Date(s.trial_ends_at).getTime() <= Date.now();
   const days = Math.ceil((new Date(s.trial_ends_at).getTime() - Date.now()) / 86_400_000);
@@ -35,6 +36,7 @@ export function HQCompanyEntitlements({ subscription: s, catalog, money, company
     <Button size="sm" variant="outline" onClick={() => setOpen(true)} aria-label={`${companyName}: packs and storage`}><Package className="mr-1 h-4 w-4" />{summary}</Button>
     <Dialog open={open} onOpenChange={setOpen}><DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
       <DialogHeader><DialogTitle>Packs & storage · {companyName}</DialogTitle><DialogDescription>What this company has activated. Use Setup package to change it.</DialogDescription></DialogHeader>
+      {s.company_id && <CompanySeatStatus companyId={s.company_id} />}
       <section className="space-y-1 rounded-md border p-3 text-sm">
         <p className="text-xs uppercase text-muted-foreground">Status</p>
         <p className="font-medium">{status}</p>
