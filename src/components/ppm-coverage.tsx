@@ -48,7 +48,6 @@ export function PpmCoverage({
         .eq("agreement_id", agreementId)
         .order("created_at");
       if (r.error) throw r.error;
-      if (active === true) { const generated = await supabase.rpc('generate_ppm_visits', { _plan: id }); if (generated.error) throw generated.error; }
       return r.data;
     },
   });
@@ -113,6 +112,7 @@ export function PpmCoverage({
           ? await supabase.rpc("generate_ppm_visits", { _plan: id })
           : await supabase.from("ppm_plans").update({ active }).eq("id", id);
       if (r.error) throw r.error;
+      if (active === true) { const generated = await supabase.rpc('generate_ppm_visits', { _plan: id }); if (generated.error) throw generated.error; }
       await refresh();
       toast.success(
         active === false

@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ppmStatus, matchesMaintenanceFilter, type MaintenanceFilter } from "@/lib/ppm";
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
+import { EditVisit } from '@/components/edit-visit';
 import { useCompanyUsers } from "@/lib/profile";
 import { Button } from "@/components/ui/button";
 import {
@@ -132,7 +133,7 @@ export function PpmVisits({
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {!sheet && <Button asChild variant="outline" size="sm"><Link to="/dispatched" search={{job:j.id}}>Open visit</Link></Button>}
+                  {canManage && !completed && <EditVisit visit={j} />}
                   {canManage && !completed && (
                     <Select
                       value={j.assigned_technician_id ?? "none"}
