@@ -31,7 +31,6 @@ export function ClaimIncentiveSettings({ companyId }: { companyId: string }) {
     <div className="max-w-xs space-y-2"><Label htmlFor="default-claim-bonus">Default bonus (€)</Label><Input id="default-claim-bonus" type="number" min="0" step="0.01" value={amount} onChange={e=>setAmount(e.target.value)}/></div>
     <Button disabled={busy||!q.data} onClick={save}>{busy?'Saving…':'Save incentives'}</Button>
     </>}
-    <ClaimIncentiveLedger companyId={companyId}/>
   </section>;
 }
 
@@ -41,13 +40,16 @@ export function ClaimIncentiveLedger({ companyId }: { companyId: string }) {
   const q=useQuery({queryKey:['claim-incentive-ledger',companyId,month],enabled:!!month,queryFn:async()=>{
     const rows: {id:string;user_id:string;amount_cents:number;earned_at:string|null;jobs:{job_number:number}|null}[]=[];
     for(let offset=0;;offset+=500){const r=await supabase.from('job_claim_incentives').select('id,user_id,amount_cents,earned_at,jobs(job_number)').gte('claimed_at',from).lt('claimed_at',next.toISOString()).order('claimed_at',{ascending:false}).range(offset,offset+499);if(r.error)throw r.error;rows.push(...(r.data??[]));if((r.data?.length??0)<500)break;}
+    if(!rows.length)return [];
     const users=await supabase.from('users').select('id,full_name').in('id',[...new Set(rows.map(r=>r.user_id))]);
     return rows.map(r=>({...r,name:users.data?.find(u=>u.id===r.user_id)?.full_name??'Team member'}));
   }});
+  const totals=new Map<string,{name:string;earned:number;pending:number;count:number}>();for(const r of q.data??[]){const v=totals.get(r.user_id)??{name:r.name,earned:0,pending:0,count:0};v.count++;if(r.earned_at)v.earned+=r.amount_cents;else v.pending+=r.amount_cents;totals.set(r.user_id,v);}
   return <div className="space-y-3"><Label htmlFor="incentive-month">Claim ledger month</Label><Input id="incentive-month" className="max-w-xs" type="month" value={month} onChange={e=>setMonth(e.target.value)}/>
     {q.error?<p role="alert" className="text-destructive">Could not load claim ledger</p>:<>
     <p className="text-sm">Earned: {incentiveAmount((q.data??[]).filter(r=>r.earned_at).reduce((n,r)=>n+r.amount_cents,0))} · Pending completion: {incentiveAmount((q.data??[]).filter(r=>!r.earned_at).reduce((n,r)=>n+r.amount_cents,0))}</p>
-    <ul className="divide-y">{q.data?.map(r=><li key={r.id} className="flex flex-wrap justify-between gap-2 py-2 text-sm"><span>#{r.jobs?.job_number} · {r.name}</span><span>{incentiveAmount(r.amount_cents)} · {r.earned_at?'Earned':'Pending completion'}</span></li>)}</ul>
+    <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b"><th className="py-2">Team member</th><th>Claims</th><th>Earned</th><th>Pending completion</th></tr></thead><tbody>{[...totals].map(([id,v])=><tr key={id} className="border-b"><td className="py-3">{v.name}</td><td>{v.count}</td><td>{incentiveAmount(v.earned)}</td><td>{incentiveAmount(v.pending)}</td></tr>)}</tbody></table></div>
+    {[...totals].map(([id,v])=><details key={id} className="border-b py-2"><summary className="cursor-pointer text-sm">{v.name} · Claim details</summary><ul className="divide-y">{q.data?.filter(r=>r.user_id===id).map(r=><li key={r.id} className="flex flex-wrap justify-between gap-2 py-2 text-sm"><span>#{r.jobs?.job_number}</span><span>{incentiveAmount(r.amount_cents)} · {r.earned_at?'Earned':'Pending completion'}</span></li>)}</ul></details>)}
     </>}
   </div>;
 }

@@ -8,6 +8,10 @@ export function incentiveCents(raw: string): number | null {
 export const incentiveAmount = (cents: number) => `€${(cents / 100).toFixed(2)}`;
 
 export type IncentiveEntry = { amount_cents: number; earned_at: string | null };
+export function payableIncentives<T extends IncentiveEntry & {id:string;user_id:string;payslip_id:string|null}>(rows:T[],userId:string,from:string,to:string) {
+ return rows.filter(r=>r.user_id===userId&&r.earned_at!==null&&r.earned_at.slice(0,10)>=from&&r.earned_at.slice(0,10)<=to&&!r.payslip_id).sort((a,b)=>a.id.localeCompare(b.id));
+}
+export function selfIncentiveLocked(role:string|undefined,actor:string|undefined,crew:string[]) {return role==='supervisor'&&!!actor&&crew.includes(actor);}
 export function incentiveTotals(rows: IncentiveEntry[], month: string) {
   return rows.reduce((total, row) => {
     if (!row.earned_at) total.pending += row.amount_cents;

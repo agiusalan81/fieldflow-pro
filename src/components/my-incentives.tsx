@@ -49,10 +49,10 @@ export function JobIncentiveBadge({ jobId }: { jobId: string | null | undefined 
 
 export function MyIncentives({ compact = false }: { compact?: boolean }) {
   const { visible, ledger } = useMyIncentives();
-  if (!visible) return null;
+  if (!visible) return compact?null:<p className="text-sm text-muted-foreground">Incentive totals are not available for this account.</p>;
   const totals = incentiveTotals(ledger.data ?? [], new Date().toISOString().slice(0, 7));
   return <section aria-label="My incentives" className="space-y-3 border-y py-4">
-    <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-medium">My incentives</h2>{compact && <Link to="/hours" className="text-sm text-primary">View details</Link>}</div>
+    <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-medium">My incentives</h2>{compact && <Link to="/my-incentives" className="text-sm text-primary">View details</Link>}</div>
     {ledger.error ? <p role="alert" className="text-sm text-destructive">Could not load incentives.</p> : ledger.isPending ? <p className="text-sm text-muted-foreground">Loading incentives…</p> : <>
       <dl className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {([['Earned this month', totals.monthEarned], ['Pending completion', totals.pending], ['Total earned', totals.earned]] as const).map(([label, cents]) => <div key={label}><dt className="text-xs text-muted-foreground">{label}</dt><dd className="text-xl font-semibold tabular-nums">{incentiveAmount(cents)}</dd></div>)}

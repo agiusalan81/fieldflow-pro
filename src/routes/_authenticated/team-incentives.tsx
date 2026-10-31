@@ -1,0 +1,6 @@
+import { createFileRoute } from '@tanstack/react-router';
+import { AppShell } from '@/components/app-shell';
+import { ClaimIncentiveLedger } from '@/components/claim-incentive-settings';
+import { useProfile } from '@/lib/profile';
+export const Route=createFileRoute('/_authenticated/team-incentives')({staticData:{sitemap:false},head:()=>({meta:[{title:'Team incentives — FieldBridge'},{name:'description',content:'Office review of earned and pending incentives by team member.'},{property:'og:title',content:'Team incentives — FieldBridge'},{property:'og:description',content:'Monthly dispatch incentive totals for office review.'},{property:'og:type',content:'website'},{name:'twitter:card',content:'summary'}]}),component:Page});
+function Page(){const {data:p}=useProfile();const office=p&&['admin','superuser'].includes(p.real_role)&&['admin','superuser'].includes(p.role);return <AppShell title="Team incentives">{office?<ClaimIncentiveLedger companyId={p.company_id}/>:<p>Office access is required.</p>}</AppShell>;}

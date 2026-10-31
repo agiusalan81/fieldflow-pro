@@ -64,6 +64,7 @@ const techNav: NavItem[] = [
   { group: "Time & roster", to: "/standby", label: "On-call rota", icon: PhoneCall, feature: "standby" },
   { group: "Time & roster", to: "/leave", label: "Leave", icon: CalendarDays },
   { group: "Time & roster", to: "/hours", label: "My hours", icon: Clock },
+  { group: "My workspace", to: "/my-incentives", label: "My incentives", icon: Calculator },
   { group: "General", to: "/settings", label: "Settings", icon: Settings },
   { group: "General", to: "/subscription", label: "Billing & Plan", icon: Calculator },
 ];
@@ -98,6 +99,8 @@ const adminNav: NavItem[] = [
   { group: "Clients & commercial", to: "/surveys", label: "Site surveys", icon: ClipboardList, feature: "site_surveys" },
   { group: "Clients & commercial", to: "/as-built", label: "As-built QS", icon: Calculator, feature: "qs_pricing" },
   { group: "My workspace", to: "/hours", label: "My hours", icon: Clock },
+  { group: "My workspace", to: "/my-incentives", label: "My incentives", icon: Calculator },
+  { group: "Operations", to: "/team-incentives", label: "Team incentives", icon: Calculator, office: true },
   { group: "My workspace", to: "/leave", label: "My leave", icon: CalendarDays },
   { group: "Administration", to: "/admin/approvals", label: "Approvals", icon: ClipboardList },
   { group: "Administration", to: "/company", label: "Company settings", icon: Building2, module: "team" },
@@ -144,6 +147,7 @@ const supervisorNav: NavItem[] = [
   { group: "Time & roster", to: "/dwr", label: "Daily reports", icon: FileText },
   { group: "Time & roster", to: "/leave", label: "My leave", icon: CalendarDays },
   { group: "Time & roster", to: "/hours", label: "My hours", icon: Clock },
+  { group: "My workspace", to: "/my-incentives", label: "My incentives", icon: Calculator },
   { group: "General", to: "/settings", label: "Settings", icon: Settings },
 ];
 
