@@ -2,7 +2,7 @@ import { afterEach, expect, it, vi } from "vitest";
 
 const rpc = vi.hoisted(() => ({ getPushPublicKey: vi.fn(), savePushSubscription: vi.fn(), sendChatPush: vi.fn() }));
 vi.mock("@/lib/web-push.functions", () => rpc);
-import { currentPushEndpoint, enablePush, registerPush } from "./web-push";
+import { currentPushEndpoint, enablePush, readPushStatus, registerPush } from "./web-push";
 
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); vi.clearAllMocks(); });
 
@@ -64,4 +64,17 @@ it("subscribes with userVisibleOnly when no subscription exists", async () => {
   expect(await registerPush()).toBe("registered");
   expect(reg.pushManager.subscribe).toHaveBeenCalledWith({ userVisibleOnly: true, applicationServerKey: new Uint8Array([4, 1, 2]) });
   expect(rpc.savePushSubscription).toHaveBeenCalledTimes(1);
+});
+it('quietly checks the current subscription without registering or sending a server request', async () => {
+  const { register, reg } = device();
+  expect(await readPushStatus()).toBe('registered');
+  expect(register).not.toHaveBeenCalled();
+  expect(reg.pushManager.subscribe).not.toHaveBeenCalled();
+  expect(rpc.savePushSubscription).not.toHaveBeenCalled();
+  reg.pushManager.getSubscription.mockResolvedValue(null);
+  expect(await readPushStatus()).toBe('no-worker');
+});
+it('reports revoked notification permission even with a previously registered subscription', async () => {
+  device('denied');
+  expect(await readPushStatus()).toBe('blocked');
 });
