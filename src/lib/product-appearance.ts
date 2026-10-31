@@ -57,7 +57,13 @@ export function appearanceCss(edition: Edition, a: ProductAppearance): string {
   const p = a.palette; const out: string[] = [];
   const vars = [["--background", c(p.background)], ["--card", c(p.background)], ["--primary", c(p.primary)], ["--ring", c(p.primary)], ["--sidebar", c(p.menuBackground)], ["--tenant-input-background", c(p.fieldBackground)], ["--input", c(p.fieldBorder)]].filter(([, v]) => v);
   if (vars.length) out.push(`${root}{${vars.map(([k, v]) => `${k}:${v} !important`).join(";")}}`);
-  if (c(p.menuBackground)) out.push(`${root} .tenant-menu{background-color:${p.menuBackground};background-image:none}`);
+  if (c(p.menuBackground)) {
+    out.push(`${root} .tenant-menu{background-color:${p.menuBackground};background-image:none}`);
+    // Keep menu text, brand title, footer and the active pill readable on the chosen menu colour.
+    const ink = isLight(p.menuBackground) ? (c(a.zones.menuHeader.color) || "#0f2942") : "#ffffff";
+    const pill = isLight(p.menuBackground) ? (c(p.primary) || "#1e3a5f") : "rgba(255,255,255,.18)";
+    out.push(`${root}{--sidebar-foreground:${ink} !important;--sidebar-accent:${pill} !important;--sidebar-accent-foreground:#ffffff !important;--sidebar-border:${isLight(p.menuBackground) ? "#e2e8f0" : "rgba(255,255,255,.15)"} !important}`);
+  }
   if (c(p.buttonBackground)) out.push(`${root} ${ZONES[5]!.selector}{background-color:${p.buttonBackground}}`);
   if (c(p.fieldBorder)) out.push(`${root} ${ZONES[2]!.selector}{border-color:${p.fieldBorder}}`);
   for (const z of ZONES) {
@@ -67,5 +73,14 @@ export function appearanceCss(edition: Edition, a: ProductAppearance): string {
     if (rules.length) out.push(`${root} :is(${z.selector}){${rules.join(";")}}`);
   }
   if (c(a.zones.fieldText.color)) out.push(`${root} :is(input,textarea)::placeholder{color:${a.zones.fieldText.color};opacity:.55}`);
+  out.push(`${root} .tenant-menu a[data-status=active],${root} .tenant-menu a[data-status=active] *{color:var(--sidebar-accent-foreground) !important}`);
   return out.join("\n");
+}
+
+/** True when a hex colour is light enough to need dark text on top. */
+export function isLight(hex: string): boolean {
+  let h = hex.replace("#", "");
+  if (h.length === 3 || h.length === 4) h = h.split("").map((x) => x + x).join("");
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
+  return 0.2126 * r! + 0.7152 * g! + 0.0722 * b! > 0.6;
 }

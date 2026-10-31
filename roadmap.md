@@ -115,3 +115,6 @@
 - [x] Receipt crop: four-corner drag pins, auto-detect with full-photo fallback, perspective straighten, rotate.
 
 - [ ] ApexPlatform HQ umbrella site: separate Lovable project on apexplatformhq.com (waiting on user to create the new project)
+- [x] Hotels: readable sidebar menu (active item, title, footer)
+- [x] Asset ID format step placed before the configurator, with setup prompt
+- [x] Hotels: unattended room sign-off with photo evidence + note

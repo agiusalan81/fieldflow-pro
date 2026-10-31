@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { splitHours, scheduledInitials, assignmentFilter, isAssisting } from "./jobsheets";
-import { leaveHours, remainingBalance, missingSignOff, hoursFromTimes } from "./jobsheets";
+import { leaveHours, remainingBalance, missingSignOff, hoursFromTimes, UNATTENDED_SIGNOFF } from "./jobsheets";
 
 describe("job sheet & leave rules", () => {
   it("equal endpoints create no standard or overtime hours", () => expect(splitHours("2026-10-19", "21:53", "21:53")).toEqual({ standard: 0, ot15: 0, ot20: 0 }));
@@ -21,6 +21,10 @@ describe("job sheet & leave rules", () => {
   it("submission blocked without client name, ID card and signature", () => {
     expect(missingSignOff({ client_full_name: "A", client_id_card_no: "", signature: "x" })).toEqual(["Client ID card no."]);
     expect(missingSignOff({ client_full_name: "A", client_id_card_no: "1", signature: "x" })).toEqual([]);
+  });
+  it("unattended hotel sign-off needs a photo and note, not a signature", () => {
+    expect(missingSignOff({ client_full_name: UNATTENDED_SIGNOFF, client_id_card_no: "", evidencePhotos: 0 })).toEqual(["Completion photo", "Verification note"]);
+    expect(missingSignOff({ client_full_name: UNATTENDED_SIGNOFF, client_id_card_no: "Room 204 vacant", evidencePhotos: 1 })).toEqual([]);
   });
   it("daily hours from time in/out", () => {
     expect(hoursFromTimes("08:00", "12:30")).toBe(4.5);
