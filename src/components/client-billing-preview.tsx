@@ -1,0 +1,16 @@
+import { BILLING_KINDS, billingNotice, depositAmount, type BillingSnapshot } from '@/lib/client-billing';
+import { quoteLineTotals } from '@/lib/customer-quotes';
+import { formatMoney } from '@/lib/locale';
+import { platformCredit } from '@/lib/platform-credit';
+
+export function ClientBillingPreview({ snapshot: s }: { snapshot: BillingSnapshot }) {
+  const money = (n: number) => formatMoney(n, s.currency);
+  return <article className="min-w-0 space-y-5 border bg-background p-5 sm:p-8" aria-label="Billing document preview">
+    <header className="flex flex-wrap justify-between gap-4 border-b pb-5"><div>{s.company.logo && <img src={s.company.logo} alt={s.company.name} className="mb-3 max-h-14 max-w-40 object-contain" />}<h2 className="text-xl font-semibold">{s.company.name}</h2><p className="whitespace-pre-wrap text-sm">{s.company.address}</p>{s.company.vat && <p className="text-sm">VAT: {s.company.vat}</p>}</div><div><h3 className="text-lg font-semibold">{BILLING_KINDS[s.kind]}</h3><p className="font-mono">{s.reference}</p><p className="text-sm">Issued {s.document.issue_date}<br />Due {s.document.due_date}</p></div></header>
+    {billingNotice(s.kind) && <p className="text-sm font-medium">{billingNotice(s.kind)}</p>}
+    <div><p className="text-xs text-muted-foreground">Bill to</p><p className="font-semibold">{s.client.name}</p><p className="whitespace-pre-wrap text-sm">{s.client.address}</p></div><h3 className="font-semibold">{s.document.title}</h3>
+    <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="pb-2">Description</th><th className="px-2 pb-2">Qty / unit</th><th className="px-2 pb-2">Rate</th><th className="px-2 pb-2">VAT</th><th className="pb-2 text-right">Net</th></tr></thead><tbody>{s.document.lines.map(l => <tr key={l.id} className="border-b"><td className="min-w-32 whitespace-pre-wrap py-3">{l.description}{l.discount > 0 && <p className="text-xs">Discount {l.discount}%</p>}</td><td className="px-2">{l.quantity} {l.unit}</td><td className="whitespace-nowrap px-2">{money(l.rate)}</td><td className="px-2">{l.vat}%</td><td className="whitespace-nowrap text-right">{money(quoteLineTotals(l).net)}</td></tr>)}</tbody></table></div>
+    <dl className="ml-auto grid max-w-xs grid-cols-2 gap-2 text-right"><dt>Net</dt><dd>{money(s.totals.net)}</dd><dt>VAT</dt><dd>{money(s.totals.vat)}</dd><dt className="font-semibold">Total</dt><dd className="font-semibold">{money(s.totals.total)}</dd>{s.kind === 'proforma' && s.document.deposit_pct > 0 && <><dt>Deposit {s.document.deposit_pct}%</dt><dd>{money(depositAmount(s.document.lines, s.document.deposit_pct))}</dd></>}</dl>
+    {([['Payment terms', s.document.payment_terms], ['Payment methods & bank details', s.document.payment_methods], ['Terms & conditions', s.document.terms], ['Notes', s.document.notes]] as const).map(([title, text]) => text && <section key={title}><h4 className="text-sm font-semibold">{title}</h4><p className="whitespace-pre-wrap break-words text-sm">{text}</p></section>)}<footer className="border-t pt-3 text-xs text-muted-foreground">{platformCredit()}</footer>
+  </article>;
+}

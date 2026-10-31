@@ -2,6 +2,7 @@
 export function navigationHub(role: string | undefined, path: string): string {
   if (['/hours', '/leave', '/settings','/my-incentives'].includes(path)) return 'My workspace';
   if (path === '/lift-rfq') return 'Vertical packs';
+  if (path === '/client-billing') return 'Commercial & CRM';
   if (role === 'supervisor') {
     if (['/dashboard', '/sheets', '/schedule', '/surveys', '/as-built', '/technical-library', '/dwr'].includes(path)) return 'My field work';
     if (['/admin/entities', '/qr-codes', '/crm', '/estimates', '/lift-rfq', '/proposals', '/contracts'].includes(path)) return 'Commercial & CRM';

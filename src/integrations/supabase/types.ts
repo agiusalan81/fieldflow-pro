@@ -389,6 +389,51 @@ export type Database = {
           },
         ]
       }
+      client_billing_links: {
+        Row: {
+          company_id: string
+          created_at: string
+          document_id: string
+          expires_at: string
+          id: string
+          revoked_at: string | null
+          token_hash: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          document_id: string
+          expires_at?: string
+          id?: string
+          revoked_at?: string | null
+          token_hash: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          document_id?: string
+          expires_at?: string
+          id?: string
+          revoked_at?: string | null
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_billing_links_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_billing_links_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "client_billing_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_billing_payments: {
         Row: {
           amount: number
@@ -7532,6 +7577,7 @@ export type Database = {
       company_product_id: { Args: { _company: string }; Returns: string }
       company_storage_usage: { Args: { _company: string }; Returns: Json }
       convert_client_billing: { Args: { _id: string }; Returns: string }
+      create_client_billing_link: { Args: { _id: string }; Returns: string }
       create_client_setup: { Args: { _details: Json }; Returns: Json }
       create_equipment_report_link: {
         Args: { _asset: string }
@@ -7864,6 +7910,7 @@ export type Database = {
         Args: { _code: string; _site: string }
         Returns: undefined
       }
+      read_client_billing: { Args: { _token: string }; Returns: Json }
       read_client_report: { Args: { _hash: string }; Returns: Json }
       read_customer_quote: { Args: { _token: string }; Returns: Json }
       read_proposal_approval: { Args: { _token: string }; Returns: Json }
@@ -7911,6 +7958,7 @@ export type Database = {
         Args: { _approve: boolean; _id: string }
         Returns: undefined
       }
+      revoke_client_billing_links: { Args: { _id: string }; Returns: undefined }
       revoke_client_portal_access: {
         Args: { _client: string; _contact: string }
         Returns: undefined

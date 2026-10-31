@@ -24,6 +24,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAsBuiltRouteImport } from './routes/_authenticated/as-built'
 import { Route as AuthenticatedAvailableJobsRouteImport } from './routes/_authenticated/available-jobs'
+import { Route as AuthenticatedClientBillingRouteImport } from './routes/_authenticated/client-billing'
 import { Route as AuthenticatedCompanyRouteImport } from './routes/_authenticated/company'
 import { Route as AuthenticatedContractsRouteImport } from './routes/_authenticated/contracts'
 import { Route as AuthenticatedCrmRouteImport } from './routes/_authenticated/crm'
@@ -58,6 +59,7 @@ import { Route as AuthenticatedTeamIncentivesRouteImport } from './routes/_authe
 import { Route as AuthenticatedTeamInvitesRouteImport } from './routes/_authenticated/team-invites'
 import { Route as AuthenticatedTechnicalLibraryRouteImport } from './routes/_authenticated/technical-library'
 import { Route as ApproveTokenRouteImport } from './routes/approve.$token'
+import { Route as BillingDocumentTokenRouteImport } from './routes/billing-document.$token'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as ProblemTokenRouteImport } from './routes/problem.$token'
 import { Route as QuoteTokenRouteImport } from './routes/quote.$token'
@@ -158,6 +160,12 @@ const AuthenticatedAvailableJobsRoute =
   AuthenticatedAvailableJobsRouteImport.update({
     id: '/available-jobs',
     path: '/available-jobs',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedClientBillingRoute =
+  AuthenticatedClientBillingRouteImport.update({
+    id: '/client-billing',
+    path: '/client-billing',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedCompanyRoute = AuthenticatedCompanyRouteImport.update({
@@ -338,6 +346,11 @@ const ApproveTokenRoute = ApproveTokenRouteImport.update({
   path: '/approve/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BillingDocumentTokenRoute = BillingDocumentTokenRouteImport.update({
+  id: '/billing-document/$token',
+  path: '/billing-document/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const JoinTokenRoute = JoinTokenRouteImport.update({
   id: '/join/$token',
   path: '/join/$token',
@@ -498,6 +511,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/as-built': typeof AuthenticatedAsBuiltRoute
   '/available-jobs': typeof AuthenticatedAvailableJobsRoute
+  '/client-billing': typeof AuthenticatedClientBillingRoute
   '/company': typeof AuthenticatedCompanyRoute
   '/contracts': typeof AuthenticatedContractsRoute
   '/crm': typeof AuthenticatedCrmRoute
@@ -532,6 +546,7 @@ export interface FileRoutesByFullPath {
   '/team-invites': typeof AuthenticatedTeamInvitesRoute
   '/technical-library': typeof AuthenticatedTechnicalLibraryRoute
   '/approve/$token': typeof ApproveTokenRoute
+  '/billing-document/$token': typeof BillingDocumentTokenRoute
   '/join/$token': typeof JoinTokenRoute
   '/problem/$token': typeof ProblemTokenRoute
   '/quote/$token': typeof QuoteTokenRoute
@@ -574,6 +589,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/as-built': typeof AuthenticatedAsBuiltRoute
   '/available-jobs': typeof AuthenticatedAvailableJobsRoute
+  '/client-billing': typeof AuthenticatedClientBillingRoute
   '/company': typeof AuthenticatedCompanyRoute
   '/contracts': typeof AuthenticatedContractsRoute
   '/crm': typeof AuthenticatedCrmRoute
@@ -608,6 +624,7 @@ export interface FileRoutesByTo {
   '/team-invites': typeof AuthenticatedTeamInvitesRoute
   '/technical-library': typeof AuthenticatedTechnicalLibraryRoute
   '/approve/$token': typeof ApproveTokenRoute
+  '/billing-document/$token': typeof BillingDocumentTokenRoute
   '/join/$token': typeof JoinTokenRoute
   '/problem/$token': typeof ProblemTokenRoute
   '/quote/$token': typeof QuoteTokenRoute
@@ -652,6 +669,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/_authenticated/as-built': typeof AuthenticatedAsBuiltRoute
   '/_authenticated/available-jobs': typeof AuthenticatedAvailableJobsRoute
+  '/_authenticated/client-billing': typeof AuthenticatedClientBillingRoute
   '/_authenticated/company': typeof AuthenticatedCompanyRoute
   '/_authenticated/contracts': typeof AuthenticatedContractsRoute
   '/_authenticated/crm': typeof AuthenticatedCrmRoute
@@ -686,6 +704,7 @@ export interface FileRoutesById {
   '/_authenticated/team-invites': typeof AuthenticatedTeamInvitesRoute
   '/_authenticated/technical-library': typeof AuthenticatedTechnicalLibraryRoute
   '/approve/$token': typeof ApproveTokenRoute
+  '/billing-document/$token': typeof BillingDocumentTokenRoute
   '/join/$token': typeof JoinTokenRoute
   '/problem/$token': typeof ProblemTokenRoute
   '/quote/$token': typeof QuoteTokenRoute
@@ -730,6 +749,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/as-built'
     | '/available-jobs'
+    | '/client-billing'
     | '/company'
     | '/contracts'
     | '/crm'
@@ -764,6 +784,7 @@ export interface FileRouteTypes {
     | '/team-invites'
     | '/technical-library'
     | '/approve/$token'
+    | '/billing-document/$token'
     | '/join/$token'
     | '/problem/$token'
     | '/quote/$token'
@@ -806,6 +827,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/as-built'
     | '/available-jobs'
+    | '/client-billing'
     | '/company'
     | '/contracts'
     | '/crm'
@@ -840,6 +862,7 @@ export interface FileRouteTypes {
     | '/team-invites'
     | '/technical-library'
     | '/approve/$token'
+    | '/billing-document/$token'
     | '/join/$token'
     | '/problem/$token'
     | '/quote/$token'
@@ -883,6 +906,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/_authenticated/as-built'
     | '/_authenticated/available-jobs'
+    | '/_authenticated/client-billing'
     | '/_authenticated/company'
     | '/_authenticated/contracts'
     | '/_authenticated/crm'
@@ -917,6 +941,7 @@ export interface FileRouteTypes {
     | '/_authenticated/team-invites'
     | '/_authenticated/technical-library'
     | '/approve/$token'
+    | '/billing-document/$token'
     | '/join/$token'
     | '/problem/$token'
     | '/quote/$token'
@@ -960,6 +985,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   ApproveTokenRoute: typeof ApproveTokenRoute
+  BillingDocumentTokenRoute: typeof BillingDocumentTokenRoute
   JoinTokenRoute: typeof JoinTokenRoute
   ProblemTokenRoute: typeof ProblemTokenRoute
   QuoteTokenRoute: typeof QuoteTokenRoute
@@ -1079,6 +1105,13 @@ declare module '@tanstack/react-router' {
       path: '/available-jobs'
       fullPath: '/available-jobs'
       preLoaderRoute: typeof AuthenticatedAvailableJobsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/client-billing': {
+      id: '/_authenticated/client-billing'
+      path: '/client-billing'
+      fullPath: '/client-billing'
+      preLoaderRoute: typeof AuthenticatedClientBillingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/company': {
@@ -1319,6 +1352,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApproveTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/billing-document/$token': {
+      id: '/billing-document/$token'
+      path: '/billing-document/$token'
+      fullPath: '/billing-document/$token'
+      preLoaderRoute: typeof BillingDocumentTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/join/$token': {
       id: '/join/$token'
       path: '/join/$token'
@@ -1522,6 +1562,7 @@ const AuthenticatedPayrollRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAsBuiltRoute: typeof AuthenticatedAsBuiltRoute
   AuthenticatedAvailableJobsRoute: typeof AuthenticatedAvailableJobsRoute
+  AuthenticatedClientBillingRoute: typeof AuthenticatedClientBillingRoute
   AuthenticatedCompanyRoute: typeof AuthenticatedCompanyRoute
   AuthenticatedContractsRoute: typeof AuthenticatedContractsRoute
   AuthenticatedCrmRoute: typeof AuthenticatedCrmRoute
@@ -1571,6 +1612,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAsBuiltRoute: AuthenticatedAsBuiltRoute,
   AuthenticatedAvailableJobsRoute: AuthenticatedAvailableJobsRoute,
+  AuthenticatedClientBillingRoute: AuthenticatedClientBillingRoute,
   AuthenticatedCompanyRoute: AuthenticatedCompanyRoute,
   AuthenticatedContractsRoute: AuthenticatedContractsRoute,
   AuthenticatedCrmRoute: AuthenticatedCrmRoute,
@@ -1635,6 +1677,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   ApproveTokenRoute: ApproveTokenRoute,
+  BillingDocumentTokenRoute: BillingDocumentTokenRoute,
   JoinTokenRoute: JoinTokenRoute,
   ProblemTokenRoute: ProblemTokenRoute,
   QuoteTokenRoute: QuoteTokenRoute,

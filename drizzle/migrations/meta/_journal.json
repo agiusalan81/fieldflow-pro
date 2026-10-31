@@ -1394,6 +1394,27 @@
       "when": 1793431956894,
       "tag": "0198_contractor_client_billing",
       "breakpoints": true
+    },
+    {
+      "idx": 199,
+      "version": "7",
+      "when": 1793432240671,
+      "tag": "0199_client_billing_sharing_and_validation",
+      "breakpoints": true
+    },
+    {
+      "idx": 200,
+      "version": "7",
+      "when": 1793432568782,
+      "tag": "0200_billing_counter_kinds",
+      "breakpoints": true
+    },
+    {
+      "idx": 201,
+      "version": "7",
+      "when": 1793432697625,
+      "tag": "0201_billing_conversion_identity_and_dates",
+      "breakpoints": true
     }
   ]
 }

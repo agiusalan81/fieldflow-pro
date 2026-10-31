@@ -43,6 +43,7 @@ export function SurveyTrades({ details, companyTrades, onChange }: { details: Su
 
 function ObservationPhotos({ companyId, surveyId, observation, disabled, onChange }: { companyId: string; surveyId: string; observation: SurveyObservation; disabled: boolean; onChange: (photos: string[]) => void }) {
   const file = useRef<HTMLInputElement>(null);
+  const camera = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [view, setView] = useState<string | null>(null);
   const paths = observation.photos ?? [];
@@ -68,7 +69,7 @@ function ObservationPhotos({ companyId, surveyId, observation, disabled, onChang
   };
   return <div className="flex flex-wrap gap-2">
     {paths.map((path, i) => <div key={path} className="flex flex-col gap-1">{urls.data?.[path] && <Button type="button" variant="ghost" className="h-20 w-20 p-0" aria-label={`View observation photo ${i + 1}`} onClick={() => setView(urls.data?.[path] ?? null)}><img src={urls.data[path]} alt="Site observation" className="h-20 w-20 rounded-md object-cover" /></Button>}{!disabled && <Button type="button" variant="ghost" size="sm" aria-label={`Remove observation photo ${i + 1}`} onClick={() => onChange(paths.filter(p => p !== path))}><Trash2 className="h-4 w-4" /></Button>}</div>)}
-    {!disabled && <><input ref={file} aria-label="Upload survey photos" type="file" accept="image/*" multiple className="hidden" onChange={e => void upload(e.target.files)} /><Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => file.current?.click()}><Camera className="mr-1 h-4 w-4" />{busy ? "Uploading…" : "Add photos"}</Button><label className="inline-flex cursor-pointer items-center gap-1 rounded-md border px-3 py-1 text-sm"><Camera className="h-4 w-4" />Take photo<input aria-label="Take survey photo" type="file" accept="image/*" capture="environment" disabled={busy} className="hidden" onChange={e => void upload(e.target.files)} /></label></>}
+    {!disabled && <><input ref={file} aria-label="Upload survey photos" type="file" accept="image/*" multiple className="hidden" onChange={e => void upload(e.target.files)} /><Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => file.current?.click()}><Camera className="mr-1 h-4 w-4" />{busy ? "Uploading…" : "Add photos"}</Button><input ref={camera} aria-label="Take survey photo" type="file" accept="image/*" capture="environment" disabled={busy} className="hidden" onChange={e => { void upload(e.target.files); e.target.value = ''; }} /><Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => camera.current?.click()}><Camera className="mr-1 h-4 w-4" />Take photo</Button></>}
     {view && <div role="dialog" aria-label="Observation photo" className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 p-5" onClick={() => setView(null)}><img src={view} alt="Site observation enlarged" className="max-h-full max-w-full" /><Button type="button" className="absolute right-5 top-5" onClick={() => setView(null)}>Close</Button></div>}
   </div>;
 }
