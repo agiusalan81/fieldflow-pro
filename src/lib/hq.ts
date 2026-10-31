@@ -3,7 +3,7 @@ export const HQ_GROUPS = [
   { key: "analytics", label: "Analytics & Radar", sections: [{ key: "analytics", label: "Analytics & Radar" }] },
   { key: "tenants", label: "Tenants & companies", sections: [{ key: "tenants", label: "Companies" }, { key: "billing", label: "Invoices & reminders" }, { key: "bespoke", label: "Bespoke requests" }, { key: "finance", label: "Revenue & expenses" }, { key: "referrals", label: "Referrals" }] },
   { key: "plans", label: "Plans, tiers & modules", sections: [{ key: "plans", label: "Tiers & packs" }, { key: "construction", label: "Under construction" }, { key: "settings", label: "Product settings" }, { key: "campaigns", label: "Promotions" }, { key: "appearance", label: "App appearance" }] },
-  { key: "legal", label: "Platform company & legal", sections: [{ key: "legal", label: "Company details" }, { key: "audit", label: "Audit history" }] },
+  { key: "legal", label: "Platform company & legal", sections: [{ key: "legal", label: "Company details" }, {key:'services',label:'Categories & services'}, { key: "audit", label: "Audit history" }] },
 ] as const;
 export function hqGroup(section: string) { return HQ_GROUPS.find(g => g.sections.some(s => s.key === section)) ?? HQ_GROUPS[0]; }
 export function tenantLocation(city: string, country: string) { return [city.trim(), country.trim()].filter(Boolean).join(", ") || "Not provided"; }

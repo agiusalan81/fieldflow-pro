@@ -2,7 +2,9 @@ import { FieldsEditor } from "@/components/fields-editor";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCan } from "@/lib/permissions";
 import { NumberingSettings } from "@/components/numbering-settings";
-import { TRADES } from "@/lib/price-list";
+import { expandServices } from '@/lib/operating-services';
+import { OperatingServices } from '@/components/operating-services';
+import { IdentifierSettings } from '@/components/identifier-settings';
 import { settingsSectionPatch } from "@/lib/settings-sections";
 import { TechnicalStructure } from "@/components/technical-structure";
 import { CrmSettings } from "@/components/crm-settings";
@@ -332,7 +334,7 @@ function IndustryTab({ companyId }: { companyId: string }) {
   const [preset, setPreset] = useState<Appearance["industryPreset"] | null>(null);
   const [trades, setTrades] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
-  useEffect(() => { if (data && preset === null) { setPreset(data.appearance.industryPreset); setTrades(data.trades); } }, [data, preset]);
+  useEffect(() => { if (data && preset === null) { setPreset(data.appearance.industryPreset); setTrades(expandServices(data.trades)); } }, [data, preset]);
   if (!data || preset === null) return null;
   const save = async () => {
     setBusy(true);
@@ -360,13 +362,7 @@ function IndustryTab({ companyId }: { companyId: string }) {
       </section>
       <section className="space-y-3 rounded-xl border bg-card p-5">
         <div><h2 className="font-medium text-foreground">Operating Trades & Services</h2><p className="text-sm text-muted-foreground">Select the trade disciplines your company delivers. Price lists, site surveys and estimates only offer these. Leave all off to show every trade.</p></div>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {TRADES.map((t) => (
-            <label key={t.key} className="flex cursor-pointer items-center gap-3 rounded-lg border p-3 text-sm">
-              <Checkbox checked={trades.includes(t.key)} onCheckedChange={(c) => setTrades(c ? [...trades, t.key] : trades.filter((x) => x !== t.key))} />{t.label}
-            </label>
-          ))}
-        </div>
+        <OperatingServices companyId={companyId} values={trades} onChange={setTrades}/>
       </section>
       <Button className="h-11" disabled={busy} onClick={save}>{busy ? "Saving…" : "Save industry & services"}</Button>
     </div>
@@ -445,7 +441,7 @@ function SettingsSections({ superuser, companyId, userId, role }: { superuser: b
     ] },
     { title: "Commercial & numbering", items: [
       { key: "estimates", label: "Estimates & suppliers", render: () => <div className="space-y-4">{superuser&&<Button asChild variant="outline"><Link to="/subscription" hash="custom-requests">Request a custom module / template</Link></Button>}<QuoteAcceptanceSetting companyId={companyId} /><EstimateSettings companyId={companyId} /></div> },
-      { key: "numbering", label: "Document numbering", render: () => <NumberingSettings companyId={companyId} /> },
+      { key: "numbering", label: "Numbering & ID formats", render: () => <div className="space-y-6"><NumberingSettings companyId={companyId} /><IdentifierSettings companyId={companyId}/></div> },
       { key: "terms", label: "Terms & conditions", render: () => <DocumentSettings companyId={companyId} part="terms" /> },
       { key: "library", label: libraryName, render: () => <div className="space-y-4">{superuser&&<Button asChild variant="outline"><Link to="/subscription" hash="custom-requests">Request a custom module / template</Link></Button>}<DocumentLibrary companyId={companyId} userId={userId} /></div> },
       { key: "pricelist", label: "Price list", render: () => <PriceListSettings companyId={companyId} /> },

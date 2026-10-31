@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CreatableCombobox } from '@/components/creatable-combobox';
+import { normalizeIdentifier, validateIdentifier, suggestNextTag } from '@/lib/identifier-format';
 
 type Tool = { id: string; tag: string; name: string; model: string | null; serial_number: string | null; category: string; default_location: string | null; status: ToolStatus; inspection_due: string | null; holder_id: string | null; notes: string | null };
 type Log = { id: string; tool_id: string; holder_id: string; issued_by: string; destination: string | null; checked_out_at: string; expected_return: string | null; returned_at: string | null; return_condition: string | null; return_notes: string | null };
@@ -102,11 +104,16 @@ export function ToolRegister({ profile }: { profile: Profile }) {
 }
 
 function ToolEditor({ tool, companyId, onClose, onSaved }: { tool: Partial<Tool>; companyId: string; onClose: () => void; onSaved: () => void }) {
+  const rules=useQuery({queryKey:['identifier-rules',companyId,'tool'],queryFn:async()=>{const r=await supabase.from('company_identifier_rules').select('*').eq('kind','tool').maybeSingle();if(r.error)throw r.error;return r.data;}});
+  const existing=useQuery({queryKey:['tool-tag-sequence'],queryFn:async()=>{const r=await supabase.from('company_tools').select('tag');if(r.error)throw r.error;return r.data.map(t=>t.tag);}});
   const [f, setF] = useState(tool);
   const set = (k: keyof Tool, v: string) => setF({ ...f, [k]: v });
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
-    const row = { tag: f.tag!.trim(), name: f.name!.trim(), model: f.model || null, serial_number: f.serial_number || null, category: f.category || "General", default_location: f.default_location || null, inspection_due: f.inspection_due || null, notes: f.notes || null };
+    const rule=rules.data; const tag=rule?normalizeIdentifier(f.tag??'',rule):(f.tag??'').trim();
+    if(!tag||!f.name?.trim()){toast.error('Enter a tag and tool name');return;}
+    if(rule?.strict&&!validateIdentifier(tag,rule)){toast.error('Tag does not match the company format');return;}
+    const row = { tag, name: f.name.trim(), model: f.model || null, serial_number: f.serial_number || null, category: f.category || "General", default_location: f.default_location || null, inspection_due: f.inspection_due || null, notes: f.notes || null };
     const status = f.status === "checked_out" ? undefined : f.status;
     const { error } = f.id
       ? await supabase.from("company_tools").update({ ...row, ...(status ? { status } : {}) }).eq("id", f.id)
@@ -120,12 +127,12 @@ function ToolEditor({ tool, companyId, onClose, onSaved }: { tool: Partial<Tool>
         <DialogHeader><DialogTitle>{f.id ? "Edit tool" : "New tool"}</DialogTitle></DialogHeader>
         <form onSubmit={save} className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5"><Label>Tag / ID</Label><Input required placeholder="TL-001" value={f.tag ?? ""} onChange={(e) => set("tag", e.target.value)} /></div>
+            <div className="space-y-1.5"><Label>Tag / ID</Label><Input required placeholder={rules.data?suggestNextTag(existing.data??[],rules.data):'TL-001'} value={f.tag ?? ""} onBlur={()=>{if(rules.data)set('tag',normalizeIdentifier(f.tag??'',rules.data));}} onChange={(e) => set("tag", e.target.value)} />{!f.id&&rules.data&&rules.data.pattern_type==='numeric'&&<Button type="button" variant="ghost" size="sm" onClick={()=>{if(rules.data)set('tag',suggestNextTag(existing.data??[],rules.data));}}>Use next ID</Button>}</div>
             <div className="space-y-1.5"><Label>Tool name</Label><Input required placeholder="Magnetic drill" value={f.name ?? ""} onChange={(e) => set("name", e.target.value)} /></div>
             <div className="space-y-1.5"><Label>Model</Label><Input value={f.model ?? ""} onChange={(e) => set("model", e.target.value)} /></div>
             <div className="space-y-1.5"><Label>Serial no.</Label><Input value={f.serial_number ?? ""} onChange={(e) => set("serial_number", e.target.value)} /></div>
             <div className="space-y-1.5"><Label>Category</Label>
-              <Select value={f.category ?? "General"} onValueChange={(v) => set("category", v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{TOOL_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select>
+              <CreatableCombobox value={f.category??'General'} onChange={v=>set('category',v)} groups={[{group:'Tool categories',items:[...TOOL_CATEGORIES]}]}/>
             </div>
             <div className="space-y-1.5"><Label>Store location</Label><Input placeholder="Central store · Shelf B" value={f.default_location ?? ""} onChange={(e) => set("default_location", e.target.value)} /></div>
             <div className="space-y-1.5"><Label>Inspection / calibration due</Label><Input type="date" value={f.inspection_due ?? ""} onChange={(e) => set("inspection_due", e.target.value)} /></div>

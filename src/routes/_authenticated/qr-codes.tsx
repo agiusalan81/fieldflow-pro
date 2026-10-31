@@ -11,6 +11,7 @@ import { isManager, useProfile } from '@/lib/profile';
 import { StorePlaques } from '@/components/store-plaques';
 
 export const Route = createFileRoute('/_authenticated/qr-codes')({ staticData: { sitemap: false },
+  validateSearch:(s:Record<string,unknown>)=>({site:typeof s['site']==='string'?s['site']:'',assets:typeof s['assets']==='string'?s['assets']:''}),
   head: () => ({ meta: [
     { title: 'QR code generator — FieldBridgeApp' },
     { name: 'description', content: 'Create branded equipment QR stickers for technical data and fault reporting.' },
@@ -25,10 +26,11 @@ export const Route = createFileRoute('/_authenticated/qr-codes')({ staticData: {
 type Asset = { id: string; reference_number: string; asset_category: string | null; site_id: string | null; sites: { name: string | null; client_id: string | null; clients: { name: string | null } | null } | null };
 
 function QrPage() {
+  const filter=Route.useSearch();
   const word = useTerminology();
   const { data: p } = useProfile();
   const [client, setClient] = useState('');
-  const [site, setSite] = useState('');
+  const [site, setSite] = useState(filter.site);
   const [q, setQ] = useState('');
   const assets = useQuery({
     queryKey: ['qr-generator-assets'],
@@ -42,7 +44,8 @@ function QrPage() {
   const all = assets.data ?? [];
   const clients = useMemo(() => [...new Map(all.filter(a => a.sites?.client_id).map(a => [a.sites!.client_id!, a.sites?.clients?.name ?? 'Client'])).entries()], [all]);
   const sites = useMemo(() => [...new Map(all.filter(a => a.site_id && (!client || a.sites?.client_id === client)).map(a => [a.site_id!, a.sites?.name ?? 'Site'])).entries()], [all, client]);
-  const list = all.filter(a => (!client || a.sites?.client_id === client) && (!site || a.site_id === site) && (!q || a.reference_number.toLowerCase().includes(q.toLowerCase())));
+  const ids=filter.assets?new Set(filter.assets.split(',')):null;
+  const list = all.filter(a => (!ids||ids.has(a.id))&&(!client || a.sites?.client_id === client) && (!site || a.site_id === site) && (!q || a.reference_number.toLowerCase().includes(q.toLowerCase())));
   if (p && !isManager(p)) return <AppShell title="QR code generator"><EmptyState>Only supervisors and office staff can create QR stickers.</EmptyState></AppShell>;
   return (
     <AppShell title="QR code generator">

@@ -26,12 +26,12 @@ export function CreatableCombobox({ value, onChange, groups, placeholder = "Choo
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] min-w-64 p-0" align="start">
-        <Command>
+        <Command shouldFilter={false}>
           <CommandInput placeholder="Search or add…" value={q} onValueChange={setQ} />
           <CommandList>
             <CommandEmpty>No match.</CommandEmpty>
             {isNew && <CommandGroup><CommandItem value={`__add ${typed}`} onSelect={() => pick(typed)}><Plus className="mr-2 h-4 w-4" />Add “{typed}”</CommandItem></CommandGroup>}
-            {groups.map((g) => g.items.length > 0 && (
+            {groups.map((g) => ({...g,items:g.items.filter(i=>i.toLowerCase().includes(typed.toLowerCase()))})).map((g) => g.items.length > 0 && (
               <CommandGroup key={g.group} heading={g.group}>
                 {g.items.map((i) => (
                   <CommandItem key={g.group + i} value={i} onSelect={() => pick(i)}>

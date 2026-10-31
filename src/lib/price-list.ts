@@ -12,7 +12,8 @@ export const TRADES = [
 export type TradeKey = (typeof TRADES)[number]["key"];
 /** Trades a company offers: its ticked operating trades plus Other / custom; every trade when none are ticked. */
 export function operatingTrades(selected: readonly string[]) {
-  const chosen = TRADES.filter((t) => t.key === "custom" || selected.includes(t.key));
+  const aliases:Record<string,string[]>={elevator:['lifts','escalators'],hvac:['air_conditioning','heating','ventilation','refrigeration'],fire_security:['fire_detection','fire_suppression','safety','security','cctv','access_control']};
+  const chosen = TRADES.filter((t) => t.key === "custom" || selected.includes(t.key)||(aliases[t.key]??[]).some(k=>selected.includes(k)));
   return chosen.length > 1 ? chosen : [...TRADES];
 }
 const PRESET_TRADE: Record<string, TradeKey> = { lifts: "elevator", hvac: "hvac", electrical: "electrical", plumbing: "plumbing", drains: "drains" };

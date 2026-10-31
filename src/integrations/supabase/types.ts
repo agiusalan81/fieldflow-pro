@@ -744,6 +744,50 @@ export type Database = {
           },
         ]
       }
+      company_identifier_rules: {
+        Row: {
+          company_id: string
+          kind: string
+          padding: number
+          pattern: string
+          pattern_type: string
+          prefix: string
+          separator: string
+          strict: boolean
+          uppercase: boolean
+        }
+        Insert: {
+          company_id: string
+          kind: string
+          padding?: number
+          pattern?: string
+          pattern_type?: string
+          prefix?: string
+          separator?: string
+          strict?: boolean
+          uppercase?: boolean
+        }
+        Update: {
+          company_id?: string
+          kind?: string
+          padding?: number
+          pattern?: string
+          pattern_type?: string
+          prefix?: string
+          separator?: string
+          strict?: boolean
+          uppercase?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_identifier_rules_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_invites: {
         Row: {
           company_id: string
@@ -2652,6 +2696,7 @@ export type Database = {
           earned_at: string | null
           id: string
           job_id: string
+          payslip_id: string | null
           sheet_id: string | null
           user_id: string
         }
@@ -2662,6 +2707,7 @@ export type Database = {
           earned_at?: string | null
           id?: string
           job_id: string
+          payslip_id?: string | null
           sheet_id?: string | null
           user_id: string
         }
@@ -2672,6 +2718,7 @@ export type Database = {
           earned_at?: string | null
           id?: string
           job_id?: string
+          payslip_id?: string | null
           sheet_id?: string | null
           user_id?: string
         }
@@ -2688,6 +2735,13 @@ export type Database = {
             columns: ["job_id"]
             isOneToOne: false
             referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_claim_incentives_payslip_id_fkey"
+            columns: ["payslip_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_payslips"
             referencedColumns: ["id"]
           },
           {
@@ -3079,6 +3133,7 @@ export type Database = {
           handover_at: string | null
           handover_note: string | null
           id: string
+          incentive_set_by: string | null
           job_number: number
           open_to_claim: boolean
           ppm_deadline: string | null
@@ -3108,6 +3163,7 @@ export type Database = {
           handover_at?: string | null
           handover_note?: string | null
           id?: string
+          incentive_set_by?: string | null
           job_number?: number
           open_to_claim?: boolean
           ppm_deadline?: string | null
@@ -3137,6 +3193,7 @@ export type Database = {
           handover_at?: string | null
           handover_note?: string | null
           id?: string
+          incentive_set_by?: string | null
           job_number?: number
           open_to_claim?: boolean
           ppm_deadline?: string | null
@@ -4537,6 +4594,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "message_channels_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      operating_service_catalog: {
+        Row: {
+          approved: boolean
+          category: string
+          company_id: string | null
+          created_at: string
+          created_by: string
+          id: string
+          service: string
+        }
+        Insert: {
+          approved?: boolean
+          category: string
+          company_id?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          service: string
+        }
+        Update: {
+          approved?: boolean
+          category?: string
+          company_id?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          service?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operating_service_catalog_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
@@ -7219,6 +7314,13 @@ export type Database = {
         }[]
       }
       chat_sheet_access: { Args: { _sheet: string }; Returns: boolean }
+      check_identifier_rule: {
+        Args: {
+          _rule: Database["public"]["Tables"]["company_identifier_rules"]["Row"]
+          _value: string
+        }
+        Returns: boolean
+      }
       claim_open_job: { Args: { _job: string }; Returns: string }
       client_contract_coverage: { Args: { _client: string }; Returns: Json }
       client_message_recipients: {
@@ -7378,6 +7480,10 @@ export type Database = {
           _seats: number
           _subscription: string
         }
+        Returns: undefined
+      }
+      hq_promote_operating_service: {
+        Args: { _id: string }
         Returns: undefined
       }
       hq_save_setup_options: {
@@ -7550,6 +7656,10 @@ export type Database = {
       platform_subscription_module_access: {
         Args: { _module: string; _subscription: string }
         Returns: boolean
+      }
+      populate_space_assets: {
+        Args: { _rows: Json; _site: string }
+        Returns: string[]
       }
       portal_decide_quote: {
         Args: {

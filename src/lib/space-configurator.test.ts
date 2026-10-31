@@ -4,6 +4,7 @@ import { assetRows, buildSpaces, nextFloor, type Floor } from "./space-configura
 const f1: Floor = { id: "a", label: "Floor 1", start: 101, count: 3, zone: "Standard King" };
 
 describe("space configurator", () => {
+  it('creates three fridge records under Bakery and Pastry',()=>{const rows=assetRows([{floor:'Bakery',zone:'Pastry',name:'Bay 1'}],[{name:'Fridge',count:3}]);expect(rows).toHaveLength(3);expect(rows.map(r=>r.asset_category)).toEqual(['Fridge','Fridge','Fridge']);expect(rows[0]?.location_details).toBe('Bakery · Pastry · Bay 1');});
   it("added floor continues at the next hundred", () => {
     expect(nextFloor([f1], "x").start).toBe(201);
   });
