@@ -46,7 +46,7 @@ export function parseTextStyles(raw: unknown): TextStyles {
 }
 /** Colour a layer prints in: its own colour, else the existing template default. */
 export function layerColor(t: PdfTemplate, k: TextLayerKey) {
-  const own = t.textStyles?.[k]?.color; if (own) return own;
+  const own = t.textStyles?.[k]?.color; if (own && !(k === 'company' && own.toLowerCase() === '#ffffff' && (t.fieldBackground || '#ffffff').toLowerCase() === '#ffffff')) return own;
   return k === "label" || k === "company" ? t.primaryColor : t.fieldText || "#202020";
 }
 
