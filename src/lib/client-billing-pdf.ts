@@ -33,6 +33,7 @@ export async function buildBillingPdf(s: BillingSnapshot): Promise<Uint8Array> {
   write(`Net ${money(s.totals.net)} | VAT ${money(s.totals.vat)} | Total ${money(s.totals.total)}`, true, 12);
   if (s.kind === 'proforma' && s.document.deposit_pct) write(`Deposit requested: ${s.document.deposit_pct}% (${money(Math.round(s.totals.total * s.document.deposit_pct) / 100)})`, true);
   for (const [label, text] of [['Payment terms', s.document.payment_terms], ['Payment methods', s.document.payment_methods], ['Terms & conditions', s.document.terms], ['Notes', s.document.notes]]) if (text) { write(label ?? '', true); write(text); }
+  if (template.footer) write(template.footer, false, 8);
   pdf.getPages().forEach((p, i) => { p.drawText(platformCredit(), { x: 42, y: 30, size: 7, font: normal }); p.drawText(`${i + 1} / ${pdf.getPageCount()}`, { x: 515, y: 30, size: 8, font: normal }); });
   return pdf.save();
 }
