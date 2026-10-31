@@ -31,7 +31,7 @@
 - Overtime uses captured DWR intervals/rules; old reports show associated sites only; factual allocation.
 - - Typography via applyTypography/AppShell, locale via locale.ts. Branding shares asset-backed font IDs and preview/PDF decorations; DB/HQ locks protect saved values.
 - Auth emails share auth-brand.tsx; the managed handler owns verification and dispatch for reliable account recovery.
-- Shared document-preview tabs serve desktop/mobile; no implicit draft saves.
+- Document-preview tabs are shared; no implicit draft saves.
 - Independent settings editors use settingsSectionPatch to write only owned columns; JSON styling saves merge current stored keys; 
 - Numbers retain raw text until blur; UnitSelect uses trade-aware RLS history. identifier-format.ts/DB guards share rules; batch creation locks sequences to avoid collisions.
 - Service sheets share a typed safe projection/renderers for preview, print and email; 
@@ -70,10 +70,10 @@
 - Delivery uses client_message_recipients; preferences choose recipients, not unsupported channel delivery.
 - Own-shift RPC captures one-time GPS; failure never blocks clock-out; history distinguishes action fixes from breadcrumbs.
 - Bespoke requests freeze on submit, stay private, never charge/activate; immediate setup is owner-only.
-- Surveys: guard_site_survey protects manager pricing/trade_review; field_details snapshots contacts/sites atomically; supplier quotes stay internal.
+- Surveys: guard_site_survey protects commercial review; field_details retains contacts, optional rooms/orphan trades/private photos; company services supply choices — why: preserve evidence.
 - Sites render via site-display.ts; portal edits only store_code. Approvals use category/object links; completed field-sheet history is company-controlled restrictive RLS.
 - Asset limits: platform_catalog.asset_limit (plan NULL=unlimited, pack=extra) enforced by assets_guard_limit trigger; trials/legacy unlimited.
-- Core quotes: frozen snapshots, atomic RPCs; phone acceptance allows token confirmation without portal.
+- Quotes/billing: atomic frozen snapshots; phone quote confirmation needs no portal. Contractor Core billing: office-only, tenant-enabled types, explicit issue/conversion, append-only payments — why: no implicit invoices.
 - HQ modules: shared layer/domain taxonomy, one tier-or-pack matrix; customer_quotes inherits Core entitlement.
 - CRM access: user_roles.crm_access (null=role default) via crm_can(), RLS/RPC enforced, mirrored in crm.ts.
 - Protected per-member RPCs/RLS govern estimates, contracts and dispatch; field eligibility is separate, CRM levels persist — why: primary roles still drive payroll/rota.
@@ -84,4 +84,4 @@
 - Shift sessions: shared sign-out checks own open shift/standby and fails closed; inactivity keeps active/test sessions, test return bypasses logout — why: retain shift workflow without weakening auth.
 - Inventory: tool/parts modes enforced by tool_sign_* RPCs + guard_inventory_stock, mirrored in inventory-control.ts — why: DB-enforced.
 - Appearance: HQ per-edition product_appearances → hex-validated edition-scoped CSS — why: safe no-code styling.
-- Document letterheads/footers use platform-credit.ts (edition-aware credit + contact lines) — why: one consistent credit across products.
+- Document credits share platform-credit.ts — why: consistent edition credit.
