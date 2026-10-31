@@ -16,7 +16,7 @@ export function parseSurveyDetails(value: unknown): SurveyDetails {
   const v = value && typeof value === "object" && !Array.isArray(value) ? value as Partial<SurveyDetails> : {};
   return { clientName: v.clientName ?? "", siteName: v.siteName ?? "", address: v.address ?? "", storeCode: v.storeCode ?? "", contacts: Array.isArray(v.contacts) ? v.contacts : [], trades: Array.isArray(v.trades) ? v.trades : [], observations: Array.isArray(v.observations) ? v.observations : [], materialsNA: v.materialsNA === true };
 }
-export function surveyTradeLabel(trade: string) { return SERVICE_GROUPS.flatMap(g => g.items).find(t => t[0] === trade)?.[1] ?? TRADES.find(t => t.key === trade)?.label ?? trade; }
+export function surveyTradeLabel(trade: string) { return SERVICE_GROUPS.map(g => g.items.find(t => t[0] === trade)?.[1]).find(Boolean) ?? TRADES.find(t => t.key === trade)?.label ?? trade; }
 export function surveyTradeOptions(companyTrades: string[]) {
   return expandServices(companyTrades.length ? companyTrades : SERVICE_GROUPS.flatMap(g => g.items.map(t => t[0]))).filter(t => t !== 'custom').map(key => ({ key, label: surveyTradeLabel(key) }));
 }

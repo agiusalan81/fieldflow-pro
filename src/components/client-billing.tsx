@@ -64,7 +64,7 @@ export function ClientBilling({ documentId }: { documentId?: string }) {
 function BillingEditor({ id, onBack, onOpen }: { id: string; onBack: () => void; onOpen: (id: string) => void }) {
   const qc = useQueryClient(); const { data: company } = useCompanyRules(); const { data: profile } = useProfile();
   const q = useQuery({ queryKey: ['client-billing-document', id], queryFn: async () => { const r = await supabase.from('client_billing_documents').select('*').eq('id', id).single(); if (r.error) throw r.error; return r.data; } });
-  const clients = useQuery({ queryKey: ['billing-clients'], queryFn: async () => { const r = await supabase.from('clients').select('id,name,address,email').order('name'); if (r.error) throw r.error; return r.data; } });
+  const clients = useQuery({ queryKey: ['billing-clients'], queryFn: async () => { const r = await supabase.from('clients').select('id,name,billing_address').order('name'); if (r.error) throw r.error; return r.data; } });
   const library = useQuery({ queryKey: ['billing-library'], queryFn: async () => { const r = await supabase.from('document_masters').select('name,kind,body,items,sections,field_specs,commercial,extras,audience').neq('state', 'archived').contains('audience', ['client']).limit(200); if (r.error) throw r.error; return r.data; } });
   const [row, setRow] = useState<Row | null>(null); const [doc, setDoc] = useState<BillingDocument>(newBillingDocument()); const [busy, setBusy] = useState(false);
   const [payment, setPayment] = useState({ amount: '', paid_on: new Date().toISOString().slice(0, 10), method: '', reference: '', request_id: crypto.randomUUID() });
@@ -75,7 +75,7 @@ function BillingEditor({ id, onBack, onOpen }: { id: string; onBack: () => void;
   if (q.error) return <p role="alert" className="text-destructive">This billing document is unavailable.</p>;
   if (!row) return <p>Loading…</p>;
   const kind = row.kind as BillingKind; const issued = !!row.issued_at; const client = clients.data?.find(c => c.id === clientId);
-  const snapshot: BillingSnapshot = issued ? row.snapshot as unknown as BillingSnapshot : { kind, reference: 'DRAFT', document: doc, totals: quoteTotals(doc.lines), currency: company?.locale.currency ?? 'EUR', company: { name: profile?.companies?.name ?? '', address: company?.phones.company_address ?? '', vat: company?.vatNumber ?? '', logo: company?.logo ?? '' }, client: { name: client?.name ?? '', address: client?.address ?? '' } };
+  const snapshot: BillingSnapshot = issued ? row.snapshot as unknown as BillingSnapshot : { kind, reference: 'DRAFT', document: doc, totals: quoteTotals(doc.lines), currency: company?.locale.currency ?? 'EUR', company: { name: profile?.companies?.name ?? '', address: company?.phones.company_address ?? '', vat: company?.vatNumber ?? '', logo: company?.logo ?? '' }, client: { name: client?.name ?? '', address: client?.billing_address ?? '' } };
   const paid = (payments.data ?? []).reduce((n, p) => n + Number(p.amount), 0); const balance = billingBalance(snapshot.totals.total, paid);
   const refresh = async () => { await Promise.all([q.refetch(), qc.invalidateQueries({ queryKey: ['client-billing-documents'] }), qc.invalidateQueries({ queryKey: ['client-billing-payments'] })]); };
   const run = async (action: () => Promise<void>) => { setBusy(true); try { await action(); } catch (e) { toast.error(e instanceof Error ? e.message : 'Action failed'); } finally { setBusy(false); } };
