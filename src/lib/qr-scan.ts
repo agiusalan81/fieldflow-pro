@@ -14,9 +14,11 @@ export function scannedTarget(raw: string, origin: string): ScannedTarget | null
     const id = url.searchParams.get('equipment');
     if (url.pathname === '/auth' && id && uuid.test(id)) return { kind: 'asset', id };
     const asset = url.pathname.match(/^\/equipment\/([^/]+)$/);
-    if (asset && uuid.test(asset[1])) return { kind: 'asset', id: asset[1] };
+    const assetId = asset?.[1];
+    if (assetId && uuid.test(assetId)) return { kind: 'asset', id: assetId };
     const report = url.pathname.match(/^\/(problem|store-report)\/([a-f0-9]{64})$/);
-    if (report) return { kind: report[1] as 'problem' | 'store-report', token: report[2] };
+    const kind = report?.[1]; const token = report?.[2];
+    if ((kind === 'problem' || kind === 'store-report') && token) return { kind, token };
     return null;
   } catch { return null; }
 }

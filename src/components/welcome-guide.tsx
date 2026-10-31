@@ -58,7 +58,7 @@ export function WelcomeGuide({ profile, allowed }: { profile: Profile; allowed: 
   useEffect(() => {
     const check = () => {
       const blocked = Array.from(document.querySelectorAll<HTMLElement>('[role="dialog"], [role="alertdialog"]')).some(el =>
-        !el.hasAttribute('data-welcome-tour') && el.dataset.state !== 'closed' && el.getClientRects().length > 0);
+        !el.hasAttribute('data-welcome-tour') && el.dataset['state'] !== 'closed' && el.getClientRects().length > 0);
       setDialogOpen(blocked);
       if (blocked) setOpen(false);
     };
