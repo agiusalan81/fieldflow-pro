@@ -1,0 +1,27 @@
+import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
+import { Download, Upload, CheckCircle2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
+import { IMPORT_FIELDS, REQUIRED_FIELDS, parseCompanyCsv, mappedImportRows, csvTemplate, type ImportKind } from '@/lib/company-csv';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+export function CompanyCsvImport({ hotel }: { hotel: boolean }) {
+  const qc=useQueryClient(); const [kind,setKind]=useState<ImportKind>('clients');
+  const [file,setFile]=useState<ReturnType<typeof parseCompanyCsv>|null>(null); const [mapping,setMapping]=useState<Record<string,number>>({});
+  const [busy,setBusy]=useState(false); const [result,setResult]=useState<{added:number;skipped:number;ids:string[]}|null>(null);
+  const preview=file?mappedImportRows(kind,file.rows,mapping):null;
+  const download=()=>{const url=URL.createObjectURL(new Blob(['\uFEFF'+csvTemplate(kind)+'\r\n'],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=`${kind}-template.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+  const upload=async(f:File|undefined)=>{if(!f)return;setResult(null);setFile(null);if(f.size>5*1024*1024){toast.error('Choose a CSV under 5 MB');return;}try{const next=parseCompanyCsv(await f.text());setFile(next);setMapping(Object.fromEntries(IMPORT_FIELDS[kind].map(key=>[key,next.headers.findIndex(h=>h.toLowerCase().replace(/\s/g,'_')===key)])));}catch(e){toast.error(e instanceof Error?e.message:'Could not read CSV');}};
+  const run=async()=>{if(!preview||preview.errors.length||!confirm(`Import ${preview.records.length} rows? Existing records will be skipped, never overwritten.`))return;setBusy(true);try{const r=await supabase.rpc('import_company_csv',{_kind:kind,_rows:preview.records as unknown as Json});if(r.error)throw r.error;setResult(r.data as unknown as {added:number;skipped:number;ids:string[]});setFile(null);await qc.invalidateQueries();toast.success('Import completed');}catch(e){toast.error(e instanceof Error?e.message:(e as {message?:string})?.message??'Import failed — no rows were saved');}finally{setBusy(false);}};
+  return <div className="space-y-5"><div className="flex flex-wrap items-end gap-3"><div className="w-60"><Label>Record type</Label><Select value={kind} onValueChange={v=>{setKind(v as ImportKind);setFile(null);setResult(null);}}><SelectTrigger aria-label="Import record type"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="clients">Clients / property owners</SelectItem><SelectItem value="sites">Sites / properties / stores</SelectItem><SelectItem value="equipment">Equipment / assets</SelectItem>{hotel&&<SelectItem value="rooms">Hotel rooms</SelectItem>}</SelectContent></Select></div><Button variant="outline" onClick={download}><Download className="mr-2 h-4 w-4"/>CSV template</Button><Button asChild variant="outline" disabled={busy}><label><Upload className="mr-2 h-4 w-4"/>Choose CSV<input aria-label="Upload company CSV" type="file" accept=".csv,text/csv" className="sr-only" disabled={busy} onChange={e=>{void upload(e.target.files?.[0]);e.target.value='';}}/></label></Button></div>
+    {file&&<><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{IMPORT_FIELDS[kind].map(key=><div key={key}><Label>{key.replaceAll('_',' ')}{REQUIRED_FIELDS[kind].includes(key)?' *':''}</Label><Select value={String(mapping[key]??-1)} onValueChange={v=>setMapping({...mapping,[key]:Number(v)})}><SelectTrigger aria-label={`Map ${key}`}><SelectValue/></SelectTrigger><SelectContent><SelectItem value="-1">Not mapped</SelectItem>{file.headers.map((h,i)=><SelectItem key={i} value={String(i)}>{h}</SelectItem>)}</SelectContent></Select></div>)}</div>
+    <h3 className="font-semibold">Preview · {file.rows.length} rows</h3><div className="max-h-80 overflow-auto border"><table className="w-full text-sm"><thead className="bg-muted"><tr>{IMPORT_FIELDS[kind].map(k=><th key={k} className="p-2 text-left">{k}</th>)}</tr></thead><tbody>{preview?.records.slice(0,50).map((r,i)=><tr key={i} className="border-t">{IMPORT_FIELDS[kind].map(k=><td key={k} className="max-w-64 break-words p-2">{r[k]}</td>)}</tr>)}</tbody></table></div>
+    {!!preview?.errors.length&&<ul role="alert" className="text-sm text-destructive">{preview.errors.slice(0,20).map((e,i)=><li key={i}>{e}</li>)}</ul>}<Button disabled={busy||!!preview?.errors.length} onClick={()=>void run()}>{busy?'Importing…':`Import ${file.rows.length} rows`}</Button></>}
+    {result&&<div role="status" className="space-y-3 border-t pt-4"><p className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5 text-primary"/>{result.added} added · {result.skipped} existing records skipped</p>{(kind==='equipment'||kind==='rooms')&&result.ids.length>0&&<Button asChild variant="outline"><Link to="/qr-codes" search={{site:'',assets:result.ids.join(',')}}>Print imported QR codes</Link></Button>}</div>}
+  </div>;
+}

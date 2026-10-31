@@ -3,6 +3,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCan } from "@/lib/permissions";
 import { NumberingSettings } from "@/components/numbering-settings";
 import { ClientBillingSettings } from '@/components/client-billing-settings';
+import { FinanceReminderStudio } from '@/components/finance-reminder-studio';
+import { CompanyCsvImport } from '@/components/company-csv-import';
 import { expandServices } from '@/lib/operating-services';
 import { OperatingServices } from '@/components/operating-services';
 import { IdentifierSettings } from '@/components/identifier-settings';
@@ -447,6 +449,8 @@ function SettingsSections({ superuser, companyId, userId, role }: { superuser: b
     ] },
     { title: inHouse ? "Numbering & exports" : "Commercial & numbering", items: [
       ...(edition === 'contractor' ? [{ key: 'client-billing', label: 'Client billing', render: () => <ClientBillingSettings companyId={companyId} /> }] : []),
+      ...(edition === 'contractor' ? [{ key: 'reminders', label: 'Reminders & follow-ups', render: () => <FinanceReminderStudio /> }] : []),
+      { key: 'csv-import', label: 'Import from CSV', render: () => <CompanyCsvImport hotel={edition === 'hotel'} /> },
       ...(inHouse ? [] : [{ key: "estimates", label: "Estimates & suppliers", render: () => <div className="space-y-4">{superuser&&<Button asChild variant="outline"><Link to="/subscription" hash="custom-requests">Request a custom module / template</Link></Button>}<QuoteAcceptanceSetting companyId={companyId} /><EstimateSettings companyId={companyId} /></div> }]),
       { key: "numbering", label: "Numbering & ID formats", render: () => <div className="space-y-6"><NumberingSettings companyId={companyId} /><IdentifierSettings companyId={companyId}/></div> },
       ...(inHouse ? [{ key: "integrations", label: "Hours & payroll export", render: () => <HoursExportSettings /> }] : [

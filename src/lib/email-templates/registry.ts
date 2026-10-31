@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react'
 import { template as teamInviteTemplate } from './team-invite'
+import { template as clientFollowupTemplate } from './client-followup'
 import { template as clientBillingTemplate } from './client-billing'
 import { template as invoiceReminderTemplate } from './invoice-reminder'
 import { template as customerQuoteTemplate } from './customer-quote'
@@ -25,6 +26,7 @@ export interface TemplateEntry {
  *   // then add to TEMPLATES: 'welcome': welcomeTemplate
  */
 export const TEMPLATES: Record<string, TemplateEntry> = {
+  'client-followup': clientFollowupTemplate,
   'team-invite': teamInviteTemplate,
   'client-billing': clientBillingTemplate,
   'customer-quote': customerQuoteTemplate,

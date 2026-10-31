@@ -1,0 +1,10 @@
+import {describe,it,expect} from 'vitest';
+import {reminderQueue,reminderRules,DEFAULT_REMINDER_RULES,targetOpen,type ReminderTarget} from './finance-reminders';
+const invoice:ReminderTarget={id:'invoice',type:'invoice',reference:'INV-1',title:'Work',client:'Client',issued:'2026-10-01',due:'2026-10-31',balance:118,currency:'EUR',status:'issued',converted:false};
+describe('finance reminder rules',()=>{
+ it('uses 3 days before and 7 days after due date',()=>{const rules=reminderRules({invoice:{...DEFAULT_REMINDER_RULES.invoice,enabled:true}});expect(reminderQueue([invoice],[],rules,'2026-10-31').map(s=>[s.key,s.date,s.dueNow])).toEqual([['before','2026-10-28',true],['due','2026-10-31',true],['overdue','2026-11-07',false]]);});
+ it('stops reminders after full payment or conversion',()=>{expect(targetOpen({...invoice,balance:0})).toBe(false);expect(targetOpen({...invoice,converted:true})).toBe(false);});
+ it('stops quotes on acceptance and decline',()=>{expect(targetOpen({...invoice,type:'quote',status:'accepted'})).toBe(false);expect(targetOpen({...invoice,type:'quote',status:'declined'})).toBe(false);});
+ it('pause and snooze suppress due alerts',()=>{const rules=reminderRules({invoice:{...DEFAULT_REMINDER_RULES.invoice,enabled:true}});const state={id:'s',billing_id:invoice.id,quote_id:null,paused:false,snoozed_until:'2026-11-10',completed_stages:[],activity:[]};expect(reminderQueue([invoice],[state],rules,'2026-10-31').every(s=>!s.dueNow)).toBe(true);expect(reminderQueue([invoice],[{...state,paused:true}],rules)).toEqual([]);});
+ it('completed stages never reappear',()=>{const rules=reminderRules({invoice:{...DEFAULT_REMINDER_RULES.invoice,enabled:true}});expect(reminderQueue([invoice],[{id:'s',billing_id:invoice.id,quote_id:null,paused:false,snoozed_until:null,completed_stages:['before','due'],activity:[]}],rules).map(s=>s.key)).toEqual(['overdue']);});
+});
