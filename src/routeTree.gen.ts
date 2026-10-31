@@ -39,6 +39,7 @@ import { Route as AuthenticatedLiftRfqRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedLiftSurveysRouteImport } from './routes/_authenticated/lift-surveys'
 import { Route as AuthenticatedLiveMapRouteImport } from './routes/_authenticated/live-map'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
+import { Route as AuthenticatedMyIncentivesRouteImport } from './routes/_authenticated/my-incentives'
 import { Route as AuthenticatedOvertimeRouteImport } from './routes/_authenticated/overtime'
 import { Route as AuthenticatedPayrollRouteImport } from './routes/_authenticated/payroll'
 import { Route as AuthenticatedPendingWorksRouteImport } from './routes/_authenticated/pending-works'
@@ -53,6 +54,7 @@ import { Route as AuthenticatedStandbyRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedSubscriptionRouteImport } from './routes/_authenticated/subscription'
 import { Route as AuthenticatedSurveysRouteImport } from './routes/_authenticated/surveys'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
+import { Route as AuthenticatedTeamIncentivesRouteImport } from './routes/_authenticated/team-incentives'
 import { Route as AuthenticatedTeamInvitesRouteImport } from './routes/_authenticated/team-invites'
 import { Route as AuthenticatedTechnicalLibraryRouteImport } from './routes/_authenticated/technical-library'
 import { Route as ApproveTokenRouteImport } from './routes/approve.$token'
@@ -235,6 +237,12 @@ const AuthenticatedMessagesRoute = AuthenticatedMessagesRouteImport.update({
   path: '/messages',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMyIncentivesRoute =
+  AuthenticatedMyIncentivesRouteImport.update({
+    id: '/my-incentives',
+    path: '/my-incentives',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOvertimeRoute = AuthenticatedOvertimeRouteImport.update({
   id: '/overtime',
   path: '/overtime',
@@ -307,6 +315,12 @@ const AuthenticatedTeamRoute = AuthenticatedTeamRouteImport.update({
   path: '/team',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTeamIncentivesRoute =
+  AuthenticatedTeamIncentivesRouteImport.update({
+    id: '/team-incentives',
+    path: '/team-incentives',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedTeamInvitesRoute =
   AuthenticatedTeamInvitesRouteImport.update({
     id: '/team-invites',
@@ -499,6 +513,7 @@ export interface FileRoutesByFullPath {
   '/lift-surveys': typeof AuthenticatedLiftSurveysRoute
   '/live-map': typeof AuthenticatedLiveMapRoute
   '/messages': typeof AuthenticatedMessagesRoute
+  '/my-incentives': typeof AuthenticatedMyIncentivesRoute
   '/overtime': typeof AuthenticatedOvertimeRoute
   '/payroll': typeof AuthenticatedPayrollRouteWithChildren
   '/pending-works': typeof AuthenticatedPendingWorksRoute
@@ -513,6 +528,7 @@ export interface FileRoutesByFullPath {
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/surveys': typeof AuthenticatedSurveysRoute
   '/team': typeof AuthenticatedTeamRoute
+  '/team-incentives': typeof AuthenticatedTeamIncentivesRoute
   '/team-invites': typeof AuthenticatedTeamInvitesRoute
   '/technical-library': typeof AuthenticatedTechnicalLibraryRoute
   '/approve/$token': typeof ApproveTokenRoute
@@ -573,6 +589,7 @@ export interface FileRoutesByTo {
   '/lift-surveys': typeof AuthenticatedLiftSurveysRoute
   '/live-map': typeof AuthenticatedLiveMapRoute
   '/messages': typeof AuthenticatedMessagesRoute
+  '/my-incentives': typeof AuthenticatedMyIncentivesRoute
   '/overtime': typeof AuthenticatedOvertimeRoute
   '/payroll': typeof AuthenticatedPayrollRouteWithChildren
   '/pending-works': typeof AuthenticatedPendingWorksRoute
@@ -587,6 +604,7 @@ export interface FileRoutesByTo {
   '/subscription': typeof AuthenticatedSubscriptionRoute
   '/surveys': typeof AuthenticatedSurveysRoute
   '/team': typeof AuthenticatedTeamRoute
+  '/team-incentives': typeof AuthenticatedTeamIncentivesRoute
   '/team-invites': typeof AuthenticatedTeamInvitesRoute
   '/technical-library': typeof AuthenticatedTechnicalLibraryRoute
   '/approve/$token': typeof ApproveTokenRoute
@@ -649,6 +667,7 @@ export interface FileRoutesById {
   '/_authenticated/lift-surveys': typeof AuthenticatedLiftSurveysRoute
   '/_authenticated/live-map': typeof AuthenticatedLiveMapRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
+  '/_authenticated/my-incentives': typeof AuthenticatedMyIncentivesRoute
   '/_authenticated/overtime': typeof AuthenticatedOvertimeRoute
   '/_authenticated/payroll': typeof AuthenticatedPayrollRouteWithChildren
   '/_authenticated/pending-works': typeof AuthenticatedPendingWorksRoute
@@ -663,6 +682,7 @@ export interface FileRoutesById {
   '/_authenticated/subscription': typeof AuthenticatedSubscriptionRoute
   '/_authenticated/surveys': typeof AuthenticatedSurveysRoute
   '/_authenticated/team': typeof AuthenticatedTeamRoute
+  '/_authenticated/team-incentives': typeof AuthenticatedTeamIncentivesRoute
   '/_authenticated/team-invites': typeof AuthenticatedTeamInvitesRoute
   '/_authenticated/technical-library': typeof AuthenticatedTechnicalLibraryRoute
   '/approve/$token': typeof ApproveTokenRoute
@@ -725,6 +745,7 @@ export interface FileRouteTypes {
     | '/lift-surveys'
     | '/live-map'
     | '/messages'
+    | '/my-incentives'
     | '/overtime'
     | '/payroll'
     | '/pending-works'
@@ -739,6 +760,7 @@ export interface FileRouteTypes {
     | '/subscription'
     | '/surveys'
     | '/team'
+    | '/team-incentives'
     | '/team-invites'
     | '/technical-library'
     | '/approve/$token'
@@ -799,6 +821,7 @@ export interface FileRouteTypes {
     | '/lift-surveys'
     | '/live-map'
     | '/messages'
+    | '/my-incentives'
     | '/overtime'
     | '/payroll'
     | '/pending-works'
@@ -813,6 +836,7 @@ export interface FileRouteTypes {
     | '/subscription'
     | '/surveys'
     | '/team'
+    | '/team-incentives'
     | '/team-invites'
     | '/technical-library'
     | '/approve/$token'
@@ -874,6 +898,7 @@ export interface FileRouteTypes {
     | '/_authenticated/lift-surveys'
     | '/_authenticated/live-map'
     | '/_authenticated/messages'
+    | '/_authenticated/my-incentives'
     | '/_authenticated/overtime'
     | '/_authenticated/payroll'
     | '/_authenticated/pending-works'
@@ -888,6 +913,7 @@ export interface FileRouteTypes {
     | '/_authenticated/subscription'
     | '/_authenticated/surveys'
     | '/_authenticated/team'
+    | '/_authenticated/team-incentives'
     | '/_authenticated/team-invites'
     | '/_authenticated/technical-library'
     | '/approve/$token'
@@ -1160,6 +1186,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMessagesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/my-incentives': {
+      id: '/_authenticated/my-incentives'
+      path: '/my-incentives'
+      fullPath: '/my-incentives'
+      preLoaderRoute: typeof AuthenticatedMyIncentivesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/overtime': {
       id: '/_authenticated/overtime'
       path: '/overtime'
@@ -1256,6 +1289,13 @@ declare module '@tanstack/react-router' {
       path: '/team'
       fullPath: '/team'
       preLoaderRoute: typeof AuthenticatedTeamRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/team-incentives': {
+      id: '/_authenticated/team-incentives'
+      path: '/team-incentives'
+      fullPath: '/team-incentives'
+      preLoaderRoute: typeof AuthenticatedTeamIncentivesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/team-invites': {
@@ -1497,6 +1537,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLiftSurveysRoute: typeof AuthenticatedLiftSurveysRoute
   AuthenticatedLiveMapRoute: typeof AuthenticatedLiveMapRoute
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
+  AuthenticatedMyIncentivesRoute: typeof AuthenticatedMyIncentivesRoute
   AuthenticatedOvertimeRoute: typeof AuthenticatedOvertimeRoute
   AuthenticatedPayrollRoute: typeof AuthenticatedPayrollRouteWithChildren
   AuthenticatedPendingWorksRoute: typeof AuthenticatedPendingWorksRoute
@@ -1511,6 +1552,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSubscriptionRoute: typeof AuthenticatedSubscriptionRoute
   AuthenticatedSurveysRoute: typeof AuthenticatedSurveysRoute
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
+  AuthenticatedTeamIncentivesRoute: typeof AuthenticatedTeamIncentivesRoute
   AuthenticatedTeamInvitesRoute: typeof AuthenticatedTeamInvitesRoute
   AuthenticatedTechnicalLibraryRoute: typeof AuthenticatedTechnicalLibraryRoute
   AuthenticatedAdminApprovalsRoute: typeof AuthenticatedAdminApprovalsRoute
@@ -1544,6 +1586,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLiftSurveysRoute: AuthenticatedLiftSurveysRoute,
   AuthenticatedLiveMapRoute: AuthenticatedLiveMapRoute,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
+  AuthenticatedMyIncentivesRoute: AuthenticatedMyIncentivesRoute,
   AuthenticatedOvertimeRoute: AuthenticatedOvertimeRoute,
   AuthenticatedPayrollRoute: AuthenticatedPayrollRouteWithChildren,
   AuthenticatedPendingWorksRoute: AuthenticatedPendingWorksRoute,
@@ -1558,6 +1601,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSubscriptionRoute: AuthenticatedSubscriptionRoute,
   AuthenticatedSurveysRoute: AuthenticatedSurveysRoute,
   AuthenticatedTeamRoute: AuthenticatedTeamRoute,
+  AuthenticatedTeamIncentivesRoute: AuthenticatedTeamIncentivesRoute,
   AuthenticatedTeamInvitesRoute: AuthenticatedTeamInvitesRoute,
   AuthenticatedTechnicalLibraryRoute: AuthenticatedTechnicalLibraryRoute,
   AuthenticatedAdminApprovalsRoute: AuthenticatedAdminApprovalsRoute,

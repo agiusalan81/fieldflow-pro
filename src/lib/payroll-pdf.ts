@@ -28,7 +28,8 @@ export async function downloadPayslip(s: PayslipSnapshot, id: string) {
   line(`Overtime 1.5x (${s.hours.ot15.toFixed(2)} h)`,euros(s.totals.ot15Pay));
   line(`Overtime 2x (${s.hours.ot20.toFixed(2)} h)`,euros(s.totals.ot20Pay));
   line(`Standby allowance (${s.hours.standbyDays} days)`,euros(s.hours.standbyPay));
-  if(s.detail){line("Housing allowance",euros(s.detail.config.housing));line("Food allowance",euros(s.detail.config.food));line("Scheduled bonus / supplement",euros(s.detail.automatic.bonus));line("Additional earnings",euros(s.adjustments.bonus-s.detail.automatic.bonus-s.detail.automatic.allowances));}else line("Other earnings / bonus",euros(s.adjustments.bonus));line("Gross pay",euros(s.totals.gross),true);
+  if(s.claimIncentives)line("Claim incentives / dispatch bonuses",euros(s.claimIncentives.amountCents/100));
+  if(s.detail){line("Housing allowance",euros(s.detail.config.housing));line("Food allowance",euros(s.detail.config.food));line("Scheduled bonus / supplement",euros(s.detail.automatic.bonus));line("Additional earnings",euros(s.adjustments.bonus-s.detail.automatic.bonus-s.detail.automatic.allowances-(s.claimIncentives?.amountCents??0)/100));}else line("Other earnings / bonus",euros(s.adjustments.bonus-(s.claimIncentives?.amountCents??0)/100));line("Gross pay",euros(s.totals.gross),true);
   if(!global){line("Deductions","",true);if(s.detail){line("Tax (FSS)",euros(s.detail.automatic.taxBasic));line("Tax on overtime",euros(s.detail.automatic.taxOvertime));line("Additional tax adjustment",euros(s.adjustments.tax-s.detail.automatic.tax));line(`NI contributions quantity: ${s.detail.automatic.mondays} Mondays`);}else line("Income tax (FSS) - office reviewed",euros(s.adjustments.tax));
   line("Employee national insurance - office reviewed",euros(s.adjustments.nationalInsurance));
   line("Other deductions",euros(s.adjustments.otherDeductions));line("Net pay",euros(s.totals.net),true);}
