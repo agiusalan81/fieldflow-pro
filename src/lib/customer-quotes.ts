@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { PdfTemplate } from './documents';
 
 /** Core quotes can request written confirmation of an office-recorded acceptance without the portal pack. */
 export function quoteLinkAllowsDecision(status: string, portalEnabled: boolean) {
@@ -22,7 +23,7 @@ export type QuoteLine = z.infer<typeof quoteLineSchema>;
 export type QuoteDocument = z.infer<typeof quoteDocumentSchema>;
 export type QuoteTotals = { subtotal: number; discount: number; net: number; vat: number; total: number };
 export type QuoteSnapshot = {
-  reference: string; revision: number; document: QuoteDocument; totals: QuoteTotals;
+  template?: PdfTemplate | undefined; reference: string; revision: number; document: QuoteDocument; totals: QuoteTotals;
   company: { name: string; logo?: string | null | undefined; address?: string | null | undefined; vat?: string | null | undefined; primary?: string | null | undefined; footer?: string | null | undefined };
   currency: string; client: string; site?: string | null | undefined; equipment?: string | null | undefined;
   status?: string; signer_name?: string | null; decided_at?: string | null; allow_decision?: boolean;

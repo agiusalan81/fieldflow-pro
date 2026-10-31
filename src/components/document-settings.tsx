@@ -5,7 +5,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ArrowDown, ArrowUp, Download, FileUp, GripVertical, Loader2, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { BLOCKS, DOC_TYPES, moveBlock, parsePresets, parseTemplate, parseTerms, termsFor, visibleBlocks, type NotePreset, type PdfTemplate, type Terms } from "@/lib/documents";
+import { BLOCKS, DOC_TYPES, moveBlock, parsePresets, parseTemplate, parseTerms, termsFor, visibleBlocks, type DocType, type NotePreset, type PdfTemplate, type Terms } from "@/lib/documents";
+import { PaymentDefaultSettings } from './payment-default-settings';
 import { buildPdf } from "@/lib/sendJobSheetEmail";
 import { formatOfficeAddress, parseOfficeAddress } from "@/lib/contact-details";
 import { BrandControls } from "@/components/brand-controls";
@@ -41,7 +42,7 @@ export function DocumentSettings({ companyId, part }: { companyId: string; part:
   const [terms, setTerms] = useState<Terms | null>(null);
   const [presets, setPresets] = useState<NotePreset[]>([]);
   const [drag, setDrag] = useState<number | null>(null);
-  const [importFor, setImportFor] = useState<"job_sheet" | "estimate" | "agreement" | null>(null);
+  const [importFor, setImportFor] = useState<DocType | null>(null);
   const libraryName = useCompanyTitle("document library");
   const [importing, setImporting] = useState(false);
   const { data: libraryDocs = [] } = useQuery({
@@ -76,9 +77,9 @@ export function DocumentSettings({ companyId, part }: { companyId: string; part:
     if (readError) { toast.error(readError.message); setSaving(false); return; }
     const prior = (latest?.pdf_template ?? {}) as Record<string, unknown>;
     const next = { ...prior, primaryColor: t.primaryColor, labels: t.labels, header: t.header, footer: t.footer, showTravel: t.showTravel,
-      ...(planOn("branding_documents") ? { order: t.order, hidden: t.hidden, stylePreset: t.stylePreset, accentColor: t.accentColor, frame: t.frame, backgroundPath: t.backgroundPath, fieldBackground: t.fieldBackground, fieldText: t.fieldText, textStyles: t.textStyles } : {}),
+      ...(planOn("branding_documents") ? { order: t.order, hidden: t.hidden, stylePreset: t.stylePreset, accentColor: t.accentColor, frame: t.frame, backgroundPath: t.backgroundPath, backgroundOpacity: t.backgroundOpacity, backgroundTone: t.backgroundTone, backgroundBrightness: t.backgroundBrightness, fieldBackground: t.fieldBackground, fieldText: t.fieldText, textStyles: t.textStyles } : {}),
       ...(planOn("branding_fonts") ? { font: t.font, documentFont: t.documentFont } : {}),
-      ...(planOn("branding_custom_fonts") ? { fontPath: t.fontPath, fontName: t.fontName } : {}) };
+      ...(planOn("branding_custom_fonts") ? { fontPath: t.fontPath, fontName: t.fontName, customFonts: t.customFonts?.map(({ data: _data, ...font }) => font) } : {}) };
     const patch = settingsSectionPatch(part, { pdf_template: next, terms, note_presets: presets.filter(p => p.label.trim()) });
     const { error } = await supabase.from("company_settings").upsert({ company_id: companyId, ...patch } as never);
     setSaving(false); if (error) { toast.error(error.message); return; }
@@ -170,7 +171,7 @@ export function DocumentSettings({ companyId, part }: { companyId: string; part:
             )}
           </div>
         ))}
-        <p className="text-xs text-muted-foreground">Estimates and agreements will use these once their PDFs are generated.</p>
+        <PaymentDefaultSettings companyId={companyId} />
       </section>
 
       <Dialog open={!!importFor} onOpenChange={(o) => { if (!o && !importing) setImportFor(null); }}>

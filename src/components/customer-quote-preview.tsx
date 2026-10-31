@@ -2,10 +2,12 @@ import type { QuoteSnapshot } from '@/lib/customer-quotes';
 import { quoteLineTotals } from '@/lib/customer-quotes';
 import { formatMoney } from '@/lib/locale';
 import { QuotePhotoGallery, type QuotePhotoAccess } from './customer-quote-photos';
+import { BrandedDocument } from './branded-document';
+import { DEFAULT_TEMPLATE } from '@/lib/documents';
 
 export function CustomerQuotePreview({ snapshot: s, photoAccess }: { snapshot: QuoteSnapshot; photoAccess?: QuotePhotoAccess }) {
-  const d = s.document; const accent = /^#[0-9a-f]{6}$/i.test(s.company.primary ?? '') ? s.company.primary! : undefined; const tone = accent ? { color: accent } : undefined; const line = accent ? { borderColor: accent } : undefined; const money = (v: number) => formatMoney(v, s.currency);
-  return <article className="space-y-5 bg-background text-foreground p-5 sm:p-8">
+  const d = s.document; const accent = s.template?.primaryColor || (/^#[0-9a-f]{6}$/i.test(s.company.primary ?? '') ? s.company.primary : undefined); const tone = accent ? { color: accent } : undefined; const line = accent ? { borderColor: accent } : undefined; const money = (v: number) => formatMoney(v, s.currency);
+  return <BrandedDocument template={s.template ?? { ...DEFAULT_TEMPLATE, primaryColor: accent || DEFAULT_TEMPLATE.primaryColor }}><article className="space-y-5 p-5 sm:p-8">
     <header className="flex flex-wrap justify-between gap-4 border-b-2 pb-4" style={line}>
       <div>{s.company.logo && <img src={s.company.logo} alt={s.company.name} className="mb-3 max-h-16 max-w-48 object-contain" />}<h2 className="text-lg font-semibold" style={tone}>{s.company.name}</h2><p className="whitespace-pre-line text-sm text-muted-foreground">{s.company.address}</p>{s.company.vat && <p className="text-sm text-muted-foreground">VAT {s.company.vat}</p>}</div>
       <div className="text-sm"><p className="font-semibold capitalize" style={tone}>{d.kind} {s.reference}</p><p>Revision {s.revision}</p><p>Issued {d.issue_date}</p><p>Valid until {d.valid_until}</p></div>
@@ -16,5 +18,5 @@ export function CustomerQuotePreview({ snapshot: s, photoAccess }: { snapshot: Q
     {([['Payment terms', d.payment], ['Expected work timeframe', d.timeframe], ['Exclusions', d.exclusions], ['Customer notes', d.notes]] as const).filter(([, text]) => text).map(([title, text]) => <section key={title}><h3 className="font-semibold text-sm" style={tone}>{title}</h3><p className="whitespace-pre-wrap text-sm">{text}</p></section>)}
     <QuotePhotoGallery photos={d.photos ?? []} {...(photoAccess ? { access: photoAccess } : {})} />
     {s.company.footer && <footer className="border-t pt-3 text-xs text-muted-foreground">{s.company.footer}</footer>}
-  </article>;
+  </article></BrandedDocument>;
 }

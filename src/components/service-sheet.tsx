@@ -6,9 +6,9 @@ import { documentFontFamily, layerStyle, loadDocumentFont } from "@/lib/branding
 
 export function ServiceSheet({ data: d }: { data: PdfSheetData }) {
   const t = d.template;
-  useEffect(() => { let active = true; let dispose: (() => unknown) | undefined; void loadDocumentFont(t).then(fn => { if (active) dispose = fn; else fn?.(); }).catch(() => {}); return () => { active = false; dispose?.(); }; }, [t.documentFont, t.fontData]);
+  useEffect(() => { let active = true; let dispose: (() => unknown) | undefined; void loadDocumentFont(t).then(fn => { if (active) dispose = fn; else fn?.(); }).catch(() => {}); return () => { active = false; dispose?.(); }; }, [t.documentFont, t.fontData, t.customFonts, t.textStyles]);
   const visible = visibleBlocks(t);
-  const style = { "--document-primary": t.primaryColor, "--document-accent": t.accentColor, "--document-font": documentFontFamily(t), "--document-field-background": t.fieldBackground, "--document-field-text": t.fieldText, "--document-background-image": t.backgroundData ? `url("${t.backgroundData}")` : "none" } as CSSProperties;
+  const style = { "--document-background-opacity": t.backgroundOpacity ?? .12, "--document-primary": t.primaryColor, "--document-accent": t.accentColor, "--document-font": documentFontFamily(t), "--document-field-background": t.fieldBackground, "--document-field-text": t.fieldText, "--document-background-image": t.backgroundData ? `url("${t.backgroundData}")` : "none" } as CSSProperties;
   const text: Record<string, string> = { client: d.client, address: d.address, equipment: d.asset, fault: d.fault, work: d.repairs, notes: d.notes ?? "" };
   const section = (key: string) => <section key={key} className="service-section"><h3 className="document-label mb-1 uppercase" style={layerStyle(t, "label")}>{documentLabel(t, key)}</h3><p className="whitespace-pre-wrap break-words" style={layerStyle(t, "detail")}>{text[key] || "—"}</p>{key === "equipment" && d.workType && <p className="mt-2">{d.workType}</p>}</section>;
   return <article style={style} data-frame={t.frame} data-style="service" className="document-paper service-sheet mx-auto w-full border p-5 text-xs leading-relaxed sm:p-7">

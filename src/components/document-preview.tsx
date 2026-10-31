@@ -6,10 +6,10 @@ import { useProfile } from "@/lib/profile";
 import { documentFontFamily, layerStyle, loadDocumentFont } from "@/lib/branding-assets";
 
 export function documentVariables(t: PdfTemplate): CSSProperties {
-  return { "--document-primary": t.primaryColor, "--document-accent": t.accentColor, "--document-font": documentFontFamily(t), "--document-field-background": t.fieldBackground, "--document-field-text": t.fieldText, "--document-background-image": t.backgroundData ? `url("${t.backgroundData}")` : "none" } as CSSProperties;
+  return { "--document-background-opacity": t.backgroundOpacity ?? .12, "--document-primary": t.primaryColor, "--document-accent": t.accentColor, "--document-font": documentFontFamily(t), "--document-field-background": t.fieldBackground, "--document-field-text": t.fieldText, "--document-background-image": t.backgroundData ? `url("${t.backgroundData}")` : "none" } as CSSProperties;
 }
 export function DocumentPreview({ template, logo, mode = "document" }: { template: PdfTemplate; logo?: string | undefined; mode?: "document" | "form" }) {
-  useEffect(() => { let active = true; let dispose: (() => unknown) | undefined; void loadDocumentFont(template).then(fn => { if (active) dispose = fn; else fn?.(); }).catch(() => {}); return () => { active = false; dispose?.(); }; }, [template.documentFont, template.fontData]);
+  useEffect(() => { let active = true; let dispose: (() => unknown) | undefined; void loadDocumentFont(template).then(fn => { if (active) dispose = fn; else fn?.(); }).catch(() => {}); return () => { active = false; dispose?.(); }; }, [template.documentFont, template.fontData, template.customFonts, template.textStyles]);
   const { data: profile } = useProfile();
   const companyName = profile?.companies?.name?.trim() || "Your Company";
   const samples: Record<string, string> = { client: "Sample client", address: "Sample service address", equipment: "Unit 02 · Model XJ-500 · SN 88412", fault: "Intermittent operation and unusual noise.", work: "Replaced worn components, adjusted alignment and completed functional tests.", timesheet: "18/10/2026     08:30 → 11:00     5.00 h", parts: "Guide assembly     pcs     4", notes: "Reception holds the service access key.", signoff: "Technician: A. Smith     Client: J. Jones" };

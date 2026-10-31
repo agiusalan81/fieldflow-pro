@@ -9,6 +9,7 @@ import { BILLING_KINDS, billingDocumentSchema, billingBalance, billingPaymentSta
 import { newQuoteLine, quoteDraftForEditor, quoteTotals, type QuoteLine } from '@/lib/customer-quotes';
 import { buildBillingPdf } from '@/lib/client-billing-pdf';
 import { useCompanyRules } from '@/lib/company';
+import { billingDefaultsFor } from '@/lib/payment-defaults';
 import { useProfile } from '@/lib/profile';
 import { formatMoney } from '@/lib/locale';
 import { stripRich } from '@/lib/rich-text';
@@ -31,6 +32,7 @@ export function ClientBilling({ documentId }: { documentId?: string | undefined 
   const qc = useQueryClient(); const navigate = useNavigate();
   const open = (id?: string) => void navigate({ to: '/client-billing', search: { document: id } });
   const settings = useQuery({ queryKey: ['client-billing-settings'], queryFn: async () => { const r = await supabase.from('client_billing_settings').select('*').maybeSingle(); if (r.error) throw r.error; return r.data; } });
+  const termSettings = useQuery({ queryKey: ['billing-company-terms'], queryFn: async () => { const r = await supabase.from('company_settings').select('terms').maybeSingle(); if (r.error) throw r.error; return r.data; } });
   const list = useQuery({ queryKey: ['client-billing-documents'], queryFn: async () => { const r = await supabase.from('client_billing_documents').select('*,clients(name)').order('created_at', { ascending: false }).limit(200); if (r.error) throw r.error; return r.data; } });
   const [kind, setKind] = useState<BillingKind>('payment_request'); const [source, setSource] = useState(''); const [busy, setBusy] = useState(false); const [filter, setFilter] = useState('all');
   const enabledKinds = (Object.keys(BILLING_KINDS) as BillingKind[]).filter(k => settings.data?.[`${k}_enabled`]);
@@ -40,10 +42,10 @@ export function ClientBilling({ documentId }: { documentId?: string | undefined 
   const create = async () => {
     setBusy(true);
     try {
-      let doc = newBillingDocument(settings.data?.defaults as Partial<BillingDocument>); let clientId: string | null = null;
+      let doc = newBillingDocument(billingDefaultsFor(settings.data?.defaults, termSettings.data?.terms, kind)); let clientId: string | null = null;
       const quote = kind === 'proforma' ? quotes.data?.find(q => q.id === source) : undefined;
       const sheet = kind === 'payment_request' ? sheets.data?.find(s => s.id === source) : undefined;
-      if (quote) { const frozen = quote.snapshot as { document?: unknown } | null; const d = quoteDraftForEditor(frozen?.document ?? quote.data); doc = { ...doc, title: d.title, lines: d.lines, payment_terms: d.payment || doc.payment_terms, terms: d.exclusions, notes: d.notes }; clientId = quote.client_id; }
+      if (quote) { const frozen = quote.snapshot as { document?: unknown } | null; const d = quoteDraftForEditor(frozen?.document ?? quote.data); doc = { ...doc, title: d.title, lines: d.lines, payment_terms: d.payment || doc.payment_terms, terms: doc.terms || d.exclusions, notes: d.notes || doc.notes }; clientId = quote.client_id; }
       if (sheet) {
         const billing = sheet.billing_data as { lines?: { description: string; qty: number; unit_price: number }[] } | null;
         if (!billing?.lines?.length) throw new Error('Approve the job sheet billing review first so labour, parts and agreed prices are available.');
@@ -76,7 +78,7 @@ function BillingEditor({ id, onBack, onOpen }: { id: string; onBack: () => void;
   if (q.error) return <p role="alert" className="text-destructive">This billing document is unavailable.</p>;
   if (!row) return <p>Loading…</p>;
   const kind = row.kind as BillingKind; const issued = !!row.issued_at; const client = clients.data?.find(c => c.id === clientId);
-  const snapshot: BillingSnapshot = issued ? row.snapshot as unknown as BillingSnapshot : { kind, reference: 'DRAFT', document: doc, totals: quoteTotals(doc.lines), currency: company?.locale.currency ?? 'EUR', company: { name: profile?.companies?.name ?? '', address: company?.phones.company_address ?? '', vat: company?.vatNumber ?? '', logo: company?.logo ?? '' }, client: { name: client?.name ?? '', address: client?.billing_address ?? '' } };
+  const snapshot: BillingSnapshot = issued ? row.snapshot as unknown as BillingSnapshot : { kind, reference: 'DRAFT', document: doc, totals: quoteTotals(doc.lines), currency: company?.locale.currency ?? 'EUR', template: company?.documentTemplate, company: { name: profile?.companies?.name ?? '', address: company?.phones.company_address ?? '', vat: company?.vatNumber ?? '', logo: company?.logo ?? '' }, client: { name: client?.name ?? '', address: client?.billing_address ?? '' } };
   const paid = (payments.data ?? []).reduce((n, p) => n + Number(p.amount), 0); const balance = billingBalance(snapshot.totals.total, paid);
   const refresh = async () => { await Promise.all([q.refetch(), qc.invalidateQueries({ queryKey: ['client-billing-documents'] }), qc.invalidateQueries({ queryKey: ['client-billing-payments'] })]); };
   const run = async (action: () => Promise<void>) => { setBusy(true); try { await action(); } catch (e) { toast.error(billingError(e)); } finally { setBusy(false); } };
