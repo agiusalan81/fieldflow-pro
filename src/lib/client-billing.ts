@@ -22,3 +22,8 @@ export function billingBalance(total: number, paid: number) { return Math.max(0,
 export function billingPaymentState(total: number, paid: number) { return paid <= 0 ? 'Unpaid' : billingBalance(total, paid) === 0 ? 'Paid' : 'Partial'; }
 export function depositAmount(lines: QuoteLine[], percentage: number) { return Math.round(quoteTotals(lines).total * percentage) / 100; }
 export function billingNotice(kind: BillingKind) { return kind === 'invoice' ? '' : kind === 'proforma' ? 'Proforma invoice — not a tax invoice.' : 'Payment request — not a tax invoice.'; }
+export function billingError(error: unknown) {
+  if (error instanceof z.ZodError) return error.issues[0]?.message ?? 'Check the document details';
+  if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') return error.message;
+  return 'Could not complete the billing action';
+}

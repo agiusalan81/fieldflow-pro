@@ -7,7 +7,7 @@ export const NUMBERED_DOCUMENTS: { key: NumberingKind; label: string; prefix: st
   { key: "proposal", label: "Proposals", prefix: "PRP-" },
   { key: "job_sheet", label: "Job sheets", prefix: "JS-" },
   { key: "site_visit", label: "Site visits / surveys", prefix: "VIS-", note: "Every new site survey or visit gets this reference, in Core and in the Lift pack." },
-  { key: "invoice", label: "Invoices", prefix: "INV-", note: "Saved now and used when invoicing is connected." },
+  { key: "invoice", label: "Invoices", prefix: "INV-", note: "Client billing shares this next-number sequence. Set its document prefix in Client billing setup." },
 ];
 
 /** Mirrors the database: prefix + number padded to the chosen digits (never truncated). */
