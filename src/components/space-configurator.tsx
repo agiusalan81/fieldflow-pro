@@ -47,7 +47,7 @@ export function SpaceConfigurator({ companyId, edition }: { companyId: string; e
     if (!site) { toast.error("Choose a property first"); return; }
     if (!rows.length) { toast.error("Nothing to create"); return; }
     setSaving(true);
-    try{const {data,error}=await supabase.rpc('populate_space_assets',{_site:site.id,_rows:rows as unknown as Json});if(error)throw error;setCreatedIds(data);toast.success(`${data.length} items created`);setDone(true);await Promise.all(['qr-generator-assets','configurator-references'].map(key=>qc.invalidateQueries({queryKey:[key]})));}catch(e){toast.error(e instanceof Error?e.message:'Could not create items');}finally{setSaving(false);}
+    try{const {data,error}=await supabase.rpc('populate_space_assets',{_site:site.id,_rows:rows as unknown as Json});if(error)throw error;setCreatedIds(data);toast.success(`${data.length} items created`);setDone(true);await Promise.all(['qr-generator-assets','configurator-references'].map(key=>qc.invalidateQueries({queryKey:[key]})));}catch(e){toast.error((e as {message?:string})?.message??'Could not create items');}finally{setSaving(false);}
   };
 
   return (

@@ -1,6 +1,6 @@
 /** Presentation only: input must already be filtered by role and tenant entitlement. */
 export function navigationHub(role: string | undefined, path: string): string {
-  if (['/hours', '/leave', '/settings'].includes(path)) return 'My workspace';
+  if (['/hours', '/leave', '/settings','/my-incentives'].includes(path)) return 'My workspace';
   if (path === '/lift-rfq') return 'Vertical packs';
   if (role === 'supervisor') {
     if (['/dashboard', '/sheets', '/schedule', '/surveys', '/as-built', '/technical-library', '/dwr'].includes(path)) return 'My field work';

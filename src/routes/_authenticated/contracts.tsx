@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { CreatableCombobox } from '@/components/creatable-combobox';
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -136,7 +137,7 @@ function Types({ office, companyId }: { office: boolean; companyId?: string | un
         <section className="grid gap-2 rounded-xl border bg-card p-4 md:grid-cols-9 md:items-end">
           <div className="space-y-1.5"><Label>Category</Label><Select value={f.category} onValueChange={(v) => setF({ ...f, category: v })}><SelectTrigger className="h-11"><SelectValue /></SelectTrigger><SelectContent>{["Residential", "Commercial", "Other"].map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select>{f.category === "Other" && <LookupInput category={CONTRACT_CATEGORY} value={f.other} onChange={(v) => setF({ ...f, other: v })} placeholder="e.g. Industrial" />}</div>
           <div className="space-y-1.5"><Label>Name</Label><Input className="h-11" placeholder={contractName(f.category === "Other" ? f.other : f.category, f.tier) || "Residential Gold"} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
-          <div className="space-y-1.5"><Label>Equipment</Label><Select value={f.equipment_category} onValueChange={(v) => setF({ ...f, equipment_category: v })}><SelectTrigger className="h-11"><SelectValue /></SelectTrigger><SelectContent>{EQUIPMENT_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
+          <div className="space-y-1.5"><Label>Equipment</Label><CreatableCombobox ariaLabel="Equipment" value={f.equipment_category} onChange={v=>setF({...f,equipment_category:v})} groups={[{group:'Equipment',items:[...EQUIPMENT_CATEGORIES]}]}/></div>
           <div className="space-y-1.5"><Label>Tier</Label><Select value={f.tier || "none"} onValueChange={(v) => { const tier = v === "none" ? "" : v; setF({ ...f, tier, visits_per_year: String(visitsForTier(tier, Number(f.visits_per_year) || 0)) }); }}><SelectTrigger className="h-11"><SelectValue /></SelectTrigger><SelectContent>{["none", "Bronze", "Silver", "Gold", "Custom"].map((t) => <SelectItem key={t} value={t}>{t === "none" ? "—" : t}</SelectItem>)}</SelectContent></Select></div>
           <div className="space-y-1.5"><Label>Visits / yr</Label><Input className="h-11" type="number" value={f.visits_per_year} onChange={(e) => setF({ ...f, visits_per_year: e.target.value })} /></div>
           <div className="space-y-1.5"><Label>€ / year</Label><Input className="h-11" type="number" value={f.annual_price} onChange={(e) => setF({ ...f, annual_price: e.target.value })} /></div>
@@ -206,7 +207,7 @@ function Checklists({ office, companyId }: { office: boolean; companyId?: string
         <section className="space-y-3 rounded-xl border bg-card p-4">
           <p className="text-sm text-muted-foreground">One checklist per equipment type. Technicians must tick every item before submitting a maintenance job sheet for that equipment.</p>
           <div className="grid gap-2 sm:grid-cols-2">
-            <Select value={f.equipment_category} onValueChange={load}><SelectTrigger className="h-11"><SelectValue /></SelectTrigger><SelectContent>{EQUIPMENT_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select>
+            <CreatableCombobox ariaLabel="Checklist equipment type" value={f.equipment_category} onChange={load} groups={[{group:'Equipment types',items:[...new Set([...EQUIPMENT_CATEGORIES,...data.map(c=>c.equipment_category)])]}]}/>
             <Input className="h-11" placeholder="Checklist name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
           </div>
           <Textarea rows={10} placeholder={"One item per line, e.g.\nCheck door operation\nTest emergency alarm\nInspect brakes"} value={f.items} onChange={(e) => setF({ ...f, items: e.target.value })} />

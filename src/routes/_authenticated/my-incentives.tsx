@@ -1,0 +1,4 @@
+import { createFileRoute } from '@tanstack/react-router';
+import { AppShell } from '@/components/app-shell';
+import { MyIncentives } from '@/components/my-incentives';
+export const Route=createFileRoute('/_authenticated/my-incentives')({staticData:{sitemap:false},head:()=>({meta:[{title:'My incentives — FieldBridge'},{name:'description',content:'Your earned and pending dispatch incentives.'},{property:'og:title',content:'My incentives — FieldBridge'},{property:'og:description',content:'Your own dispatch incentive earnings.'},{property:'og:type',content:'website'},{name:'twitter:card',content:'summary'}]}),component:()=> <AppShell title="My incentives"><MyIncentives/></AppShell>});

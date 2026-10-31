@@ -1,5 +1,5 @@
 import { dispatchAvailability } from "@/lib/dispatch-availability";
-import { incentiveCents } from "@/lib/claim-incentive";
+import { incentiveCents,selfIncentiveLocked } from "@/lib/claim-incentive";
 import { useTerminology } from "@/lib/company";
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
@@ -64,6 +64,7 @@ export function NewJobDialog({pending,onClose}:{pending?:PendingDispatch;onClose
   const savingRef = useRef(false);
   const empty = { client_id: "", site_id: "none", asset_id: "none", tech: "none", assistant: "none", scheduled_date: new Date().toISOString().slice(0, 10), window_start: "", window_end: "", priority: "normal", problem_summary: "", teamSize: 1, open: false, tbd: false, hold: false, skills: [] as string[], crew: [] as string[] };
   const [f, setF] = useState({...empty,...(pending?{client_id:pending.client_id,site_id:pending.site_id??'none',asset_id:pending.asset_id??'none',problem_summary:`Follow-up from #${pending.jobsheet_number}: ${pending.pending_works_future_jobs??''}`}:{})});
+  const bonusLocked=selfIncentiveLocked(profile?.real_role,profile?.id,[f.tech,f.assistant,...f.crew]);
   const feature = usePlanFeatures(!!profile);
   const smart = feature("skills_dispatch");
   const [trade,setTrade]=useState('');
@@ -103,7 +104,7 @@ export function NewJobDialog({pending,onClose}:{pending?:PendingDispatch;onClose
     if (named > teamSize) { toast.error(`You picked ${named} people for a team of ${teamSize}`); return; }
     if (!f.open && f.tech === "none" && f.crew.length) { toast.error("Choose a lead technician"); return; }
     const availability = dispatchAvailability(f.tbd ? null : f.scheduled_date, f.tech, smart, f.hold, f.open && named < teamSize);
-    const bonusCents=bonus===''?null:incentiveCents(bonus);
+    const bonusCents=bonusLocked||bonus===''?null:incentiveCents(bonus);
     if(bonus!==''&&bonusCents===null){toast.error('Enter a valid bonus in euros, up to two decimal places');return;}
     savingRef.current = true; setSaving(true);
     try {
@@ -185,7 +186,7 @@ export function NewJobDialog({pending,onClose}:{pending?:PendingDispatch;onClose
           </div>}
           <label className="flex items-center gap-2 text-sm"><Checkbox checked={f.tbd} onCheckedChange={v => setF({...f,tbd:v===true})}/>Date to be decided (TBD)</label>
           {smart && f.tech === "none" && !f.tbd && <label className="flex items-center gap-2 text-sm"><Checkbox checked={f.hold} onCheckedChange={v => setF({...f,hold:v===true})}/>Hold off Up for grabs</label>}
-          {smart&&<div className="space-y-1.5"><Label htmlFor="new-claim-bonus">Claim bonus override (€)</Label><Input id="new-claim-bonus" type="number" min="0" step="0.01" placeholder="Company default" value={bonus} onChange={e=>setBonus(e.target.value)}/></div>}
+          {smart&&<div className="space-y-1.5"><Label htmlFor="new-claim-bonus">Claim bonus override (€)</Label><Input id="new-claim-bonus" disabled={bonusLocked} type="number" min="0" step="0.01" placeholder="Company default" value={bonusLocked?'':bonus} onChange={e=>setBonus(e.target.value)}/>{bonusLocked&&<p className="text-xs text-muted-foreground">Company default applies when dispatching to yourself.</p>}</div>}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 [&>*:first-child]:col-span-2 sm:[&>*:first-child]:col-span-1">
             <div className="space-y-1.5"><Label>Date</Label><Input type="date" required={!f.tbd} disabled={f.tbd} value={f.tbd ? "" : f.scheduled_date} onChange={(e) => setF({ ...f, scheduled_date: e.target.value })} /></div>
             <div className="space-y-1.5"><Label>Arrive from (optional)</Label><Input type="time" disabled={f.tbd} value={f.window_start} onChange={(e) => setF({ ...f, window_start: e.target.value })} /></div>

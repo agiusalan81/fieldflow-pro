@@ -1,0 +1,1 @@
+DO $$ DECLARE f text; BEGIN f:=pg_get_functiondef('public.guard_record_identifier()'::regprocedure);f:=replace(f,'r.strict','r."strict"');EXECUTE f; END $$;

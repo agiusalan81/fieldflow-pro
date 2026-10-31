@@ -1,0 +1,5 @@
+import { expect,it } from 'vitest';
+import { payableIncentives,selfIncentiveLocked } from './claim-incentive';
+import { calculateWages } from './payroll';
+it('only unpaid earned incentives in the pay period enter wages',()=>{const rows=[{id:'1',user_id:'tech',amount_cents:50,earned_at:'2026-10-30T12:00:00Z',payslip_id:null},{id:'2',user_id:'tech',amount_cents:50,earned_at:null,payslip_id:null},{id:'3',user_id:'tech',amount_cents:50,earned_at:'2026-10-29T12:00:00Z',payslip_id:'paid'},{id:'4',user_id:'other',amount_cents:50,earned_at:'2026-10-29T12:00:00Z',payslip_id:null}];const bonus=payableIncentives(rows,'tech','2026-10-01','2026-10-31').reduce((n,r)=>n+r.amount_cents,0)/100;expect(bonus).toBe(0.5);expect(calculateWages({worked:8,leave:0,sickFull:0,sickHalf:0,sickUnpaid:0,normal:8,ot15:0,ot20:0,standbyDays:0,standbyPay:0,fullUsed:0,halfUsed:0,sourceIds:[]},10,{bonus,tax:0,nationalInsurance:0,otherDeductions:0}).gross).toBe(80.5);});
+it('locks supervisor self assignment in any crew slot',()=>{expect(selfIncentiveLocked('supervisor','me',['other','me'])).toBe(true);expect(selfIncentiveLocked('supervisor','me',['other'])).toBe(false);});

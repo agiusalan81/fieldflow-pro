@@ -1359,6 +1359,27 @@
       "when": 1793425507012,
       "tag": "0193_atomic_configurator_and_incentive_safeguards",
       "breakpoints": true
+    },
+    {
+      "idx": 194,
+      "version": "7",
+      "when": 1793426539801,
+      "tag": "0194_configurator_edition_and_override_provenance",
+      "breakpoints": true
+    },
+    {
+      "idx": 195,
+      "version": "7",
+      "when": 1793426902146,
+      "tag": "0195_identifier_trigger_record_safe_projection",
+      "breakpoints": true
+    },
+    {
+      "idx": 196,
+      "version": "7",
+      "when": 1793427073838,
+      "tag": "0196_identifier_strict_column_qualification",
+      "breakpoints": true
     }
   ]
 }
