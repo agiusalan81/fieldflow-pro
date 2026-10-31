@@ -1,0 +1,18 @@
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { DEFAULT_IDENTIFIER_RULE, suggestNextTag, type IdentifierRule } from '@/lib/identifier-format';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { NativeSelect } from '@/components/ui/native-select';
+import { toast } from 'sonner';
+const KINDS = [['tool','Tool tag / ID'],['asset','Asset & equipment ID'],['part','Part SKU'],['site','Store / site code']] as const;
+export function IdentifierSettings({companyId}:{companyId:string}) {
+ const qc=useQueryClient(); const [draft,setDraft]=useState<Record<string,IdentifierRule>|null>(null); const [busy,setBusy]=useState(false);
+ const q=useQuery({queryKey:['identifier-rules',companyId],queryFn:async()=>{const r=await supabase.from('company_identifier_rules').select('*');if(r.error)throw r.error;return Object.fromEntries(r.data.map(v=>[v.kind,v]));}});
+ const values=draft??q.data; if(!values)return <p role="status">{q.error?.message??'Loading formats…'}</p>;
+ const save=async()=>{setBusy(true);try{const r=await supabase.from('company_identifier_rules').upsert(Object.entries(values).map(([kind,v])=>({...v,kind,company_id:companyId})));if(r.error)throw r.error;setDraft(null);await qc.invalidateQueries({queryKey:['identifier-rules']});toast.success('Identifier formats saved');}catch(e){toast.error(e instanceof Error?e.message:'Could not save formats');}finally{setBusy(false);}};
+ return <section className="space-y-5 border-t pt-5"><h2 className="font-medium">Field & asset ID formats</h2>{KINDS.map(([kind,label])=>{const v=values[kind]??{...DEFAULT_IDENTIFIER_RULE,prefix:kind==='tool'?'TL':kind==='asset'?'AST':kind==='part'?'PT':'ST'};const set=(p:Partial<IdentifierRule>)=>setDraft({...values,[kind]:{...v,...p}});return <div key={kind} className="space-y-3 border-b pb-4"><h3 className="font-medium">{label}</h3><div className="grid gap-3 sm:grid-cols-3"><div><Label>Prefix</Label><Input aria-label={`${label} prefix`} value={v.prefix} maxLength={24} onChange={e=>set({prefix:e.target.value})}/></div><div><Label>Separator</Label><Input aria-label={`${label} separator`} value={v.separator} maxLength={3} onChange={e=>set({separator:e.target.value})}/></div><div><Label>Format</Label><NativeSelect aria-label={`${label} format`} value={v.pattern_type} onValueChange={pattern_type=>set({pattern_type})}><option value="numeric">Number sequence</option><option value="alphanumeric">Letters & numbers</option><option value="regex">Custom pattern</option></NativeSelect></div><div><Label>Minimum digits</Label><Input type="number" min={1} max={10} value={v.padding} onChange={e=>set({padding:Math.max(1,Math.min(10,Number(e.target.value)))})}/></div>{v.pattern_type==='regex'&&<div className="sm:col-span-2"><Label>Pattern after prefix</Label><Input value={v.pattern} maxLength={120} onChange={e=>set({pattern:e.target.value})}/></div>}</div><div className="flex flex-wrap gap-5"><Label className="flex items-center gap-2"><Switch checked={v.strict} onCheckedChange={strict=>set({strict})}/>Require this format</Label><Label className="flex items-center gap-2"><Switch checked={v.uppercase} onCheckedChange={uppercase=>set({uppercase,prefix:uppercase?v.prefix.toUpperCase():v.prefix})}/>Uppercase</Label><output className="font-mono text-sm">{suggestNextTag([],v)}</output></div></div>;})}<Button disabled={busy||!draft} onClick={save}>{busy?'Saving…':'Save ID formats'}</Button></section>;
+}
