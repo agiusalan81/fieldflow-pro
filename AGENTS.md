@@ -43,7 +43,7 @@
 - job_sheets embeds use users!job_sheets_assigned_technician_id_fkey (two users FKs).
 - Signing batches: creator-owned, finalized transactionally; store delivery before sending via shared PDF builder; atomic, retry-safe delivery.
 - Offline: account-scoped IndexedDB/optimistic RPC/PWA; confirmed discard atomically removes only that account/sheet draft/photos/cache; retain inaccessible drafts.
-- Masters immutable except names; shared document-blocks; site/equipment buttons reuse DocumentMasters preselected; one attachment workflow.
+- Masters immutable except names; item-driven checklists share document-blocks; site/equipment reuse DocumentMasters; one attachment workflow.
 - Platform authority is protected separately in user_roles; HQ uses a narrow directory RPC, not tenant reads; 
 - Plan access: DB write guards + plan-features.ts menu gating; legacy stays on. RFQ rules in lift-rfq.ts; 
 - Client reports use immutable DB-built safe snapshots and hashed expiring/revocable links; photo paths stay server-only; 
