@@ -48,7 +48,7 @@ export const Route = createFileRoute("/_authenticated/contracts")({ staticData: 
 
 function ContractsPage() {
   const { tab = "agreements" } = Route.useSearch();
-  const {edition}=useEdition();const inhouse=isInHouse(edition);const title=inhouse?editionLabel(edition,"Contracts"):"Contracts & checklists";const activeTab=inhouse&&(tab==="types"||tab==="masters")?"agreements":tab;
+  const {edition}=useEdition();const inhouse=isInHouse(edition);const title=inhouse?editionLabel(edition,"Contracts"):"Contracts & checklists";const activeTab=inhouse&&tab==="types"?"agreements":tab;
   const navigate = useNavigate();
   const { data: profile } = useProfile();
   const access = useMemberWorkspaces();
@@ -62,13 +62,13 @@ function ContractsPage() {
           <TabsTrigger value="agreements">{inhouse?"Vendor coverage & warranties":"Client agreements"}</TabsTrigger>
           <TabsTrigger value="renewals">Renewals due</TabsTrigger>
           {!inhouse&&<TabsTrigger value="types">Service tiers</TabsTrigger>}
-          {!inhouse&&isOffice(profile) && <TabsTrigger value="masters">Contracts & checklist masters</TabsTrigger>}
+          {isOffice(profile) && <TabsTrigger value="masters">{inhouse?"Checklist & document templates":"Contracts & checklist masters"}</TabsTrigger>}
           <TabsTrigger value="checklists">Checklists</TabsTrigger>
         </TabsList>
         <TabsContent value="renewals" className="mt-4"><Renewals office={office} /></TabsContent>
         <TabsContent value="agreements" className="mt-4"><Agreements office={office} companyId={profile?.company_id} /></TabsContent>
         {!inhouse&&<TabsContent value="types" className="mt-4">{office && profile ? <ContractTiers companyId={profile.company_id} /> : <Types office={office} companyId={profile?.company_id} />}</TabsContent>}
-        {!inhouse&&office && profile && <TabsContent value="masters" className="mt-4"><DocumentMasters companyId={profile.company_id} /></TabsContent>}
+        {office && profile && <TabsContent value="masters" className="mt-4"><DocumentMasters companyId={profile.company_id} /></TabsContent>}
         <TabsContent value="checklists" className="mt-4"><Checklists office={office} companyId={profile?.company_id} /></TabsContent>
       </Tabs>
     </AppShell>
