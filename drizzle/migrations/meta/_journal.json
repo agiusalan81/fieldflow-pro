@@ -1415,6 +1415,13 @@
       "when": 1793432697625,
       "tag": "0201_billing_conversion_identity_and_dates",
       "breakpoints": true
+    },
+    {
+      "idx": 202,
+      "version": "7",
+      "when": 1793438846570,
+      "tag": "0202_document_branding_fonts_billing_snapshots",
+      "breakpoints": true
     }
   ]
 }
