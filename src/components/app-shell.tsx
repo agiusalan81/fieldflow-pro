@@ -92,6 +92,7 @@ const adminNav: NavItem[] = [
   { group: "Clients & commercial", to: "/contracts", label: "Contracts", icon: FileSignature, module: "contracts", feature: "contracts" },
   { group: "Clients & commercial", to: "/crm", label: "CRM pipeline", icon: Users, module: "clients", feature: "crm_pipeline" },
   { group: "Clients & commercial", to: "/estimates", label: "Estimates, quotes & proposals", icon: Calculator, feature: "core" },
+  { group: "Clients & commercial", to: "/client-billing", label: "Client billing", icon: FileText, office: true, feature: "core" },
   { group: "Clients & commercial", to: "/lift-surveys", label: "Lift site surveys", icon: ClipboardList, feature: "lift_pack" },
   { group: "Clients & commercial", to: "/lift-costing", label: "Lift costing sheets", icon: Calculator, feature: "lift_pack" },
   { group: "Clients & commercial", to: "/lift-rfq", label: "Lift supplier RFQs", icon: Calculator, module: "estimates", feature: "lift_pack" },
@@ -265,7 +266,7 @@ export function AppShell({ title, actions, children }: { title: string; actions?
   const personal: Record<string, string> = coName ? { "Team": `${coName} Team`, "Team chat": `${coName} Chat`, "Technical library": `${coName} Technical library` } : {};
   const { edition } = useEdition(!!actor);
   useEffect(() => { document.documentElement.dataset["edition"] = edition; return () => { delete document.documentElement.dataset["edition"]; }; }, [edition]);
-  const items = editionMenu(edition, organizeNavigation(profile?.role, baseItems.filter(i => !(isInHouse(edition) && profile?.role === "technician" && (i.to === "/contracts" || i.to === "/lift-rfq"))).filter(i => (i.to === "/contracts" && workspaces?.contracts && !preview.member || i.to === "/surveys" && workspaces?.surveys && !preview.member || showRoleMenuItem(profile?.role, i.to)))).map(i => ({ ...i, label: personal[i.label] ?? industrySheetLabel(appearance.industryPreset, i.label) })));
+  const items = editionMenu(edition, organizeNavigation(profile?.role, baseItems.filter(i => i.to !== '/client-billing' || edition === 'contractor').filter(i => !(isInHouse(edition) && profile?.role === "technician" && (i.to === "/contracts" || i.to === "/lift-rfq"))).filter(i => (i.to === "/contracts" && workspaces?.contracts && !preview.member || i.to === "/surveys" && workspaces?.surveys && !preview.member || showRoleMenuItem(profile?.role, i.to)))).map(i => ({ ...i, label: personal[i.label] ?? industrySheetLabel(appearance.industryPreset, i.label) })));
   const inHouse = isInHouse(edition);
   const createProps = { manager: (!inHouse || profile?.role !== "technician") && !!workspaces?.dispatch && !!items.find(i => i.to === "/admin/jobs" && !i.locked), field: (!manager || profile?.role === "supervisor" || !!actor?.can_field_dispatch) && !navLock("core").locked, estimates: !!workspaces?.estimates && !!items.find(i => i.to === "/estimates" && !i.locked), crm: !inHouse && crmAllows(crmLevel, "contributor") && !navLock("crm_pipeline").locked, company: profile?.company_id };
   const appTitle = (() => { const t = resolveAppTitle(company?.appTitle, planOn("custom_app_title")); return t === "FieldBridge" ? EDITION_SPEC[edition].product : t; })();

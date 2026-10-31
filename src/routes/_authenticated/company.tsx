@@ -2,6 +2,7 @@ import { FieldsEditor } from "@/components/fields-editor";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCan } from "@/lib/permissions";
 import { NumberingSettings } from "@/components/numbering-settings";
+import { ClientBillingSettings } from '@/components/client-billing-settings';
 import { expandServices } from '@/lib/operating-services';
 import { OperatingServices } from '@/components/operating-services';
 import { IdentifierSettings } from '@/components/identifier-settings';
@@ -443,6 +444,7 @@ function SettingsSections({ superuser, companyId, userId, role }: { superuser: b
       { key: "branding", label: "Branding & PDF styling", render: () => <div className="space-y-6"><AppearanceSettings companyId={companyId} /><ProfileTab companyId={companyId} part="fonts" /><DocumentSettings companyId={companyId} part="branding" /></div> },
     ] },
     { title: "Commercial & numbering", items: [
+      ...(edition === 'contractor' ? [{ key: 'client-billing', label: 'Client billing', render: () => <ClientBillingSettings companyId={companyId} /> }] : []),
       { key: "estimates", label: "Estimates & suppliers", render: () => <div className="space-y-4">{superuser&&<Button asChild variant="outline"><Link to="/subscription" hash="custom-requests">Request a custom module / template</Link></Button>}<QuoteAcceptanceSetting companyId={companyId} /><EstimateSettings companyId={companyId} /></div> },
       { key: "numbering", label: "Numbering & ID formats", render: () => <div className="space-y-6"><NumberingSettings companyId={companyId} /><IdentifierSettings companyId={companyId}/></div> },
       { key: "terms", label: "Terms & conditions", render: () => <DocumentSettings companyId={companyId} part="terms" /> },
