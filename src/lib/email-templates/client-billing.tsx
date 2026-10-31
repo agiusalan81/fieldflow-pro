@@ -1,0 +1,7 @@
+import { Body, Button, Container, Head, Heading, Html, Preview, Text } from '@react-email/components';
+import type { TemplateEntry } from './registry';
+type Props = { company?: string; name?: string; kind?: string; title?: string; reference?: string; total?: string; due?: string; notice?: string; documentUrl?: string };
+function BillingEmail({ company = 'FieldBridge', name = '', kind = 'Payment request', title = '', reference = '', total = '', due = '', notice = '', documentUrl = '' }: Props) {
+  return <Html><Head /><Preview>{company}: {kind} {reference}</Preview><Body style={{ backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }}><Container style={{ maxWidth: '560px', padding: '24px' }}><Heading>{company}</Heading><Text>Hello {name},</Text><Text>Your <strong>{kind.toLowerCase()} {reference}</strong> for {title} is ready.</Text><Text>Total: {total}<br />Due: {due}</Text>{notice && <Text>{notice}</Text>}<Button href={documentUrl} style={{ backgroundColor: '#14213d', color: '#ffffff', padding: '12px 20px', borderRadius: '6px' }}>View document and download PDF</Button></Container></Body></Html>;
+}
+export const template = { component: BillingEmail, subject: d => `${d['company'] ?? 'FieldBridge'} — ${d['kind'] ?? 'Billing document'} ${d['reference'] ?? ''}`, displayName: 'Client billing document' } satisfies TemplateEntry;
