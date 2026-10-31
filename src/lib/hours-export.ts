@@ -8,7 +8,7 @@ export type HoursExportRow = {
 
 export const HOURS_HEADER = ["Date", "Employee_Name", "Employee_ID", "Shift_Start", "Shift_End", "Break_Minutes", "Total_Worked_Hours", "Standard_Hours", "Overtime_1_5x_Hours", "Overtime_2_0x_Hours", "Jobs_Logged", "Vehicle"];
 
-const cell = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""').replace(/^[=+@-]/, "'")}"`;
+const cell = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""').replace(/^[=+@-]/, "'$&")}"`;
 const time = (s: string | null) => (s ? new Date(s).toTimeString().slice(0, 5) : "");
 
 /** Superseded (corrected) reports are excluded so hours are never counted twice. */
