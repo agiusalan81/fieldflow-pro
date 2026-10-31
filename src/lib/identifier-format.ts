@@ -1,4 +1,4 @@
-export type IdentifierRule = { prefix: string; separator: string; padding: number; pattern_type: string; pattern: string; uppercase: boolean; strict: boolean; use_equipment_prefixes?: boolean; equipment_prefixes?: Record<string, string> };
+export type IdentifierRule = { prefix: string; separator: string; padding: number; pattern_type: string; pattern: string; uppercase: boolean; strict: boolean; use_equipment_prefixes?: boolean; equipment_prefixes?: unknown };
 export const DEFAULT_IDENTIFIER_RULE: IdentifierRule = { prefix: '', separator: '-', padding: 2, pattern_type: 'numeric', pattern: '', uppercase: true, strict: false };
 export function normalizeIdentifier(value: string, rule: IdentifierRule) {
   const clean = value.trim(); return rule.uppercase ? clean.toUpperCase() : clean;
