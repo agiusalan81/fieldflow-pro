@@ -6,7 +6,7 @@ import { ArrowLeft, ChevronDown, Plus, Send, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { useProfile, isManager } from "@/lib/profile";
-import { usePlanFeatures } from "@/lib/plan-features";
+import { usePlanFeatures, useEdition } from "@/lib/plan-features";
 import { formatSiteDisplay } from "@/lib/site-display";
 import { clientEstimateView, parsePricing, pricingTotals, type Pricing, type PricingLine, type RateUnit } from "@/lib/survey-pricing";
 import { AppShell, EmptyState } from "@/components/app-shell";
@@ -18,8 +18,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useCompanyRules } from "@/lib/company";
 import { SuggestedTextarea } from "@/components/suggested-textarea";
-import { ACCESS_SUGGESTIONS, WORKING_WINDOWS, canSubmitSurvey, surveyItemsPending, parseSurveyDetails, surveyReviewerOptions, surveyTradeLabel, type SurveyDetails, type TradeReview } from "@/lib/survey-details";
+import { ACCESS_SUGGESTIONS, WORKING_WINDOWS, canSubmitSurvey, generatedSurveyScope, resolvedSurveyScope, surveyItemsPending, parseSurveyDetails, surveyReviewerOptions, surveyTradeLabel, type SurveyDetails, type TradeReview } from "@/lib/survey-details";
 import { SurveyContacts, SurveyTrades, SurveyObservations, SurveyTradeReview } from "@/components/survey-field-details";
+import { editionLabel } from "@/lib/editions";
 import { ClientSitePicker } from "@/components/client-site-picker";
 
 export const Route = createFileRoute("/_authenticated/surveys")({
@@ -51,12 +52,14 @@ const items = (v: Json): Item[] => (Array.isArray(v) ? (v as unknown as Item[]) 
 function SurveysPage() {
   const { data: profile } = useProfile();
   const on = usePlanFeatures();
+  const { edition } = useEdition();
+  const title = editionLabel(edition, "Site surveys");
   const { survey } = Route.useSearch();
   const navigate = useNavigate();
   const open = (id?: string) => void navigate({ to: "/surveys", search: { survey: id } });
-  if (!profile) return <AppShell title="Site surveys"><p className="text-muted-foreground">Loading…</p></AppShell>;
-  if (!on("site_surveys")) return <AppShell title="Site surveys"><EmptyState>Site surveys are not included in your plan. Ask your administrator to enable it.</EmptyState></AppShell>;
-  return <AppShell title="Site surveys">{survey ? <Editor id={survey} onBack={() => open()} /> : <List onOpen={open} manager={isManager(profile)} superuser={["superuser", "admin"].includes(profile.role)} canCreate={profile.role !== "admin"} lift={on("lift_pack") && isManager(profile)} />}</AppShell>;
+  if (!profile) return <AppShell title={title}><p className="text-muted-foreground">Loading…</p></AppShell>;
+  if (!on("site_surveys")) return <AppShell title={title}><EmptyState>Site surveys are not included in your plan. Ask your administrator to enable it.</EmptyState></AppShell>;
+  return <AppShell title={title}>{survey ? <Editor id={survey} onBack={() => open()} /> : <List onOpen={open} manager={isManager(profile)} superuser={["superuser", "admin"].includes(profile.role)} canCreate={profile.role !== "admin"} lift={on("lift_pack") && isManager(profile)} />}</AppShell>;
 }
 
 function List({ onOpen, manager, superuser, canCreate, lift }: { onOpen: (id: string) => void; manager: boolean; superuser: boolean; canCreate: boolean; lift: boolean }) {
@@ -134,6 +137,7 @@ function Editor({ id, onBack }: { id: string; onBack: () => void }) {
   const qc = useQueryClient();
   const { data: profile } = useProfile();
   const team = useTeam();
+  const on = usePlanFeatures();
   const company = useCompanyRules();
   const q = useQuery({ queryKey: ["site-survey", id], queryFn: async () => { const r = await supabase.from("site_surveys").select("*").eq("id", id).single(); if (r.error) throw r.error; return r.data as unknown as Survey; } });
   const clients = useQuery({ queryKey: ["survey-clients"], queryFn: async () => (await supabase.from("clients").select("id,name").order("name")).data ?? [] });
@@ -167,10 +171,11 @@ function Editor({ id, onBack }: { id: string; onBack: () => void }) {
     return true;
   };
   const submit = async () => {
-    if (!canSubmitSurvey(s, details)) { toast.error("Enter a client, site/location and scope before submitting."); return; }
+    const scopeInput = { ...s, materials: items(s.materials), other_items: items(s.other_items) };
+    if (!canSubmitSurvey(scopeInput, details)) { toast.error("Enter a client and site/location, then describe work in the summary, room findings or items."); return; }
     if (surveyItemsPending(items(s.materials), items(s.other_items), details)) { toast.error("Add the materials & equipment, or tick “Not applicable”. Save as draft to complete them later."); return; }
     if (!office && !reviewer) { toast.error("Select your supervisor before sending the survey."); return; }
-    if (await persist({ status: "submitted" })) toast.success("Survey sent");
+    if (await persist({ status: "submitted", scope_summary: resolvedSurveyScope(scopeInput, details) })) toast.success("Survey sent");
   };
   const remove = async () => { if (!confirm(s.status === "draft" ? "Delete this draft survey? This cannot be undone." : `Delete this ${STATUS[s.status]?.toLowerCase() ?? ""} survey, including its pricing and photos list? This cannot be undone.`)) return; const r = await supabase.from("site_surveys").delete().eq("id", id); if (r.error) toast.error(r.error.message); else { void qc.invalidateQueries({ queryKey: ["site-surveys"] }); onBack(); } };
 
@@ -195,18 +200,18 @@ function Editor({ id, onBack }: { id: string; onBack: () => void }) {
         <div className="space-y-2"><div><Label htmlFor="sv-window">Working window</Label><Input id="sv-window" placeholder="e.g. Weekdays after 18:00" value={s.working_window ?? ""} onChange={(e) => set({ working_window: e.target.value })} /></div>{editable && <div className="flex flex-wrap gap-1">{WORKING_WINDOWS.map(window => <Button key={window} type="button" size="sm" variant="outline" className="h-auto whitespace-normal py-1 text-xs" onClick={() => set({ working_window: window })}>{window}</Button>)}</div>}</div>
       </div>
       <fieldset><legend className="text-sm font-medium">Site hazards</legend><div className="mt-1 grid gap-1 sm:grid-cols-2">{HAZARDS.map((h) => <label key={h} className="flex items-center gap-2 text-sm"><Checkbox checked={s.hazards.includes(h)} onCheckedChange={(v) => set({ hazards: v ? [...s.hazards, h] : s.hazards.filter((x) => x !== h) })} />{h}</label>)}</div></fieldset>
-      <SurveyObservations details={details} onChange={setDetails} disabled={!editable} companyId={profile.company_id} surveyId={id} />
-      <div><Label htmlFor="sv-scope">Scope summary</Label><Textarea id="sv-scope" rows={4} value={s.scope_summary ?? ""} onChange={(e) => set({ scope_summary: e.target.value })} /></div>
+      <SurveyObservations details={details} onChange={setDetails} disabled={!editable} companyId={profile.company_id} surveyId={id} liftPack={on("lift_pack")} />
+      <label className="flex items-center gap-2 text-sm"><Checkbox checked={details.materialsNA === true} onCheckedChange={(v) => setDetails({ ...details, materialsNA: v === true })} />Not applicable — no materials or equipment needed</label>
+      <p className="text-xs text-muted-foreground">No time on site? Save as draft and add the items later.</p>
+      <ItemList label="Materials & equipment needed" trades={details.trades} value={items(s.materials)} onChange={(v) => set({ materials: v as unknown as Json })} />
+      <ItemList label="Other materials / equipment" trades={details.trades} value={items(s.other_items)} onChange={(v) => set({ other_items: v as unknown as Json })} />
+      <div><div className="flex flex-wrap items-center justify-between gap-2"><Label htmlFor="sv-scope">Scope summary (optional)</Label>{editable && <Button type="button" size="sm" variant="outline" disabled={!generatedSurveyScope(details, items(s.materials), items(s.other_items))} onClick={() => set({ scope_summary: generatedSurveyScope(details, items(s.materials), items(s.other_items)) })}>Auto-fill from notes &amp; items</Button>}</div><Textarea id="sv-scope" rows={4} placeholder={generatedSurveyScope(details, items(s.materials), items(s.other_items)) || "Work summary"} value={s.scope_summary ?? ""} onChange={(e) => set({ scope_summary: e.target.value })} /></div>
       <div className="grid gap-3 sm:grid-cols-3">
         <div><Label htmlFor="sv-rec">Recommended action</Label><Input id="sv-rec" value={s.recommended_action ?? ""} onChange={(e) => set({ recommended_action: e.target.value })} /></div>
         <div><Label htmlFor="sv-hours">Estimated labour hours</Label><Input id="sv-hours" inputMode="decimal" value={s.labour_hours ?? ""} onChange={(e) => set({ labour_hours: e.target.value === "" ? null : Number(e.target.value) })} /></div>
         <div><Label htmlFor="sv-techs">Technicians needed</Label><Input id="sv-techs" inputMode="numeric" value={s.technicians ?? ""} onChange={(e) => set({ technicians: e.target.value === "" ? null : Number(e.target.value) })} /></div>
         <div><Label htmlFor="sv-urg">Urgency</Label><select id="sv-urg" className={sel} value={s.urgency} onChange={(e) => set({ urgency: e.target.value })}><option value="routine">Routine</option><option value="soon">Within 2 weeks</option><option value="urgent">Urgent</option></select></div>
       </div>
-      <label className="flex items-center gap-2 text-sm"><Checkbox checked={details.materialsNA === true} onCheckedChange={(v) => setDetails({ ...details, materialsNA: v === true })} />Not applicable — no materials or equipment needed</label>
-      <p className="text-xs text-muted-foreground">No time on site? Save as draft and add the items later.</p>
-      <ItemList label="Materials & equipment needed" trades={details.trades} value={items(s.materials)} onChange={(v) => set({ materials: v as unknown as Json })} />
-      <ItemList label="Other materials / equipment" trades={details.trades} value={items(s.other_items)} onChange={(v) => set({ other_items: v as unknown as Json })} />
     </fieldset>
     {(editable || office) && <div className="flex flex-wrap items-end gap-2">
       <div className="w-72"><Label htmlFor="sv-rev">Reviewer</Label><select id="sv-rev" className={sel} value={reviewer ?? ""} onChange={(e) => office && s.status !== "draft" ? void persist({ reviewer_id: e.target.value || null }) : set({ reviewer_id: e.target.value || null })}><option value="">{office ? "Company default" : "Choose supervisor…"}</option>{reviewers.map((m) => <option key={m.id} value={m.id}>{m.name} · {roleLabel[m.role]}</option>)}</select></div>

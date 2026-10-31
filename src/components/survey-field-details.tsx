@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { isLiftTrade } from '@/lib/trade-association';
-import { CreatableCombobox } from '@/components/creatable-combobox';
 
 const selectClass = "h-10 w-full rounded-md border bg-background px-3 text-foreground";
 
