@@ -52,20 +52,20 @@ export function PpmCoverage({
     },
   });
   const opts = useQuery({
-    queryKey: ["ppm-options", clientId],
+    queryKey: ["ppm-options", clientId, agreementId],
     enabled: open,
     queryFn: async () => {
-      const [a, u] = await Promise.all([
+      const [a, agreement] = await Promise.all([
         supabase
           .from("assets")
           .select("id,reference_number,site_id,sites(name)")
           .eq("client_id", clientId)
           .order("reference_number"),
-        supabase.from("users").select("id,full_name").in("role", ["technician", "supervisor"]),
+        supabase.from('maintenance_agreements').select('status,site_id').eq('id',agreementId).single(),
       ]);
       if (a.error) throw a.error;
-      if (u.error) throw u.error;
-      return { assets: a.data, users: u.data };
+      if (agreement.error) throw agreement.error;
+      return { assets: a.data.filter(asset => !agreement.data.site_id || asset.site_id === agreement.data.site_id), active: agreement.data.status === 'active' };
     },
   });
   const refresh = () =>
@@ -187,6 +187,7 @@ export function PpmCoverage({
           </ul>
           {canManage && (
             <div className="grid gap-4 border-t pt-4 sm:grid-cols-2">
+              {opts.data && !opts.data.active && <p role="status" className="text-sm text-muted-foreground sm:col-span-2">Activate this agreement before scheduling maintenance visits.</p>}
               <div className="space-y-2 sm:col-span-2">
                 <Label>Equipment</Label>
                 <Select value={asset} onValueChange={setAsset}>
@@ -268,6 +269,7 @@ export function PpmCoverage({
                 <Button
                   disabled={
                     busy ||
+                    !opts.data?.active ||
                     !asset ||
                     first < start ||
                     first > end ||
