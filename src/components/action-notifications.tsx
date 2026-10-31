@@ -80,7 +80,7 @@ export function useActionQueues() {
     const [incoming,approval,leave,problems,responses,cats]=await Promise.all([
       standby?supabase.from('standby_swaps').select('id').eq('target_id',p.id).eq('status','pending').or(`snoozed_until.is.null,snoozed_until.lte.${new Date().toISOString()}`):empty,
       standby&&manager?supabase.from('standby_swaps').select('id').eq('status','accepted').eq('manager_approved',false):empty,
-      leaveOn?supabase.from('leave_requests').select('id').eq('status','pending'):empty,
+      leaveOn?supabase.rpc('pending_leave_review_ids').then(r=>({data:r.data?.map(id=>({id}))??[],error:r.error})):empty,
       problemsOn?supabase.from('equipment_problem_reports').select('id,asset_id,problem').eq('status','open').order('created_at',{ascending:false}).limit(10):Promise.resolve({data:[],error:null}),
       empty,
       catsOn?supabase.from('expense_categories').select('id,name').eq('status','pending').limit(20):zero,

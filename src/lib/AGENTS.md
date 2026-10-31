@@ -1,4 +1,7 @@
 # Integration rules
+- Workspace conversations are append-only, record-authorized, tenant-bound and recipient-alerted; operational replies are captured transactionally to retain history.
+- Scheduled travel uses the Malta calendar day in both client checks and a database trigger; incentive defaults apply to claimable jobs unless the company opts into all jobs, preserving override provenance.
+- Chat selection follows the thread URL so notification links switch conversations and Back returns to the list.
 - Seat capacity derives from the selected edition's plan or larger HQ-licensed allowance; active staff and live invitation reservations share a company lock. Trial/legacy/custom access and existing over-limit members remain intact; storage uses the same product-scoped subscription.
 - Preventive maintenance reuses agreement-bound plans and immutable generated jobs across editions; shared status filters and pagination never change cadence, deadlines, or signed history.
 - Field-device setup gates real field users independently of paid tracking access; actual GPS consent plus registered push precede clock-in. Recovery never blocks clock-out or test return; GPS writes retain existing shift/plan/vehicle rules.
