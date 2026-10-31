@@ -744,6 +744,50 @@ export type Database = {
           },
         ]
       }
+      company_identifier_rules: {
+        Row: {
+          company_id: string
+          kind: string
+          padding: number
+          pattern: string
+          pattern_type: string
+          prefix: string
+          separator: string
+          strict: boolean
+          uppercase: boolean
+        }
+        Insert: {
+          company_id: string
+          kind: string
+          padding?: number
+          pattern?: string
+          pattern_type?: string
+          prefix?: string
+          separator?: string
+          strict?: boolean
+          uppercase?: boolean
+        }
+        Update: {
+          company_id?: string
+          kind?: string
+          padding?: number
+          pattern?: string
+          pattern_type?: string
+          prefix?: string
+          separator?: string
+          strict?: boolean
+          uppercase?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_identifier_rules_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_invites: {
         Row: {
           company_id: string
@@ -4544,6 +4588,44 @@ export type Database = {
           },
         ]
       }
+      operating_service_catalog: {
+        Row: {
+          approved: boolean
+          category: string
+          company_id: string | null
+          created_at: string
+          created_by: string
+          id: string
+          service: string
+        }
+        Insert: {
+          approved?: boolean
+          category: string
+          company_id?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          service: string
+        }
+        Update: {
+          approved?: boolean
+          category?: string
+          company_id?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          service?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operating_service_catalog_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       overtime_logs: {
         Row: {
           call_type: string
@@ -7219,6 +7301,13 @@ export type Database = {
         }[]
       }
       chat_sheet_access: { Args: { _sheet: string }; Returns: boolean }
+      check_identifier_rule: {
+        Args: {
+          _rule: Database["public"]["Tables"]["company_identifier_rules"]["Row"]
+          _value: string
+        }
+        Returns: boolean
+      }
       claim_open_job: { Args: { _job: string }; Returns: string }
       client_contract_coverage: { Args: { _client: string }; Returns: Json }
       client_message_recipients: {
@@ -7378,6 +7467,10 @@ export type Database = {
           _seats: number
           _subscription: string
         }
+        Returns: undefined
+      }
+      hq_promote_operating_service: {
+        Args: { _id: string }
         Returns: undefined
       }
       hq_save_setup_options: {

@@ -1345,6 +1345,13 @@
       "when": 1793341980124,
       "tag": "0191_product_appearances",
       "breakpoints": true
+    },
+    {
+      "idx": 192,
+      "version": "7",
+      "when": 1793425432849,
+      "tag": "0192_company_identifier_rules_and_trade_catalog",
+      "breakpoints": true
     }
   ]
 }
