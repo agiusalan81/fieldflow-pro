@@ -7,10 +7,11 @@ vi.mock('@/lib/field-device', async original => ({...await original<typeof impor
 vi.mock('@/components/shift-sign-out', () => ({ ShiftSignOut:()=>null }));
 vi.mock('@/components/test-session-switch', () => ({ ReturnToSuperuserBanner:()=>null }));
 import { DevicePermissions } from './device-permissions';
+import { dismissSetup } from '@/lib/device-setup';
 beforeEach(() => {state.role='technician';state.push='needs-permission';state.gps='prompt';vi.stubGlobal('Notification',{permission:'default',requestPermission:async()=>{state.push='registered';return 'granted';}});});
-afterEach(()=>{cleanup();vi.unstubAllGlobals();});
+afterEach(()=>{cleanup();vi.unstubAllGlobals();localStorage.clear();});
 it('withholds field work despite a previous setup dismissal until both requirements are met', async()=>{
-  localStorage.setItem('fieldops:device-setup:field-1','yes');
+  dismissSetup('field-1');
   render(<DevicePermissions><div>Field workspace</div></DevicePermissions>);
   await screen.findByRole('dialog');
   expect(screen.queryByText('Field workspace')).toBeNull();
@@ -27,5 +28,5 @@ it('does not accept an unsupported notification device for field work', async()=
 it('office-only staff are not blocked by field requirements', async()=>{
   state.role='admin';
   render(<DevicePermissions><div>Office workspace</div></DevicePermissions>);
-  expect(screen.getByText('Office workspace')).toBeTruthy();
+  await waitFor(()=>expect(screen.getByText('Office workspace')).toBeTruthy());
 });
