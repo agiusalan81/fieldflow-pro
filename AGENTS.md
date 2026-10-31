@@ -83,7 +83,6 @@
 - Shift sessions: shared sign-out checks own open shift/standby and fails closed; inactivity keeps active/test sessions, test return bypasses logout; retain shift workflow without weakening auth.
 - Inventory: tool/parts modes enforced by tool_sign_* RPCs + guard_inventory_stock, mirrored in inventory-control.ts; DB-enforced.
 - Appearance: HQ per-edition product_appearances → hex-validated edition-scoped CSS; safe no-code styling.
-- Credits: platform-credit.ts.
+- Read src/lib/AGENTS.md before library edits; credits: platform-credit.ts.
 
-- Tours yield; prompts are sequential.
-- QR: tap-load, RLS reads, no arbitrary redirects.
+- Tours yield to prompts; QR tap-load uses RLS, no redirects.
