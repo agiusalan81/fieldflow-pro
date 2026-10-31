@@ -8,6 +8,8 @@ import { Bell, MessageSquare, CalendarClock, CalendarDays, AlertTriangle } from 
 import { supabase } from '@/integrations/supabase/client';
 import { useProfile, isManager, isOffice } from '@/lib/profile';
 import { usePlanFeatures } from '@/lib/plan-features';
+import { useEdition } from '@/lib/plan-features';
+import { useFinanceDue } from '@/lib/finance-queues';
 import { useCan } from '@/lib/permissions';
 import { useUnreadChatTotal, useChatReads, unreadByThread, type ChatMsg } from '@/lib/chat-unread';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
@@ -58,6 +60,7 @@ export function useActionQueues() {
   const plan=usePlanFeatures(!!p),lock=useNavLock(!!p),can=useCan(p);
   const on=(key:string)=>plan(key)&&!lock(key).locked;
   const core=on('core'),standby=on('standby');
+  const {edition}=useEdition(!!p);const finance=useFinanceDue(!!p&&isOffice(p)&&edition==='contractor'&&core);
   const threads=useUnreadThreads(core?p?.id:undefined);
   const manager=!!p&&isManager(p);
   const catsOn=!!p&&on('receipts')&&['admin','superuser','supervisor'].includes(p.role),leaveOn=core&&can('leave_approvals'),problemsOn=core&&manager&&can('pending_works');
@@ -85,8 +88,8 @@ export function useActionQueues() {
   const openJobs=useOpenJobs().alerting;
   const chat=threads.reduce((a,t)=>a+t.n,0);
   const problems=data?.problems??[];
-  const count=openJobs.length+passports.length+crm.length+decided.length+surveys.length+chat+(data?.incoming.length??0)+(data?.approval.length??0)+(data?.leave.length??0)+(data?.responses.length??0)+problems.length+(data?.categories.length??0);
-  return { openJobs, passports, threads, crm, decided, surveys, problems, data, count, chat };
+  const count=finance.length+openJobs.length+passports.length+crm.length+decided.length+surveys.length+chat+(data?.incoming.length??0)+(data?.approval.length??0)+(data?.leave.length??0)+(data?.responses.length??0)+problems.length+(data?.categories.length??0);
+  return { finance, openJobs, passports, threads, crm, decided, surveys, problems, data, count, chat };
 }
 
 export function QueueBadge({ path }: { path: string }) {
@@ -112,10 +115,10 @@ export function QueueBadge({ path }: { path: string }) {
 }
 
 export function ActionNotifications() {
-  const { openJobs, passports, threads, crm, decided, surveys, problems, data, count } = useActionQueues();
+  const { finance, openJobs, passports, threads, crm, decided, surveys, problems, data, count } = useActionQueues();
   const [open, setOpen] = useState(false);
   const approvalCount = passports.length+(data?.incoming.length ?? 0) + (data?.approval.length ?? 0) + (data?.leave.length ?? 0) + (data?.responses.length ?? 0) + (data?.categories.length ?? 0);
-  const commercialCount = crm.length + decided.length;
+  const commercialCount = finance.length + crm.length + decided.length;
   const fieldCount = openJobs.length + problems.length + surveys.length + threads.reduce((n, t) => n + t.n, 0);
   const item="h-auto w-full justify-start whitespace-normal py-3 [&_span]:whitespace-normal [&_span]:break-words [&_span]:text-wrap";
   const empty = <p className="py-6 text-sm text-muted-foreground">Nothing awaiting your attention here.</p>;
@@ -134,6 +137,7 @@ export function ActionNotifications() {
           {data?.responses.map(r=><Button key={r.id} asChild variant="outline" className={item}><Link to="/admin/leave" search={{request:r.id}}><Row icon={CalendarDays}>Supervisor replied — review leave</Row></Link></Button>)}
         </TabsContent>
         <TabsContent value="commercial" className="space-y-2 pt-3">{!commercialCount && empty}
+          {finance.map(f=><Button key={`${f.target.id}-${f.key}`} asChild variant="outline" className={item}>{f.target.type==='quote'?<Link to="/estimates" search={{quote:f.target.id}}><Row icon={CalendarClock}>{f.label} · {f.target.reference}</Row></Link>:<Link to="/client-billing" search={{document:f.target.id}}><Row icon={CalendarClock}>{f.label} · {f.target.reference}</Row></Link>}</Button>)}
           {crm.map(f=><Button key={f.id} asChild variant="outline" className={item}><Link to="/crm" search={{lead:f.opportunity_id}}><Row icon={CalendarClock}>{new Date(f.due_at)<new Date()?'Overdue':'Due today'}: {f.action_label}</Row></Link></Button>)}
           {decided.map(v=><Button key={v.id} asChild variant="outline" className={item}><Link to="/estimates" search={{quote:v.id}}><Row icon={AlertTriangle}>{v.status === 'awaiting_confirmation' ? `Awaiting client confirmation · ${v.reference}` : `Client ${v.status} quote ${v.reference}`}</Row></Link></Button>)}
         </TabsContent>
