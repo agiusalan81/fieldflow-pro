@@ -1,3 +1,4 @@
+import { ReportPhoto } from "@/components/qr-report-photo";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +24,7 @@ export function StoreProblemQueue() {
       <p className="font-medium">{r.sites?.name} · {r.category} · {r.location}</p>
       <p className="text-xs text-muted-foreground">{r.reporter_type === "visitor" ? "Customer / visitor" : "Store staff"}{r.reporter_name ? ` · ${r.reporter_name}` : ""} · {new Date(r.created_at ?? "").toLocaleString()}</p>
       <p className="my-3 whitespace-pre-wrap text-sm">{r.problem}</p>
+      <ReportPhoto reportId={r.id} kind="store"/>
       <Button variant="outline" size="sm" onClick={() => void close(r.id)}>Close report</Button>
     </li>)}</ul>
   </section>;

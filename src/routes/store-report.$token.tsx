@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { QrReportPhoto } from "@/components/qr-report-photo";
+import { submitPhotoReport } from "@/lib/qr-report-photo.functions";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -32,6 +34,7 @@ function StoreReport() {
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
+  const [photo,setPhoto]=useState("");
   const target = useQuery({ queryKey: ["store-report-target", token], enabled: valid, retry: false, queryFn: async () => {
     const r = await supabase.rpc("get_store_report_target", { _token: token });
     if (r.error) throw r.error;
@@ -40,11 +43,14 @@ function StoreReport() {
   } });
   const send = async () => {
     if (busy || !category || !target.data) return; setBusy(true); setError("");
-    const r = await supabase.rpc("submit_store_problem", { _token: token, _reporter_type: "visitor", _name: f.name.trim(), _category: category, _location: f.location.trim() || target.data.store, _problem: composeProblem({ category, symptom, note: f.note }) });
-    setBusy(false);
-    if (r.error) setError(r.error.message); else setDone(true);
+    try {
+      const fields={reporter_type:"visitor",name:f.name.trim(),category,location:f.location.trim()||target.data.store,problem:composeProblem({category,symptom,note:f.note})};
+      if(photo){const result=await submitPhotoReport({data:{token,kind:"store",photo,fields}});if("error" in result)throw new Error(result.error);}
+      else{const r=await supabase.rpc("submit_store_problem",{_token:token,_reporter_type:fields.reporter_type,_name:fields.name,_category:category,_location:fields.location,_problem:fields.problem});if(r.error)throw new Error(r.error.message);}
+      setDone(true);
+    }catch(e){setError(e instanceof Error?e.message:"Report could not be sent. Please try again.");}finally{setBusy(false);}
   };
-  const reset = () => { setDone(false); setCategory(""); setSymptom(""); setMore(false); setF({ ...f, location: "", note: "" }); };
+  const reset = () => { setPhoto(""); setDone(false); setCategory(""); setSymptom(""); setMore(false); setF({ ...f, location: "", note: "" }); };
   const symptoms = STORE_SYMPTOMS[category] ?? [];
   return <main className="mx-auto max-w-lg px-5 py-8">
     <h1 className="mb-1 text-2xl font-semibold">Report a problem</h1>
@@ -63,6 +69,7 @@ function StoreReport() {
           <div><Label htmlFor="sr-problem">Note (optional)</Label><Textarea id="sr-problem" maxLength={1500} rows={3} value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} /></div>
           <div><Label htmlFor="sr-name">Your name (optional)</Label><Input id="sr-name" className="h-11" maxLength={100} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
         </div>}
+        <QrReportPhoto value={photo} onChange={setPhoto} disabled={busy}/>
         <p className="text-xs text-muted-foreground">For emergencies, tell a member of staff straight away.</p>
         {error && <p role="alert" className="text-destructive">{error}</p>}
         <Button className="h-12 w-full" disabled={busy || !category} onClick={send}>{busy ? "Sending…" : "Send report"}</Button>
