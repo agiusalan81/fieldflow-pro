@@ -2419,6 +2419,7 @@ export type Database = {
       equipment_problem_reports: {
         Row: {
           asset_id: string
+          closed_at: string | null
           company_id: string
           created_at: string | null
           first_name: string
@@ -2430,6 +2431,7 @@ export type Database = {
         }
         Insert: {
           asset_id: string
+          closed_at?: string | null
           company_id: string
           created_at?: string | null
           first_name: string
@@ -2441,6 +2443,7 @@ export type Database = {
         }
         Update: {
           asset_id?: string
+          closed_at?: string | null
           company_id?: string
           created_at?: string | null
           first_name?: string
@@ -6453,6 +6456,50 @@ export type Database = {
         }
         Relationships: []
       }
+      qr_report_photos: {
+        Row: {
+          company_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          kind: string
+          link_id: string
+          object_path: string
+          report_id: string | null
+          token_hash: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          kind: string
+          link_id: string
+          object_path: string
+          report_id?: string | null
+          token_hash: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          kind?: string
+          link_id?: string
+          object_path?: string
+          report_id?: string | null
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_report_photos_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qs_surveys: {
         Row: {
           closed_at: string | null
@@ -7024,6 +7071,7 @@ export type Database = {
       store_problem_reports: {
         Row: {
           category: string
+          closed_at: string | null
           company_id: string
           created_at: string | null
           id: string
@@ -7036,6 +7084,7 @@ export type Database = {
         }
         Insert: {
           category: string
+          closed_at?: string | null
           company_id: string
           created_at?: string | null
           id?: string
@@ -7048,6 +7097,7 @@ export type Database = {
         }
         Update: {
           category?: string
+          closed_at?: string | null
           company_id?: string
           created_at?: string | null
           id?: string
@@ -8018,6 +8068,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      reserve_qr_photo: {
+        Args: { _kind: string; _token: string }
+        Returns: Json
+      }
       review_passport_handover: {
         Args: { _approve: boolean; _id: string }
         Returns: undefined
@@ -8251,6 +8305,10 @@ export type Database = {
       submit_platform_feedback: {
         Args: { _category: string; _message: string; _rating: number }
         Returns: string
+      }
+      submit_qr_photo_report: {
+        Args: { _fields: Json; _grant: string; _kind: string; _token: string }
+        Returns: undefined
       }
       submit_store_problem: {
         Args: {

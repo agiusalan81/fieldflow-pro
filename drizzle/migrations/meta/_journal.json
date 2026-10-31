@@ -1436,6 +1436,13 @@
       "when": 1793449770554,
       "tag": "0204_tenant_capacity_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 205,
+      "version": "7",
+      "when": 1793452224838,
+      "tag": "0205_qr_private_photo_evidence_and_closure_audit",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
+import { QrReportPhoto } from '@/components/qr-report-photo';
+import { submitPhotoReport } from '@/lib/qr-report-photo.functions';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -16,6 +18,7 @@ function ProblemForm() {
  const [busy, setBusy] = useState(false);
  const [done, setDone] = useState(false);
  const [error, setError] = useState('');
+ const [photo,setPhoto]=useState('');
  const valid = /^[a-f0-9]{64}$/.test(token);
  const target = useQuery({ queryKey: ['equipment-report-target', token], enabled: valid, retry: false, queryFn: async () => {
    const result = await supabase.rpc('get_equipment_report_target', { _token: token });
@@ -34,9 +37,12 @@ function ProblemForm() {
    setBusy(true); setError('');
    try {
      const who = reporterFields(f.name);
-     const result = await supabase.rpc('submit_equipment_problem', { _token: token, _first: who.first, _last: who.last, _position: who.position, _problem: composeProblem({ category: target.data.category, symptom, note: f.note }) });
-     if (result.error) setError(result.error.message); else setDone(true);
-   } catch { setError('Report could not be sent. Please try again.'); }
+     const problem=composeProblem({ category: target.data.category, symptom, note: f.note });
+     if(photo){const result=await submitPhotoReport({data:{token,kind:'equipment',photo,fields:{...who,problem}}});if('error' in result)throw new Error(result.error);}else{
+       const result = await supabase.rpc('submit_equipment_problem', { _token: token, _first: who.first, _last: who.last, _position: who.position, _problem: problem });
+       if(result.error)throw new Error(result.error.message);
+     } setDone(true);
+   } catch(e) { setError(e instanceof Error?e.message:'Report could not be sent. Please try again.'); }
    finally { setBusy(false); }
  };
  return <main className="mx-auto max-w-lg px-5 py-10">
@@ -54,6 +60,7 @@ function ProblemForm() {
        <div><Label htmlFor="report-problem">Note (optional)</Label><Textarea id="report-problem" maxLength={1500} rows={3} value={f.note} onChange={e => setF({ ...f, note: e.target.value })}/></div>
        <div><Label htmlFor="report-name">Your name (optional)</Label><Input id="report-name" maxLength={100} value={f.name} onChange={e => setF({ ...f, name: e.target.value })}/></div>
      </div>}
+     <QrReportPhoto value={photo} onChange={setPhoto} disabled={busy}/>
      <p className="text-xs text-muted-foreground">For emergencies or trapped passengers, use the emergency contact displayed on the equipment. This form is not an emergency service.</p>
      {error && <p role="alert" className="text-destructive">{error}</p>}<Button className="h-12 w-full" disabled={busy || !symptom}>{busy ? 'Sending…' : 'Send report'}</Button>
    </form>}
