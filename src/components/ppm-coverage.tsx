@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PPM_CADENCES, ppmDates } from "@/lib/ppm";
+import { useCompanyUsers } from '@/lib/profile';
 export function PpmCoverage({
   agreementId,
   clientId,
@@ -30,6 +31,7 @@ export function PpmCoverage({
   canManage: boolean;
 }) {
   const qc = useQueryClient();
+  const companyUsers = useCompanyUsers();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [asset, setAsset] = useState("");
@@ -110,6 +112,7 @@ export function PpmCoverage({
           ? await supabase.rpc("generate_ppm_visits", { _plan: id })
           : await supabase.from("ppm_plans").update({ active }).eq("id", id);
       if (r.error) throw r.error;
+      if (active === true) { const generated = await supabase.rpc('generate_ppm_visits', { _plan: id }); if (generated.error) throw generated.error; }
       await refresh();
       toast.success(
         active === false
@@ -247,7 +250,7 @@ export function PpmCoverage({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Unassigned</SelectItem>
-                    {opts.data?.users.map((u) => (
+                    {companyUsers.data?.filter(u => u.registration_status === 'active' && ['technician','supervisor','maintenance'].includes(u.role)).map((u) => (
                       <SelectItem key={u.id} value={u.id}>
                         {u.full_name}
                       </SelectItem>
@@ -278,6 +281,7 @@ export function PpmCoverage({
                   {busy ? "Saving…" : "Save & schedule visits"}
                 </Button>
               </div>
+              {first && first >= start && first <= end && <ol aria-label="Maintenance schedule preview" className="max-h-40 overflow-y-auto border-t pt-3 text-sm sm:col-span-2">{ppmDates(first, end, Number(months)).map(date => <li key={date} className="py-1">{date}</li>)}</ol>}
             </div>
           )}
         </DialogContent>

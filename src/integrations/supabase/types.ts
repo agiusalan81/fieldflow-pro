@@ -7633,6 +7633,8 @@ export type Database = {
         Returns: boolean
       }
       company_product_id: { Args: { _company: string }; Returns: string }
+      company_seat_limit: { Args: { _company: string }; Returns: number }
+      company_seat_usage: { Args: { _company: string }; Returns: Json }
       company_storage_usage: { Args: { _company: string }; Returns: Json }
       convert_client_billing: { Args: { _id: string }; Returns: string }
       create_client_billing_link: { Args: { _id: string }; Returns: string }

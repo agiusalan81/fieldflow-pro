@@ -1429,6 +1429,13 @@
       "when": 1793445552087,
       "tag": "0203_finance_followups_and_atomic_csv_import",
       "breakpoints": true
+    },
+    {
+      "idx": 204,
+      "version": "7",
+      "when": 1793449770554,
+      "tag": "0204_tenant_capacity_guards",
+      "breakpoints": true
     }
   ]
 }

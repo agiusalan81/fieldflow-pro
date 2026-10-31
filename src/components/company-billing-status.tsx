@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { isLapsed, isOverdue, isPayable, storageLevel } from "@/lib/saas-billing";
 import { Progress } from "@/components/ui/progress";
+import { CompanySeatStatus } from '@/components/company-seat-status';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
@@ -30,6 +31,7 @@ export function CompanyBillingStatus({ companyId, money }: { companyId: string; 
   const today = new Date().toISOString().slice(0, 10);
   const lapsed = data.invoices.some((i) => isLapsed(i, today));
   return <>
+    <CompanySeatStatus companyId={companyId} />
     {lapsed && <section className="border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">An invoice is more than 14 days overdue, so your workspace is read-only. Records and exports are still available. Editing comes back as soon as the invoice is paid.</section>}
     <section className="space-y-2 border-t pt-6"><h2 className="text-lg font-semibold">Storage</h2>
       <Progress value={Math.min(100, lv.pct)} aria-label="Storage used" />
