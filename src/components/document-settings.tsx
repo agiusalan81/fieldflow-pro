@@ -87,6 +87,8 @@ export function DocumentSettings({ companyId, part }: { companyId: string; part:
     qc.invalidateQueries({ queryKey: ["doc-settings"] });
     qc.invalidateQueries({ queryKey: ["company-settings"] });
     qc.invalidateQueries({ queryKey: ["note-presets"] });
+    qc.invalidateQueries({ queryKey: ["billing-company-terms"] });
+    qc.invalidateQueries({ queryKey: ["branding-financial-defaults"] });
   };
   const toggle = (k: PdfTemplate["order"][number]) => setT({ ...t, hidden: t.hidden.includes(k) ? t.hidden.filter((x) => x !== k) : [...t.hidden, k] });
 
@@ -122,8 +124,8 @@ export function DocumentSettings({ companyId, part }: { companyId: string; part:
   return (
     <div className="space-y-4">
       {part === "branding" && <>
-      <MobileDocumentPreview template={resolved ? { ...t, fontData: resolved.fontData, backgroundData: resolved.backgroundData } : t} logo={data?.logo_data ?? ""} />
-      <BrandControls companyId={companyId} template={resolved ? { ...t, fontData: resolved.fontData, backgroundData: resolved.backgroundData } : t} onChange={value => { const { fontData: _f, backgroundData: _b, ...stored } = value; setT(stored); }} logo={data?.logo_data ?? ""} />
+      <MobileDocumentPreview template={resolved ? { ...t, fontData: resolved.fontData, backgroundData: resolved.backgroundData, customFonts: resolved.customFonts ?? [] } : t} logo={data?.logo_data ?? ""} />
+      <BrandControls companyId={companyId} template={resolved ? { ...t, fontData: resolved.fontData, backgroundData: resolved.backgroundData, customFonts: resolved.customFonts ?? [] } : t} onChange={value => { const { fontData: _f, backgroundData: _b, ...stored } = value; setT({ ...stored, customFonts: stored.customFonts?.map(({ data: _data, ...f }) => f) ?? [] }); }} logo={data?.logo_data ?? ""} />
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="space-y-4 rounded-xl border bg-card p-5">
           <div><h2 className="font-medium text-foreground">Job sheet PDF layout</h2><p className="text-sm text-muted-foreground">Drag sections to reorder. Switch off anything you don't want clients to see.</p></div>
@@ -149,7 +151,7 @@ export function DocumentSettings({ companyId, part }: { companyId: string; part:
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Live preview — what the client receives</p>
             <Button size="sm" variant="outline" onClick={downloadSample}><Download className="mr-1 h-3.5 w-3.5" />Sample PDF</Button>
           </div>
-          <DocumentPreview template={resolved ? { ...t, fontData: resolved.fontData, backgroundData: resolved.backgroundData } : t} logo={data?.logo_data ?? ""} />
+          <DocumentPreview template={resolved ? { ...t, fontData: resolved.fontData, backgroundData: resolved.backgroundData, customFonts: resolved.customFonts ?? [] } : t} logo={data?.logo_data ?? ""} />
           <p className="mt-2 text-xs text-muted-foreground">Sample data shown. Download the sample PDF to see the exact file the client receives by email.</p>
         </section>
       </div>
