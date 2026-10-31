@@ -1,93 +1,99 @@
-import { useEffect, useState } from "react";
-import { Bell, MapPin } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { pushSupported, registerPush, type PushStatus } from "@/lib/web-push";
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
+import { Bell, MapPin, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { pushSupported, registerPush, type PushStatus } from '@/lib/web-push';
 import { boundedPermission, permissionSequence } from '@/lib/permission-sequence';
-import { useProfile } from "@/lib/profile";
+import { useProfile } from '@/lib/profile';
 import { isMobileDevice } from '@/lib/testing-rules';
-import { usePlanFeatures } from '@/lib/plan-features';
 import { dismissSetup, setupDismissed } from '@/lib/device-setup';
+import { confirmFieldLocation, fieldDeviceReady, readLocationPermission, requiresFieldDevice, type GeoStatus } from '@/lib/field-device';
+import { ShiftSignOut } from '@/components/shift-sign-out';
+import { ReturnToSuperuserBanner } from '@/components/test-session-switch';
+const RecoveryShift = lazy(() => import('@/routes/_authenticated/dashboard').then(m => ({ default: m.ShiftTracker })));
 
-type Geo = "granted" | "denied" | "prompt" | "unsupported";
-async function geoState(): Promise<Geo> {
-  if (!("geolocation" in navigator)) return "unsupported";
-  try { return (await navigator.permissions.query({ name: "geolocation" })).state as Geo; } catch { return "prompt"; }
-}
-
-/** Bundled first-run permission setup: notifications for everyone, location for field staff. */
-export function DevicePermissions() {
-  const { data: profile } = useProfile();
-  const on = usePlanFeatures(!!profile);
+/** Field setup cannot be dismissed; office setup remains optional. No shift is started here. */
+export function DevicePermissions({ children }: { children: ReactNode }) {
+  const { data: profile, isLoading, error } = useProfile();
+  const field = requiresFieldDevice(profile?.real_role, profile?.can_field_dispatch);
   const [mobile, setMobile] = useState(false);
-  const field = on('tracking') && !!profile && ['technician','supervisor','maintenance'].includes(profile.real_role);
   const [push, setPush] = useState<PushStatus | null>(null);
-  const [geo, setGeo] = useState<Geo | null>(null);
+  const [geo, setGeo] = useState<GeoStatus | null>(null);
   const [busy, setBusy] = useState(false);
   const [later, setLater] = useState(false);
-  const check = async () => { setBusy(true); try { const [p, g] = await Promise.all([boundedPermission(registerPush), boundedPermission(geoState)]); setPush(p ?? 'error'); setGeo(g ?? 'prompt'); } finally { setBusy(false); } };
+  const [recovery, setRecovery] = useState(false);
   useEffect(() => {
     let active = true;
-    const phone = isMobileDevice(navigator.userAgent) && (navigator.maxTouchPoints ?? 0) > 0;
-    setMobile(phone); setPush(null); setGeo(null);
-    if (!phone || !profile) return;
+    setMobile(isMobileDevice(navigator.userAgent) && navigator.maxTouchPoints > 0);
+    setPush(null); setGeo(null); setRecovery(false);
+    if (!profile) return;
     setLater(setupDismissed(profile.id));
-    const refresh = async () => { const [p, g] = await Promise.all([boundedPermission(registerPush), boundedPermission(geoState)]); if (active) { setPush(p ?? 'error'); setGeo(g ?? 'prompt'); } };
+    const refresh = async () => {
+      const [p, permission] = await Promise.all([boundedPermission(registerPush, 25000), readLocationPermission()]);
+      // A granted permission is not a GPS fix. Refresh an existing grant without opening a browser prompt.
+      const g = field && permission === 'granted' ? await confirmFieldLocation(profile.id) : permission;
+      if (active) { setPush(p ?? 'error'); setGeo(g); }
+    };
     const visible = () => { if (document.visibilityState === 'visible') void refresh(); };
-    void refresh(); window.addEventListener('focus', visible); document.addEventListener('visibilitychange', visible);
-    return () => { active = false; window.removeEventListener('focus', visible); document.removeEventListener('visibilitychange', visible); };
-  }, [profile?.id]);
-  if (!mobile || !profile || push === null || geo === null) return null;
-  const pushOk = push === "registered" || push === "unsupported";
-  const geoOk = !field || geo === "granted" || geo === "unsupported";
-  const blocked = push === "blocked" || (field && geo === "denied");
-  const open = !later && !(pushOk && geoOk);
-
-  // Notifications start in the tap; location waits until that browser prompt finishes.
+    void refresh();
+    window.addEventListener('focus', visible); document.addEventListener('visibilitychange', visible);
+    const timer = setInterval(visible, 60000);
+    return () => { active = false; clearInterval(timer); window.removeEventListener('focus', visible); document.removeEventListener('visibilitychange', visible); };
+  }, [profile?.id, field]);
+  const check = async () => {
+    if (!profile) return;
+    setBusy(true);
+    try {
+      const [p, permission] = await Promise.all([boundedPermission(registerPush, 25000), readLocationPermission()]);
+      setPush(p ?? 'error');
+      setGeo(field && permission === 'granted' ? await confirmFieldLocation(profile.id) : permission);
+    } finally { setBusy(false); }
+  };
   const allow = async () => {
+    if (!profile) return;
     setBusy(true);
     try {
       await permissionSequence(async () => {
         if (pushSupported() && Notification.permission === 'default') return Notification.requestPermission();
         return 'complete';
       }, async () => {
-        if (!field || geo === 'granted' || geo === 'denied' || geo === 'unsupported') return;
-        await new Promise<void>(resolve => {
-          navigator.geolocation.getCurrentPosition(() => { setGeo('granted'); resolve(); }, error => {
-            setGeo(error.code === 1 ? 'denied' : 'prompt'); resolve();
-          }, { timeout: 5000, maximumAge: 600000 });
-        });
+        if (field) setGeo(await confirmFieldLocation(profile.id));
       });
-      const p = await boundedPermission(registerPush);
-      setPush(p ?? 'error');
+      setPush((await boundedPermission(registerPush, 25000)) ?? 'error');
     } finally { setBusy(false); }
   };
-
-  const Row = ({ icon, label, why, ok, bad }: { icon: React.ReactNode; label: string; why: string; ok: boolean; bad: boolean }) => (
-    <div className="flex gap-3 rounded-lg border p-3">
-      {icon}
-      <div className="text-sm"><p className="font-medium text-foreground">{label} — {ok ? "On" : bad ? "Blocked" : "Not on yet"}</p><p className="text-muted-foreground">{why}</p></div>
-    </div>
-  );
-
-  return (
+  if (isLoading || (field && (push === null || geo === null))) return <div role="status" className="p-6 text-muted-foreground">Checking device permissions…</div>;
+  if (error) return <div role="alert" className="p-6 text-destructive">Could not check your account. Reload to try again.</div>;
+  if (!profile) return children;
+  const pushOk = field ? push === 'registered' : push === 'registered' || push === 'unsupported';
+  const geoOk = !field || geo === 'granted';
+  const open = field ? !fieldDeviceReady(push, geo) : mobile && !later && !pushOk;
+  const blocked = push === 'blocked' || geo === 'denied';
+  const row = (icon: ReactNode, label: string, ok: boolean, denied: boolean) => <div className="flex items-center gap-3 border-b py-3">{icon}<p className="text-sm font-medium">{label} — {ok ? 'On' : denied ? 'Blocked' : 'Not on yet'}</p></div>;
+  return <>
+    {(!field || !open) && children}
     <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="[&>button]:hidden" onEscapeKeyDown={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()}>
-        <DialogHeader>
-          <DialogTitle>Set up this device</DialogTitle>
-          <DialogDescription>FieldBridge needs these to alert you about jobs and keep your shift records accurate.</DialogDescription>
-        </DialogHeader>
-        <div className="space-y-2">
-          <Row icon={<Bell className="mt-0.5 h-4 w-4" />} label="Notifications" why="Lock-screen alerts for dispatched jobs, rota changes and team chat." ok={pushOk} bad={push === "blocked"} />
-          {field && <Row icon={<MapPin className="mt-0.5 h-4 w-4" />} label="Location" why="Used only while you're clocked in, for travel and arrival times." ok={geoOk} bad={geo === "denied"} />}
-        </div>
-        {blocked && <p className="text-sm text-muted-foreground">{mobile ? "Open your phone's app or browser permissions and allow notifications/location, then tap Check again." : "Open the site controls beside the browser address and review Notifications and Location. Private browsing can block notifications; you can continue without them."}</p>}
+      <DialogContent className="max-h-[90dvh] overflow-y-auto [&>button]:hidden" onEscapeKeyDown={e => e.preventDefault()} onPointerDownOutside={e => e.preventDefault()}>
+        <DialogHeader><DialogTitle>Set up this device</DialogTitle><DialogDescription>{field ? 'Enable notifications and location before starting field work. Location is shared only during eligible clocked-in shifts; browser sleep can interrupt tracking.' : 'Enable notifications for job and team alerts.'}</DialogDescription></DialogHeader>
+        {row(<Bell className="h-4 w-4 shrink-0" />, 'Notifications', pushOk, push === 'blocked')}
+        {field && row(<MapPin className="h-4 w-4 shrink-0" />, 'Location', geoOk, geo === 'denied')}
+        {blocked && <p className="text-sm text-muted-foreground">Allow notifications and location in this site's browser settings, then check again.</p>}
+        {push === 'unsupported' && field && <p role="alert" className="text-sm text-muted-foreground">This browser cannot receive push notifications. On iPhone or iPad, add the app to your Home Screen and open it there; otherwise use a push-supported browser.</p>}
+        {geo === 'unsupported' && field && <p role="alert" className="text-sm text-destructive">This device cannot provide location. Use a location-enabled device.</p>}
+        {geo === 'unavailable' && <p role="alert" className="text-sm text-muted-foreground">No GPS fix yet. Turn on device location, move to a clearer signal and retry.</p>}
+        {(push === 'error' || push === 'no-worker') && <p role="alert" className="text-sm text-muted-foreground">Notifications could not be connected. Check your connection and retry.</p>}
         <div className="flex flex-col gap-2">
-          {blocked && <Button className="h-11" variant="outline" disabled={busy} onClick={check}>Check again</Button>}
-          {(!pushOk && push !== 'blocked' || !geoOk && geo !== 'denied') && <Button className="h-11" disabled={busy} onClick={allow}>{busy ? 'Checking permissions…' : pushOk || push === 'blocked' ? 'Allow location' : 'Allow all'}</Button>}
-          <Button variant="ghost" className="h-11" onClick={() => { dismissSetup(profile.id); setLater(true); }}>Continue without setup</Button>
+          <Button className="h-11" disabled={busy} onClick={allow}>{busy ? 'Checking permissions…' : 'Enable notifications & location'}</Button>
+          <Button variant="outline" className="h-11" disabled={busy} onClick={check}><RefreshCw className="mr-2 h-4 w-4" />Check again</Button>
+          {!field && <Button variant="ghost" onClick={() => { dismissSetup(profile.id); setLater(true); }}>Continue without setup</Button>}
+          {field && <>
+            <Button variant="ghost" onClick={() => setRecovery(v => !v)}>Clock-out options</Button>
+            {recovery && <Suspense fallback={<p role="status">Loading your shift…</p>}><RecoveryShift profile={profile} recoveryOnly /></Suspense>}
+            <ShiftSignOut userId={profile.id} onClockOut={() => setRecovery(true)} />
+            <ReturnToSuperuserBanner />
+          </>}
         </div>
       </DialogContent>
     </Dialog>
-  );
+  </>;
 }
