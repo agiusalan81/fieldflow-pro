@@ -18,3 +18,7 @@ export function metricsCsv(rows: [string,string | number][]) {
   const cell = (value: string | number) => { const text = String(value); return `"${(/^[=+@\-\t\r]/.test(text) ? "'" : '') + text.replaceAll('"','""')}"`; };
   return '\uFEFF' + [['Metric','Value'], ...rows].map(row => row.map(cell).join(',')).join('\r\n');
 }
+export function quoteDecisionMetrics(statuses:string[]) {
+  const decisions=statuses.filter(s=>s==='accepted'||s==='declined');
+  return {decisions:decisions.length,accepted:decisions.filter(s=>s==='accepted').length};
+}
