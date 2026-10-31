@@ -48,7 +48,7 @@ export const Route = createFileRoute("/_authenticated/contracts")({ staticData: 
 
 function ContractsPage() {
   const { tab = "agreements" } = Route.useSearch();
-  const {edition}=useEdition();const inhouse=isInHouse(edition);const title=inhouse?editionLabel(edition,"Contracts"):"Contracts & checklists";const activeTab=inhouse&&(tab==="types"||tab==="masters")?"agreements":tab;
+  const {edition}=useEdition();const inhouse=isInHouse(edition);const title=inhouse?editionLabel(edition,"Contracts"):"Contracts & checklists";const activeTab=inhouse&&tab==="types"?"agreements":tab;
   const navigate = useNavigate();
   const { data: profile } = useProfile();
   const access = useMemberWorkspaces();

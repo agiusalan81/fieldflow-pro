@@ -453,7 +453,10 @@ function SettingsSections({ superuser, companyId, userId, role }: { superuser: b
       { key: 'csv-import', label: 'Import from CSV', render: () => <CompanyCsvImport hotel={edition === 'hotel'} /> },
       ...(inHouse ? [] : [{ key: "estimates", label: "Estimates & suppliers", render: () => <div className="space-y-4">{superuser&&<Button asChild variant="outline"><Link to="/subscription" hash="custom-requests">Request a custom module / template</Link></Button>}<QuoteAcceptanceSetting companyId={companyId} /><EstimateSettings companyId={companyId} /></div> }]),
       { key: "numbering", label: "Numbering & ID formats", render: () => <div className="space-y-6"><NumberingSettings companyId={companyId} /><IdentifierSettings companyId={companyId}/></div> },
-      ...(inHouse ? [{ key: "integrations", label: "Hours & payroll export", render: () => <HoursExportSettings /> }] : [
+      ...(inHouse ? [
+        { key: "library", label: libraryName, render: () => <div className="space-y-4">{superuser&&<Button asChild variant="outline"><Link to="/subscription" hash="custom-requests">Request a custom module / template</Link></Button>}<DocumentLibrary companyId={companyId} userId={userId} /></div> },
+        { key: "integrations", label: "Hours & payroll export", render: () => <HoursExportSettings /> },
+      ] : [
         { key: "terms", label: "Terms & conditions", render: () => <DocumentSettings companyId={companyId} part="terms" /> },
         { key: "library", label: libraryName, render: () => <div className="space-y-4">{superuser&&<Button asChild variant="outline"><Link to="/subscription" hash="custom-requests">Request a custom module / template</Link></Button>}<DocumentLibrary companyId={companyId} userId={userId} /></div> },
         { key: "pricelist", label: "Price list", render: () => <PriceListSettings companyId={companyId} /> },
