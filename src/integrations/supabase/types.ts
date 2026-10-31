@@ -3093,6 +3093,42 @@ export type Database = {
           },
         ]
       }
+      job_seen_receipts: {
+        Row: {
+          company_id: string
+          job_id: string
+          seen_at: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          job_id: string
+          seen_at?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          job_id?: string
+          seen_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_seen_receipts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_seen_receipts_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_sheets: {
         Row: {
           asset_id: string | null
@@ -7919,7 +7955,17 @@ export type Database = {
       }
       is_platform_owner: { Args: never; Returns: boolean }
       issue_client_billing: { Args: { _id: string }; Returns: string }
+      job_seen_readers: {
+        Args: { _job: string }
+        Returns: {
+          assigned: boolean
+          full_name: string
+          seen_at: string
+          user_id: string
+        }[]
+      }
       mark_customer_quote_seen: { Args: { _quote: string }; Returns: undefined }
+      mark_job_seen: { Args: { _job: string }; Returns: string }
       member_commercial_can: { Args: { _area: string }; Returns: boolean }
       member_costing_can: { Args: never; Returns: boolean }
       member_dispatch_can: { Args: never; Returns: boolean }
