@@ -353,7 +353,7 @@ function SheetForm() {
   const submit = async () => {
     if (safetyItems.some((i) => !checks[`safety:${i}`])) { toast.error("Complete the safety assessment before submitting"); return; }
     if (!navigator.onLine) { toast.error("Connect to submit and email. Save as Draft to keep work on this device."); return; }
-    const missing = missingSignOff({ client_full_name: form.client_full_name as string, client_id_card_no: form.client_id_card_no as string, signature: form.signature_data as string });
+    const missing = missingSignOff({ client_full_name: form.client_full_name as string, client_id_card_no: form.client_id_card_no as string, signature: form.signature_data as string, evidencePhotos: photos.filter((p) => p.scope === "work" && p.day === null).length });
     if (missing.length) { toast.error(`Can't submit — missing: ${missing.join(", ")}`); return; }
     const unticked = missingChecklist(checklistItems, checks);
     if (unticked.length) { toast.error(`Can't submit — maintenance checklist not complete (${unticked.length} item${unticked.length > 1 ? "s" : ""} left)`); return; }
@@ -661,6 +661,19 @@ function SheetForm() {
         {!inHouse && <SpecialNotes form={form} set={set} readOnly={readOnly} />}
 
         <Section n={6} title={inHouse ? "Sign-off & verification" : "Client sign-off"}>
+          {edition === "hotel" && !form.signature_data && !readOnly && (
+            <div className="mb-4 grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Sign-off method">
+              <Button type="button" variant={unattended ? "outline" : "default"} className="h-11" onClick={() => unattended && set({ client_full_name: null, client_id_card_no: null })}>Guest / staff signature</Button>
+              <Button type="button" variant={unattended ? "default" : "outline"} className="h-11" onClick={() => !unattended && set({ client_full_name: UNATTENDED_SIGNOFF, client_id_card_no: "", signature_data: null })}>Unattended — photo evidence</Button>
+            </div>
+          )}
+          {unattended ? (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">No one available to sign. Add at least one photo of the finished work and a short note. It is recorded under your name with today's date.</p>
+              <JobPhotos {...photoProps} scope="work" day={null} />
+              <div className="space-y-1.5"><Label>Verification note *</Label><Input className="h-11" disabled={readOnly} placeholder="e.g. Room 204 vacant · repair tested and working" value={(form.client_id_card_no as string) ?? ""} onChange={(e) => set({ client_id_card_no: e.target.value })} /></div>
+            </div>
+          ) : <>
           {form.signature_data ? (
             <div className="flex flex-wrap items-center gap-4">
               <img src={form.signature_data as string} alt={inHouse ? "Verifier signature" : "Client signature"} className="h-24 rounded-lg border bg-card" />
@@ -673,6 +686,7 @@ function SheetForm() {
               <PenLine className="mr-1 h-4 w-4" />{inHouse ? "Present for sign-off & verification" : "Present to client for sign-off"}
             </Button>
           )}
+          </>}
           {!inHouse && !form.signature_data && <DepartureRequest preapproved={client?.preapprove_departure ?? false} sheet={{ id: sheet.id, departure_status: sheet.departure_status, departure_note: sheet.departure_note, departure_reply: sheet.departure_reply, signature_data: null, return_fee_waived: sheet.return_fee_waived }} manager={manager} onChange={() => { revision.current = null; qc.invalidateQueries({ queryKey: ["sheet", sheetId] }); }} />}
         </Section>
       </fieldset>
