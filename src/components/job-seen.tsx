@@ -17,11 +17,13 @@ export function JobSeenMarker({ jobId, disabled = false }: { jobId: string; disa
       if (timer) clearTimeout(timer);
       if (!visible || done || busy || document.visibilityState !== 'visible' || document.querySelector('[role="dialog"][data-state="open"], [role="alertdialog"]')) return;
       timer = setTimeout(async () => {
+        if (!visible || document.visibilityState !== 'visible' || document.querySelector('[role="dialog"][data-state="open"], [role="alertdialog"]')) return;
         busy = true;
         try {
           const r = await supabase.rpc('mark_job_seen', { _job: jobId });
           if (!r.error) done = true;
-        } finally { busy = false; }
+        } catch { /* Retry after transient offline failures; never claim a saved view. */ }
+        finally { busy = false; }
       }, 800);
     };
     const observer = new IntersectionObserver(([entry]) => {
