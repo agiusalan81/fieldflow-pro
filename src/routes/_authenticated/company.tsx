@@ -434,7 +434,10 @@ function SettingsSections({ superuser, companyId, userId, role }: { superuser: b
       { key: "vehicles", label: "Clock-in & vehicles", render: () => <VehicleCompanySettings companyId={companyId} /> },
       { key: "inventory", label: "Inventory control", render: () => <InventoryControlSettings companyId={companyId} /> },
       { key: "dispatch-incentives", label: "Dispatch incentives", render: () => <ClaimIncentiveSettings companyId={companyId} /> },
-      ...(edition === "hotel" || edition === "retail" ? [{ key: "configurator", label: edition === "hotel" ? "Room & floor configurator" : "Store & department configurator", render: () => <SpaceConfigurator companyId={companyId} edition={edition} /> }] : []),
+      ...(edition === "hotel" || edition === "retail" ? [
+        { key: "asset-ids", label: "Asset ID format (step 1)", render: () => <IdentifierSettings companyId={companyId} /> },
+        { key: "configurator", label: edition === "hotel" ? "Room & floor configurator (step 2)" : "Store & department configurator (step 2)", render: () => <SpaceConfigurator companyId={companyId} edition={edition} /> },
+      ] : []),
     ] },
     { title: "Branding & appearance", items: [
       { key: "branding", label: "Branding & PDF styling", render: () => <div className="space-y-6"><AppearanceSettings companyId={companyId} /><ProfileTab companyId={companyId} part="fonts" /><DocumentSettings companyId={companyId} part="branding" /></div> },

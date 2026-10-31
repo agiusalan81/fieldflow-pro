@@ -56,6 +56,14 @@ export function SpaceConfigurator({ companyId, edition }: { companyId: string; e
         <h2 className="font-medium text-foreground">{c.title}</h2>
         <p className="text-sm text-muted-foreground">Try a layout here first. Nothing is saved until you press “Create items”.</p>
       </div>
+      {rules.isSuccess && !rules.data && (
+        <div className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm">
+          <p className="font-medium">Step 1: set your asset ID format first</p>
+          <p className="text-muted-foreground">Choose how tags look (e.g. FR-01, RM-001) so new items get unique numbers.</p>
+          <Button asChild size="sm" variant="outline" className="mt-2"><Link to="/company" search={{ section: "asset-ids" }}>Set asset ID format</Link></Button>
+        </div>
+      )}
+      {rules.data && rules.data.pattern_type !== "numeric" && <p className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm">Your asset ID format must use a number sequence for automatic creation. <Link className="underline" to="/company" search={{ section: "asset-ids" }}>Change it</Link></p>}
       <div className="space-y-1.5 sm:max-w-sm"><Label>Property / site</Label>
         <CreatableCombobox ariaLabel="Property" value={sites.data?.find((s) => s.id === siteId)?.name ?? ""} placeholder="Choose a property"
           groups={[{ group: "Sites", items: (sites.data ?? []).map((s) => s.name) }]}
