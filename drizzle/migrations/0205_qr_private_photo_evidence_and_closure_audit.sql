@@ -1,0 +1,30 @@
+ALTER TABLE public.equipment_problem_reports ADD COLUMN closed_at timestamptz;
+ALTER TABLE public.store_problem_reports ADD COLUMN closed_at timestamptz;
+CREATE FUNCTION public.report_closure_audit() RETURNS trigger LANGUAGE plpgsql SET search_path=public AS $$ BEGIN IF NEW.status IS DISTINCT FROM OLD.status THEN NEW.closed_at=CASE WHEN NEW.status='closed' THEN now() ELSE NULL END; ELSE NEW.closed_at=OLD.closed_at; END IF; RETURN NEW; END $$;
+CREATE TRIGGER equipment_report_closure BEFORE UPDATE ON public.equipment_problem_reports FOR EACH ROW EXECUTE FUNCTION public.report_closure_audit();
+CREATE TRIGGER store_report_closure BEFORE UPDATE ON public.store_problem_reports FOR EACH ROW EXECUTE FUNCTION public.report_closure_audit();
+CREATE TABLE public.qr_report_photos (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), company_id uuid NOT NULL REFERENCES public.companies(id), kind text NOT NULL CHECK(kind IN ('equipment','store')), link_id uuid NOT NULL, token_hash text NOT NULL, object_path text NOT NULL UNIQUE, expires_at timestamptz NOT NULL DEFAULT now()+interval '15 minutes', report_id uuid, created_at timestamptz NOT NULL DEFAULT now());
+GRANT ALL ON public.qr_report_photos TO service_role;
+ALTER TABLE public.qr_report_photos ENABLE ROW LEVEL SECURITY;
+CREATE FUNCTION public.reserve_qr_photo(_token text,_kind text) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ DECLARE c uuid; l uuid; p uuid:=gen_random_uuid(); BEGIN
+IF _token !~ '^[a-f0-9]{64}$' OR _kind NOT IN ('equipment','store') THEN RAISE EXCEPTION 'Invalid reporting link'; END IF;
+IF _kind='equipment' THEN SELECT company_id,id INTO c,l FROM public.equipment_report_links WHERE token_hash=encode(sha256(_token::bytea),'hex') AND revoked_at IS NULL FOR UPDATE; ELSE SELECT company_id,id INTO c,l FROM public.store_report_links WHERE token_hash=encode(sha256(_token::bytea),'hex') AND revoked_at IS NULL FOR UPDATE; END IF;
+IF l IS NULL OR NOT public.company_module_access(c,'core') THEN RAISE EXCEPTION 'This reporting link is unavailable'; END IF;
+IF EXISTS(SELECT 1 FROM public.qr_report_photos WHERE link_id=l AND created_at>now()-interval '30 seconds') OR (SELECT count(*) FROM public.qr_report_photos WHERE link_id=l AND created_at>now()-interval '1 hour')>=20 THEN RAISE EXCEPTION 'Photo uploads temporarily unavailable. Try again later or send without a photo.'; END IF;
+INSERT INTO public.qr_report_photos(id,company_id,kind,link_id,token_hash,object_path) VALUES(p,c,_kind,l,encode(sha256(_token::bytea),'hex'),p::text||'.jpg'); RETURN jsonb_build_object('id',p,'path',p::text||'.jpg'); END $$;
+REVOKE ALL ON FUNCTION public.reserve_qr_photo(text,text) FROM PUBLIC,anon,authenticated; GRANT EXECUTE ON FUNCTION public.reserve_qr_photo(text,text) TO service_role;
+CREATE FUNCTION public.attach_qr_photo() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ DECLARE p public.qr_report_photos; g text:=current_setting('app.qr_photo',true); k text; BEGIN IF coalesce(g,'')='' THEN RETURN NEW; END IF;
+k=CASE WHEN TG_TABLE_NAME='equipment_problem_reports' THEN 'equipment' ELSE 'store' END;
+SELECT * INTO p FROM public.qr_report_photos WHERE id=g::uuid FOR UPDATE;
+IF NOT FOUND OR p.report_id IS NOT NULL OR p.expires_at<now() OR p.company_id<>NEW.company_id OR p.kind<>k THEN RAISE EXCEPTION 'Photo attachment unavailable'; END IF;
+IF NOT EXISTS(SELECT 1 FROM storage.objects WHERE bucket_id='qr-report-photos' AND name=p.object_path AND (metadata->>'size')::bigint BETWEEN 1 AND 2097152 AND metadata->>'mimetype'='image/jpeg') THEN RAISE EXCEPTION 'Photo upload incomplete'; END IF;
+UPDATE public.qr_report_photos SET report_id=NEW.id WHERE id=p.id; RETURN NEW; END $$;
+CREATE TRIGGER equipment_report_photo AFTER INSERT ON public.equipment_problem_reports FOR EACH ROW EXECUTE FUNCTION public.attach_qr_photo();
+CREATE TRIGGER store_report_photo AFTER INSERT ON public.store_problem_reports FOR EACH ROW EXECUTE FUNCTION public.attach_qr_photo();
+CREATE FUNCTION public.submit_qr_photo_report(_token text,_kind text,_grant uuid,_fields jsonb) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ DECLARE p public.qr_report_photos; BEGIN
+SELECT * INTO p FROM public.qr_report_photos WHERE id=_grant AND token_hash=encode(sha256(_token::bytea),'hex') AND kind=_kind FOR UPDATE;
+IF NOT FOUND OR p.report_id IS NOT NULL OR p.expires_at<now() THEN RAISE EXCEPTION 'Photo attachment expired. Choose your photo again.'; END IF;
+PERFORM set_config('app.qr_photo',p.id::text,true);
+IF _kind='equipment' THEN PERFORM public.submit_equipment_problem(_token,_fields->>'first',_fields->>'last',_fields->>'position',_fields->>'problem'); ELSE PERFORM public.submit_store_problem(_token,_fields->>'reporter_type',_fields->>'name',_fields->>'category',_fields->>'location',_fields->>'problem'); END IF;
+PERFORM set_config('app.qr_photo','',true); END $$;
+REVOKE ALL ON FUNCTION public.submit_qr_photo_report(text,text,uuid,jsonb) FROM PUBLIC,anon,authenticated; GRANT EXECUTE ON FUNCTION public.submit_qr_photo_report(text,text,uuid,jsonb) TO service_role;
