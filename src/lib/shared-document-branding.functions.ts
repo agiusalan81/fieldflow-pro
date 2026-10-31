@@ -17,10 +17,11 @@ export const sharedDocumentBranding = createServerFn({ method: 'POST' })
     // The link is authenticated before privileged access, and every file is bounded to its tenant.
     const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
     const hash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(data.token))), b => b.toString(16).padStart(2, '0')).join('');
-    const link = await supabaseAdmin.from(data.kind === 'billing' ? 'client_billing_links' : 'customer_quote_links').select('company_id').eq('token_hash', hash).is('revoked_at', null).gt('expires_at', new Date().toISOString()).maybeSingle();
-    if (link.error || !link.data) return null;
+    let tenant: string | undefined;
+    if (data.kind === 'billing') { const link = await supabaseAdmin.from('client_billing_links').select('company_id').eq('token_hash', hash).is('revoked_at', null).gt('expires_at', new Date().toISOString()).maybeSingle(); if (link.error || !link.data) return null; tenant = link.data.company_id; }
+    else { const link = await supabaseAdmin.from('customer_quote_links').select('quote_id').eq('token_hash', hash).is('revoked_at', null).gt('expires_at', new Date().toISOString()).maybeSingle(); if (link.error || !link.data) return null; const quote = await supabaseAdmin.from('customer_quotes').select('company_id').eq('id', link.data.quote_id).maybeSingle(); if (quote.error || !quote.data) return null; tenant = quote.data.company_id; }
+    if (!tenant) return null;
     const template = parseTemplate(snapshot.template);
-    const tenant = link.data.company_id;
     if (template.fontPath && !template.fontPath.startsWith(`${tenant}/fonts/`)) template.fontPath = '';
     if (template.backgroundPath && !template.backgroundPath.startsWith(`${tenant}/backgrounds/`)) template.backgroundPath = '';
     template.customFonts = (template.customFonts ?? []).filter(f => f.path.startsWith(`${tenant}/fonts/`));
