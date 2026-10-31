@@ -24,16 +24,16 @@
 - Invites redeem names atomically via single-use signup triggers; social users need no password; verified names; no client-assigned tenant/role.
 - Preview: real-superuser-only, actor-scoped, removable memory state; root blocks other screens/writes; 
 - Payroll uses tested gross/Malta engines, office RLS, snapshots, HQ guards; roster RPC updates existing settings only; 
-- Payroll routes share payroll-page.tsx. Opening leave/payslips save atomically with issued-slip/totals guards; year-qualified carry-forward prevents double consumption; 
+- Payroll shares payroll-page.tsx; atomic issued snapshots/linking prevent repeat incentives and leave consumption.
 - Sign-off/leave/overtime/checklist/renewals use tested jobsheets.ts; shared rules.
 - DWR: one canonical report/shift; retain corrected/superseded originals; filing clears held flags; 
-- Dispatch: DB guards TBD/claims; bonuses freeze/earn on claim/completion; staff ledger follows visibility; no staff badges in client documents; bell recipients server-derived. Global open-job audio gates real field roles + own shift/standby, fails closed and refreshes on shift changes; office board visibility stays separate.
+- Dispatch: DB guards TBD/claims/self-award provenance; bonuses freeze/earn on claim/completion; own/team ledgers outside settings; no client badges. Bell recipients server-derived; audio needs real field role + own shift/standby, fails closed and refreshes on shift changes; office visibility separate.
 - Overtime uses captured DWR intervals/rules; old reports show associated sites only; factual allocation.
 - - Typography via applyTypography/AppShell, locale via locale.ts. Branding shares asset-backed font IDs and preview/PDF decorations; DB/HQ locks protect saved values.
 - Auth emails share auth-brand.tsx; the managed handler owns verification and dispatch for reliable account recovery.
 - Shared document-preview tabs serve desktop/mobile; no implicit draft saves.
 - Independent settings editors use settingsSectionPatch to write only owned columns; JSON styling saves merge current stored keys; 
-- Numbers keep raw text until blur; UnitSelect shares trade-aware presets/bounded RLS history — why: no cross-trade defaults.
+- Numbers retain raw text until blur; UnitSelect uses trade-aware RLS history. identifier-format.ts/DB guards share rules; batch creation locks sequences to avoid collisions.
 - Service sheets share a typed safe projection/renderers for preview, print and email; 
 - Pending works close via close_pending_on_followup trigger; sheet creation requires clock-in or standby; enforce without UI.
 - Billing precedence in billing.ts, config in integrations.ts; job_sheets_guard_billing allows office review only; completed office list rows open shared BillingReview.
@@ -53,7 +53,7 @@
 - ExpenseCapture shares date/amount/category across stash/sheets; private receipts stay HQ-gated and immutable; post-signature notes never reach clients.
 - Technical library: private storage/RLS; publish checks real/displayed supervisor/superuser; AI reads approved pages as caller; 
 - Leave/profile/clock-out handover rules use tested field-rules.ts plus guard_leave_decision; UI and DB agree.
-- HQ merges registry/product/catalog module keys; catalog writes register keys atomically. Owner-only toggles; isStorageAddon separates storage packs.
+- HQ merges registry/product/catalog keys atomically; owner-only toggles/service promotion; tenant custom services never auto-promote. isStorageAddon separates storage packs.
 - Attention: guarded atomic pending RPCs/separate actions; never edit signed content; 
 - Rota: supervisor config separate from payroll; swaps apply atomically with audit.
 - Equipment: focused passports prefill new records; private field handovers merge via manager-only RPCs; QR stays hashed/revocable/bounded — why: preserve engineering evidence.

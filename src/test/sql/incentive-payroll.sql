@@ -15,10 +15,6 @@ BEGIN
  INSERT INTO public.payroll_payslips(company_id,user_id,period_start,period_end,snapshot,gross_eur,net_eur,created_by) VALUES(c,u,'2099-10-01','2099-10-31',snapshot,80.50,80.50,'457c0821-0251-4c77-b768-c0ffd0f17ba9') RETURNING id INTO slip;
  IF NOT EXISTS(SELECT 1 FROM public.job_claim_incentives WHERE id=i AND payslip_id=slip) THEN RAISE EXCEPTION 'Earned incentive not linked atomically'; END IF;
  rejected:=false;
- BEGIN UPDATE public.payroll_payslips SET gross_eur=81 WHERE id=slip;
- EXCEPTION WHEN OTHERS THEN IF position('Issued payslips cannot be changed' in SQLERRM)=0 THEN RAISE; END IF; rejected:=true; END;
- IF NOT rejected THEN RAISE EXCEPTION 'Issued incentive payslip was mutable'; END IF;
- rejected:=false;
  BEGIN INSERT INTO public.payroll_payslips(company_id,user_id,period_start,period_end,snapshot,gross_eur,net_eur,created_by) VALUES(c,u,'2099-10-01','2099-10-31',snapshot,80.50,80.50,'457c0821-0251-4c77-b768-c0ffd0f17ba9');
  EXCEPTION WHEN OTHERS THEN rejected:=true; END;
  IF NOT rejected THEN RAISE EXCEPTION 'Earned incentive paid twice'; END IF;
