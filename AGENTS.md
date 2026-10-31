@@ -17,7 +17,7 @@
 - HQ: product-scoped owner-only setup/invites/resets; ordered tenant deletes retain users/branding/platform bills and refuse issued payroll; no cross-tenant/financial loss.
 - Chrome: neutral tokens; root clips for sticky previews. Plaques share escaped preview/print messages and fonts.
 - Travel: startJobTravel; arrival time before on-site.
-- Tenant RLS uses company_id/current_company_id(); never UI company filters; 
+- Tenant RLS: company_id/current_company_id(), never UI company filters.
 - Roles: protected user_roles; users.role is display-only. Manager-only MemberSkills uses module guards; additions never assign; removal archives for history.
 - Atomic handover reviews jobs/rotas/shifts, preserving history; active-only rota choices share day validation. Snooze is recipient-only; alerts target each request.
 - Invites: timed/authenticated; atomic single-use signup names, no client tenant/role. Team sends use fixed managed templates, RLS recipients, server product URLs and token idempotency for safe retries.
@@ -28,9 +28,9 @@
 - DWR: one canonical report/shift; retain corrected/superseded originals; filing clears held flags; 
 - Dispatch: DB guards TBD/claims/self-award provenance; bonuses freeze/earn on claim/completion; own/team ledgers outside settings; no client badges. Bell recipients server-derived; audio needs real field role + own shift/standby, fails closed and refreshes on shift changes; office visibility separate.
 - Overtime uses captured DWR intervals/rules; old reports show associated sites only; factual allocation.
-- Typography: applyTypography/AppShell, locale.ts; asset fonts/shared preview/PDF decorations; DB/HQ locks.
+- Typography: applyTypography/AppShell, locale.ts; shared font/PDF decorations and DB/HQ locks. Financial branding freezes on issue; token file reads stay tenant-bounded.
 - Auth emails share auth-brand.tsx; the managed handler owns verification and dispatch for reliable account recovery.
-- Document-preview tabs are shared; no implicit draft saves.
+- Shared document previews never save drafts; payment defaults share one billing source, kind-specific terms live in company terms.
 - Independent settings editors use settingsSectionPatch to write only owned columns; JSON styling saves merge current stored keys; 
 - Numbers retain raw text until blur; UnitSelect uses trade-aware RLS history. identifier-format.ts/DB guards share rules; batch creation locks sequences to avoid collisions.
 - Service sheets share a typed safe projection/renderers for preview, print and email; 
@@ -83,7 +83,7 @@
 - Shift sessions: shared sign-out checks own open shift/standby and fails closed; inactivity keeps active/test sessions, test return bypasses logout; retain shift workflow without weakening auth.
 - Inventory: tool/parts modes enforced by tool_sign_* RPCs + guard_inventory_stock, mirrored in inventory-control.ts; DB-enforced.
 - Appearance: HQ per-edition product_appearances → hex-validated edition-scoped CSS; safe no-code styling.
-- Document credits share platform-credit.ts for consistency.
+- Document credits use platform-credit.ts.
 
-- Tours start explicitly and yield to dialogs; sequential device prompts prevent mobile conflicts.
-- QR decoder loads on tap; supported tokens use existing RLS reads, never arbitrary URL redirects.
+- Explicit tours yield to dialogs; device prompts are sequential.
+- QR loads on tap; tokens use RLS reads, never arbitrary redirects.
