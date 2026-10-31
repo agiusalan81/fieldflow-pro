@@ -1,3 +1,4 @@
+import {brandedPushPayload} from '@/lib/notification-brand';
 const b64url = (b: Uint8Array) => btoa(String.fromCharCode(...b)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 
 /** Derives the app's push signing key pair from the WEB_PUSH_SEED secret (server only). */
@@ -13,13 +14,7 @@ export async function vapidKeys() {
 export type Alert = { title: string; body: string; url: string; tag: string };
 
 /** Lock-screen-ready payload read by public/push-sw.js. */
-export function pushPayload(a: Alert) {
-  return {
-    title: a.title || "FieldBridge", body: a.body || "You have a new team chat message",
-    icon: "/icon-192x192.png", badge: "/badge-72x72.png", tag: a.tag,
-    data: { url: a.url, chatId: a.tag },
-  };
-}
+export function pushPayload(a: Alert,edition:unknown='contractor') {return brandedPushPayload(a,edition);}
 type Sub = { endpoint: string; p256dh: string; auth: string };
 
 const cat = (...a: Uint8Array[]) => { const o = new Uint8Array(a.reduce((n, x) => n + x.length, 0)); let i = 0; for (const x of a) { o.set(x, i); i += x.length; } return o; };
@@ -52,7 +47,6 @@ async function encrypt(p256: any, sub: Sub, plain: Uint8Array) {
 export async function deliver(supabaseAdmin: any, subs: Sub[], alert: Alert) {
     const { p256, d, pub } = await vapidKeys();
     const enc = new TextEncoder();
-    const payload = enc.encode(JSON.stringify(pushPayload(alert)));
     let sent = 0;
     for (let offset = 0; offset < subs.length; offset += 6) {
     await Promise.all(subs.slice(offset, offset + 6).map(async (s) => {
@@ -62,6 +56,15 @@ export async function deliver(supabaseAdmin: any, subs: Sub[], alert: Alert) {
       const raw = p256.sign(enc.encode(`${head}.${body}`), d) as unknown as Uint8Array | { toBytes: (f: string) => Uint8Array };
       const sig = b64url(raw instanceof Uint8Array ? raw : raw.toBytes("compact"));
       try {
+        const device=await supabaseAdmin.from('push_subscriptions').select('user_id').eq('endpoint',endpoint).single();
+        if(device.error||!device.data)return;
+        const member=await supabaseAdmin.from('user_roles').select('company_id').eq('user_id',device.data.user_id).eq('registration_status','active').single();
+        if(member.error||!member.data)return;
+        const productId=await supabaseAdmin.rpc('company_product_id',{_company:member.data.company_id});
+        if(productId.error||!productId.data)return;
+        const product=await supabaseAdmin.from('platform_products').select('engine_edition').eq('id',productId.data).single();
+        if(product.error||!product.data)return;
+        const payload=enc.encode(JSON.stringify(pushPayload(alert,product.data.engine_edition)));
         const bodyBytes = await encrypt(p256, s, payload);
         const res = await fetch(endpoint, { method: "POST", signal: AbortSignal.timeout(15000), headers: { Authorization: `vapid t=${head}.${body}.${sig}, k=${b64url(pub)}`, TTL: "86400", Urgency: "high", "Content-Encoding": "aes128gcm", "Content-Type": "application/octet-stream" }, body: bodyBytes as BodyInit });
         if (res.status === 404 || res.status === 410) await supabaseAdmin.from("push_subscriptions").delete().eq("endpoint", endpoint);

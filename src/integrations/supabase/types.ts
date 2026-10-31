@@ -7976,6 +7976,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      pending_leave_review_ids: { Args: never; Returns: string[] }
       platform_analytics_summary: {
         Args: { _days?: number; _product: string }
         Returns: Json

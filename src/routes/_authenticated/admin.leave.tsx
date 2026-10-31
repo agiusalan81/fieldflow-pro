@@ -38,7 +38,7 @@ function LeaveApprovals() {
   const [month, setMonth] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
   const { data: reqs = [] } = useQuery({
     queryKey: ["leave", "team"],
-    queryFn: async () => { const { data, error } = await supabase.from("leave_requests").select("*, users(full_name, role)").order("start_date"); if (error) throw error; return data; },
+    queryFn: async () => { const { data, error } = await supabase.from("leave_requests").select("*, users(full_name, role)").order("start_date"); if (error) throw error; const rows=data??[]; const access=await Promise.all(rows.map(r=>supabase.rpc('workspace_thread_can',{_kind:'leave',_id:r.id}))); return rows.filter((_,i)=>access[i]?.data===true); },
   });
   const { data: bals = [] } = useQuery({ queryKey: ["leave-balances-team"], queryFn: async () => (await supabase.from("user_leave_balances").select("*")).data ?? [] });
   useEffect(() => { if (request && reqs.length) document.getElementById(`leave-${request}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, [request, reqs]);
