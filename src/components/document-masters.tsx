@@ -218,7 +218,7 @@ export function DocumentMasters({ companyId, clientId, siteId, assetId, compact 
     const master = key.startsWith("master:") ? docs.find(d => d.id === key.slice(7) && d.state !== "archived") : undefined;
     const template = key.startsWith("template:") ? templates.data?.find(d => d.id === key.slice(9)) : undefined;
     if (!master && !template) return;
-    const sourceItems = master?.items ?? (Array.isArray(template?.items) ? template.items.flatMap(item => typeof item === "string" ? [item] : item && typeof item === "object" && "label" in item && typeof item.label === "string" ? [item.label] : []) : []);
+    const sourceItems = master?.items ?? (Array.isArray(template?.items) ? template.items.flatMap(item => typeof item === "string" ? [item] : item && typeof item === "object" && "label" in item && typeof item["label"] === "string" ? [item["label"]] : []) : []);
     const next = appendChecklistRows(edit.items, edit.field_specs, sourceItems, master?.field_specs);
     setEdit({ ...edit, items: next.items, field_specs: next.specs as unknown as Json });
   };
@@ -291,7 +291,7 @@ export function DocumentMasters({ companyId, clientId, siteId, assetId, compact 
       <SectionEditor sections={parseSections(edit.sections)} onChange={(s) => setEdit({ ...edit, sections: s as unknown as Json })} />
       <section className="space-y-3 border-y py-3" aria-label="Document checklist">
         <div className="flex flex-wrap items-center justify-between gap-2"><Label>Checklist</Label>{editItems.length > 0 && <Button size="sm" variant="ghost" onClick={() => { if (window.confirm("Remove all checklist steps from this draft?")) setEdit({ ...edit, items: [], field_specs: [] }); }}><Trash2 className="mr-1 h-4 w-4" />Remove checklist</Button>}</div>
-        <SearchSelect value="" ariaLabel="Import existing checklist" placeholder="Import existing checklist…" options={[...docs.filter(d => d.id !== edit.id && d.state !== "archived" && d.items.some(item => item.trim())).map(d => ({ value: `master:${d.id}`, label: `${d.name} · ${docTypeLabel(d.kind)}` })), ...(templates.data ?? []).map(t => ({ value: `template:${t.id}`, label: `${t.name} · ${t.equipment_category}` }))]} onChange={importChecklist} />
+        <SearchSelect value="" placeholder="Import existing checklist…" options={[...docs.filter(d => d.id !== edit.id && d.state !== "archived" && d.items.some(item => item.trim())).map(d => ({ value: `master:${d.id}`, label: `${d.name} · ${docTypeLabel(d.kind)}` })), ...(templates.data ?? []).map(t => ({ value: `template:${t.id}`, label: `${t.name} · ${t.equipment_category}` }))]} onChange={importChecklist} />
         {templates.error && <p role="alert" className="text-sm text-destructive">Equipment checklists could not be loaded.</p>}
         {editItems.length > 0 ? <ChecklistRowEditor items={editItems} specs={editSpecs} onChange={(items, specs) => setEdit({ ...edit, items, field_specs: specs as unknown as Json })} /> : <Button size="sm" variant="outline" onClick={() => setEdit({ ...edit, items: [""], field_specs: [{ ...DEFAULT_SPEC }] as unknown as Json })}><Plus className="mr-1 h-4 w-4" />Add checklist</Button>}
       </section>
