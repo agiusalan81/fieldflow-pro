@@ -63,6 +63,7 @@ export function useActionQueues() {
   const {edition}=useEdition(!!p);const finance=useFinanceDue(!!p&&isOffice(p)&&edition==='contractor'&&core);
   const threads=useUnreadThreads(core?p?.id:undefined);
   const manager=!!p&&isManager(p);
+  const workspace=useQuery({queryKey:['workspace-alerts',p?.id,core],enabled:!!p&&core,refetchInterval:15000,queryFn:async()=>{if(!p)return [];const r=await supabase.from('workspace_thread_alerts').select('id,kind,record_id,title').eq('recipient_id',p.id).is('seen_at',null).order('created_at');if(r.error)throw r.error;return r.data;}}).data??[];
   const catsOn=!!p&&on('receipts')&&['admin','superuser','supervisor'].includes(p.role),leaveOn=core&&can('leave_approvals'),problemsOn=core&&manager&&can('pending_works');
   const surveysOn=!!p&&on('site_surveys')&&manager;
   const passportOn=!!p&&manager&&on('lift_pack');
@@ -79,17 +80,17 @@ export function useActionQueues() {
     const [incoming,approval,leave,problems,responses,cats]=await Promise.all([
       standby?supabase.from('standby_swaps').select('id').eq('target_id',p.id).eq('status','pending').or(`snoozed_until.is.null,snoozed_until.lte.${new Date().toISOString()}`):empty,
       standby&&manager?supabase.from('standby_swaps').select('id').eq('status','accepted').eq('manager_approved',false):empty,
-      leaveOn?supabase.from('leave_requests').select('id').eq('consulted_supervisor_id',p.id).eq('status','pending').is('supervisor_response',null):empty,
+      leaveOn?supabase.from('leave_requests').select('id').eq('status','pending'):empty,
       problemsOn?supabase.from('equipment_problem_reports').select('id,asset_id,problem').eq('status','open').order('created_at',{ascending:false}).limit(10):Promise.resolve({data:[],error:null}),
-      leaveOn&&isOffice(p)?supabase.from('leave_requests').select('id').eq('status','pending').not('supervisor_response','is',null):empty,
+      empty,
       catsOn?supabase.from('expense_categories').select('id,name').eq('status','pending').limit(20):zero,
     ]);if(incoming.error||approval.error||leave.error||responses.error)throw incoming.error||approval.error||leave.error||responses.error;return {categories:(cats.data??[]) as {id:string;name:string}[],incoming:incoming.data??[],approval:approval.data??[],leave:leave.data??[],responses:responses.data??[],problems:problems.data??[]};
   }});
   const openJobs=useOpenJobs().alerting;
   const chat=threads.reduce((a,t)=>a+t.n,0);
   const problems=data?.problems??[];
-  const count=finance.length+openJobs.length+passports.length+crm.length+decided.length+surveys.length+chat+(data?.incoming.length??0)+(data?.approval.length??0)+(data?.leave.length??0)+(data?.responses.length??0)+problems.length+(data?.categories.length??0);
-  return { finance, openJobs, passports, threads, crm, decided, surveys, problems, data, count, chat };
+  const count=workspace.length+finance.length+openJobs.length+passports.length+crm.length+decided.length+surveys.length+chat+(data?.incoming.length??0)+(data?.approval.length??0)+(data?.leave.length??0)+(data?.responses.length??0)+problems.length+(data?.categories.length??0);
+  return { finance, openJobs, passports, threads, crm, decided, surveys, problems, data, count, chat,workspace };
 }
 
 export function QueueBadge({ path }: { path: string }) {
@@ -115,9 +116,10 @@ export function QueueBadge({ path }: { path: string }) {
 }
 
 export function ActionNotifications() {
-  const { finance, openJobs, passports, threads, crm, decided, surveys, problems, data, count } = useActionQueues();
+  const { finance, openJobs, passports, threads, crm, decided, surveys, problems, data, count,workspace } = useActionQueues();
+  const {data:me}=useProfile();
   const [open, setOpen] = useState(false);
-  const approvalCount = passports.length+(data?.incoming.length ?? 0) + (data?.approval.length ?? 0) + (data?.leave.length ?? 0) + (data?.responses.length ?? 0) + (data?.categories.length ?? 0);
+  const approvalCount = workspace.length+passports.length+(data?.incoming.length ?? 0) + (data?.approval.length ?? 0) + (data?.leave.length ?? 0) + (data?.responses.length ?? 0) + (data?.categories.length ?? 0);
   const commercialCount = finance.length + crm.length + decided.length;
   const fieldCount = openJobs.length + problems.length + surveys.length + threads.reduce((n, t) => n + t.n, 0);
   const item="h-auto w-full justify-start whitespace-normal py-3 [&_span]:whitespace-normal [&_span]:break-words [&_span]:text-wrap";
@@ -129,11 +131,12 @@ export function ActionNotifications() {
       <Tabs defaultValue={fieldCount && !approvalCount && !commercialCount ? 'field' : approvalCount ? 'approvals' : 'commercial'} className="min-w-0 px-4 pb-6" onClick={e => { if ((e.target as HTMLElement).closest('a')) setOpen(false); }}>
         <TabsList className="grid h-auto w-full grid-cols-3"><TabsTrigger value="approvals" className="min-w-0 whitespace-normal text-xs">Approvals · {approvalCount}</TabsTrigger><TabsTrigger value="commercial" className="min-w-0 whitespace-normal text-xs">Commercial · {commercialCount}</TabsTrigger><TabsTrigger value="field" className="min-w-0 whitespace-normal text-xs">Field & chat · {fieldCount}</TabsTrigger></TabsList>
         <TabsContent value="approvals" className="space-y-2 pt-3">{!approvalCount && empty}
+          {workspace.map(a=><Button key={a.id} asChild variant="outline" className={item}>{a.kind==='leave'?<Link to={me&&isManager(me)?'/admin/leave':'/leave'} search={{request:a.record_id}}><Row icon={MessageSquare}>{a.title}</Row></Link>:<Link to="/pending-works" search={{report:a.record_id,kind:a.kind}}><Row icon={MessageSquare}>{a.title}</Row></Link>}</Button>)}
           {passports.map(s=><Button key={s.id} asChild variant="outline" className={item}><Link to="/equipment/$assetId" params={{assetId:s.asset_id}} search={{view:'passport',submission:s.id}}><Row icon={AlertTriangle}>Technical passport handover: {s.title}</Row></Link></Button>)}
           {data?.categories.map(c=><Button key={c.id} asChild variant="outline" className={item}><Link to="/admin/approvals" search={{category:"expenses",item:c.id}}><Row icon={AlertTriangle}>Expense category to approve: {c.name}</Row></Link></Button>)}
           {data?.incoming.map(s=><Button key={s.id} asChild variant="outline" className={item}><Link to="/standby" search={{swap:s.id}}><Row icon={CalendarClock}>On-call swap — Accept, Decline or Snooze</Row></Link></Button>)}
           {data?.approval.map(s=><Button key={s.id} asChild variant="outline" className={item}><Link to="/standby" search={{swap:s.id}}><Row icon={CalendarClock}>On-call swap — review approval</Row></Link></Button>)}
-          {data?.leave.map(r=><Button key={r.id} asChild variant="outline" className={item}><Link to="/admin/leave" search={{request:r.id}}><Row icon={CalendarDays}>Leave consultation — respond</Row></Link></Button>)}
+          {data?.leave.map(r=><Button key={r.id} asChild variant="outline" className={item}><Link to="/admin/leave" search={{request:r.id}}><Row icon={CalendarDays}>Leave request — review conversation</Row></Link></Button>)}
           {data?.responses.map(r=><Button key={r.id} asChild variant="outline" className={item}><Link to="/admin/leave" search={{request:r.id}}><Row icon={CalendarDays}>Supervisor replied — review leave</Row></Link></Button>)}
         </TabsContent>
         <TabsContent value="commercial" className="space-y-2 pt-3">{!commercialCount && empty}
@@ -143,7 +146,7 @@ export function ActionNotifications() {
         </TabsContent>
         <TabsContent value="field" className="space-y-2 pt-3">{!fieldCount && empty}
           {openJobs.map(j=><Button key={j.id} asChild variant="outline" className={item}><Link to="/available-jobs" search={{job:j.id}}><Row icon={AlertTriangle}>Up for grabs · #{j.job_number} · {j.site_name ?? j.client_name}{j.claim_incentive_cents>0?` · ${incentiveAmount(j.claim_incentive_cents)} incentive`:''}</Row></Link></Button>)}
-          {problems.map(r=><Button key={r.id} asChild variant="outline" className={item}><Link to="/admin/jobs" search={{new:true,assetId:r.asset_id,problemId:r.id}}><Row icon={AlertTriangle}>Equipment problem: {r.problem}</Row></Link></Button>)}
+          {problems.map(r=><Button key={r.id} asChild variant="outline" className={item}><Link to="/pending-works" search={{kind:'equipment',report:r.id}}><Row icon={AlertTriangle}>Equipment problem: {r.problem}</Row></Link></Button>)}
           {surveys.map(v=><Button key={v.id} asChild variant="outline" className={item}><Link to="/surveys" search={{survey:v.id}}><Row icon={AlertTriangle}>Site survey to review{v.location_ref?`: ${v.location_ref}`:''}{v.reviewer_id?' (assigned to you)':''}</Row></Link></Button>)}
           {threads.map(t=><Button key={t.key} asChild variant="outline" className={item}><Link to="/messages" search={{thread:t.key}}><Row icon={MessageSquare}>{t.name} · {t.n} new</Row></Link></Button>)}
         </TabsContent>
