@@ -8,6 +8,7 @@ import { dwrEligible } from '@/lib/testing-rules';
 import { usePreviewProfile } from "@/lib/impersonation";
 import { downloadDwr } from "@/lib/dwr-report";
 import type { DwrRow } from "@/lib/dwr";
+import { downloadCsv, hoursCsv, type HoursExportRow } from "@/lib/hours-export";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -78,6 +79,7 @@ function DwrPage() {
           </div>
           {manager && <label className="flex items-end gap-2 pb-2 text-sm"><input type="checkbox" checked={otOnly} onChange={(e) => setOtOnly(e.target.checked)} />With overtime only</label>}
         </section>
+        {manager && list.length > 0 && <div className="flex justify-end"><Button variant="outline" size="sm" onClick={() => downloadCsv(hoursCsv(list as unknown as HoursExportRow[]), `Hours_DWR_${from}_${to}.csv`)}><Download className="mr-2 h-4 w-4" />Export CSV</Button></div>}
 
         {list.length === 0 ? <EmptyState>No daily works reports in this range. A report is filed each time someone clocks out.</EmptyState> : (
           <ul className="space-y-2">

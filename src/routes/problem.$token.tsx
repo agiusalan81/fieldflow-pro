@@ -6,10 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { EQUIPMENT_SYMPTOMS, composeProblem, reporterFields } from '@/lib/quick-report';
 export const Route=createFileRoute('/problem/$token')({ staticData: { sitemap: false },head:()=>({meta:[{title:'Report an equipment problem — FieldBridge'},{name:'description',content:'Submit an equipment fault securely to the responsible service team.'},{property:'og:title',content:'Report an equipment problem — FieldBridge'},{property:'og:description',content:'Send a problem report without accessing private equipment records.'},{property:'og:type',content:'website'},{name:'twitter:card',content:'summary'}]}),component:ProblemForm});
 function ProblemForm() {
  const { token } = Route.useParams();
- const [f, setF] = useState({ first: '', last: '', position: '', problem: '' });
+ const [f, setF] = useState({ name: '', note: '' });
+ const [symptom, setSymptom] = useState('');
+ const [more, setMore] = useState(false);
  const [busy, setBusy] = useState(false);
  const [done, setDone] = useState(false);
  const [error, setError] = useState('');
@@ -27,10 +30,11 @@ function ProblemForm() {
    return r.data as unknown as { company: string; next_visit: string | null; visits: { date: string; number: string; type: string }[] };
  } });
  const send = async (e: React.FormEvent) => {
-   e.preventDefault(); if (!target.data || busy) return;
+   e.preventDefault(); if (!target.data || busy || !symptom) return;
    setBusy(true); setError('');
    try {
-     const result = await supabase.rpc('submit_equipment_problem', { _token: token, _first: f.first.trim(), _last: f.last.trim(), _position: f.position.trim(), _problem: f.problem.trim() });
+     const who = reporterFields(f.name);
+     const result = await supabase.rpc('submit_equipment_problem', { _token: token, _first: who.first, _last: who.last, _position: who.position, _problem: composeProblem({ category: target.data.category, symptom, note: f.note }) });
      if (result.error) setError(result.error.message); else setDone(true);
    } catch { setError('Report could not be sent. Please try again.'); }
    finally { setBusy(false); }
@@ -42,12 +46,16 @@ function ProblemForm() {
      {logbook.data.next_visit && <p className="mt-3 text-sm">Next scheduled visit: <span className="font-medium">{new Date(logbook.data.next_visit).toLocaleDateString()}</span></p>}
      {logbook.data.visits.length ? <ul className="mt-3 divide-y text-sm">{logbook.data.visits.map(v => <li key={v.number + v.date} className="flex justify-between gap-3 py-2"><span>{new Date(v.date).toLocaleDateString()} · {v.type}</span><span className="font-mono text-xs text-muted-foreground">{v.number}</span></li>)}</ul> : <p className="mt-3 text-sm text-muted-foreground">No completed visits recorded yet.</p>}
    </section>}
-   {!valid ? <p role="alert">This reporting link is unavailable.</p> : target.isPending ? <p role="status">Checking equipment…</p> : target.isError ? <div className="space-y-3"><p role="alert">Equipment could not be checked. Please try again.</p><Button variant="outline" onClick={() => target.refetch()}>Retry</Button></div> : !target.data ? <p role="alert">This reporting link is unavailable.</p> : done ? <div role="status" className="space-y-3"><h2 className="font-medium">Report received</h2><p className="text-muted-foreground">Your report has been sent to the service team.</p></div> : <form onSubmit={send} className="space-y-4">
-     <div className="grid gap-4 sm:grid-cols-2"><div><Label htmlFor="report-first">Name</Label><Input id="report-first" required maxLength={100} value={f.first} onChange={e => setF({ ...f, first: e.target.value })}/></div><div><Label htmlFor="report-last">Surname</Label><Input id="report-last" required maxLength={100} value={f.last} onChange={e => setF({ ...f, last: e.target.value })}/></div></div>
-     <div><Label htmlFor="report-position">Position</Label><Input id="report-position" required maxLength={100} value={f.position} onChange={e => setF({ ...f, position: e.target.value })}/></div>
-     <div><Label htmlFor="report-problem">Problem</Label><Textarea id="report-problem" required minLength={5} maxLength={2000} rows={6} value={f.problem} onChange={e => setF({ ...f, problem: e.target.value })}/></div>
+   {!valid ? <p role="alert">This reporting link is unavailable.</p> : target.isPending ? <p role="status">Checking equipment…</p> : target.isError ? <div className="space-y-3"><p role="alert">Equipment could not be checked. Please try again.</p><Button variant="outline" onClick={() => target.refetch()}>Retry</Button></div> : !target.data ? <p role="alert">This reporting link is unavailable.</p> : done ? <div role="status" className="space-y-3"><h2 className="font-medium">Report received</h2><p className="text-muted-foreground">Your report has been sent to the service team.</p></div> : <form onSubmit={send} className="space-y-5">
+     <fieldset><legend className="mb-2 text-sm font-medium">What's wrong?</legend><div className="grid grid-cols-2 gap-2">
+       {EQUIPMENT_SYMPTOMS.map(s => <Button key={s} type="button" variant={symptom === s ? 'default' : 'outline'} aria-pressed={symptom === s} className="h-14" onClick={() => { setSymptom(s); if (s === 'Other') setMore(true); }}>{s}</Button>)}
+     </div></fieldset>
+     {!more ? <button type="button" className="text-sm text-primary underline" onClick={() => setMore(true)}>Add details (optional)</button> : <div className="space-y-3 rounded-lg border p-3">
+       <div><Label htmlFor="report-problem">Note (optional)</Label><Textarea id="report-problem" maxLength={1500} rows={3} value={f.note} onChange={e => setF({ ...f, note: e.target.value })}/></div>
+       <div><Label htmlFor="report-name">Your name (optional)</Label><Input id="report-name" maxLength={100} value={f.name} onChange={e => setF({ ...f, name: e.target.value })}/></div>
+     </div>}
      <p className="text-xs text-muted-foreground">For emergencies or trapped passengers, use the emergency contact displayed on the equipment. This form is not an emergency service.</p>
-     {error && <p role="alert" className="text-destructive">{error}</p>}<Button className="w-full" disabled={busy}>{busy ? 'Sending…' : 'Send report'}</Button>
+     {error && <p role="alert" className="text-destructive">{error}</p>}<Button className="h-12 w-full" disabled={busy || !symptom}>{busy ? 'Sending…' : 'Send report'}</Button>
    </form>}
  </main>;
 }

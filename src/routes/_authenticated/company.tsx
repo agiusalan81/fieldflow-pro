@@ -35,6 +35,7 @@ import { DocumentLibrary } from "@/components/document-library";
 import { useCompanyTitle } from "@/lib/company-name";
 import { SafetySettings } from "@/components/safety-settings";
 import { IntegrationsSettings } from "@/components/integrations-settings";
+import { HoursExportSettings } from "@/components/hours-export-settings";
 import { AppShell, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -427,6 +428,7 @@ function SettingsSections({ superuser, companyId, userId, role }: { superuser: b
     heading.current?.focus({ preventScroll: true });
   }, [active]);
   const { edition } = useEdition();
+  const inHouse = edition === "hotel" || edition === "retail";
   const groups: { title: string; items: SectionItem[] }[] = [
     { title: "General & trade", items: [
       { key: "profile", label: "Profile & details", render: () => <ProfileTab companyId={companyId} part="details" navigation={navigation} /> },
@@ -443,19 +445,21 @@ function SettingsSections({ superuser, companyId, userId, role }: { superuser: b
     { title: "Branding & appearance", items: [
       { key: "branding", label: "Branding & PDF styling", render: () => <div className="space-y-6"><AppearanceSettings companyId={companyId} /><ProfileTab companyId={companyId} part="fonts" /><DocumentSettings companyId={companyId} part="branding" /></div> },
     ] },
-    { title: "Commercial & numbering", items: [
+    { title: inHouse ? "Numbering & exports" : "Commercial & numbering", items: [
       ...(edition === 'contractor' ? [{ key: 'client-billing', label: 'Client billing', render: () => <ClientBillingSettings companyId={companyId} /> }] : []),
-      { key: "estimates", label: "Estimates & suppliers", render: () => <div className="space-y-4">{superuser&&<Button asChild variant="outline"><Link to="/subscription" hash="custom-requests">Request a custom module / template</Link></Button>}<QuoteAcceptanceSetting companyId={companyId} /><EstimateSettings companyId={companyId} /></div> },
+      ...(inHouse ? [] : [{ key: "estimates", label: "Estimates & suppliers", render: () => <div className="space-y-4">{superuser&&<Button asChild variant="outline"><Link to="/subscription" hash="custom-requests">Request a custom module / template</Link></Button>}<QuoteAcceptanceSetting companyId={companyId} /><EstimateSettings companyId={companyId} /></div> }]),
       { key: "numbering", label: "Numbering & ID formats", render: () => <div className="space-y-6"><NumberingSettings companyId={companyId} /><IdentifierSettings companyId={companyId}/></div> },
-      { key: "terms", label: "Terms & conditions", render: () => <DocumentSettings companyId={companyId} part="terms" /> },
-      { key: "library", label: libraryName, render: () => <div className="space-y-4">{superuser&&<Button asChild variant="outline"><Link to="/subscription" hash="custom-requests">Request a custom module / template</Link></Button>}<DocumentLibrary companyId={companyId} userId={userId} /></div> },
-      { key: "pricelist", label: "Price list", render: () => <PriceListSettings companyId={companyId} /> },
+      ...(inHouse ? [{ key: "integrations", label: "Hours & payroll export", render: () => <HoursExportSettings /> }] : [
+        { key: "terms", label: "Terms & conditions", render: () => <DocumentSettings companyId={companyId} part="terms" /> },
+        { key: "library", label: libraryName, render: () => <div className="space-y-4">{superuser&&<Button asChild variant="outline"><Link to="/subscription" hash="custom-requests">Request a custom module / template</Link></Button>}<DocumentLibrary companyId={companyId} userId={userId} /></div> },
+        { key: "pricelist", label: "Price list", render: () => <PriceListSettings companyId={companyId} /> },
+      ]),
     ] },
     { title: "Integrations & access", items: [
-      { key: "crm", label: "CRM settings", render: () => <CrmSettings companyId={companyId} actorRole={superuser ? "superuser" : role} /> },
+      ...(inHouse ? [] : [{ key: "crm", label: "CRM settings", render: () => <CrmSettings companyId={companyId} actorRole={superuser ? "superuser" : role} /> }]),
       ...(superuser ? [{ key: "access", label: "Role access", render: () => <AccessTab companyId={companyId} /> }] : []),
       { key: "messaging", label: "Messages & emails", render: () => <IntegrationsSettings part="messaging" companyId={companyId} /> },
-      { key: "integrations", label: "Accounting", render: () => <IntegrationsSettings part="accounting" companyId={companyId} /> },
+      ...(inHouse ? [] : [{ key: "integrations", label: "Accounting", render: () => <IntegrationsSettings part="accounting" companyId={companyId} /> }]),
       { key: "technical", label: "Technical data structure", render: () => <TechnicalStructure companyId={companyId} /> },
       { key: "safety", label: "Safety & faults", render: () => <SafetySettings companyId={companyId} /> },
       ...(can("fields") ? [{ key: "fields", label: "Fields & lookups", render: () => <FieldsEditor /> }] : []),
