@@ -1,5 +1,5 @@
 import { ChatChannelControls, useChatChannels } from "@/components/chat-channel-controls";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -43,6 +43,7 @@ function Messages() {
   const {data: channels = []} = useChatChannels();
   const qc = useQueryClient();
   const { thread: linked } = Route.useSearch();
+  const navigate=useNavigate();
   const [filter, setFilter] = useState<"channels" | "people" | "jobs">("people");
   const [active, setActive] = useState<Thread | null>(null);
   const [text, setText] = useState("");
@@ -109,11 +110,11 @@ function Messages() {
 
   // Open a thread from a notification link.
   useEffect(() => {
-    if (!linked || active) return;
+    if (!linked) {setActive(null);return;}
     const [kind,id]=linked.split(":");
     const t:Thread|undefined=kind==="channel" ? channels.filter(c=>c.id===id).map(c=>({kind:"channel" as const,id:c.id,label:c.name}))[0] : kind==="job" ? jobs.filter(j=>j.id===id).map(j=>({kind:"job" as const,id:j.id,label:`${j.clients?.name??"Job"} · #${j.id.slice(0,4)}`}))[0] : users.filter(u=>u.id===id).map(u=>({kind:"user" as const,id:u.id,label:u.full_name}))[0];
-    if (t) setActive(t);
-  }, [linked, jobs, users, active, channels]);
+    if (t) {setActive(t);setFilter(t.kind==='channel'?'channels':t.kind==='job'?'jobs':'people');}
+  }, [linked, jobs, users, channels]);
 
   // Mark the open thread read whenever new messages arrive in it.
   useEffect(() => {
@@ -125,7 +126,7 @@ function Messages() {
     });
   }, [active, profile, unread, reads, qc]);
 
-  const pickThread = (thread: Thread | null) => { if (sending) return; if ((text.trim() || files.length || contact) && !window.confirm("Discard this unsent message?")) return; setText(""); setFiles([]); setContact(null); setActive(thread); };
+  const pickThread = (thread: Thread | null) => { if (sending) return; if ((text.trim() || files.length || contact) && !window.confirm("Discard this unsent message?")) return; setText(""); setFiles([]); setContact(null); setActive(thread); void navigate({to:'/messages',search:thread?{thread:keyOf(thread)}:{}}); };
   const chooseFiles = (selected: FileList | null) => {
     let count = files.length; const added: File[] = [];
     for (const file of Array.from(selected ?? [])) { const error = chatFileError(file, count); if (error) { toast.error(error); continue; } added.push(file); count++; }
@@ -168,7 +169,7 @@ function Messages() {
           <div className="flex gap-1 border-b p-2">
             {(["people", "jobs", "channels"] as const).map((f) => (
               <Button key={f} size="sm" variant={filter === f ? "secondary" : "ghost"} className="flex-1 capitalize" onClick={() => setFilter(f)}>
-                {f === "jobs" ? "Job threads" : f}
+                {f === "jobs" ? "Job threads" : f === 'channels' ? 'Groups' : f}
               </Button>
             ))}
           </div>
@@ -202,7 +203,7 @@ function Messages() {
           {active ? (
             <>
               <header className="flex items-center gap-2 border-b px-3 py-2.5">
-                <Button size="icon" variant="ghost" className="md:hidden" onClick={() => pickThread(null)} aria-label="Back"><ArrowLeft className="h-4 w-4" /></Button>
+                <Button size="icon" variant="ghost" onClick={() => pickThread(null)} aria-label="Back to messages"><ArrowLeft className="h-4 w-4" /></Button>
                 <p className="truncate font-medium text-foreground">{active.label}{active.kind === "user" && roleOf(active.id) && <span className="ml-2 rounded bg-muted px-1.5 text-xs font-normal text-muted-foreground">{roleOf(active.id)}</span>}</p>
               </header>
               <div className="min-h-0 flex-1 space-y-2 overflow-y-auto bg-muted/40 p-4">
