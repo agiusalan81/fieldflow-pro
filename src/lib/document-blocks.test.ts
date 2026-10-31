@@ -111,9 +111,19 @@ describe("checklist row identity", () => {
   });
 });
 
-import { audienceCopyRows, resolveChecklistValue, stepPrice } from "./document-blocks";
+import { appendChecklistRows, audienceCopyRows, resolveChecklistValue, stepPrice } from "./document-blocks";
 import { parseRich, stripRich, wrapSelection } from "./rich-text";
 describe("checklist copies and reports", () => {
+  it("template imports append without losing existing controls or changing the source", () => {
+    const source = [{ control: "choice", audience: "technician", unit: "", options: ["Safe", "Unsafe"], photo: true, price: 15 }];
+    const next = appendChecklistRows(["Pressure", ""], [{ control: "reading", unit: "bar" }], ["Safety"], source);
+    expect(next.items).toEqual(["Pressure", "Safety"]);
+    expect(next.specs[0]?.control).toBe("reading");
+    expect(next.specs[0]?.unit).toBe("bar");
+    expect(next.specs[1]).toEqual(source[0]);
+    next.specs[1]?.options?.push("N/A");
+    expect(source[0]?.options).toEqual(["Safe", "Unsafe"]);
+  });
   it("unanswered steps report as N/A", () => {
     expect(resolveChecklistValue(undefined)).toBe("N/A");
     expect(resolveChecklistValue("")).toBe("N/A");

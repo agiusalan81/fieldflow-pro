@@ -8,7 +8,7 @@ export type MasterDocumentContent = { name: string; trade?: string; body: string
 export function masterDocumentLines(doc: MasterDocumentContent, view: Audience): string[] {
   const lines = [doc.name, [doc.trade, view === "client" ? "Client copy" : "Technician copy"].filter(Boolean).join(" · "), doc.body];
   for (const section of sectionsFor(parseSections(doc.sections), view)) lines.push(section.title, section.body);
-  if (doc.kind === "checklist") for (const row of checklistRows(doc.items, doc.field_specs).filter(row => row.item.trim() && specShows(row.spec, view))) {
+  for (const row of checklistRows(doc.items, doc.field_specs).filter(row => row.item.trim() && specShows(row.spec, view))) {
     const item = stripRich(row.item), price = stepPrice(row.spec);
     lines.push(view === "client" ? `• ${item}${price ? `   ${price}` : ""}` : `${item}   ${row.spec.control === "reading" ? `________ ${row.spec.unit}` : row.spec.control === "passfail" ? "Pass / Fail / N/A" : row.spec.control === "choice" ? specChoices(row.spec).join(" / ") : "[   ]"}${row.spec.photo ? "   [Photo]" : ""}`);
   }

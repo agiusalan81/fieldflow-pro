@@ -4,6 +4,18 @@ import { DEFAULT_LIFT_PRICING } from "./document-blocks";
 import { buildMasterDocumentPdf } from "./master-document-pdf";
 const doc = { name: "Maintenance", body: "Scope of works", kind: "checklist", items: ["Locks"], commercial: { basePrice: 500, showSampleCalculation: true, liftPricing: { ...DEFAULT_LIFT_PRICING, stops: 6, landingDoors: 4, carAccess: 2, extraStopRate: 25, landingDoorRate: 30, extraCarDoorRate: 45 } } };
 describe("master document export", () => {
+  it.each(["contract", "reference", "terms", "sop", "checklist"])("%s documents retain checklist readings/photos and hide technician prices", (kind) => {
+    const draft = { name: "Audit", body: "", kind, items: ["Pressure", "Private check", "Client fee"], field_specs: [{ control: "reading", unit: "bar", audience: "both", photo: true, price: 15 }, { audience: "technician" }, { audience: "client" }] };
+    const tech = masterDocumentLines(draft, "technician").join("\n");
+    const client = masterDocumentLines(draft, "client").join("\n");
+    expect(tech).toContain("Pressure   ________ bar   [Photo]");
+    expect(tech).toContain("Private check");
+    expect(tech).not.toContain("Client fee");
+    expect(tech).not.toContain("€15.00");
+    expect(client).toContain("• Pressure   €15.00");
+    expect(client).not.toContain("Private check");
+    expect(client).not.toContain("[Photo]");
+  });
   it("excludes all structured commercial data from technician copies", () => {
     const output = masterDocumentLines(doc, "technician").join("\n");
     expect(output).toContain("Locks");

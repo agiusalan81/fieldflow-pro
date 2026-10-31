@@ -53,6 +53,13 @@ export function checklistRows(items: string[], raw: unknown) {
   return items.map((item, i) => ({ item, spec: specs[i] ?? { ...DEFAULT_SPEC } }));
 }
 
+/** Append a snapshot of imported steps without replacing the draft or sharing mutable specs. */
+export function appendChecklistRows(items: string[], raw: unknown, importedItems: string[], importedSpecs?: unknown) {
+  const rows = [...checklistRows(items, raw), ...checklistRows(importedItems, importedSpecs)]
+    .filter(row => row.item.trim());
+  return { items: rows.map(row => row.item), specs: rows.map(row => ({ ...row.spec, ...(row.spec.options ? { options: [...row.spec.options] } : {}) })) };
+}
+
 export function moveChecklistRow<T>(rows: T[], index: number, destination: number): T[] {
   if (index < 0 || destination < 0 || index >= rows.length || destination >= rows.length) return rows;
   const next = [...rows];
