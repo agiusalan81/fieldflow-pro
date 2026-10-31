@@ -59,6 +59,7 @@ import { Route as AuthenticatedTeamIncentivesRouteImport } from './routes/_authe
 import { Route as AuthenticatedTeamInvitesRouteImport } from './routes/_authenticated/team-invites'
 import { Route as AuthenticatedTechnicalLibraryRouteImport } from './routes/_authenticated/technical-library'
 import { Route as ApproveTokenRouteImport } from './routes/approve.$token'
+import { Route as BillingDocumentTokenRouteImport } from './routes/billing-document.$token'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as ProblemTokenRouteImport } from './routes/problem.$token'
 import { Route as QuoteTokenRouteImport } from './routes/quote.$token'
@@ -345,6 +346,11 @@ const ApproveTokenRoute = ApproveTokenRouteImport.update({
   path: '/approve/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BillingDocumentTokenRoute = BillingDocumentTokenRouteImport.update({
+  id: '/billing-document/$token',
+  path: '/billing-document/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const JoinTokenRoute = JoinTokenRouteImport.update({
   id: '/join/$token',
   path: '/join/$token',
@@ -540,6 +546,7 @@ export interface FileRoutesByFullPath {
   '/team-invites': typeof AuthenticatedTeamInvitesRoute
   '/technical-library': typeof AuthenticatedTechnicalLibraryRoute
   '/approve/$token': typeof ApproveTokenRoute
+  '/billing-document/$token': typeof BillingDocumentTokenRoute
   '/join/$token': typeof JoinTokenRoute
   '/problem/$token': typeof ProblemTokenRoute
   '/quote/$token': typeof QuoteTokenRoute
@@ -617,6 +624,7 @@ export interface FileRoutesByTo {
   '/team-invites': typeof AuthenticatedTeamInvitesRoute
   '/technical-library': typeof AuthenticatedTechnicalLibraryRoute
   '/approve/$token': typeof ApproveTokenRoute
+  '/billing-document/$token': typeof BillingDocumentTokenRoute
   '/join/$token': typeof JoinTokenRoute
   '/problem/$token': typeof ProblemTokenRoute
   '/quote/$token': typeof QuoteTokenRoute
@@ -696,6 +704,7 @@ export interface FileRoutesById {
   '/_authenticated/team-invites': typeof AuthenticatedTeamInvitesRoute
   '/_authenticated/technical-library': typeof AuthenticatedTechnicalLibraryRoute
   '/approve/$token': typeof ApproveTokenRoute
+  '/billing-document/$token': typeof BillingDocumentTokenRoute
   '/join/$token': typeof JoinTokenRoute
   '/problem/$token': typeof ProblemTokenRoute
   '/quote/$token': typeof QuoteTokenRoute
@@ -775,6 +784,7 @@ export interface FileRouteTypes {
     | '/team-invites'
     | '/technical-library'
     | '/approve/$token'
+    | '/billing-document/$token'
     | '/join/$token'
     | '/problem/$token'
     | '/quote/$token'
@@ -852,6 +862,7 @@ export interface FileRouteTypes {
     | '/team-invites'
     | '/technical-library'
     | '/approve/$token'
+    | '/billing-document/$token'
     | '/join/$token'
     | '/problem/$token'
     | '/quote/$token'
@@ -930,6 +941,7 @@ export interface FileRouteTypes {
     | '/_authenticated/team-invites'
     | '/_authenticated/technical-library'
     | '/approve/$token'
+    | '/billing-document/$token'
     | '/join/$token'
     | '/problem/$token'
     | '/quote/$token'
@@ -973,6 +985,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   ApproveTokenRoute: typeof ApproveTokenRoute
+  BillingDocumentTokenRoute: typeof BillingDocumentTokenRoute
   JoinTokenRoute: typeof JoinTokenRoute
   ProblemTokenRoute: typeof ProblemTokenRoute
   QuoteTokenRoute: typeof QuoteTokenRoute
@@ -1339,6 +1352,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApproveTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/billing-document/$token': {
+      id: '/billing-document/$token'
+      path: '/billing-document/$token'
+      fullPath: '/billing-document/$token'
+      preLoaderRoute: typeof BillingDocumentTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/join/$token': {
       id: '/join/$token'
       path: '/join/$token'
@@ -1657,6 +1677,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   ApproveTokenRoute: ApproveTokenRoute,
+  BillingDocumentTokenRoute: BillingDocumentTokenRoute,
   JoinTokenRoute: JoinTokenRoute,
   ProblemTokenRoute: ProblemTokenRoute,
   QuoteTokenRoute: QuoteTokenRoute,
