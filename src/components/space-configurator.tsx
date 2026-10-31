@@ -11,6 +11,7 @@ import { CreatableCombobox } from "@/components/creatable-combobox";
 import { EDITION_SPEC, type Edition } from "@/lib/editions";
 import { assetRows, buildSpaces, nextFloor, type Floor, type EquipmentBundle } from "@/lib/space-configurator";
 import { suggestNextTag } from '@/lib/identifier-format';
+import { prefixFor, sequenceTags } from '@/lib/equipment-prefixes';
 import type { Json } from '@/integrations/supabase/types';
 
 const COPY = {
@@ -37,7 +38,7 @@ export function SpaceConfigurator({ companyId, edition }: { companyId: string; e
   } });
   useEffect(()=>{if(!siteId&&sites.data?.length===1){const first=sites.data[0];if(first)setSiteId(first.id);}},[sites.data,siteId]);
   const spaces = useMemo(() => buildSpaces(floors, c.prefix), [floors, c.prefix]);
-  const rows = useMemo(() => assetRows(spaces, equipment).map((r,i)=>({...r,reference_number:rules.data?suggestNextTag(existing.data??[],rules.data,i+1):r.reference_number})), [spaces, equipment,rules.data,existing.data]);
+  const rows = useMemo(() => { const base=assetRows(spaces, equipment); const r=rules.data; if(!r) return base; if(r.use_equipment_prefixes){ const prefixes=base.map(x=>prefixFor(x.asset_category,edition,(r.equipment_prefixes??{}) as Record<string,string>)); const tags=sequenceTags(prefixes,existing.data??[],r.separator,r.padding); return base.map((x,i)=>({...x,prefix:prefixes[i],reference_number:tags[i]??x.reference_number})); } return base.map((x,i)=>({...x,reference_number:suggestNextTag(existing.data??[],r,i+1)})); }, [spaces, equipment,rules.data,existing.data,edition]);
   const groups = EDITION_SPEC[edition].assetGroups;
   const zoneGroups = [{ group: edition === "hotel" ? "Room types" : "Departments", items: [...c.zones] }];
   const upd = (id: string, p: Partial<Floor>) => setFloors((fs) => fs.map((f) => f.id === id ? { ...f, ...p } : f));
