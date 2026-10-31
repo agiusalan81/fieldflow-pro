@@ -31,16 +31,17 @@ function AuthedLayout() {
   }, []);
   return (
     <>
-      <Outlet />
-      <StaffSignatureOnboarding />
-      <DevicePermissions />
-      <Dialog open={offer} onOpenChange={setOffer}>
+      <DevicePermissions>
+        <Outlet />
+        {!offer && <StaffSignatureOnboarding />}
+        <Dialog open={offer} onOpenChange={setOffer}>
         <DialogContent>
           <DialogHeader><DialogTitle>You're in — welcome to FieldBridge</DialogTitle></DialogHeader>
           <InstallAppCard force />
           <Button variant="ghost" className="h-11" onClick={() => setOffer(false)}>Continue in browser</Button>
         </DialogContent>
-      </Dialog>
+        </Dialog>
+      </DevicePermissions>
     </>
   );
 }

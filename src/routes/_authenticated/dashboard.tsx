@@ -69,7 +69,7 @@ function useTick() {
   }, []);
 }
 
-export function ShiftTracker({ profile }: { profile: Profile }) {
+export function ShiftTracker({ profile, recoveryOnly = false }: { profile: Profile; recoveryOnly?: boolean }) {
   const { data: actor } = useProfile();
   const { active: readOnly } = useUserPreview(actor);
   useTick();
@@ -85,19 +85,19 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
   });
   const reconciled = useRef(false);
   useEffect(() => {
-    if (readOnly || !company || reconciled.current) return;
+    if (readOnly || recoveryOnly || !company || reconciled.current) return;
     reconciled.current = true;
     reconcileShifts({ userId: profile.id, companyId: profile.company_id, company, companyName: profile.companies?.name ?? "" })
       .then((m) => { if (m.length) { m.forEach((x) => toast.info(x, { duration: 10000 })); qc.invalidateQueries({ queryKey: ["open-shifts", profile.id] }); qc.invalidateQueries({ queryKey: ["dwr"] }); } })
       .catch(() => {});
-  }, [readOnly, company, profile, qc]);
+  }, [readOnly, recoveryOnly, company, profile, qc]);
   const shift = open.find((s) => s.shift_type === "shift");
   const travel = open.find((s) => s.shift_type === "travel");
 
   const [plateOpen, setPlateOpen] = useState(false);
   const [closeOpen, setCloseOpen] = useState(false);
   const toggle = async (type: "shift" | "travel", current?: { id: string; started_at: string }, vehicle?: string, vehicleUse: import('@/lib/vehicle-clock-in').VehicleUse = 'driver') => {
-    if (readOnly) return;
+    if (readOnly || (recoveryOnly && !current)) return;
     if(type==='shift'&&current)await captureShiftLocation(profile,current.id,'clock_out');
     const endedAt = new Date().toISOString();
     const res = current
@@ -134,7 +134,7 @@ export function ShiftTracker({ profile }: { profile: Profile }) {
       </span>
       {travel && <span className="inline-flex h-7 items-center gap-1 rounded-full bg-warning/20 px-2.5 text-xs tabular-nums text-foreground"><Car className="h-3 w-3" />{formatDuration(Date.now() - new Date(travel.started_at).getTime())}</span>}
       <div className="ml-auto flex gap-2">
-        <Button data-tour="clock-in" size="sm" variant={shift ? "outline" : "default"} disabled={readOnly} onClick={() => (shift ? setCloseOpen(true) : setPlateOpen(true))}>
+        <Button data-tour="clock-in" size="sm" variant={shift ? "outline" : "default"} disabled={readOnly || (recoveryOnly && !shift)} onClick={() => (shift ? setCloseOpen(true) : setPlateOpen(true))}>
           {shift ? <Square className="mr-1 h-4 w-4" /> : <Play className="mr-1 h-4 w-4" />}{shift ? "Clock out" : "Clock in"}
         </Button>
       </div>
