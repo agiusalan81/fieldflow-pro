@@ -69,7 +69,7 @@ export async function pdfLayerFonts(doc: import("pdf-lib").PDFDocument, t: PdfTe
   const one = async (k: TextLayerKey) => {
     const l = t.textStyles?.[k] ?? DEFAULT_TEXT_STYLES[k];
     const standard = l.font === "sans" || l.font === "serif" || l.font === "mono" ? l.font : null;
-    const custom = !standard && l.font !== "document" ? await pdfFonts(doc, { ...t, documentFont: l.font }) : null;
+    const custom = !standard && l.font !== "document" ? await pdfFonts(doc, { ...t, documentFont: l.font as PdfTemplate["documentFont"] }) : null;
     const font = l.font === "document" ? (l.bold ? base.bold : base.font) : standard ? await doc.embedFont(StandardFonts[names[standard][(l.bold ? 1 : 0) + (l.italic ? 2 : 0)] as keyof typeof StandardFonts]) : (l.bold ? custom?.bold : custom?.font) ?? base.font;
     return { font, color: hex(layerColor(t, k)), underline: l.underline };
   };

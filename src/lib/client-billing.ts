@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { PdfTemplate } from './documents';
 import { quoteLineSchema, quoteTotals, type QuoteLine, type QuoteTotals } from './customer-quotes';
 
 export const BILLING_KINDS = { proforma: 'Proforma invoice', payment_request: 'Payment request', invoice: 'Invoice' } as const;
@@ -12,7 +13,7 @@ export const billingDocumentSchema = z.object({
 }).refine(d => d.due_date >= d.issue_date, { message: 'Due date must not precede issue date' })
   .refine(d => !d.tax_exempt || d.lines.every(l => l.vat === 0), { message: 'Non-VAT documents must have zero VAT on all lines' });
 export type BillingDocument = z.infer<typeof billingDocumentSchema>;
-export type BillingSnapshot = { kind: BillingKind; reference: string; document: BillingDocument; totals: QuoteTotals; currency: string; company: { name: string; address: string; vat: string; logo?: string }; client: { name: string; address: string; email?: string }; source_document_id?: string | null };
+export type BillingSnapshot = { template?: PdfTemplate | undefined; kind: BillingKind; reference: string; document: BillingDocument; totals: QuoteTotals; currency: string; company: { name: string; address: string; vat: string; logo?: string }; client: { name: string; address: string; email?: string }; source_document_id?: string | null };
 export function newBillingDocument(defaults: Partial<BillingDocument> = {}): BillingDocument {
   const date = new Date(); const due = new Date(date); due.setUTCDate(due.getUTCDate() + 30);
   return { title: '', issue_date: date.toISOString().slice(0, 10), due_date: due.toISOString().slice(0, 10), lines: [], payment_terms: '', payment_methods: '', terms: '', notes: '', deposit_pct: 0, tax_exempt: false, ...defaults };
