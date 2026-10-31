@@ -1,4 +1,5 @@
 import {formatSiteDisplay} from "@/lib/site-display";
+import { JobSeenMarker } from '@/components/job-seen';
 import { CreatableCombobox } from '@/components/creatable-combobox';
 import { JobIncentiveBadge } from '@/components/my-incentives';
 import { TravelPicker } from "@/components/travel-picker";
@@ -442,6 +443,7 @@ function SheetForm() {
         <datalist id="previous-part-units">{suggestions?.units.map(text => <option key={text} value={text} />)}</datalist>
         {safetyItems.length > 0 && <Section n={0} title="Pre-work safety assessment"><div className="space-y-2">{safetyItems.map((i) => <label key={i} className="flex items-start gap-3 border p-3 text-sm"><Checkbox checked={!!checks[`safety:${i}`]} onCheckedChange={(v) => setChecks({ ...checks, [`safety:${i}`]: !!v })} />{i}</label>)}</div></Section>}
         <div className="flex flex-wrap items-center gap-2">
+          {sheet.job_id && <JobSeenMarker jobId={sheet.job_id} />}
           <StatusBadge status={sheet.status} />
           <JobIncentiveBadge jobId={sheet.job_id} />
           {sheet.status === "in_transit" && <Button type="button" className="h-11" disabled={busy || !localReady} onClick={() => arrive()}><MapPin className="mr-1 h-4 w-4" />Arrive on site</Button>}

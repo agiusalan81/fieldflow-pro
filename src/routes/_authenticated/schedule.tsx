@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { JobSeenMarker } from '@/components/job-seen';
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -116,6 +117,7 @@ function Schedule() {
             <ul className="grid gap-3 md:grid-cols-2">
               {jobs.map((j) => (
                 <li key={j.id} className="space-y-3 rounded-xl border bg-card p-4">
+                  <JobSeenMarker jobId={j.id} disabled={isPreview} />
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="text-xs text-muted-foreground">{new Date(j.scheduled_date + "T00:00").toLocaleDateString([], { weekday: "short", day: "numeric", month: "short" })} · {timeWindow(j.window_start, j.window_end)}</p>
@@ -168,6 +170,7 @@ function Schedule() {
             <>
               <DialogHeader><DialogTitle>Job #{detail.job_number} · {detail.clients?.name}</DialogTitle></DialogHeader>
               <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2 text-sm">
+                <JobSeenMarker jobId={detail.id} disabled={isPreview} />
                 <dt className="text-muted-foreground">Assignment</dt><dd>{profile && isAssisting(detail, profile.id) ? "Assisting" : "Lead"}</dd>
                 <dt className="text-muted-foreground">When</dt><dd>{new Date(detail.scheduled_date + "T00:00").toLocaleDateString()} · {timeWindow(detail.window_start, detail.window_end)}</dd>
                 <dt className="text-muted-foreground">Site</dt><dd>{detail.sites ? `${detail.sites.name}${detail.sites.address ? `, ${detail.sites.address}` : ""}` : "—"}</dd>

@@ -1,4 +1,5 @@
 import { useOpenJobs } from "@/lib/open-jobs";
+import { JobSeenMarker, JobSeenReaders } from '@/components/job-seen';
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -53,6 +54,8 @@ function AvailableJobs() {
         {p?.real_role === 'superuser' && <p className="text-sm text-muted-foreground">Use Test account to test claiming as a technician; View as keeps your Superuser sign-in.</p>}
         {jobs.isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : !(jobs.data ?? []).length ? <EmptyState>No open jobs right now. New open jobs appear here automatically.</EmptyState> : (jobs.data ?? []).map(j => (
           <div key={j.id} id={`job-${j.id}`} className={`rounded-lg border bg-card p-4 ${focus === j.id ? "ring-2 ring-primary" : ""}`}>
+            <JobSeenMarker jobId={j.id} />
+            {p && ['superuser', 'admin', 'supervisor'].includes(p.real_role) && <JobSeenReaders jobId={j.id} openToClaim />}
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div><p className="font-medium">#{j.job_number} · {j.client_name ?? "Client"}{j.site_name ? ` · ${j.site_name}` : ""}</p>
                 <p className="text-sm text-muted-foreground">{j.scheduled_date}{j.window_start ? ` · ${j.window_start.slice(0, 5)}` : ""}{j.window_end ? `–${j.window_end.slice(0, 5)}` : ""} · <span className="capitalize">{j.priority}</span></p></div>

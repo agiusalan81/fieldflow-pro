@@ -16,7 +16,7 @@
 - Quote photos: private immutable storage, frozen snapshot IDs/captions, URLs only after token/portal auth; no unrelated path exposure.
 - HQ: product-scoped owner-only setup/invites/resets; ordered tenant deletes retain users/branding/platform bills and refuse issued payroll; no cross-tenant/financial loss.
 - Chrome: neutral tokens; root clips for sticky previews. Plaques share escaped preview/print messages and fonts.
-- Travel: startJobTravel; arrival time before on-site.
+- Travel: startJobTravel; arrival first. Seen: src/lib/AGENTS.md.
 - Tenant RLS: company_id/current_company_id(), never UI company filters.
 - Roles: protected user_roles; users.role is display-only. Manager-only MemberSkills uses module guards; additions never assign; removal archives for history.
 - Atomic handover reviews jobs/rotas/shifts, preserving history; active-only rota choices share day validation. Snooze is recipient-only; alerts target each request.
@@ -85,4 +85,4 @@
 - Appearance: HQ per-edition product_appearances → hex-validated edition-scoped CSS; safe no-code styling.
 - Library/capacity/PPM/reporting and QR-photo rules: src/lib/AGENTS.md; credits: platform-credit.ts.
 
-- Tours yield to prompts; QR tap-load uses RLS, no redirects.
+- Tours yield to prompts; QR uses RLS.

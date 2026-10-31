@@ -1,4 +1,5 @@
 import { OperationalOverview } from "@/components/operational-overview";
+import { JobSeenMarker } from '@/components/job-seen';
 import { AttentionOverview } from "@/components/attention-overview";
 import { ApprovalsBanner } from "@/components/approvals-banner";
 import { LiveLocations } from "@/components/live-locations";
@@ -179,6 +180,7 @@ function UpForGrabs({ profile }: { profile: Profile }) {
       <ul className="grid min-w-0 gap-3 md:grid-cols-2">
         {(jobs.data ?? []).map((j) => (
           <li key={j.id} className="min-w-0 space-y-2 break-words rounded-lg border bg-card p-3">
+            <JobSeenMarker jobId={j.id} />
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="truncate font-medium text-foreground">#{j.job_number} · {j.client_name ?? "Client"}{j.site_name ? ` · ${j.site_name}` : ""}</p>
@@ -233,6 +235,7 @@ function TechToday({ profile, readOnly, switcher }: { profile: Profile; readOnly
             <ul className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2">
               {jobs.map((j) => (
                  <li key={j.id} id={`assigned-job-${j.id}`} className="w-full min-w-0 space-y-3 overflow-hidden rounded-xl border bg-card p-4">
+                  <JobSeenMarker jobId={j.id} disabled={readOnly} />
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="text-xs font-medium text-primary">{isAssisting(j, profile.id) ? "Assisting" : "Lead"}</p><p className="text-xs text-muted-foreground">Job #{j.job_number} · {timeWindow(j.window_start, j.window_end)}</p>
