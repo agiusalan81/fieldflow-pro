@@ -11,12 +11,12 @@ BEGIN
  SELECT count(*) INTO cap FROM public.user_roles WHERE company_id=tenant AND registration_status='active';
  UPDATE public.platform_subscriptions SET seats=cap+1 WHERE id=sub;
  UPDATE public.company_invites SET expires_at=now()-interval '1 minute' WHERE company_id=tenant AND used_at IS NULL;
- INSERT INTO public.company_invites(company_id,role,full_name) VALUES(tenant,'technician','Capacity rollback fixture') RETURNING id INTO inv;
+ INSERT INTO public.company_invites(company_id,role,full_name,created_by) VALUES(tenant,'technician','Capacity rollback fixture',actor) RETURNING id INTO inv;
  PERFORM set_config('request.jwt.claim.sub',actor::text,true);
  usage:=public.company_seat_usage(tenant);
  IF (usage->>'available_seats')::integer<>0 OR (usage->>'pending_invites')::integer<>1 THEN RAISE EXCEPTION 'Invitation did not reserve final seat'; END IF;
  BEGIN
-  INSERT INTO public.company_invites(company_id,role,full_name) VALUES(tenant,'technician','Must reject');
+  INSERT INTO public.company_invites(company_id,role,full_name,created_by) VALUES(tenant,'technician','Must reject',actor);
   RAISE EXCEPTION 'Over-capacity invitation accepted';
  EXCEPTION WHEN raise_exception THEN IF SQLERRM='Over-capacity invitation accepted' THEN RAISE; END IF; IF SQLERRM NOT LIKE 'Team seat limit reached%' THEN RAISE; END IF; END;
  DELETE FROM public.company_invites WHERE id=inv;
