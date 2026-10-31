@@ -2696,6 +2696,7 @@ export type Database = {
           earned_at: string | null
           id: string
           job_id: string
+          payslip_id: string | null
           sheet_id: string | null
           user_id: string
         }
@@ -2706,6 +2707,7 @@ export type Database = {
           earned_at?: string | null
           id?: string
           job_id: string
+          payslip_id?: string | null
           sheet_id?: string | null
           user_id: string
         }
@@ -2716,6 +2718,7 @@ export type Database = {
           earned_at?: string | null
           id?: string
           job_id?: string
+          payslip_id?: string | null
           sheet_id?: string | null
           user_id?: string
         }
@@ -2732,6 +2735,13 @@ export type Database = {
             columns: ["job_id"]
             isOneToOne: false
             referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_claim_incentives_payslip_id_fkey"
+            columns: ["payslip_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_payslips"
             referencedColumns: ["id"]
           },
           {
@@ -3123,6 +3133,7 @@ export type Database = {
           handover_at: string | null
           handover_note: string | null
           id: string
+          incentive_set_by: string | null
           job_number: number
           open_to_claim: boolean
           ppm_deadline: string | null
@@ -3152,6 +3163,7 @@ export type Database = {
           handover_at?: string | null
           handover_note?: string | null
           id?: string
+          incentive_set_by?: string | null
           job_number?: number
           open_to_claim?: boolean
           ppm_deadline?: string | null
@@ -3181,6 +3193,7 @@ export type Database = {
           handover_at?: string | null
           handover_note?: string | null
           id?: string
+          incentive_set_by?: string | null
           job_number?: number
           open_to_claim?: boolean
           ppm_deadline?: string | null
@@ -7643,6 +7656,10 @@ export type Database = {
       platform_subscription_module_access: {
         Args: { _module: string; _subscription: string }
         Returns: boolean
+      }
+      populate_space_assets: {
+        Args: { _rows: Json; _site: string }
+        Returns: string[]
       }
       portal_decide_quote: {
         Args: {
