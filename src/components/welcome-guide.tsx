@@ -47,13 +47,22 @@ export function WelcomeGuide({ profile, allowed }: { profile: Profile; allowed: 
   const [index, setIndex] = useState(0);
   const key = guideKey(profile.id, profile.company_id);
   const steps = guideSteps(profile.real_role).filter((s) => allowed.includes(s.to));
+  // The tour never opens by itself; it resumes only a tour the user started from the header button.
   useEffect(() => {
     try {
       const live = sessionStorage.getItem(`${key}:step`);
-      if (live !== null) { setIndex(Number(live) || 0); setOpen(true); return; }
-      setOpen(localStorage.getItem(key) !== "done" && path === "/dashboard");
+      if (live !== null) { setIndex(Number(live) || 0); setOpen(true); }
     } catch { setOpen(false); }
   }, [key]);
+  // Hide while any setup/permission dialog is open so the two overlays never fight over taps.
+  const [dialogOpen, setDialogOpen] = useState(false);
+  useEffect(() => {
+    const check = () => setDialogOpen(!!document.querySelector('[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"]'));
+    check();
+    const mo = new MutationObserver(check);
+    mo.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-state"] });
+    return () => mo.disconnect();
+  }, []);
   const finish = () => { try { localStorage.setItem(key, "done"); sessionStorage.removeItem(`${key}:step`); } catch { /* guide works without storage */ } setOpen(false); };
   const go = (next: number) => { const step = steps[next]; if (!step) return; setIndex(next); try { sessionStorage.setItem(`${key}:step`, String(next)); } catch { /* ignore */ } if (step.to !== path) void navigate({ to: step.to }); };
   const step = steps[index];
