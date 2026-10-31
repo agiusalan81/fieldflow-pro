@@ -1,4 +1,6 @@
 # Roadmap
+- [ ] Current build: company-trade survey choices, optional room/area observations and defect/area photos.
+- [ ] Current build: FieldBridge contractor proforma/payment-request/invoice workspace, independent activation, agreed quote/completed-sheet sources, standalone creation, inline library terms, explicit issue/conversion, payment tracking and verification.
 - [x] Approved batch: Hotel/AisleOps configurator custom zones, department → zone → equipment quantities and create/QR hand-off. Retail custom zone → three fridges → fr-01/02/03 → QR read-back verified; fixtures removed. FieldBridge configurator deferred.
 - [x] Approved batch: company identifier rules for tools/assets, strict validation and generated sequences; invalid asset rejection and three sequential IDs verified. Additional identifier fields remain future extensions.
 - [x] Approved batch: categorized multi-select trades, custom categories/services and owner-only HQ default promotion; tenant submission → HQ promotion verified and fixtures removed; supervisor promotion rejected.

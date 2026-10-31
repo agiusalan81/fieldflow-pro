@@ -1,7 +1,8 @@
 import { TRADES } from "./price-list";
+import { SERVICE_GROUPS, expandServices } from "./operating-services";
 
 export type SurveyContact = { id: string; name: string; position: string; email: string; phone: string };
-export type SurveyObservation = { id: string; area: string; trade: string; notes: string; photos: string[] };
+export type SurveyObservation = { id: string; area: string; trade: string; notes: string; photos: string[]; urgency?: string; caption?: string };
 export type SurveyDetails = {
   clientName: string; siteName: string; address: string; storeCode: string;
   contacts: SurveyContact[]; trades: string[]; observations: SurveyObservation[];
@@ -15,13 +16,16 @@ export function parseSurveyDetails(value: unknown): SurveyDetails {
   const v = value && typeof value === "object" && !Array.isArray(value) ? value as Partial<SurveyDetails> : {};
   return { clientName: v.clientName ?? "", siteName: v.siteName ?? "", address: v.address ?? "", storeCode: v.storeCode ?? "", contacts: Array.isArray(v.contacts) ? v.contacts : [], trades: Array.isArray(v.trades) ? v.trades : [], observations: Array.isArray(v.observations) ? v.observations : [], materialsNA: v.materialsNA === true };
 }
-export function surveyTradeLabel(trade: string) { return TRADES.find(t => t.key === trade)?.label ?? trade; }
+export function surveyTradeLabel(trade: string) { return SERVICE_GROUPS.flatMap(g => g.items).find(t => t[0] === trade)?.[1] ?? TRADES.find(t => t.key === trade)?.label ?? trade; }
+export function surveyTradeOptions(companyTrades: string[]) {
+  return expandServices(companyTrades.length ? companyTrades : SERVICE_GROUPS.flatMap(g => g.items.map(t => t[0]))).filter(t => t !== 'custom').map(key => ({ key, label: surveyTradeLabel(key) }));
+}
 export function addSurveyTrade(trades: string[], trade: string): string[] {
   const name = trade.trim();
   return !name || trades.some(t => t.toLowerCase() === name.toLowerCase()) ? trades : [...trades, name];
 }
 export function groupSurveyObservations(details: SurveyDetails) {
-  return details.trades.map(trade => ({ trade, label: surveyTradeLabel(trade), observations: details.observations.filter(o => o.trade === trade) }));
+  return [...new Set([...details.trades, ...details.observations.map(o => o.trade)])].map(trade => ({ trade, label: trade ? surveyTradeLabel(trade) : 'General / site', observations: details.observations.filter(o => o.trade === trade) }));
 }
 export function surveyReviewerOptions<T extends { role: string }>(team: T[], manager: boolean): T[] {
   return manager ? team : team.filter(m => m.role === "supervisor");

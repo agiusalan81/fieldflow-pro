@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { addSurveyTrade, canSubmitSurvey, groupSurveyObservations, parseSurveyDetails, surveyReviewerOptions } from "./survey-details";
+import { addSurveyTrade, canSubmitSurvey, groupSurveyObservations, parseSurveyDetails, surveyReviewerOptions, surveyTradeOptions } from "./survey-details";
 
 describe("survey field workflow", () => {
+  it('offers configured company services including bespoke equipment trades', () => expect(surveyTradeOptions(['heating', 'Pool repairs']).map(t => t.key)).toEqual(['heating', 'Pool repairs']));
+  it('keeps room observations and photos without selected trades', () => {
+    const d = parseSurveyDetails({ observations: [{ id: 'room1', area: 'Room 101', trade: '', notes: 'Leak', photos: ['tenant/site-surveys/photo.jpg'] }] });
+    expect(groupSurveyObservations(d)[0]?.observations[0]).toMatchObject({ area: 'Room 101', photos: ['tenant/site-surveys/photo.jpg'] });
+  });
   it("retains more than one contact including emails", () => {
     const contacts = [{ id: "1", name: "Caretaker", email: "caretaker@example.com", phone: "123", position: "Caretaker" }, { id: "2", name: "Owner", email: "owner@example.com", phone: "456", position: "Owner" }];
     expect(parseSurveyDetails({ contacts }).contacts).toEqual(contacts);

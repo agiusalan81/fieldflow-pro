@@ -3,8 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Camera, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { TRADES } from "@/lib/price-list";
-import { addSurveyTrade, groupSurveyObservations, surveyTradeLabel, type SurveyDetails, type SurveyObservation, type TradeReview } from "@/lib/survey-details";
+import { addSurveyTrade, groupSurveyObservations, surveyTradeOptions, surveyTradeLabel, type SurveyDetails, type SurveyObservation, type TradeReview } from "@/lib/survey-details";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -31,8 +30,8 @@ export function SurveyContacts({ details, onChange }: { details: SurveyDetails; 
 
 export function SurveyTrades({ details, companyTrades, onChange }: { details: SurveyDetails; companyTrades: string[]; onChange: (value: SurveyDetails) => void }) {
   const [other, setOther] = useState("");
-  const options = [...TRADES.filter(t => t.key !== "custom")].sort((a, b) => Number(companyTrades.includes(b.key)) - Number(companyTrades.includes(a.key)) || a.label.localeCompare(b.label));
-  const toggle = (trade: string, checked: boolean) => onChange({ ...details, trades: checked ? addSurveyTrade(details.trades, trade) : details.trades.filter(t => t !== trade), observations: checked ? details.observations : details.observations.filter(o => o.trade !== trade) });
+  const options = surveyTradeOptions(companyTrades);
+  const toggle = (trade: string, checked: boolean) => onChange({ ...details, trades: checked ? addSurveyTrade(details.trades, trade) : details.trades.filter(t => t !== trade) });
   return <section className="space-y-3">
     <h2 className="font-medium">Trades involved</h2>
     <div className="grid gap-2 sm:grid-cols-2">{options.map(t => <label key={t.key} className="flex items-center gap-2 text-sm"><Checkbox checked={details.trades.includes(t.key)} onCheckedChange={v => toggle(t.key, v === true)} />{t.label}</label>)}
@@ -69,7 +68,7 @@ function ObservationPhotos({ companyId, surveyId, observation, disabled, onChang
   };
   return <div className="flex flex-wrap gap-2">
     {paths.map((path, i) => <div key={path} className="flex flex-col gap-1">{urls.data?.[path] && <Button type="button" variant="ghost" className="h-20 w-20 p-0" aria-label={`View observation photo ${i + 1}`} onClick={() => setView(urls.data?.[path] ?? null)}><img src={urls.data[path]} alt="Site observation" className="h-20 w-20 rounded-md object-cover" /></Button>}{!disabled && <Button type="button" variant="ghost" size="sm" aria-label={`Remove observation photo ${i + 1}`} onClick={() => onChange(paths.filter(p => p !== path))}><Trash2 className="h-4 w-4" /></Button>}</div>)}
-    {!disabled && <><input ref={file} type="file" accept="image/*" multiple className="hidden" onChange={e => void upload(e.target.files)} /><Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => file.current?.click()}><Camera className="mr-1 h-4 w-4" />{busy ? "Uploading…" : "Add photos"}</Button></>}
+    {!disabled && <><input ref={file} aria-label="Upload survey photos" type="file" accept="image/*" multiple className="hidden" onChange={e => void upload(e.target.files)} /><Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => file.current?.click()}><Camera className="mr-1 h-4 w-4" />{busy ? "Uploading…" : "Add photos"}</Button><label className="inline-flex cursor-pointer items-center gap-1 rounded-md border px-3 py-1 text-sm"><Camera className="h-4 w-4" />Take photo<input aria-label="Take survey photo" type="file" accept="image/*" capture="environment" disabled={busy} className="hidden" onChange={e => void upload(e.target.files)} /></label></>}
     {view && <div role="dialog" aria-label="Observation photo" className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 p-5" onClick={() => setView(null)}><img src={view} alt="Site observation enlarged" className="max-h-full max-w-full" /><Button type="button" className="absolute right-5 top-5" onClick={() => setView(null)}>Close</Button></div>}
   </div>;
 }
@@ -78,11 +77,14 @@ export function SurveyObservations({ details, onChange, disabled, companyId, sur
   const patch = (id: string, p: Partial<SurveyObservation>) => onChange({ ...details, observations: details.observations.map(o => o.id === id ? { ...o, ...p } : o) });
   return <section className="space-y-4">
     <h2 className="font-medium">Room / area observations <span className="text-xs font-normal text-muted-foreground">(optional)</span></h2>
+    {!disabled && <Button type="button" variant="outline" onClick={() => onChange({ ...details, observations: [...details.observations, { id: crypto.randomUUID(), area: '', trade: '', notes: '', photos: [] }] })}><Plus className="mr-1 h-4 w-4" />Add room / area observation</Button>}
     {groupSurveyObservations(details).map(g => <section key={g.trade} className="space-y-3 border-t pt-3">
       <h3 className="text-sm font-semibold">{g.label}</h3>
       {g.observations.map((o, i) => <div key={o.id} className="space-y-2 rounded-md border bg-card p-3">
         <div className="flex items-end gap-2"><div className="min-w-0 flex-1"><Label htmlFor={`area-${o.id}`}>Room / area</Label><Input id={`area-${o.id}`} value={o.area} onChange={e => patch(o.id, { area: e.target.value })} /></div>{!disabled && <Button type="button" size="icon" variant="ghost" aria-label={`Remove ${g.label} observation ${i + 1}`} onClick={() => onChange({ ...details, observations: details.observations.filter(x => x.id !== o.id) })}><Trash2 className="h-4 w-4" /></Button>}</div>
         <div><Label htmlFor={`finding-${o.id}`}>Findings / work needed</Label><Textarea id={`finding-${o.id}`} value={o.notes} onChange={e => patch(o.id, { notes: e.target.value })} /></div>
+        <div className="grid gap-2 sm:grid-cols-2"><div><Label htmlFor={`trade-${o.id}`}>Trade / category</Label><select id={`trade-${o.id}`} className={selectClass} value={o.trade} onChange={e => patch(o.id, { trade: e.target.value })}><option value="">General / site</option>{details.trades.map(t => <option key={t} value={t}>{surveyTradeLabel(t)}</option>)}</select></div><div><Label htmlFor={`urgency-${o.id}`}>Defect urgency</Label><select id={`urgency-${o.id}`} className={selectClass} value={o.urgency ?? 'routine'} onChange={e => patch(o.id, { urgency: e.target.value })}><option value="routine">Routine / area record</option><option value="soon">Repair needed</option><option value="urgent">Urgent defect</option></select></div></div>
+        <div><Label htmlFor={`caption-${o.id}`}>Photo caption</Label><Input id={`caption-${o.id}`} value={o.caption ?? ''} onChange={e => patch(o.id, { caption: e.target.value })} /></div>
         <ObservationPhotos companyId={companyId} surveyId={surveyId} observation={o} disabled={disabled} onChange={photos => patch(o.id, { photos })} />
       </div>)}
       {!disabled && <Button type="button" variant="outline" size="sm" onClick={() => onChange({ ...details, observations: [...details.observations, { id: crypto.randomUUID(), area: "", trade: g.trade, notes: "", photos: [] }] })}><Plus className="mr-1 h-4 w-4" />Add {g.label} observation</Button>}

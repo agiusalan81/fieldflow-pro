@@ -302,6 +302,182 @@ export type Database = {
           },
         ]
       }
+      client_billing_documents: {
+        Row: {
+          client_id: string | null
+          company_id: string
+          created_at: string
+          created_by: string
+          data: Json
+          id: string
+          issued_at: string | null
+          kind: string
+          reference: string | null
+          snapshot: Json | null
+          source_document_id: string | null
+          source_quote_id: string | null
+          source_sheet_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          data?: Json
+          id?: string
+          issued_at?: string | null
+          kind?: string
+          reference?: string | null
+          snapshot?: Json | null
+          source_document_id?: string | null
+          source_quote_id?: string | null
+          source_sheet_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          data?: Json
+          id?: string
+          issued_at?: string | null
+          kind?: string
+          reference?: string | null
+          snapshot?: Json | null
+          source_document_id?: string | null
+          source_quote_id?: string | null
+          source_sheet_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_billing_documents_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_billing_documents_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_billing_documents_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: true
+            referencedRelation: "client_billing_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_billing_documents_source_quote_id_fkey"
+            columns: ["source_quote_id"]
+            isOneToOne: false
+            referencedRelation: "customer_quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_billing_documents_source_sheet_id_fkey"
+            columns: ["source_sheet_id"]
+            isOneToOne: false
+            referencedRelation: "job_sheets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_billing_payments: {
+        Row: {
+          amount: number
+          company_id: string
+          created_at: string
+          created_by: string
+          document_id: string
+          id: string
+          method: string
+          paid_on: string
+          reference: string
+          request_id: string
+        }
+        Insert: {
+          amount: number
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          document_id: string
+          id?: string
+          method: string
+          paid_on?: string
+          reference?: string
+          request_id?: string
+        }
+        Update: {
+          amount?: number
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          document_id?: string
+          id?: string
+          method?: string
+          paid_on?: string
+          reference?: string
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_billing_payments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_billing_payments_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "client_billing_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_billing_settings: {
+        Row: {
+          company_id: string
+          defaults: Json
+          formats: Json
+          invoice_enabled: boolean
+          payment_request_enabled: boolean
+          proforma_enabled: boolean
+        }
+        Insert: {
+          company_id?: string
+          defaults?: Json
+          formats?: Json
+          invoice_enabled?: boolean
+          payment_request_enabled?: boolean
+          proforma_enabled?: boolean
+        }
+        Update: {
+          company_id?: string
+          defaults?: Json
+          formats?: Json
+          invoice_enabled?: boolean
+          payment_request_enabled?: boolean
+          proforma_enabled?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_billing_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_contacts: {
         Row: {
           all_sites: boolean
@@ -7328,6 +7504,7 @@ export type Database = {
         Returns: boolean
       }
       claim_open_job: { Args: { _job: string }; Returns: string }
+      client_billing_can: { Args: never; Returns: boolean }
       client_contract_coverage: { Args: { _client: string }; Returns: Json }
       client_message_recipients: {
         Args: {
@@ -7354,6 +7531,7 @@ export type Database = {
       }
       company_product_id: { Args: { _company: string }; Returns: string }
       company_storage_usage: { Args: { _company: string }; Returns: Json }
+      convert_client_billing: { Args: { _id: string }; Returns: string }
       create_client_setup: { Args: { _details: Json }; Returns: Json }
       create_equipment_report_link: {
         Args: { _asset: string }
@@ -7511,6 +7689,7 @@ export type Database = {
         Returns: boolean
       }
       is_platform_owner: { Args: never; Returns: boolean }
+      issue_client_billing: { Args: { _id: string }; Returns: string }
       mark_customer_quote_seen: { Args: { _quote: string }; Returns: undefined }
       member_commercial_can: { Args: { _area: string }; Returns: boolean }
       member_costing_can: { Args: never; Returns: boolean }
