@@ -1422,6 +1422,13 @@
       "when": 1793438846570,
       "tag": "0202_document_branding_fonts_billing_snapshots",
       "breakpoints": true
+    },
+    {
+      "idx": 203,
+      "version": "7",
+      "when": 1793445552087,
+      "tag": "0203_finance_followups_and_atomic_csv_import",
+      "breakpoints": true
     }
   ]
 }
