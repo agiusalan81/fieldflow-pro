@@ -20,6 +20,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/pending-works")({ staticData: { sitemap: false },
+  validateSearch:(s:Record<string,unknown>):{report?:string;kind?:string}=>({...(typeof s['report']==='string'?{report:s['report']}:{}),...(typeof s['kind']==='string'?{kind:s['kind']}:{})}),
   head: () => ({
     meta: [
       { title: "Pending works — FieldBridge" },
@@ -49,6 +50,8 @@ export function usePendingWorks() {
 }
 
 function PendingWorks() {
+  const linked=Route.useSearch();
+  useEffect(()=>{if(!linked.report)return;const timer=setInterval(()=>{const el=document.getElementById(`${linked.kind==='store'?'store':'equipment'}-report-${linked.report}`);if(el){el.scrollIntoView({block:'center'});clearInterval(timer);}},300);return()=>clearInterval(timer);},[linked.report,linked.kind]);
   const { data: profile } = useProfile();
   const { data = [] } = usePendingWorks();
   const { data: users = [] } = useCompanyUsers();

@@ -11,22 +11,24 @@ import { incentiveCents, incentiveAmount } from '@/lib/claim-incentive';
 export function ClaimIncentiveSettings({ companyId }: { companyId: string }) {
   const qc = useQueryClient();
   const q = useQuery({queryKey:['claim-incentive-settings',companyId],queryFn:async()=>{
-    const r=await supabase.from('company_settings').select('claim_incentive_enabled,claim_incentive_cents,claim_incentive_staff_visible').eq('company_id',companyId).single();
+    const r=await supabase.from('company_settings').select('claim_incentive_enabled,claim_incentive_cents,claim_incentive_staff_visible,claim_incentive_all_jobs').eq('company_id',companyId).single();
     if(r.error)throw r.error; return r.data;
   }});
   const [enabled,setEnabled]=useState(false),[amount,setAmount]=useState('0.00'),[busy,setBusy]=useState(false);
   const [staffVisible,setStaffVisible]=useState(true);
-  useEffect(()=>{if(q.data){setEnabled(q.data.claim_incentive_enabled);setAmount((q.data.claim_incentive_cents/100).toFixed(2));setStaffVisible(q.data.claim_incentive_staff_visible);}},[q.data]);
+  const [allJobs,setAllJobs]=useState(false);
+  useEffect(()=>{if(q.data){setEnabled(q.data.claim_incentive_enabled);setAmount((q.data.claim_incentive_cents/100).toFixed(2));setStaffVisible(q.data.claim_incentive_staff_visible);setAllJobs(q.data.claim_incentive_all_jobs);}},[q.data]);
   const save=async()=>{
     const cents=incentiveCents(amount); if(cents===null){toast.error('Enter a non-negative euro amount with up to two decimals');return;}
     setBusy(true);try{
-      const r=await supabase.from('company_settings').update({claim_incentive_enabled:enabled,claim_incentive_cents:cents,claim_incentive_staff_visible:staffVisible}).eq('company_id',companyId);
+      const r=await supabase.from('company_settings').update({claim_incentive_enabled:enabled,claim_incentive_cents:cents,claim_incentive_staff_visible:staffVisible,claim_incentive_all_jobs:allJobs}).eq('company_id',companyId);
       if(r.error)throw r.error;await Promise.all(['claim-incentive-settings','staff-incentive-visibility','my-incentives','open-job-bonuses'].map(key=>qc.invalidateQueries({queryKey:[key]})));toast.success('Claim incentive settings saved');
     }catch{toast.error('Could not save claim incentive settings');}finally{setBusy(false);}
   };
   return <section className="space-y-4 border-t pt-5"><h2 className="font-medium">Up for grabs incentives</h2>
     {q.error?<p role="alert" className="text-destructive">Could not load settings</p>:<>
     <Label className="flex items-center justify-between gap-3">Enable claim incentive<Switch aria-label="Enable claim incentive" checked={enabled} onCheckedChange={setEnabled}/></Label>
+    <Label className="flex items-center justify-between gap-3">Also apply the default incentive to directly assigned jobs<Switch aria-label="Apply incentives to all jobs" checked={allJobs} onCheckedChange={setAllJobs}/></Label>
     <Label className="flex items-center justify-between gap-3">Show incentive amounts and totals to staff<Switch aria-label="Show incentive amounts and totals to staff" checked={staffVisible} onCheckedChange={setStaffVisible}/></Label>
     <div className="max-w-xs space-y-2"><Label htmlFor="default-claim-bonus">Default bonus (€)</Label><Input id="default-claim-bonus" type="number" min="0" step="0.01" value={amount} onChange={e=>setAmount(e.target.value)}/></div>
     <Button disabled={busy||!q.data} onClick={save}>{busy?'Saving…':'Save incentives'}</Button>

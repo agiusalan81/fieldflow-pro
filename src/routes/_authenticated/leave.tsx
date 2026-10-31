@@ -1,7 +1,8 @@
 import { LeaveBlackouts, useLeaveBlackouts } from "@/components/leave-blackouts";
 import { matchingBlackouts } from "@/lib/attention-rules";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState,useEffect } from "react";
+import {WorkspaceThread} from '@/components/workspace-thread';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Paperclip } from "lucide-react";
@@ -17,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export const Route = createFileRoute("/_authenticated/leave")({ staticData: { sitemap: false },
+  validateSearch:(s:Record<string,unknown>):{request?:string}=>typeof s['request']==='string'?{request:s['request']}:{},
   head: () => ({
     meta: [
       { property: "og:type", content: "website" },
@@ -45,6 +47,9 @@ function LeavePage() {
   const [f, setF] = useState({ leave_type: "Annual", start_date: "", end_date: "", optional_notes: "" });
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
+  const linked=Route.useSearch().request;
+  const [selected,setSelected]=useState<string|null>(null);
+  useEffect(()=>{setSelected(linked??null);},[linked]);
 
   const { data: reqs = [] } = useQuery({
     queryKey: ["leave", "mine", profile?.id],
@@ -173,7 +178,7 @@ function LeavePage() {
                         <TableCell>{r.leave_type}{r.medical_certificate_path && !isPreview && <Button size="icon" variant="ghost" className="ml-1 h-6 w-6 text-primary" aria-label="View certificate" onClick={() => r.medical_certificate_path && openCert(r.medical_certificate_path)}><Paperclip className="h-3 w-3" /></Button>}</TableCell>
                         <TableCell className="whitespace-nowrap">{r.start_date} → {r.end_date}</TableCell>
                         <TableCell className="text-right tabular-nums">{Number(r.total_hours).toFixed(2)}</TableCell>
-                        <TableCell><span className={`rounded-full px-2 py-0.5 text-xs ${STATUS_CLS[r.status]}`}>{cap(r.status)}</span></TableCell>
+                        <TableCell><Button variant="ghost" size="sm" onClick={()=>setSelected(r.id)}><span className={`rounded-full px-2 py-0.5 text-xs ${STATUS_CLS[r.status]}`}>{cap(r.status)}</span></Button></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -182,6 +187,7 @@ function LeavePage() {
             )}
           </section>
         </div>
+        {mine.filter(r=>r.id===selected).map(r=><section key={r.id} className="space-y-3 border-t pt-4"><h2 className="font-medium">{r.leave_type} · {r.start_date} → {r.end_date} · {cap(r.status)}</h2><WorkspaceThread kind="leave" recordId={r.id} readOnly={isPreview}/></section>)}
 
       </div>
     </AppShell>

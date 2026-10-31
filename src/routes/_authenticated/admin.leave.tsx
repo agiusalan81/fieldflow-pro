@@ -1,5 +1,6 @@
 import { LeaveBlackouts } from "@/components/leave-blackouts";
 import { LeaveImpact } from "@/components/leave-impact";
+import { WorkspaceThread } from '@/components/workspace-thread';
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -89,7 +90,7 @@ function LeaveApprovals() {
                       <p className="truncate text-sm font-medium text-foreground">{r.users?.full_name} <span className="text-xs capitalize text-muted-foreground">· {ROLE_LABEL[members.find(u => u.id === r.user_id)?.role ?? 'technician']}</span> · {leaveLabel(r.leave_type)}</p>
                       <p className="text-xs text-muted-foreground">{r.start_date} → {r.end_date} · {Number(r.total_hours).toFixed(2)} h
                         {isOffice(me) && r.medical_certificate_path && <Button variant="link" size="sm" onClick={() => r.medical_certificate_path && openCert(r.medical_certificate_path)}>certificate</Button>}</p>
-                      {r.optional_notes && <p className="mt-1 text-xs text-foreground">“{r.optional_notes}”</p>}
+                      {r.optional_notes && (r.leave_type!=='Sick'||isOffice(me)) && <p className="mt-1 text-xs text-foreground">“{r.optional_notes}”</p>}
                     </div>
                     <div className="flex flex-wrap gap-1.5 text-xs">
                       <span className="rounded-full bg-muted px-2 py-0.5 tabular-nums">{bal.available.toFixed(2)} h available</span>
@@ -97,6 +98,7 @@ function LeaveApprovals() {
                       {bal.exceedsBy > 0 && <span className="rounded-full bg-warning/25 px-2 py-0.5 text-warning-foreground">Exceeds balance by {bal.exceedsBy.toFixed(2)} h</span>}
                     </div>
                     <LeaveImpact request={{...r, users: r.users ? {...r.users, role: members.find(u => u.id === r.user_id)?.role ?? r.users.role} : null}}/>
+                    <WorkspaceThread kind="leave" recordId={r.id}/>
                   </li>
                 );
               })}

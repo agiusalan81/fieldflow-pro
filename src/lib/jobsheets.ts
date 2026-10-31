@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { initialsOf, type Profile } from "@/lib/profile";
+import { scheduledTravelAllowed } from '@/lib/workspace-thread';
 
 /** Creates a draft job sheet for the signed-in technician, pre-filled from a scheduled job when given. */
 export async function createDraftSheet(profile: Profile, jobId?: string) {
@@ -50,6 +51,10 @@ export async function createDraftSheet(profile: Profile, jobId?: string) {
 
 /** Start a scheduled journey without resetting a sheet already on site or completed. */
 export async function startJobTravel(profile: Profile, jobId: string) {
+  const {data:job,error:jobError}=await supabase.from('jobs').select('scheduled_date').eq('id',jobId).single();
+  if(jobError)throw jobError;
+  if(!job)throw new Error('Job unavailable');
+  if(!scheduledTravelAllowed(job.scheduled_date))throw new Error('Travel can only start on the scheduled date');
   const { data: latest, error: latestError } = await supabase.from("job_sheets").select("id, status").eq("job_id", jobId).order("created_at", { ascending: false }).limit(1).maybeSingle();
   if (latestError) throw latestError;
   if (latest?.status === "in_progress" || latest?.status === "completed") throw new Error("This job is already on site or completed. Open its job sheet instead.");
