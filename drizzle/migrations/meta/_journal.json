@@ -1394,6 +1394,13 @@
       "when": 1793431956894,
       "tag": "0198_contractor_client_billing",
       "breakpoints": true
+    },
+    {
+      "idx": 199,
+      "version": "7",
+      "when": 1793432240671,
+      "tag": "0199_client_billing_sharing_and_validation",
+      "breakpoints": true
     }
   ]
 }
