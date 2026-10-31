@@ -42,13 +42,18 @@ export function DevicePermissions() {
   const blocked = push === "blocked" || (field && geo === "denied");
   const open = !later && !(pushOk && geoOk);
 
-  const allow = async () => {
+  // Mobile browsers only honour prompts started directly inside the tap, so both requests start synchronously here.
+  const allow = () => {
     setBusy(true);
-    try {
-      if (!pushOk && push !== "blocked") setPush(await enablePush());
-      if (field && geo === "prompt") await new Promise<void>((r) => navigator.geolocation.getCurrentPosition(() => r(), () => r(), { timeout: 15000 }));
-      setGeo(await geoState());
-    } finally { setBusy(false); }
+    const geoP = field && geo !== "granted" && geo !== "denied"
+      ? new Promise<void>((r) => { try { navigator.geolocation.getCurrentPosition(() => r(), () => r(), { timeout: 7000, maximumAge: 600000 }); } catch { r(); } setTimeout(r, 8000); })
+      : Promise.resolve();
+    const pushP = !pushOk && push !== "blocked" ? enablePush() : Promise.resolve(push);
+    void Promise.allSettled([pushP, geoP]).then(async ([p]) => {
+      if (p.status === "fulfilled" && p.value) setPush(p.value);
+      setGeo(await geoState().catch(() => "prompt" as Geo));
+      setBusy(false);
+    });
   };
 
   const Row = ({ icon, label, why, ok, bad }: { icon: React.ReactNode; label: string; why: string; ok: boolean; bad: boolean }) => (
