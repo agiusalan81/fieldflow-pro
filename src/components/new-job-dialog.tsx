@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from "react";
 import { saveSheetOrder } from "@/lib/sheet-nav";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Mail, FileText, Trash2, Download, X } from "lucide-react";
+import { Plus, Mail, FileText, Trash2, Download, X, ChevronDown } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { DateFilter } from "@/components/date-filter";
 import { MonthlySheets } from "@/components/monthly-sheets";
@@ -42,6 +42,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ClientSitePicker } from "@/components/client-site-picker";
 import { isDispatchable, useFieldDispatchIds } from "@/lib/member-capabilities";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DispatchEquipmentSelect } from '@/components/dispatch-equipment-select';
 
 export type PendingDispatch = {id:string;pending_status:string;client_id:string;site_id:string|null;asset_id:string|null;pending_works_future_jobs:string|null;jobsheet_number:string};
@@ -149,12 +150,17 @@ export function NewJobDialog({pending,onClose}:{pending?:PendingDispatch;onClose
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild><Button data-tour="dispatch" size="sm" className={pending?"hidden":"h-11"}><Plus className="mr-1 h-4 w-4" />Team dispatch</Button></DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader><DialogTitle>{pending?`Dispatch pending work — #${pending.jobsheet_number}`:"Team dispatch — New job"}</DialogTitle></DialogHeader>
-        <form onSubmit={save} className="space-y-3">
+        <form onSubmit={save} className="space-y-4">
+          <p className="text-sm font-medium">Location & work</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <ClientSitePicker disabled={!!pending} clientId={f.client_id || null} siteId={f.site_id === "none" ? null : f.site_id} onChange={(client, site) => setF((cur) => ({ ...cur, client_id: client ?? "", site_id: site ?? "none", asset_id: client === cur.client_id && (site ?? 'none') === cur.site_id ? cur.asset_id : "none" }))} />
             <DispatchEquipmentSelect assets={assets} companyId={profile?.company_id ?? ''} clientId={f.client_id} siteId={uuidOrNull(f.site_id)} value={f.asset_id} onChange={asset_id => setF(cur => ({ ...cur, asset_id }))} disabled={!!pending}/>
+          </div>
+          <div className="space-y-1.5"><Label>Problem summary</Label><SuggestedTextarea aria-label="Problem summary" value={f.problem_summary} onValueChange={problem_summary => setF({ ...f, problem_summary })} suggestions={suggestions?.problems} /></div>
+          <div className="border-t pt-4"><p className="mb-3 text-sm font-medium">Team & urgency</p>
+          <div className="grid gap-3 sm:grid-cols-3">
             <div className="space-y-1"><Label>Lead technician</Label><Select value={f.tech} onValueChange={(v) => setF({ ...f, tech: v, assistant: v === f.assistant || v === "none" ? "none" : f.assistant, crew: f.crew.filter(c => c !== v) })}>
               <SelectTrigger aria-label="Lead technician"><SelectValue /></SelectTrigger>
               <SelectContent><SelectItem value="none">{smart && f.open ? "First to claim" : "Unassigned"}</SelectItem>{ranked.map((u) => <SelectItem key={u.id} value={u.id}>{label(u)}</SelectItem>)}</SelectContent>
@@ -164,35 +170,38 @@ export function NewJobDialog({pending,onClose}:{pending?:PendingDispatch;onClose
               <SelectTrigger aria-label="Assisting technician"><SelectValue /></SelectTrigger>
               <SelectContent><SelectItem value="none">No assistant</SelectItem>{ranked.filter(u => u.id !== f.tech).map(u => <SelectItem key={u.id} value={u.id}>{label(u)}</SelectItem>)}</SelectContent>
             </Select></div>
-            <Select value={f.priority} onValueChange={(v) => setF({ ...f, priority: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <div className="space-y-1"><Label>Urgency</Label><Select value={f.priority} onValueChange={(v) => setF({ ...f, priority: v })}>
+              <SelectTrigger aria-label="Urgency" className="capitalize"><SelectValue /></SelectTrigger>
               <SelectContent>{["low", "normal", "high", "urgent"].map((p) => <SelectItem key={p} value={p} className="capitalize">{p}</SelectItem>)}</SelectContent>
-            </Select>
+            </Select></div>
           </div>
-          {smart && <div className="space-y-3 rounded-lg border p-3">
-            <p className="text-sm font-medium">Smart dispatch</p>
-            <div><Label htmlFor="dispatch-trade">Field staff trade</Label><select id="dispatch-trade" className="h-11 w-full rounded-md border bg-background px-2" value={trade} onChange={e=>setTrade(e.target.value)}><option value="">All trades</option>{FIELD_TRADES.map(t=><option key={t}>{t}</option>)}</select></div>
-            <div className="space-y-1"><Label htmlFor="team-size">Required team size</Label><NumInput id="team-size" className="h-11 w-28" min={1} max={30} step={1} value={f.teamSize} onChange={teamSize => setF({ ...f, teamSize })} /></div>
-            {!!skillList.filter(s=>!s.archived).length && <fieldset className="space-y-3"><legend className="text-sm font-medium">Required skills</legend>
+          {smart && <div className="mt-3 space-y-3">
+            <div className="grid items-end gap-3 sm:grid-cols-[1fr_8rem_1fr]"><div><Label htmlFor="dispatch-trade">Field staff trade</Label><select id="dispatch-trade" className="h-11 w-full rounded-md border bg-background px-2" value={trade} onChange={e=>setTrade(e.target.value)}><option value="">All trades</option>{FIELD_TRADES.map(t=><option key={t}>{t}</option>)}</select></div>
+            <div className="space-y-1"><Label htmlFor="team-size">Required team size</Label><NumInput id="team-size" className="h-11 w-full" min={1} max={30} step={1} value={f.teamSize} onChange={teamSize => setF({ ...f, teamSize })} /></div>
+            {!!skillList.filter(s=>!s.archived).length && <div className="space-y-1"><Label>Required skills</Label><Popover><PopoverTrigger asChild><Button type="button" variant="outline" className="h-11 w-full justify-between"><span>{f.skills.length ? `${f.skills.length} selected` : 'Select skills'}</span><ChevronDown className="ml-2 h-4 w-4"/></Button></PopoverTrigger><PopoverContent align="end" className="max-h-[50dvh] w-80 max-w-[calc(100vw-2rem)] overflow-y-auto"><fieldset className="space-y-3"><legend className="text-sm font-medium">Required skills</legend>
               <div><Label htmlFor="dispatch-category">Skills category</Label><Select value={category} onValueChange={setCategory}><SelectTrigger id="dispatch-category"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="all">All categories</SelectItem>{groupSkills(skillList.filter(s=>!s.archived)).map(([name])=><SelectItem key={name} value={name}>{name}</SelectItem>)}</SelectContent></Select></div>
               {groupSkills(skillList.filter(s=>!s.archived)).filter(([name])=>category==='all'||name===category).map(([name,skills])=><div key={name} className="space-y-2"><p className="text-xs font-medium text-muted-foreground">{name}</p><div className="grid gap-2 sm:grid-cols-2">{skills.map(s=><label key={s.id} className="flex min-h-10 cursor-pointer items-center gap-2 text-sm"><Checkbox className="rounded-full" checked={f.skills.includes(s.id)} onCheckedChange={checked=>setF(cur=>({...cur,skills:checked===true?[...new Set([...cur.skills,s.id])]:cur.skills.filter(id=>id!==s.id)}))}/><span>{s.name}</span></label>)}</div></div>)}
               {!!f.skills.length&&<div className="flex flex-wrap gap-2">{f.skills.map(id=>{const skill=skillList.find(s=>s.id===id);return skill?<Button key={id} type="button" size="sm" variant="secondary" onClick={()=>setF(cur=>({...cur,skills:cur.skills.filter(x=>x!==id)}))} aria-label={`Remove required skill ${skill.name}`}>{skill.name}<X className="ml-1 h-3 w-3"/></Button>:null;})}</div>}
-            </fieldset>}
+            </fieldset></PopoverContent></Popover></div>}</div>
             {f.tech !== "none" && f.assistant !== "none" && f.teamSize > 2 && <div className="space-y-2"><Label>More crew</Label>
               {f.crew.map((c, i) => <div key={i} className="flex gap-2"><select aria-label={`Crew member ${i + 3}`} className="h-11 flex-1 rounded-md border bg-background px-2 text-sm" value={c} onChange={e => setF({ ...f, crew: f.crew.map((x, j) => j === i ? e.target.value : x) })}>{ranked.filter(u => u.id === c || ![f.tech, f.assistant, ...f.crew].includes(u.id)).map(u => <option key={u.id} value={u.id}>{label(u)}</option>)}</select><Button type="button" variant="outline" className="h-11" onClick={() => setF({ ...f, crew: f.crew.filter((_, j) => j !== i) })} aria-label="Remove crew member"><X className="h-4 w-4" /></Button></div>)}
               {2 + f.crew.length < f.teamSize && (() => { const next = ranked.find(u => ![f.tech, f.assistant, ...f.crew].includes(u.id)); return next ? <Button type="button" variant="outline" className="h-11" onClick={() => setF({ ...f, crew: [...f.crew, next.id] })}><Plus className="mr-1 h-4 w-4" />Add technician</Button> : null; })()}
             </div>}
-            <label className="flex items-start gap-2 text-sm"><Checkbox checked={f.open} onCheckedChange={v => setF({ ...f, open: v === true })} /><span>Open to eligible technicians — clocked-in team members with the required skills can claim the remaining places ({Math.max(0, f.teamSize - ([f.tech, f.assistant].filter(x => x !== "none").length + f.crew.length))} left).</span></label>
           </div>}
+          </div>
+          <div className="space-y-3 border-t pt-4"><p className="text-sm font-medium">Schedule</p>
           <label className="flex items-center gap-2 text-sm"><Checkbox checked={f.tbd} onCheckedChange={v => setF({...f,tbd:v===true})}/>Date to be decided (TBD)</label>
-          {smart && f.tech === "none" && !f.tbd && <label className="flex items-center gap-2 text-sm"><Checkbox checked={f.hold} onCheckedChange={v => setF({...f,hold:v===true})}/>Hold off Up for grabs</label>}
-          {smart&&<div className="space-y-1.5"><Label htmlFor="new-claim-bonus">Claim bonus override (€)</Label><Input id="new-claim-bonus" disabled={bonusLocked} type="number" min="0" step="0.01" placeholder="Company default" value={bonusLocked?'':bonus} onChange={e=>setBonus(e.target.value)}/>{bonusLocked&&<p className="text-xs text-muted-foreground">Company default applies when dispatching to yourself.</p>}</div>}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 [&>*:first-child]:col-span-2 sm:[&>*:first-child]:col-span-1">
             <div className="space-y-1.5"><Label>Date</Label><Input type="date" required={!f.tbd} disabled={f.tbd} value={f.tbd ? "" : f.scheduled_date} onChange={(e) => setF({ ...f, scheduled_date: e.target.value })} /></div>
             <div className="space-y-1.5"><Label>Arrive from (optional)</Label><Input type="time" disabled={f.tbd} value={f.window_start} onChange={(e) => setF({ ...f, window_start: e.target.value })} /></div>
             <div className="space-y-1.5"><Label>Until (optional)</Label><Input type="time" disabled={f.tbd} value={f.window_end} onChange={(e) => setF({ ...f, window_end: e.target.value })} /></div>
           </div>
-          <div className="space-y-1.5"><Label>Problem summary</Label><SuggestedTextarea aria-label="Problem summary" value={f.problem_summary} onValueChange={problem_summary => setF({ ...f, problem_summary })} suggestions={suggestions?.problems} /></div>
+          </div>
+          {smart && <details className="border-t pt-3"><summary className="cursor-pointer text-sm font-medium">Advanced dispatch options</summary><div className="space-y-3 pt-3">
+            {smart && <label className="flex items-start gap-2 text-sm"><Checkbox checked={f.open} onCheckedChange={v => setF({ ...f, open: v === true })} /><span>Open to eligible technicians — clocked-in team members with the required skills can claim the remaining places ({Math.max(0, f.teamSize - ([f.tech, f.assistant].filter(x => x !== "none").length + f.crew.length))} left).</span></label>}
+          {smart && f.tech === "none" && !f.tbd && <label className="flex items-center gap-2 text-sm"><Checkbox checked={f.hold} onCheckedChange={v => setF({...f,hold:v===true})}/>Hold off Up for grabs</label>}
+          {smart&&<div className="space-y-1.5"><Label htmlFor="new-claim-bonus">Claim bonus override (€)</Label><Input id="new-claim-bonus" disabled={bonusLocked} type="number" min="0" step="0.01" placeholder="Company default" value={bonusLocked?'':bonus} onChange={e=>setBonus(e.target.value)}/>{bonusLocked&&<p className="text-xs text-muted-foreground">Company default applies when dispatching to yourself.</p>}</div>}
+          </div></details>}
           <Button type="submit" className="w-full" disabled={saving}>{saving ? "Creating…" : "Create job"}</Button>
         </form>
       </DialogContent>
