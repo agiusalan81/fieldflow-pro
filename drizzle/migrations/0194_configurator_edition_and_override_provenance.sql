@@ -1,0 +1,13 @@
+DO $$ DECLARE f text; old text:='SELECT 1 FROM public.companies co JOIN public.platform_products p ON p.id=co.product_id WHERE co.id=c AND p.slug IN (''fieldbridge_hotels'',''aisleops'')'; BEGIN f:=pg_get_functiondef('public.populate_space_assets(uuid,jsonb)'::regprocedure);IF position(old in f)=0 THEN RAISE EXCEPTION 'Edition guard insertion point missing'; END IF;f:=replace(f,old,'SELECT 1 FROM public.platform_products p WHERE p.id=public.company_product_id(c) AND p.engine_edition IN (''hotel'',''retail'')');EXECUTE f; END $$;
+CREATE OR REPLACE FUNCTION public.guard_incentive_self_dealing() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN
+ IF TG_OP='UPDATE' AND (NEW.claim_incentive_cents IS DISTINCT FROM OLD.claim_incentive_cents OR NEW.claim_incentive_override IS DISTINCT FROM OLD.claim_incentive_override) AND EXISTS(SELECT 1 FROM public.job_claim_incentives WHERE job_id=NEW.id) THEN RAISE EXCEPTION 'Bonus is frozen after the first claim'; END IF;
+ IF TG_OP='INSERT' THEN
+  IF NEW.claim_incentive_override OR NEW.claim_incentive_cents>0 THEN IF NOT public.member_dispatch_can() THEN RAISE EXCEPTION 'Dispatch access required'; END IF; NEW.claim_incentive_override:=true; NEW.incentive_set_by:=auth.uid(); ELSE NEW.incentive_set_by:=NULL; END IF;
+ ELSE
+  IF NEW.claim_incentive_cents IS DISTINCT FROM OLD.claim_incentive_cents OR (NEW.claim_incentive_override AND NOT OLD.claim_incentive_override) THEN IF NOT public.member_dispatch_can() THEN RAISE EXCEPTION 'Dispatch access required'; END IF; NEW.claim_incentive_override:=true;NEW.incentive_set_by:=auth.uid(); ELSE NEW.incentive_set_by:=OLD.incentive_set_by; END IF;
+ END IF;
+ IF NOT NEW.claim_incentive_override THEN NEW.incentive_set_by:=NULL; END IF;
+ IF NEW.claim_incentive_override AND public.has_role(NEW.incentive_set_by,'supervisor') AND (NEW.incentive_set_by IN (NEW.assigned_technician_id,NEW.secondary_technician_id) OR EXISTS(SELECT 1 FROM public.job_crew WHERE job_id=NEW.id AND user_id=NEW.incentive_set_by)) THEN RAISE EXCEPTION 'Supervisors cannot set an incentive for themselves. Use the company default or ask office staff'; END IF;
+ IF TG_OP='UPDATE' AND NEW.claim_incentive_override AND NEW.incentive_set_by IS NULL AND public.my_role()='supervisor' AND (auth.uid() IN (NEW.assigned_technician_id,NEW.secondary_technician_id)) AND (NEW.assigned_technician_id IS DISTINCT FROM OLD.assigned_technician_id OR NEW.secondary_technician_id IS DISTINCT FROM OLD.secondary_technician_id) THEN RAISE EXCEPTION 'Office review required for a legacy incentive override'; END IF;
+ RETURN NEW;
+END $$;
