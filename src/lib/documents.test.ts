@@ -34,6 +34,10 @@ describe("document text layers", () => {
     expect(t.textStyles?.detail.italic).toBe(true);
   });
   it("headings default to the brand colour", () => { const t = parseT({ primaryColor: "#abcdef" }); expect(layerColor(t, "label")).toBe("#abcdef"); });
+  it("company name defaults to its brand colour even with white field text", () => { expect(layerColor(parseT({ primaryColor: '#246654', fieldText: '#ffffff' }), 'company')).toBe('#246654'); });
+  it('repairs white company lettering on a white document', () => { expect(layerColor(parseT({ primaryColor: '#e86711', fieldBackground: '#ffffff', textStyles: { company: { color: '#ffffff' } } }), 'company')).toBe('#e86711'); });
+  it("keeps named fonts independently selectable by every layer", () => { const t = parseT({ customFonts: [{ id: 'brand-bold', name: 'Brand Bold', path: '00000000-0000-4000-8000-000000000001/fonts/a.ttf' }], textStyles: { company: { font: 'custom:brand-bold' }, label: { font: 'custom:brand-bold' }, detail: { font: 'custom:brand-bold' } } }); expect(t.customFonts?.[0]?.name).toBe('Brand Bold'); for (const key of ['company', 'label', 'detail'] as const) expect(t.textStyles?.[key].font).toBe('custom:brand-bold'); });
+  it("retains transparent grayscale backgrounds with adjustable brightness", () => { const t = parseT({ backgroundOpacity: .35, backgroundTone: 'grayscale', backgroundBrightness: 1.5 }); expect(t.backgroundOpacity).toBe(.35); expect(t.backgroundTone).toBe('grayscale'); expect(t.backgroundBrightness).toBe(1.5); });
 });
 
 it("retains underline only when explicitly enabled", () => { expect(parseTemplate({textStyles:{company:{underline:true},detail:{underline:"yes"}}}).textStyles?.company.underline).toBe(true); expect(parseTemplate({textStyles:{detail:{underline:"yes"}}}).textStyles?.detail.underline).toBe(false); });

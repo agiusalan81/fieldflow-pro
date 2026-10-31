@@ -15,6 +15,12 @@ export async function tonedBackground(data: string, t: PdfTemplate): Promise<str
     image.data[i + 1] = Math.min(255, Math.round((t.backgroundTone === 'grayscale' ? grey : g) * brightness));
     image.data[i + 2] = Math.min(255, Math.round((t.backgroundTone === 'grayscale' ? grey : b) * brightness));
   }
+  if (typeof document !== 'undefined') {
+    const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height;
+    const context = canvas.getContext('2d'); if (!context) throw new Error('Background processing unavailable');
+    context.putImageData(new ImageData(new Uint8ClampedArray(image.data), image.width, image.height), 0, 0);
+    return canvas.toDataURL('image/jpeg', .85);
+  }
   const result = jpeg.encode(image, 85).data;
   let binary = ''; for (let i = 0; i < result.length; i += 8192) binary += String.fromCharCode(...result.subarray(i, i + 8192));
   return `data:image/jpeg;base64,${btoa(binary)}`;

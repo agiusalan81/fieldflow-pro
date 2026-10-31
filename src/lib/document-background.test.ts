@@ -1,0 +1,5 @@
+import { expect, it, vi } from 'vitest';
+import { encode, decode } from 'jpeg-js';
+import { tonedBackground } from './document-background';
+import { DEFAULT_TEMPLATE } from './documents';
+it('converts a coloured background to a lighter grayscale image', async () => { vi.stubGlobal('document', undefined); const original = encode({ width: 1, height: 1, data: Uint8Array.from([160, 80, 30, 255]) }, 100).data; const data = `data:image/jpeg;base64,${btoa(String.fromCharCode(...original))}`; const result = await tonedBackground(data, { ...DEFAULT_TEMPLATE, backgroundTone: 'grayscale', backgroundBrightness: 1.5 }); const image = decode(Uint8Array.from(atob(result.split(',')[1] ?? ''), c => c.charCodeAt(0))); expect(Math.abs((image.data[0] ?? 0) - (image.data[1] ?? 0))).toBeLessThan(3); expect(image.data[0]).toBeGreaterThan(100); vi.unstubAllGlobals(); });
