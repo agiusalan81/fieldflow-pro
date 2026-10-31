@@ -12,6 +12,17 @@ export const pushSupported = () => typeof window !== "undefined" && "serviceWork
 
 export type PushStatus = "unsupported" | "blocked" | "needs-permission" | "no-worker" | "registered" | "error";
 
+/** Quiet inspection only: never subscribes, prompts, or calls the server on app focus. */
+export async function readPushStatus(): Promise<PushStatus> {
+  if (!pushSupported()) return 'unsupported';
+  if (Notification.permission === 'denied') return 'blocked';
+  if (Notification.permission !== 'granted') return 'needs-permission';
+  try {
+    const reg = await navigator.serviceWorker.getRegistration('/push/');
+    return await reg?.pushManager.getSubscription() ? 'registered' : 'no-worker';
+  } catch { return 'error'; }
+}
+
 /** Messaging has its own registration; offline caching must not gate alerts. */
 async function workerReady(ms = 20000): Promise<ServiceWorkerRegistration | null> {
   const reg = await navigator.serviceWorker.register("/push-sw.js", { scope: "/push/", updateViaCache: "none" });

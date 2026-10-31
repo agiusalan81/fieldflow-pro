@@ -6,7 +6,7 @@
 - Chat selection follows the thread URL so notification links switch conversations and Back returns to the list.
 - Seat capacity derives from the selected edition's plan or larger HQ-licensed allowance; active staff and live invitation reservations share a company lock. Trial/legacy/custom access and existing over-limit members remain intact; storage uses the same product-scoped subscription.
 - Preventive maintenance reuses agreement-bound plans and immutable generated jobs across editions; shared status filters and pagination never change cadence, deadlines, or signed history.
-- Field-device setup gates real field users independently of paid tracking access; actual GPS consent plus registered push precede clock-in. Recovery never blocks clock-out or test return; GPS writes retain existing shift/plan/vehicle rules.
+- Field-device setup gates real field users independently of paid tracking access; persist successful device GPS confirmation, quietly inspect current grants/subscriptions on focus without re-registering or fresh GPS, and retain actual GPS plus push rechecks before clock-in. Recovery never blocks clock-out or test return; GPS writes retain existing shift/plan/vehicle rules.
 - CSV imports use one manager/Core-guarded transaction with unambiguous tenant parent matching and no overwrites; rooms reuse assets for QR and maintenance history.
 - Technical suggestions use edition defaults only before trade setup, otherwise configured trade families and active packs; preserve saved custom choices.
 - Finance follow-ups stay outside immutable documents, office/Core-only, cancel by derived payment/decision state and use fixed-template single-recipient server sends. Managed email owns retries; no scheduled email dispatcher.
