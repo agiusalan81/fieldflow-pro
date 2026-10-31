@@ -11,6 +11,7 @@ import { Download } from 'lucide-react';
 import { quoteExpired, type QuoteSnapshot } from '@/lib/customer-quotes';
 import { buildCustomerQuotePdf } from '@/lib/customer-quote-pdf';
 import { useQuotePhotoUrls } from '@/components/customer-quote-photos';
+import { sharedDocumentBranding } from '@/lib/shared-document-branding.functions';
 
 export const Route = createFileRoute('/quote/$token')({ staticData: { sitemap: false }, head: () => ({ meta: [
   { title: 'Customer quote — FieldBridge' }, { name: 'description', content: 'View a securely shared customer estimate or proposal and download its PDF.' },
@@ -19,7 +20,7 @@ export const Route = createFileRoute('/quote/$token')({ staticData: { sitemap: f
 ] }), component: QuotePage });
 function QuotePage() {
   const { token } = Route.useParams(); const valid = /^[a-f0-9]{64}$/.test(token);
-  const q = useQuery({ queryKey: ['shared-customer-quote', token], enabled: valid, retry: false, queryFn: async () => { const r = await supabase.rpc('read_customer_quote', { _token: token }); if (r.error) throw r.error; return r.data as unknown as QuoteSnapshot | null; } });
+  const q = useQuery({ queryKey: ['shared-customer-quote', token], enabled: valid, retry: false, queryFn: async () => await sharedDocumentBranding({ data: { token, kind: 'quote' } }) as QuoteSnapshot | null });
   const [name, setName] = useState(''); const [comment, setComment] = useState(''); const [busy, setBusy] = useState(false); const [error, setError] = useState('');
   const photos = useQuotePhotoUrls({ token }, !!q.data?.document.photos?.length);
   const decide = async (decision: 'accepted' | 'declined') => { setBusy(true); setError(''); try { const r = await supabase.rpc('decide_customer_quote', { _token: token, _decision: decision, _name: name, _comment: comment }); if (r.error) throw r.error; await q.refetch(); } catch (e) { setError(e instanceof Error ? e.message : 'Could not record decision'); } finally { setBusy(false); } };
