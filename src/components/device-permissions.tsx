@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Bell, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { enablePush, registerPush, type PushStatus } from "@/lib/web-push";
+import { pushSupported, registerPush, type PushStatus } from "@/lib/web-push";
+import { boundedPermission, permissionSequence } from '@/lib/permission-sequence';
 import { useProfile } from "@/lib/profile";
 import { isMobileDevice } from '@/lib/testing-rules';
 import { usePlanFeatures } from '@/lib/plan-features';
@@ -24,14 +25,14 @@ export function DevicePermissions() {
   const [geo, setGeo] = useState<Geo | null>(null);
   const [busy, setBusy] = useState(false);
   const [later, setLater] = useState(false);
-  const check = async () => { setBusy(true); try { const [p, g] = await Promise.all([registerPush(), geoState()]); setPush(p); setGeo(g); } finally { setBusy(false); } };
+  const check = async () => { setBusy(true); try { const [p, g] = await Promise.all([boundedPermission(registerPush), boundedPermission(geoState)]); setPush(p ?? 'error'); setGeo(g ?? 'prompt'); } finally { setBusy(false); } };
   useEffect(() => {
     let active = true;
     const phone = isMobileDevice(navigator.userAgent) && (navigator.maxTouchPoints ?? 0) > 0;
     setMobile(phone); setPush(null); setGeo(null);
     if (!phone || !profile) return;
     setLater(setupDismissed(profile.id));
-    const refresh = async () => { const [p, g] = await Promise.all([registerPush(), geoState()]); if (active) { setPush(p); setGeo(g); } };
+    const refresh = async () => { const [p, g] = await Promise.all([boundedPermission(registerPush), boundedPermission(geoState)]); if (active) { setPush(p ?? 'error'); setGeo(g ?? 'prompt'); } };
     const visible = () => { if (document.visibilityState === 'visible') void refresh(); };
     void refresh(); window.addEventListener('focus', visible); document.addEventListener('visibilitychange', visible);
     return () => { active = false; window.removeEventListener('focus', visible); document.removeEventListener('visibilitychange', visible); };
@@ -42,18 +43,24 @@ export function DevicePermissions() {
   const blocked = push === "blocked" || (field && geo === "denied");
   const open = !later && !(pushOk && geoOk);
 
-  // Mobile browsers only honour prompts started directly inside the tap, so both requests start synchronously here.
-  const allow = () => {
+  // Notifications start in the tap; location waits until that browser prompt finishes.
+  const allow = async () => {
     setBusy(true);
-    const geoP = field && geo !== "granted" && geo !== "denied"
-      ? new Promise<void>((r) => { try { navigator.geolocation.getCurrentPosition(() => r(), () => r(), { timeout: 7000, maximumAge: 600000 }); } catch { r(); } setTimeout(r, 8000); })
-      : Promise.resolve();
-    const pushP = !pushOk && push !== "blocked" ? enablePush() : Promise.resolve(push);
-    void Promise.allSettled([pushP, geoP]).then(async ([p]) => {
-      if (p.status === "fulfilled" && p.value) setPush(p.value);
-      setGeo(await geoState().catch(() => "prompt" as Geo));
-      setBusy(false);
-    });
+    try {
+      await permissionSequence(async () => {
+        if (pushSupported() && Notification.permission === 'default') return Notification.requestPermission();
+        return 'complete';
+      }, async () => {
+        if (!field || geo === 'granted' || geo === 'denied' || geo === 'unsupported') return;
+        await new Promise<void>(resolve => {
+          navigator.geolocation.getCurrentPosition(() => { setGeo('granted'); resolve(); }, error => {
+            setGeo(error.code === 1 ? 'denied' : 'prompt'); resolve();
+          }, { timeout: 5000, maximumAge: 600000 });
+        });
+      });
+      const p = await boundedPermission(registerPush);
+      setPush(p ?? 'error');
+    } finally { setBusy(false); }
   };
 
   const Row = ({ icon, label, why, ok, bad }: { icon: React.ReactNode; label: string; why: string; ok: boolean; bad: boolean }) => (
@@ -76,9 +83,9 @@ export function DevicePermissions() {
         </div>
         {blocked && <p className="text-sm text-muted-foreground">{mobile ? "Open your phone's app or browser permissions and allow notifications/location, then tap Check again." : "Open the site controls beside the browser address and review Notifications and Location. Private browsing can block notifications; you can continue without them."}</p>}
         <div className="flex flex-col gap-2">
-          {blocked ? <Button className="h-11" disabled={busy} onClick={check}>Check again</Button>
-            : <Button className="h-11" disabled={busy} onClick={allow}>Allow all</Button>}
-          <Button variant="ghost" className="h-11" disabled={busy} onClick={() => { dismissSetup(profile.id); setLater(true); }}>Continue without setup</Button>
+          {blocked && <Button className="h-11" variant="outline" disabled={busy} onClick={check}>Check again</Button>}
+          {(!pushOk && push !== 'blocked' || !geoOk && geo !== 'denied') && <Button className="h-11" disabled={busy} onClick={allow}>{busy ? 'Checking permissions…' : pushOk || push === 'blocked' ? 'Allow location' : 'Allow all'}</Button>}
+          <Button variant="ghost" className="h-11" onClick={() => { dismissSetup(profile.id); setLater(true); }}>Continue without setup</Button>
         </div>
       </DialogContent>
     </Dialog>
