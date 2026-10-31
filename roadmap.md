@@ -120,3 +120,5 @@
 - [x] Hotels: readable sidebar menu (active item, title, footer)
 - [x] Asset ID format step placed before the configurator, with setup prompt
 - [x] Hotels: unattended room sign-off with photo evidence + note
+- [x] Hotels/AisleOps settings trimmed (no CRM/estimates/terms/library/price list/client accounting); hours & DWR CSV export added
+- [x] 3-tap QR reporting (store plaques + equipment); photo upload on public QR form not yet supported
