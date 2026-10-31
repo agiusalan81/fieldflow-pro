@@ -1,0 +1,5 @@
+import {Body,Button,Container,Head,Heading,Html,Preview,Text} from '@react-email/components';
+import type {TemplateEntry} from './registry';
+type Props={company?:string;name?:string;reference?:string;message?:string;amount?:string;due?:string;documentUrl?:string};
+function Followup({company='FieldBridge',name='',reference='',message='',amount='',due='',documentUrl=''}:Props){return <Html><Head/><Preview>{company} · Follow-up {reference}</Preview><Body style={{backgroundColor:'#ffffff',fontFamily:'Arial, sans-serif'}}><Container style={{maxWidth:'560px',padding:'24px'}}><Heading>{company}</Heading><Text>Hello {name},</Text><Text>Regarding {reference}:</Text><Text style={{whiteSpace:'pre-line'}}>{message}</Text>{amount&&<Text>Outstanding: {amount}</Text>}<Text>Due / valid until: {due}</Text><Button href={documentUrl} style={{backgroundColor:'#14213d',color:'#ffffff',padding:'12px 20px',borderRadius:'6px'}}>View document</Button></Container></Body></Html>;}
+export const template={component:Followup,subject:d=>`${d['company']??'FieldBridge'} — Follow-up ${d['reference']??''}`,displayName:'Client document follow-up'} satisfies TemplateEntry;
