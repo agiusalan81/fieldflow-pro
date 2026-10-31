@@ -34,6 +34,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { NumInput } from '@/components/num-input';
 import { CustomerQuotePreview } from '@/components/customer-quote-preview';
 import { ClientSitePicker } from "@/components/client-site-picker";
+import { DispatchEquipmentSelect } from '@/components/dispatch-equipment-select';
 type Row = Database['public']['Tables']['customer_quotes']['Row'];
 type Form = { id: string; client_id: string | null; site_id: string | null; asset_id: string | null; source_sheet_id: string | null; private_notes: string; data: QuoteDocument };
 export async function quoteAction(id: string, action: string, data: Record<string, unknown> = {}) {

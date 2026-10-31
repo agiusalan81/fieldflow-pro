@@ -1,4 +1,5 @@
 import { EquipmentQr } from "@/components/equipment-qr";
+import { CreatableCombobox } from '@/components/creatable-combobox';
 import { useEdition } from "@/lib/plan-features";
 import { editionEquipmentTypes, editionAssetLabel, isInHouse } from "@/lib/editions";
 import { ClientPortalInvitationGate } from '@/components/client-portal-invitation-gate';
@@ -113,7 +114,7 @@ export function EquipmentManager({ clientId, companyId, siteId }: { clientId: st
       ? await supabase.from("assets").insert({ ...row, client_id: clientId, company_id: companyId, site_id: siteId ?? null })
       : await supabase.from("assets").update(row).eq("id", editing);
     if (error) { toast.error(error.message); return; }
-    if (f.asset_category === "Other") { const { data: u } = await supabase.auth.getUser(); if (u.user) await learnLookup(EQUIPMENT_TYPE, category, companyId, u.user.id); setOther(""); }
+    if (!baseTypes.includes(category)) { const { data: u } = await supabase.auth.getUser(); if (u.user) await learnLookup(EQUIPMENT_TYPE, category, companyId, u.user.id); setOther(""); }
     setEditing(null); refresh();
   };
   const remove = async (id: string) => {
@@ -125,10 +126,7 @@ export function EquipmentManager({ clientId, companyId, siteId }: { clientId: st
   const form = (
     <form onSubmit={save} className="space-y-2 rounded-lg border bg-muted/30 p-3">
       <div className="space-y-1"><Label>{equipment} type *</Label>
-        <Select value={f.asset_category} onValueChange={(v) => setF({ ...f, asset_category: v })}>
-          <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
-          <SelectContent>{types.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-        </Select>
+        <CreatableCombobox ariaLabel={`${equipment} type`} value={f.asset_category} onChange={v=>setF({...f,asset_category:v})} groups={[{group:'Equipment types',items:types.filter(t=>t!=='Other')}]}/>
         {f.asset_category === "Other" && <LookupInput category={EQUIPMENT_TYPE} value={other} onChange={setOther} placeholder="Specify type (e.g. Car lift, Dock leveller)" />}
       </div>
       <div className="grid gap-2 sm:grid-cols-2">

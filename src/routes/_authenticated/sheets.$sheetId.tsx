@@ -1,4 +1,5 @@
 import {formatSiteDisplay} from "@/lib/site-display";
+import { CreatableCombobox } from '@/components/creatable-combobox';
 import { JobIncentiveBadge } from '@/components/my-incentives';
 import { TravelPicker } from "@/components/travel-picker";
 import { LiftMaintenanceChecklist } from "@/components/lift-maintenance";
@@ -488,12 +489,9 @@ function SheetForm() {
           <div className="mt-4 grid gap-4 border-t pt-4 md:grid-cols-4">
             {liftOn && <div className="space-y-1.5">
               <Label>{word("asset_type")}</Label>
-              <Select value={(form.asset_type as string) ?? "Other"} disabled={readOnly} onValueChange={(v) => set({ asset_type: v })}>
-                <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                <SelectContent>{["Lift", "Escalator", "Other"].map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-              </Select>
+              <CreatableCombobox ariaLabel="Asset type" value={(form.asset_type as string)??'Other'} disabled={readOnly} groups={[{group:'Asset types',items:['Lift','Escalator','Other']}]} onChange={v=>set(['Lift','Escalator','Other'].includes(v)?{asset_type:v}:{asset_type:'Other',asset_type_other:v})}/>
             </div>}
-            {(!liftOn || form.asset_type === "Other") && <div className="space-y-1.5"><Label>{liftOn ? "Specify" : word("asset_type")}</Label><Input className="h-11" disabled={readOnly} placeholder="e.g. Cold room, oven, shutter" value={(form.asset_type_other as string) ?? ""} onChange={(e) => set({ asset_type: "Other", asset_type_other: e.target.value })} /></div>}
+            {(!liftOn || form.asset_type === "Other") && <div className="space-y-1.5"><Label>{liftOn ? "Specify" : word("asset_type")}</Label><CreatableCombobox ariaLabel="Custom asset type" disabled={readOnly} placeholder="Choose or add equipment type" value={(form.asset_type_other as string)??''} groups={[{group:'Equipment types',items:[...new Set(assets.map(a=>a.asset_category))]}]} onChange={v=>set({asset_type:'Other',asset_type_other:v})}/></div>}
             <div className="space-y-1.5"><Label>{word("model")}</Label><Input placeholder="Model" disabled={readOnly} className="h-11" value={(form.lift_model as string) ?? ""} onChange={(e) => set({ lift_model: e.target.value, requires_admin_approval: true })} /></div>
             <div className="space-y-1.5"><Label>{word("serial")}</Label><Input placeholder="Serial number" disabled={readOnly} className="h-11" value={(form.serial_number as string) ?? ""} onChange={(e) => set({ serial_number: e.target.value, requires_admin_approval: true })} /></div>
           </div>

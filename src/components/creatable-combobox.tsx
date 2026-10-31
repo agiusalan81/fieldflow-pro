@@ -8,8 +8,8 @@ import { cn } from "@/lib/utils";
 export type ComboGroup = { group: string; items: string[] };
 
 /** Searchable picker that also accepts a typed custom value. */
-export function CreatableCombobox({ value, onChange, groups, placeholder = "Choose or type…", ariaLabel, className }: {
-  value: string; onChange: (v: string) => void; groups: ComboGroup[]; placeholder?: string; ariaLabel?: string; className?: string;
+export function CreatableCombobox({ value, onChange, groups, placeholder = "Choose or type…", ariaLabel, className, disabled }: {
+  value: string; onChange: (v: string) => void; groups: ComboGroup[]; placeholder?: string; ariaLabel?: string; className?: string; disabled?:boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
@@ -20,12 +20,12 @@ export function CreatableCombobox({ value, onChange, groups, placeholder = "Choo
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button type="button" variant="outline" role="combobox" aria-label={ariaLabel} aria-expanded={open} className={cn("h-11 w-full justify-between font-normal", className)}>
+        <Button type="button" disabled={disabled} variant="outline" role="combobox" aria-label={ariaLabel} aria-expanded={open} className={cn("h-11 w-full min-w-0 justify-between font-normal", className)}>
           <span className={cn("truncate", !value && "text-muted-foreground")}>{value || placeholder}</span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] min-w-64 p-0" align="start">
+      <PopoverContent className="w-(--radix-popover-trigger-width) max-w-[calc(100vw-2rem)] p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInput placeholder="Search or add…" value={q} onValueChange={setQ} />
           <CommandList>
