@@ -1172,6 +1172,7 @@ export type Database = {
           break_enabled: boolean
           break_minutes: number
           breaks_per_shift: number
+          claim_incentive_all_jobs: boolean
           claim_incentive_cents: number
           claim_incentive_enabled: boolean
           claim_incentive_staff_visible: boolean
@@ -1233,6 +1234,7 @@ export type Database = {
           break_enabled?: boolean
           break_minutes?: number
           breaks_per_shift?: number
+          claim_incentive_all_jobs?: boolean
           claim_incentive_cents?: number
           claim_incentive_enabled?: boolean
           claim_incentive_staff_visible?: boolean
@@ -1294,6 +1296,7 @@ export type Database = {
           break_enabled?: boolean
           break_minutes?: number
           breaks_per_shift?: number
+          claim_incentive_all_jobs?: boolean
           claim_incentive_cents?: number
           claim_incentive_enabled?: boolean
           claim_incentive_staff_visible?: boolean
@@ -7615,6 +7618,72 @@ export type Database = {
           },
         ]
       }
+      workspace_thread_alerts: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          kind: string
+          recipient_id: string
+          record_id: string
+          seen_at: string | null
+          title: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          kind: string
+          recipient_id: string
+          record_id: string
+          seen_at?: string | null
+          title: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          recipient_id?: string
+          record_id?: string
+          seen_at?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      workspace_thread_messages: {
+        Row: {
+          author_id: string
+          author_name: string
+          body: string
+          company_id: string
+          created_at: string
+          id: string
+          kind: string
+          record_id: string
+        }
+        Insert: {
+          author_id?: string
+          author_name?: string
+          body: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          kind: string
+          record_id: string
+        }
+        Update: {
+          author_id?: string
+          author_name?: string
+          body?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          record_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -8341,6 +8410,10 @@ export type Database = {
       user_initials: {
         Args: { _full_name: string; _initials: string }
         Returns: string
+      }
+      workspace_thread_can: {
+        Args: { _id: string; _kind: string }
+        Returns: boolean
       }
     }
     Enums: {
