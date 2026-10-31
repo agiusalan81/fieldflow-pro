@@ -26,7 +26,7 @@
 - Payroll shares payroll-page.tsx; atomic issued snapshots/linking prevent repeat incentives and leave consumption.
 - Sign-off/leave/overtime/checklist/renewals use tested jobsheets.ts; shared rules.
 - DWR: one canonical report/shift; retain corrected/superseded originals; filing clears held flags; 
-- Dispatch: DB guards TBD/claims/self-award provenance; bonuses freeze/earn on claim/completion; own/team ledgers outside settings; no client badges. Bell recipients server-derived; audio needs real field role + own shift/standby, fails closed and refreshes on shift changes; office visibility separate.
+- Dispatch: DB guards TBD/claims/self-awards; bonuses freeze/earn on claim/completion; own/team ledgers outside settings. Server-derived bells; field-only shift/standby audio fails closed. NewJobDialog groups work/team/schedule; skills popover beside team size; advanced claim/bonus disclosure preserves guards.
 - Overtime uses captured DWR intervals/rules; old reports show associated sites only; factual allocation.
 - Typography: applyTypography/AppShell, locale.ts; shared font/PDF decorations and DB/HQ locks. Financial branding freezes on issue; token file reads stay tenant-bounded.
 - Auth emails share auth-brand.tsx; the managed handler owns verification and dispatch for reliable account recovery.
