@@ -496,6 +496,7 @@ export type Database = {
           invoice_enabled: boolean
           payment_request_enabled: boolean
           proforma_enabled: boolean
+          reminder_rules: Json
         }
         Insert: {
           company_id?: string
@@ -504,6 +505,7 @@ export type Database = {
           invoice_enabled?: boolean
           payment_request_enabled?: boolean
           proforma_enabled?: boolean
+          reminder_rules?: Json
         }
         Update: {
           company_id?: string
@@ -512,6 +514,7 @@ export type Database = {
           invoice_enabled?: boolean
           payment_request_enabled?: boolean
           proforma_enabled?: boolean
+          reminder_rules?: Json
         }
         Relationships: [
           {
@@ -2632,6 +2635,61 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_followups: {
+        Row: {
+          activity: Json
+          billing_id: string | null
+          company_id: string
+          completed_stages: string[]
+          id: string
+          paused: boolean
+          quote_id: string | null
+          snoozed_until: string | null
+        }
+        Insert: {
+          activity?: Json
+          billing_id?: string | null
+          company_id?: string
+          completed_stages?: string[]
+          id?: string
+          paused?: boolean
+          quote_id?: string | null
+          snoozed_until?: string | null
+        }
+        Update: {
+          activity?: Json
+          billing_id?: string | null
+          company_id?: string
+          completed_stages?: string[]
+          id?: string
+          paused?: boolean
+          quote_id?: string | null
+          snoozed_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_followups_billing_id_fkey"
+            columns: ["billing_id"]
+            isOneToOne: true
+            referencedRelation: "client_billing_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_followups_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_followups_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: true
+            referencedRelation: "customer_quotes"
             referencedColumns: ["id"]
           },
         ]
@@ -7719,6 +7777,10 @@ export type Database = {
       hq_save_setup_options: {
         Args: { _options: Json; _subscription: string }
         Returns: undefined
+      }
+      import_company_csv: {
+        Args: { _kind: string; _rows: Json }
+        Returns: Json
       }
       inhouse_contract_access: { Args: never; Returns: boolean }
       invite_client_contact: {
