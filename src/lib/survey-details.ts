@@ -37,6 +37,15 @@ export function surveyItemsPending(materials: { label: string }[], other: { labe
   if (all.some(i => !i.label.trim())) return true;
   return all.length === 0 && !details.materialsNA;
 }
-export function canSubmitSurvey(s: { client_id: string | null; site_id: string | null; scope_summary: string | null }, details: SurveyDetails) {
-  return Boolean((s.client_id || details.clientName.trim()) && (s.site_id || (details.siteName.trim() && details.address.trim())) && s.scope_summary?.trim());
+export type SurveyScopeItem = { label: string; qty?: number; trade?: string };
+export function generatedSurveyScope(details: SurveyDetails, materials: SurveyScopeItem[] = [], other: SurveyScopeItem[] = []) {
+  const findings = details.observations.filter(o => o.notes.trim()).map(o => `${o.area.trim() || 'General / site'}${o.trade ? ` (${surveyTradeLabel(o.trade)})` : ''}: ${o.notes.trim()}`);
+  const itemLines = [...materials, ...other].filter(i => i.label.trim()).map(i => `${i.label.trim()}${i.qty != null ? ` × ${i.qty}` : ''}${i.trade ? ` (${surveyTradeLabel(i.trade)})` : ''}`);
+  return [findings.length ? `Observations / work needed\n${findings.join('\n')}` : '', itemLines.length ? `Materials & equipment\n${itemLines.join('\n')}` : ''].filter(Boolean).join('\n\n');
+}
+export function resolvedSurveyScope(s: { scope_summary: string | null; materials?: SurveyScopeItem[]; other_items?: SurveyScopeItem[] }, details: SurveyDetails) {
+  return s.scope_summary?.trim() || generatedSurveyScope(details, s.materials, s.other_items);
+}
+export function canSubmitSurvey(s: { client_id: string | null; site_id: string | null; scope_summary: string | null; materials?: SurveyScopeItem[]; other_items?: SurveyScopeItem[] }, details: SurveyDetails) {
+  return Boolean((s.client_id || details.clientName.trim()) && (s.site_id || (details.siteName.trim() && details.address.trim())) && resolvedSurveyScope(s, details));
 }
