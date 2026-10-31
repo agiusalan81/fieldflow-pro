@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type {Json} from '@/integrations/supabase/types';
 export const REMINDER_TYPES=['quote','proforma','payment_request','invoice'] as const;
 export type ReminderType=typeof REMINDER_TYPES[number];
 export const reminderRuleSchema=z.object({enabled:z.boolean(),before:z.number().int().min(0).max(365),after:z.number().int().min(1).max(365),message:z.string().trim().min(1).max(3000)});
@@ -17,7 +18,7 @@ export function reminderRules(raw:unknown):ReminderRules{
 }
 export function offsetDay(day:string,offset:number){const date=new Date(`${day}T00:00:00Z`);if(Number.isNaN(date.getTime()))return '';date.setUTCDate(date.getUTCDate()+offset);return date.toISOString().slice(0,10);}
 export type ReminderTarget={id:string;type:ReminderType;reference:string;title:string;client:string;issued:string;due:string;balance:number;currency:string;status:string;converted:boolean};
-export type FollowupState={id:string;billing_id:string|null;quote_id:string|null;paused:boolean;snoozed_until:string|null;completed_stages:string[];activity:unknown};
+export type FollowupState={id:string;billing_id:string|null;quote_id:string|null;paused:boolean;snoozed_until:string|null;completed_stages:string[];activity:Json};
 /** Payment/acceptance/conversion stop future tasks without changing the frozen document. */
 export function targetOpen(t:ReminderTarget){return !t.converted&&(t.type==='quote'?['issued','sent','awaiting_confirmation'].includes(t.status):t.balance>0);}
 export function reminderStages(t:ReminderTarget,r:ReminderRule){return t.type==='quote'?[{key:'first',date:offsetDay(t.issued,r.after),label:'Quote follow-up'},{key:'expiry',date:offsetDay(t.due,-r.before),label:'Before expiry'}]:[{key:'before',date:offsetDay(t.due,-r.before),label:'Before due date'},{key:'due',date:t.due,label:'Due date'},{key:'overdue',date:offsetDay(t.due,r.after),label:'Overdue payment'}];}
