@@ -16,7 +16,7 @@ export async function brandDownload(client: BrandClient, path: string) {
 }
 export async function resolveDocumentAssets(client: BrandClient, t: PdfTemplate): Promise<PdfTemplate> {
   const selected = t.customFonts?.find(f => `custom:${f.id}` === t.documentFont);
-  const [fontData, rawBackground, customFonts] = await Promise.all([(selected?.path || (t.documentFont === "custom" && t.fontPath)) ? brandDownload(client, selected?.path || t.fontPath || "") : Promise.resolve(t.fontData ?? ""), t.backgroundPath ? brandDownload(client, t.backgroundPath) : Promise.resolve(t.backgroundData ?? ""), Promise.all((t.customFonts ?? []).map(async f => ({ ...f, data: f.data || await brandDownload(client, f.path) })))]);
+  const [fontData, rawBackground, customFonts] = await Promise.all([(selected?.path || ((t.documentFont === "custom" || Object.values(t.textStyles ?? DEFAULT_TEXT_STYLES).some(l => l.font === "custom")) && t.fontPath)) ? brandDownload(client, selected?.path || t.fontPath || "") : Promise.resolve(t.fontData ?? ""), t.backgroundPath ? brandDownload(client, t.backgroundPath) : Promise.resolve(t.backgroundData ?? ""), Promise.all((t.customFonts ?? []).map(async f => ({ ...f, data: f.data || await brandDownload(client, f.path) })))]);
   return { ...t, customFonts, fontData, backgroundData: await tonedBackground(rawBackground, t) };
 }
 export async function resolveAppearanceAssets(client: BrandClient, a: Appearance): Promise<Appearance> {

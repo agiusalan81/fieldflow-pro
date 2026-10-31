@@ -26,7 +26,7 @@ export const BLOCKS: { key: BlockKey; label: string }[] = [
 
 export type TextLayerKey = "company" | "label" | "detail";
 /** background: optional fill so the text reads like a button/badge ("" = none). */
-export type TextLayer = { font: "document" | "sans" | "serif" | "mono" | BrandFontId | `custom:${string}` | "lato" | "abel"; color: string; bold: boolean; italic: boolean; underline: boolean; background: string };
+export type TextLayer = { font: "document" | "sans" | "serif" | "mono" | BrandFontId | `custom:${string}` | "lato" | "abel" | "custom"; color: string; bold: boolean; italic: boolean; underline: boolean; background: string };
 export type TextStyles = Record<TextLayerKey, TextLayer>;
 export const TEXT_LAYERS: { key: TextLayerKey; label: string; hint: string }[] = [
   { key: "company", label: "Company name", hint: "\"Your Company\" at the top of the document" },
@@ -41,7 +41,7 @@ export const DEFAULT_TEXT_STYLES: TextStyles = {
 const LAYER_FONTS = ["document", "sans", "serif", "mono"] as const;
 export function parseTextStyles(raw: unknown): TextStyles {
   const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, Partial<TextLayer>>;
-  const one = (k: TextLayerKey): TextLayer => { const v = r[k] && typeof r[k] === "object" ? r[k] : {}; const d = DEFAULT_TEXT_STYLES[k]; return { font: LAYER_FONTS.includes(v.font as never) || brandFont(v.font) || v.font === "lato" || v.font === "abel" || /^custom:[\w-]+$/.test(v.font ?? "") ? v.font as TextLayer["font"] : d.font, color: validColor(v.color, ""), bold: typeof v.bold === "boolean" ? v.bold : d.bold, italic: typeof v.italic === "boolean" ? v.italic : d.italic, underline: v.underline === true, background: validColor(v.background, "") }; };
+  const one = (k: TextLayerKey): TextLayer => { const v = r[k] && typeof r[k] === "object" ? r[k] : {}; const d = DEFAULT_TEXT_STYLES[k]; return { font: LAYER_FONTS.includes(v.font as never) || brandFont(v.font) || v.font === "custom" || v.font === "lato" || v.font === "abel" || /^custom:[\w-]+$/.test(v.font ?? "") ? v.font as TextLayer["font"] : d.font, color: validColor(v.color, ""), bold: typeof v.bold === "boolean" ? v.bold : d.bold, italic: typeof v.italic === "boolean" ? v.italic : d.italic, underline: v.underline === true, background: validColor(v.background, "") }; };
   return { company: one("company"), label: one("label"), detail: one("detail") };
 }
 /** Colour a layer prints in: its own colour, else the existing template default. */
