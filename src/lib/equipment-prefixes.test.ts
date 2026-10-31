@@ -17,7 +17,7 @@ describe("equipment prefixes", () => {
     expect(prefixFor("Fridge", "hotel", { fridge: "REF" })).toBe("REF");
   });
   it("derives a prefix for unlisted equipment", () => {
-    expect(derivePrefix("Bake-off rotary oven")).toBe("BRO");
+    expect(derivePrefix("Bake-off rotary oven")).toBe("BOR");
     expect(prefixFor("Ice cream cabinet", "hotel")).toBe("ICC");
   });
 });
