@@ -1387,6 +1387,13 @@
       "when": 1793429977526,
       "tag": "0197_equipment_id_prefixes",
       "breakpoints": true
+    },
+    {
+      "idx": 198,
+      "version": "7",
+      "when": 1793431956894,
+      "tag": "0198_contractor_client_billing",
+      "breakpoints": true
     }
   ]
 }
