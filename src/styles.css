@@ -276,6 +276,8 @@ html, body { overflow-x: clip; }
 .document-paper[data-frame=double] { outline: 3px double var(--document-primary); outline-offset: -8px; }
 .document-paper section > p, .document-paper td { background: var(--document-field-background, var(--document-paper)); color: var(--document-field-text, var(--document-ink)); }
 .document-paper h1,.document-paper h2,.document-paper h3 { font-family: inherit; font-style: normal; color: var(--document-primary); }
+.branded-document h1, .branded-document h2, .branded-document h3, .branded-document h4, .branded-document th { font-family: var(--document-heading-font); color: var(--document-heading-color); font-weight: var(--document-heading-weight); font-style: var(--document-heading-italic); text-decoration: var(--document-heading-underline); }
+.branded-document header > div:first-child h2 { font-family: var(--document-company-font); color: var(--document-company-color) !important; font-weight: var(--document-company-weight); font-style: var(--document-company-italic); text-decoration: var(--document-company-underline); }
 
 /* Product editions: same engine, distinct look. Set on <html data-edition>. */
 html[data-edition="hotel"]:not(.dark) {

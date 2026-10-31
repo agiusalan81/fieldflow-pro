@@ -5,17 +5,23 @@ import { DocumentPreview } from "@/components/document-preview";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { FinancialBrandingPreview } from './financial-branding-preview';
 
 type PreviewProps = { template: PdfTemplate; logo?: string | undefined };
 
 export function DocumentPreviewTabs({ template, logo, className }: PreviewProps & { className?: string }) {
   return <Tabs defaultValue="paper" className={className}>
-    <TabsList className="grid h-11 w-full shrink-0 grid-cols-2">
+    <TabsList className="grid h-auto w-full shrink-0 grid-cols-2 gap-1 sm:grid-cols-3">
       <TabsTrigger value="paper" className="h-full px-1 text-xs sm:text-sm">Client document</TabsTrigger>
       <TabsTrigger value="form" className="h-full px-1 text-xs sm:text-sm">Field entry form</TabsTrigger>
+      <TabsTrigger value="estimate" className="min-h-10 px-1 text-xs">Estimate / Quote</TabsTrigger>
+      <TabsTrigger value="proforma" className="min-h-10 px-1 text-xs">Proforma</TabsTrigger>
+      <TabsTrigger value="payment_request" className="min-h-10 px-1 text-xs">Payment request</TabsTrigger>
+      <TabsTrigger value="invoice" className="min-h-10 px-1 text-xs">Invoice</TabsTrigger>
     </TabsList>
     <TabsContent value="paper" className="min-h-0 overflow-y-auto overscroll-contain"><DocumentPreview template={template} logo={logo} /></TabsContent>
     <TabsContent value="form" className="min-h-0 overflow-y-auto overscroll-contain"><DocumentPreview template={template} logo={logo} mode="form" /></TabsContent>
+    {(['estimate', 'proforma', 'payment_request', 'invoice'] as const).map(kind => <TabsContent key={kind} value={kind} className="min-h-0 overflow-y-auto overscroll-contain"><FinancialBrandingPreview kind={kind} template={template} logo={logo} /></TabsContent>)}
   </Tabs>;
 }
 
