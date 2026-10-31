@@ -1,10 +1,13 @@
 import { brandFont, type BrandFontId } from "./brand-fonts";
 /** Client document (PDF/email) template rules, shared by the settings editor and the email sender. */
 
-export type DocType = "job_sheet" | "estimate" | "agreement";
+export type DocType = "job_sheet" | "estimate" | "agreement" | "proforma" | "invoice" | "payment_request";
 export const DOC_TYPES: { key: DocType; label: string }[] = [
   { key: "job_sheet", label: "Job sheets" },
   { key: "estimate", label: "Estimates" },
+  { key: "proforma", label: "Proforma invoices" },
+  { key: "invoice", label: "Tax invoices" },
+  { key: "payment_request", label: "Payment requests" },
   { key: "agreement", label: "Maintenance agreements" },
 ];
 
@@ -23,7 +26,7 @@ export const BLOCKS: { key: BlockKey; label: string }[] = [
 
 export type TextLayerKey = "company" | "label" | "detail";
 /** background: optional fill so the text reads like a button/badge ("" = none). */
-export type TextLayer = { font: "document" | "sans" | "serif" | "mono"; color: string; bold: boolean; italic: boolean; underline: boolean; background: string };
+export type TextLayer = { font: "document" | "sans" | "serif" | "mono" | BrandFontId | `custom:${string}` | "lato" | "abel"; color: string; bold: boolean; italic: boolean; underline: boolean; background: string };
 export type TextStyles = Record<TextLayerKey, TextLayer>;
 export const TEXT_LAYERS: { key: TextLayerKey; label: string; hint: string }[] = [
   { key: "company", label: "Company name", hint: "\"Your Company\" at the top of the document" },
@@ -38,13 +41,13 @@ export const DEFAULT_TEXT_STYLES: TextStyles = {
 const LAYER_FONTS = ["document", "sans", "serif", "mono"] as const;
 export function parseTextStyles(raw: unknown): TextStyles {
   const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, Partial<TextLayer>>;
-  const one = (k: TextLayerKey): TextLayer => { const v = r[k] && typeof r[k] === "object" ? r[k] : {}; const d = DEFAULT_TEXT_STYLES[k]; return { font: LAYER_FONTS.includes(v.font as never) ? v.font as TextLayer["font"] : d.font, color: validColor(v.color, ""), bold: typeof v.bold === "boolean" ? v.bold : d.bold, italic: typeof v.italic === "boolean" ? v.italic : d.italic, underline: v.underline === true, background: validColor(v.background, "") }; };
+  const one = (k: TextLayerKey): TextLayer => { const v = r[k] && typeof r[k] === "object" ? r[k] : {}; const d = DEFAULT_TEXT_STYLES[k]; return { font: LAYER_FONTS.includes(v.font as never) || brandFont(v.font) || v.font === "lato" || v.font === "abel" || /^custom:[\w-]+$/.test(v.font ?? "") ? v.font as TextLayer["font"] : d.font, color: validColor(v.color, ""), bold: typeof v.bold === "boolean" ? v.bold : d.bold, italic: typeof v.italic === "boolean" ? v.italic : d.italic, underline: v.underline === true, background: validColor(v.background, "") }; };
   return { company: one("company"), label: one("label"), detail: one("detail") };
 }
 /** Colour a layer prints in: its own colour, else the existing template default. */
 export function layerColor(t: PdfTemplate, k: TextLayerKey) {
   const own = t.textStyles?.[k]?.color; if (own) return own;
-  return k === "label" ? t.primaryColor : t.fieldText || "#202020";
+  return k === "label" || k === "company" ? t.primaryColor : t.fieldText || "#202020";
 }
 
 export type PdfTemplate = {
@@ -58,10 +61,14 @@ export type PdfTemplate = {
   accentColor: string;
   font: "sans" | "serif" | "mono";
   labels: Record<string, string>;
-  documentFont?: "standard" | "lato" | "abel" | "custom" | BrandFontId | undefined;
+  documentFont?: "standard" | "lato" | "abel" | "custom" | `custom:${string}` | BrandFontId | undefined;
+  customFonts?: { id: string; name: string; path: string; data?: string }[];
   fontPath?: string;
   fontName?: string;
   backgroundPath?: string;
+  backgroundOpacity?: number;
+  backgroundTone?: "color" | "grayscale";
+  backgroundBrightness?: number;
   frame?: "none" | "line" | "double" | undefined;
   fieldBackground?: string;
   fieldText?: string;
@@ -81,6 +88,9 @@ export const DEFAULT_TERMS: Terms = {
   job_sheet: { enabled: false, text: "" },
   estimate: { enabled: false, text: "" },
   agreement: { enabled: false, text: "" },
+  proforma: { enabled: false, text: "" },
+  invoice: { enabled: false, text: "" },
+  payment_request: { enabled: false, text: "" },
 };
 
 export type NotePreset = { label: string; text: string };
@@ -103,10 +113,14 @@ export function parseTemplate(raw: unknown): PdfTemplate {
     primaryColor: validColor(r.primaryColor, DEFAULT_TEMPLATE.primaryColor),
     accentColor: validColor(r.accentColor, DEFAULT_TEMPLATE.accentColor),
     font: r.font === "serif" || r.font === "mono" ? r.font : "sans",
-    documentFont: (["lato", "abel", "custom"].includes(r.documentFont ?? "") || !!brandFont(r.documentFont)) ? r.documentFont : "standard",
+    documentFont: (["lato", "abel", "custom"].includes(r.documentFont ?? "") || !!brandFont(r.documentFont) || /^custom:[\w-]+$/.test(r.documentFont ?? "")) ? r.documentFont : "standard",
+    customFonts: Array.isArray(r.customFonts) ? r.customFonts.filter(f => f && /^[\w-]+$/.test(f.id) && typeof f.name === "string" && /^[0-9a-f-]{36}\/fonts\/[\w.-]+$/.test(f.path)).slice(0, 30).map(f => ({ id: f.id, name: f.name.trim().slice(0, 80), path: f.path })) : [],
     fontPath: typeof r.fontPath === "string" && /^[0-9a-f-]{36}\/fonts\/[\w.-]+$/.test(r.fontPath) ? r.fontPath : "",
     fontName: typeof r.fontName === "string" ? r.fontName.slice(0, 80) : "",
     backgroundPath: typeof r.backgroundPath === "string" && /^[0-9a-f-]{36}\/backgrounds\/[\w.-]+$/.test(r.backgroundPath) ? r.backgroundPath : "",
+    backgroundOpacity: typeof r.backgroundOpacity === "number" && Number.isFinite(r.backgroundOpacity) ? Math.max(0, Math.min(1, r.backgroundOpacity)) : .12,
+    backgroundTone: r.backgroundTone === "grayscale" ? "grayscale" : "color",
+    backgroundBrightness: typeof r.backgroundBrightness === "number" && Number.isFinite(r.backgroundBrightness) ? Math.max(.25, Math.min(2, r.backgroundBrightness)) : 1,
     frame: r.frame === "line" || r.frame === "double" ? r.frame : "none",
     fieldBackground: validColor(r.fieldBackground, "#ffffff"),
     fieldText: validColor(r.fieldText, "#202020"),
