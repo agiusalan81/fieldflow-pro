@@ -1373,6 +1373,13 @@
       "when": 1793426902146,
       "tag": "0195_identifier_trigger_record_safe_projection",
       "breakpoints": true
+    },
+    {
+      "idx": 196,
+      "version": "7",
+      "when": 1793427073838,
+      "tag": "0196_identifier_strict_column_qualification",
+      "breakpoints": true
     }
   ]
 }
