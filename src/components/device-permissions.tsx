@@ -2,12 +2,12 @@ import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
 import { Bell, MapPin, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { pushSupported, registerPush, type PushStatus } from '@/lib/web-push';
+import { pushSupported, readPushStatus, registerPush, type PushStatus } from '@/lib/web-push';
 import { boundedPermission, permissionSequence } from '@/lib/permission-sequence';
 import { useProfile } from '@/lib/profile';
 import { isMobileDevice } from '@/lib/testing-rules';
 import { dismissSetup, setupDismissed } from '@/lib/device-setup';
-import { confirmFieldLocation, fieldDeviceReady, readLocationPermission, requiresFieldDevice, type GeoStatus } from '@/lib/field-device';
+import { confirmFieldLocation, fieldDeviceReady, locationDeviceConfirmed, readLocationPermission, requiresFieldDevice, type GeoStatus } from '@/lib/field-device';
 import { ShiftSignOut } from '@/components/shift-sign-out';
 import { ReturnToSuperuserBanner } from '@/components/test-session-switch';
 const RecoveryShift = lazy(() => import('@/routes/_authenticated/dashboard').then(m => ({ default: m.ShiftTracker })));
@@ -28,14 +28,27 @@ export function DevicePermissions({ children }: { children: ReactNode }) {
     setPush(null); setGeo(null); setRecovery(false);
     if (!profile) return;
     setLater(setupDismissed(profile.id));
-    const refresh = async () => {
-      const [p, permission] = await Promise.all([boundedPermission(registerPush, 25000), readLocationPermission()]);
-      // A granted permission is not a GPS fix. Refresh an existing grant without opening a browser prompt.
-      const g = field && permission === 'granted' ? await confirmFieldLocation(profile.id) : permission;
-      if (active) { setPush(p ?? 'error'); setGeo(g); }
+    let refreshing = false;
+    const refresh = async (initial = false) => {
+      if (refreshing) return;
+      refreshing = true;
+      try {
+        const [localPush, permission] = await Promise.all([readPushStatus(), readLocationPermission()]);
+        // Link on account entry only. A temporary network failure is not a revoked device permission.
+        const linked = initial && localPush === 'registered' ? await boundedPermission(registerPush, 25000) : localPush;
+        const p = localPush === 'registered' && (!linked || linked === 'error') ? localPush : linked;
+        // A previous successful GPS fix remains confirmed while the browser grant is valid.
+        // Fresh GPS is still required by the shared clock-in workflow, not every focus event.
+        const g = field && permission === 'granted' && !locationDeviceConfirmed()
+          ? await confirmFieldLocation(profile.id) : permission;
+        if (active) {
+          if (p !== 'error' || initial) setPush(p ?? 'error');
+          setGeo(g);
+        }
+      } finally { refreshing = false; }
     };
     const visible = () => { if (document.visibilityState === 'visible') void refresh(); };
-    void refresh();
+    void refresh(true);
     window.addEventListener('focus', visible); document.addEventListener('visibilitychange', visible);
     const timer = setInterval(visible, 60000);
     return () => { active = false; clearInterval(timer); window.removeEventListener('focus', visible); document.removeEventListener('visibilitychange', visible); };

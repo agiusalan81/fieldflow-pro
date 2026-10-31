@@ -7,6 +7,11 @@ export function requiresFieldDevice(role?: string, canFieldDispatch = false) {
 export function fieldDeviceReady(push: PushStatus | null, geo: GeoStatus | null) {
   return push === 'registered' && geo === 'granted';
 }
+/** Device confirmation is not authority: current browser permissions still govern access. */
+export function locationDeviceConfirmed(): boolean {
+  try { return localStorage.getItem('fieldbridge:location-device-confirmed') === 'yes'; }
+  catch { return false; }
+}
 export async function readLocationPermission(): Promise<GeoStatus> {
   if (!navigator.geolocation) return 'unsupported';
   try { return (await navigator.permissions.query({ name: 'geolocation' })).state; }
@@ -21,6 +26,7 @@ export async function confirmFieldLocation(userId: string): Promise<GeoStatus> {
       settled = true; clearTimeout(timer);
       if (status === 'granted') {
         try {
+          localStorage.setItem('fieldbridge:location-device-confirmed', 'yes');
           localStorage.setItem(`location-consent:${userId}`, 'yes');
           window.dispatchEvent(new Event('location-consent'));
         } catch { resolve('unavailable'); return; }
