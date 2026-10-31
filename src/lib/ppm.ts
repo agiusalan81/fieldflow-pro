@@ -28,3 +28,13 @@ export function ppmStatus(due: string, deadline: string, completed: boolean, tod
           ? "Due today"
           : "Upcoming";
 }
+export type MaintenanceFilter = 'open' | 'due' | 'overdue' | 'upcoming' | 'completed' | 'all';
+export function matchesMaintenanceFilter(due: string, deadline: string, completed: boolean, today: string, filter: MaintenanceFilter) {
+  if (filter === 'all') return true;
+  if (filter === 'completed') return completed;
+  if (completed) return false;
+  if (filter === 'overdue') return deadline < today;
+  if (filter === 'due') return due <= today;
+  if (filter === 'upcoming') return due > today;
+  return true;
+}
