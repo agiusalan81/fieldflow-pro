@@ -6,6 +6,7 @@ import { Car, FileText, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { startJobTravel } from "@/lib/jobsheets";
+import { scheduledTravelAllowed } from '@/lib/workspace-thread';
 import { sendClientNotice } from "@/lib/client-notices.functions";
 import { useNoticeEnabled } from "@/components/client-notices";
 import type { Profile } from "@/lib/profile";
@@ -18,6 +19,8 @@ export function JobTravelActions({ profile, jobId, address, readOnly = false, as
   const [startedId, setStartedId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const noticeEnabled = useNoticeEnabled("on_my_way");
+  const travelDay=useQuery({queryKey:['job-travel-day',jobId],refetchInterval:60000,queryFn:async()=>{const r=await supabase.from('jobs').select('scheduled_date').eq('id',jobId).single();if(r.error)throw r.error;return r.data;}});
+  const sameDay=!!travelDay.data&&scheduledTravelAllowed(travelDay.data.scheduled_date);
   const { data: sheet, isPending, isError } = useQuery({
     queryKey: ["job-travel-sheet", jobId],
     queryFn: async () => {
@@ -38,7 +41,7 @@ export function JobTravelActions({ profile, jobId, address, readOnly = false, as
   }, [travelling, address]);
   const finished = sheet?.status === "completed" || sheet?.status === "in_progress";
   const start = async () => {
-    if (readOnly || assisting || busy) return;
+    if (readOnly || assisting || busy || !sameDay) return;
     setBusy(true);
     try {
       const pos = address ? await currentPosition() : null;
@@ -67,7 +70,8 @@ export function JobTravelActions({ profile, jobId, address, readOnly = false, as
   const openSheet = (id?: string) => readOnly ? <Button disabled className="h-11"><FileText className="mr-1 h-4 w-4" />Open job sheet</Button> : <Button asChild variant="outline" className="h-11">{id ? <Link to="/sheets/$sheetId" params={{ sheetId: id }}><FileText className="mr-1 h-4 w-4" />Open job sheet</Link> : <Link to="/sheets/new" search={{ jobId }}><FileText className="mr-1 h-4 w-4" />Open job sheet</Link>}</Button>;
   return <>
     <div className="grid min-w-0 gap-2 [&_a]:w-full [&_button]:w-full [&_a]:min-w-0 [&_button]:min-w-0 [&_a]:whitespace-normal [&_button]:whitespace-normal">
-      {!finished && !assisting && <Button data-tour="start-travel" className="h-11" disabled={readOnly || busy || isPending || isError || travelling} onClick={start}><Car className="mr-1 h-4 w-4" />{busy ? "Starting…" : travelling ? `In transit${eta ? ` · ${etaBadge(eta)}` : ""}` : "Start travel"}</Button>}
+      {!finished && !assisting && <Button data-tour="start-travel" className="h-11" disabled={readOnly || busy || isPending || isError || travelling || !sameDay} onClick={start}><Car className="mr-1 h-4 w-4" />{busy ? "Starting…" : travelling ? `In transit${eta ? ` · ${etaBadge(eta)}` : ""}` : "Start travel"}</Button>}
+      {!finished&&!travelling&&travelDay.data&&!sameDay&&<p className="text-xs text-muted-foreground">Travel available on {travelDay.data.scheduled_date}</p>}
       {assisting ? sheet ? openSheet(sheet.id) : <span className="text-xs text-muted-foreground">Waiting for the lead to start</span> : openSheet(sheet?.id)}
       {isError && <Button variant="ghost" onClick={() => qc.invalidateQueries({ queryKey: ["job-travel-sheet", jobId] })}>Retry job status</Button>}
     </div>
