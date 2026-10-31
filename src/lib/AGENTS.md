@@ -1,4 +1,5 @@
 # Integration rules
+- Reusable document checklists are item-driven across kinds; imports append RLS-readable snapshots with paired specs, never live references, and shared preview/PDF projections preserve audience privacy.
 - Workspace conversations are append-only, record-authorized, tenant-bound and recipient-alerted; operational replies are captured transactionally to retain history.
 - Scheduled travel uses the Malta calendar day in both client checks and a database trigger; incentive defaults apply to claimable jobs unless the company opts into all jobs, preserving override provenance.
 - Chat selection follows the thread URL so notification links switch conversations and Back returns to the list.
