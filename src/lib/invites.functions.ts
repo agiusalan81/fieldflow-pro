@@ -4,6 +4,7 @@ import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { withInviteTimeout } from "./invite-loading";
+import { inviteSendable, teamInviteDestination } from './invite-delivery';
 
 // Public token lookup deliberately avoids browser auth/storage locks.
 export const getInvitation = createServerFn({ method: "POST" })
@@ -29,30 +30,41 @@ export const getInvitation = createServerFn({ method: "POST" })
     return result.data?.[0] ?? null;
   });
 const ROLE_NAMES: Record<string, string> = { technician: "Technician", supervisor: "Supervisor", admin: "Office Admin", superuser: "Company Superuser" };
-const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] ?? c);
 const b64 = (s: string) => btoa(Array.from(new TextEncoder().encode(s), (b) => String.fromCharCode(b)).join(""));
 const hdr = (v: string) => (/^[\x00-\x7F]*$/.test(v) ? v : `=?UTF-8?B?${b64(v)}?=`);
 
-// Sends a team invitation from the connected company mailbox. RLS limits the caller to their own company's invites.
+// RLS authorizes the invite; recipient and destination are derived on the server.
 export const sendInviteEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ token: z.string().min(1).max(200), link: z.string().url().max(500) }).parse(input))
+  .inputValidator((input: unknown) => z.object({ token: z.string().min(1).max(200) }).parse(input))
   .handler(async ({ data, context }) => {
     const { data: inv, error } = await context.supabase.from("company_invites").select("email, role, full_name, expires_at, company_id, used_at").eq("token", data.token).maybeSingle();
-    if (error || !inv || inv.used_at) throw new Error("Invitation not found");
-    if (!inv.email) throw new Error("This invitation has no recipient email");
-    if (!new URL(data.link).pathname.endsWith(`/join/${data.token}`)) throw new Error("Invalid invitation link");
+    if (error || !inv) throw new Error("Invitation not found");
+    if (!inviteSendable(inv) || !inv.email) throw new Error("This invitation needs a valid recipient and must be unused and unexpired.");
+    const { data: productId, error: productIdError } = await context.supabase.rpc('company_product_id', { _company: inv.company_id });
+    if (productIdError || !productId) throw new Error('Company app not found');
+    const { data: product, error: productError } = await context.supabase.from('platform_products').select('name,app_url,engine_edition').eq('id', productId).single();
+    if (productError || !product) throw new Error('Company app not found');
+    const destination = teamInviteDestination(product, data.token);
     const { company } = await companySender(context.supabase, inv.company_id);
     const { resolveEmailIdentity } = await import("./email-identity.server");
     const identity = await resolveEmailIdentity(context.supabase, inv.company_id);
     const role = ROLE_NAMES[inv.role] ?? inv.role;
     const expires = new Date(inv.expires_at).toLocaleDateString("en-GB");
-    const greet = inv.full_name ? `Hi ${inv.full_name},` : "Hello,";
-    const subject = `${company} invited you to join FieldBridge`;
-    const text = `${greet}\n\n${company} has invited you to join their team on FieldBridge as ${role}.\n\nRegister using this email address (${inv.email}) with Google, Microsoft or email sign-in:\n${data.link}\n\nThis link works once and expires on ${expires}.`;
-    const html = `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#1b2a3d"><h2 style="color:#1b2a3d">Join ${esc(company)} on FieldBridge</h2><p>${esc(greet)}</p><p>${esc(company)} has invited you to join their team as <b>${esc(role)}</b>.</p><p>Register using <b>${esc(inv.email)}</b>.</p><p style="margin:28px 0"><a href="${esc(data.link)}" style="background:#d97706;color:#ffffff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:bold">Accept invitation &amp; join</a></p><p style="font-size:13px;color:#5b6b7f">This link works once and expires on ${esc(expires)}.<br>${esc(data.link)}</p></div>`;
-    await sendMail({ to: inv.email, subject, text, html, fromName: identity.name, replyTo: identity.replyTo ?? "" }, "The invitation email could not be sent. Copy the link instead.");
-    return { sent: true, to: inv.email };
+    const { sendTemplateEmail } = await import('./email-templates/send-email');
+    try {
+      const result = await sendTemplateEmail('team-invite', inv.email, {
+        identity, idempotencyKey: `team-invite-${data.token}`,
+        templateData: { company, ...destination, name: inv.full_name ?? '', role, expires },
+      });
+      return { ...result, to: inv.email };
+    } catch (error) {
+      const { EmailAPIError } = await import('@lovable.dev/email-js');
+      if (error instanceof EmailAPIError && error.status === 429) throw new Error(`Email sending is busy. Retry in ${error.retryAfterSeconds ?? 60} seconds, or copy the invitation link.`);
+      console.error('Team invitation delivery failed', error instanceof EmailAPIError ? error.code : 'send_failed');
+      throw new Error('The invitation was created, but its email could not be sent. Retry or copy the link.');
+    }
   });
 
 type Sb = { from: (t: "companies" | "company_settings") => any };

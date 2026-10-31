@@ -9,6 +9,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { isLiftTrade } from '@/lib/trade-association';
+import { CreatableCombobox } from '@/components/creatable-combobox';
 
 const selectClass = "h-10 w-full rounded-md border bg-background px-3 text-foreground";
 
@@ -74,15 +76,15 @@ function ObservationPhotos({ companyId, surveyId, observation, disabled, onChang
   </div>;
 }
 
-export function SurveyObservations({ details, onChange, disabled, companyId, surveyId }: { details: SurveyDetails; onChange: (value: SurveyDetails) => void; disabled: boolean; companyId: string; surveyId: string }) {
+export function SurveyObservations({ details, onChange, disabled, companyId, surveyId, liftPack = false }: { details: SurveyDetails; onChange: (value: SurveyDetails) => void; disabled: boolean; companyId: string; surveyId: string; liftPack?: boolean }) {
   const patch = (id: string, p: Partial<SurveyObservation>) => onChange({ ...details, observations: details.observations.map(o => o.id === id ? { ...o, ...p } : o) });
   return <section className="space-y-4">
     <h2 className="font-medium">Room / area observations <span className="text-xs font-normal text-muted-foreground">(optional)</span></h2>
-    {!disabled && <Button type="button" variant="outline" onClick={() => onChange({ ...details, observations: [...details.observations, { id: crypto.randomUUID(), area: '', trade: '', notes: '', photos: [] }] })}><Plus className="mr-1 h-4 w-4" />Add room / area observation</Button>}
     {groupSurveyObservations(details).map(g => <section key={g.trade} className="space-y-3 border-t pt-3">
       <h3 className="text-sm font-semibold">{g.label}</h3>
       {g.observations.map((o, i) => <div key={o.id} className="space-y-2 rounded-md border bg-card p-3">
         <div className="flex items-end gap-2"><div className="min-w-0 flex-1"><Label htmlFor={`area-${o.id}`}>Room / area</Label><Input id={`area-${o.id}`} value={o.area} onChange={e => patch(o.id, { area: e.target.value })} /></div>{!disabled && <Button type="button" size="icon" variant="ghost" aria-label={`Remove ${g.label} observation ${i + 1}`} onClick={() => onChange({ ...details, observations: details.observations.filter(x => x.id !== o.id) })}><Trash2 className="h-4 w-4" /></Button>}</div>
+        {!disabled && liftPack && (isLiftTrade(o.trade) || (!o.trade && details.trades.some(isLiftTrade))) && <div className="flex flex-wrap gap-1">{['Lift pit', 'Machine room', 'Lift well', 'Car / cabin', 'Landing doors', 'Lift lobby', 'Headroom'].map(area => <Button key={area} type="button" variant="outline" size="sm" className="h-auto whitespace-normal py-1 text-xs" onClick={() => patch(o.id, { area })}>{area}</Button>)}</div>}
         <div><Label htmlFor={`finding-${o.id}`}>Findings / work needed</Label><Textarea id={`finding-${o.id}`} value={o.notes} onChange={e => patch(o.id, { notes: e.target.value })} /></div>
         <div className="grid gap-2 sm:grid-cols-2"><div><Label htmlFor={`trade-${o.id}`}>Trade / category</Label><select id={`trade-${o.id}`} className={selectClass} value={o.trade} onChange={e => patch(o.id, { trade: e.target.value })}><option value="">General / site</option>{details.trades.map(t => <option key={t} value={t}>{surveyTradeLabel(t)}</option>)}</select></div><div><Label htmlFor={`urgency-${o.id}`}>Defect urgency</Label><select id={`urgency-${o.id}`} className={selectClass} value={o.urgency ?? 'routine'} onChange={e => patch(o.id, { urgency: e.target.value })}><option value="routine">Routine / area record</option><option value="soon">Repair needed</option><option value="urgent">Urgent defect</option></select></div></div>
         <div><Label htmlFor={`caption-${o.id}`}>Photo caption</Label><Input id={`caption-${o.id}`} value={o.caption ?? ''} onChange={e => patch(o.id, { caption: e.target.value })} /></div>
@@ -90,6 +92,7 @@ export function SurveyObservations({ details, onChange, disabled, companyId, sur
       </div>)}
       {!disabled && <Button type="button" variant="outline" size="sm" onClick={() => onChange({ ...details, observations: [...details.observations, { id: crypto.randomUUID(), area: "", trade: g.trade, notes: "", photos: [] }] })}><Plus className="mr-1 h-4 w-4" />Add {g.label} observation</Button>}
     </section>)}
+    {!disabled && <Button type="button" variant="outline" className="h-auto whitespace-normal py-2" onClick={() => onChange({ ...details, observations: [...details.observations, { id: crypto.randomUUID(), area: '', trade: '', notes: '', photos: [] }] })}><Plus className="mr-1 h-4 w-4" />Add room / area observation</Button>}
   </section>;
 }
 

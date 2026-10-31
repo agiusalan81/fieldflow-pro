@@ -32,7 +32,7 @@ export const EDITION_SPEC: Record<Edition, EditionSpec> = {
     product: "FieldBridge Hotels",
     tagline: "In-house hotel engineering",
     home: "/hotels",
-    hiddenRoutes: CONTRACTOR_ONLY,
+    hiddenRoutes: CONTRACTOR_ONLY.filter((r) => r !== "/surveys"),
     labels: {
       "Clients & assets": "Properties, rooms & facility items",
       "Job sheets": "Work orders",
@@ -44,6 +44,7 @@ export const EDITION_SPEC: Record<Edition, EditionSpec> = {
       "Pending works": "Open defects",
       "Overview": "Engineering overview",
       "Today & team": "Today's shift",
+      "Site surveys": "Property surveys & audits",
     },
     siteTypes: ["Hotel building / wing", "Guest floor", "Guest room", "Suite", "Restaurant & bar", "Kitchen", "Laundry", "Spa & pool", "Conference & events", "Back of house", "Plant room", "Car park", "Grounds & gardens"],
     assetGroups: [
@@ -70,7 +71,7 @@ export const EDITION_SPEC: Record<Edition, EditionSpec> = {
       "Pending works": "Open faults",
       "Overview": "Estate overview",
       "Today & team": "Today's rounds",
-      "Site surveys": "Store visits",
+      "Site surveys": "Store visit surveys",
     },
     siteTypes: ["Superstore", "Express outlet", "Bakery", "Pastry kitchen", "Production / factory", "Warehouse & distribution", "Head office", "Car park"],
     assetGroups: [
