@@ -130,7 +130,8 @@ function SheetForm() {
   const qc = useQueryClient();
   const { data: profile } = useProfile();
   const liftFeatures = usePlanFeatures();
-  const inHouse = isInHouse(useEdition().edition);
+  const { edition } = useEdition();
+  const inHouse = isInHouse(edition);
   const { data: company } = useCompanyRules();
   const { data: users = [] } = useCompanyUsers();
   const { data: suggestions } = useEntrySuggestions();
