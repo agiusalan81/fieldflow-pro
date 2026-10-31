@@ -17,11 +17,10 @@
 - HQ: product-scoped owner-only setup/invites/resets; ordered tenant deletes retain users/branding/platform bills and refuse issued payroll; no cross-tenant/financial loss.
 - Chrome: neutral tokens; root clips for sticky previews. Plaques share escaped preview/print messages and fonts.
 - Travel: startJobTravel; arrival time before on-site.
-- Invites: timeouts/middleware.
 - Tenant RLS uses company_id/current_company_id(); never UI company filters; 
 - Roles: protected user_roles; users.role is display-only. Manager-only MemberSkills uses module guards; additions never assign; removal archives for history.
 - Atomic handover reviews jobs/rotas/shifts, preserving history; active-only rota choices share day validation. Snooze is recipient-only; alerts target each request.
-- Invites redeem names atomically via single-use signup triggers; social users need no password; verified names; no client-assigned tenant/role.
+- Invites: timed/authenticated; atomic single-use signup names, no client tenant/role. Team sends use fixed managed templates, RLS recipients, server product URLs and token idempotency for safe retries.
 - Preview: real-superuser-only, actor-scoped, removable memory state; root blocks other screens/writes; 
 - Payroll uses tested gross/Malta engines, office RLS, snapshots, HQ guards; roster RPC updates existing settings only; 
 - Payroll shares payroll-page.tsx; atomic issued snapshots/linking prevent repeat incentives and leave consumption.
@@ -29,7 +28,7 @@
 - DWR: one canonical report/shift; retain corrected/superseded originals; filing clears held flags; 
 - Dispatch: DB guards TBD/claims/self-award provenance; bonuses freeze/earn on claim/completion; own/team ledgers outside settings; no client badges. Bell recipients server-derived; audio needs real field role + own shift/standby, fails closed and refreshes on shift changes; office visibility separate.
 - Overtime uses captured DWR intervals/rules; old reports show associated sites only; factual allocation.
-- - Typography via applyTypography/AppShell, locale via locale.ts. Branding shares asset-backed font IDs and preview/PDF decorations; DB/HQ locks protect saved values.
+- Typography: applyTypography/AppShell, locale.ts; asset fonts/shared preview/PDF decorations; DB/HQ locks.
 - Auth emails share auth-brand.tsx; the managed handler owns verification and dispatch for reliable account recovery.
 - Document-preview tabs are shared; no implicit draft saves.
 - Independent settings editors use settingsSectionPatch to write only owned columns; JSON styling saves merge current stored keys; 
@@ -70,7 +69,7 @@
 - Delivery uses client_message_recipients; preferences choose recipients, not unsupported channel delivery.
 - Own-shift RPC captures one-time GPS; failure never blocks clock-out; history distinguishes action fixes from breadcrumbs.
 - Bespoke requests freeze on submit, stay private, never charge/activate; immediate setup is owner-only.
-- Surveys: guard_site_survey protects commercial review; field_details retains contacts, optional rooms/orphan trades/private photos; company services supply choices; preserve evidence.
+- Surveys: guarded commercial review; preserve contacts/rooms/trades/private photos and company trade choices. survey-details derives blank scope from findings/items on submit; written scope stays.
 - Sites render via site-display.ts; portal edits only store_code. Approvals use category/object links; completed field-sheet history is company-controlled restrictive RLS.
 - Asset limits: platform_catalog.asset_limit (plan NULL=unlimited, pack=extra) enforced by assets_guard_limit trigger; trials/legacy unlimited.
 - Quotes/billing: atomic frozen snapshots; phone quote confirmation needs no portal. Contractor Core billing: office-only, tenant-enabled types, explicit issue/conversion, append-only payments; no implicit invoices.
