@@ -94,8 +94,16 @@ export function remainingBalance(b: { base: number; ph: number; taken: number; p
   return b.base + b.ph + (b.carried ?? 0) - b.taken - b.pending;
 }
 
-export function missingSignOff(s: { client_full_name?: string | null; client_id_card_no?: string | null; signature?: string | null }) {
+/** Hotels: unattended room repairs are signed off with photo evidence instead of a signature. */
+export const UNATTENDED_SIGNOFF = "Unattended — photo evidence";
+
+export function missingSignOff(s: { client_full_name?: string | null; client_id_card_no?: string | null; signature?: string | null; evidencePhotos?: number }) {
   const missing: string[] = [];
+  if (s.client_full_name === UNATTENDED_SIGNOFF) {
+    if (!s.evidencePhotos) missing.push("Completion photo");
+    if (!s.client_id_card_no?.trim()) missing.push("Verification note");
+    return missing;
+  }
   if (!s.client_full_name?.trim()) missing.push("Client full name");
   if (!s.client_id_card_no?.trim()) missing.push("Client ID card no.");
   if (!s.signature) missing.push("Client signature");
