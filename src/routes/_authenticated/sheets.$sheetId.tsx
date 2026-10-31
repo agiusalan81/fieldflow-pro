@@ -24,7 +24,7 @@ import { useProfile, useCompanyUsers, initialsOf, isManager } from "@/lib/profil
 import { remindBreakIfDue } from "@/lib/dwr-report";
 import { useCompanyRules, useTerminology } from "@/lib/company";
 import { ReportSharing } from "@/components/report-sharing";
-import { scheduledInitials, assignmentFilter, hoursFromTimes, missingSignOff, missingChecklist, roundTo15, shiftTime, parsePhotos, createDraftSheet, type JobPhoto, technicianCount, labourHours, dayLabourHours } from "@/lib/jobsheets";
+import { scheduledInitials, assignmentFilter, hoursFromTimes, missingSignOff, UNATTENDED_SIGNOFF, missingChecklist, roundTo15, shiftTime, parsePhotos, createDraftSheet, type JobPhoto, technicianCount, labourHours, dayLabourHours } from "@/lib/jobsheets";
 import { JobPhotos } from "@/components/job-photos";
 import { SpecialNotes } from "@/components/special-notes";
 import { sheetLiftEnabled, unlistedEquipmentPatch } from "@/lib/sheet-equipment";
