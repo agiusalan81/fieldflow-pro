@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addSurveyTrade, canSubmitSurvey, groupSurveyObservations, parseSurveyDetails, surveyReviewerOptions, surveyTradeOptions } from "./survey-details";
+import { addSurveyTrade, canSubmitSurvey, generatedSurveyScope, resolvedSurveyScope, groupSurveyObservations, parseSurveyDetails, surveyReviewerOptions, surveyTradeOptions } from "./survey-details";
 
 describe("survey field workflow", () => {
   it('offers configured company services including bespoke equipment trades', () => expect(surveyTradeOptions(['heating', 'Pool repairs']).map(t => t.key)).toEqual(['heating', 'Pool repairs']));
@@ -20,6 +20,22 @@ describe("survey field workflow", () => {
   it("field staff can select supervisors only", () => expect(surveyReviewerOptions([{ role: "admin" }, { role: "supervisor" }, { role: "superuser" }], false)).toEqual([{ role: "supervisor" }]));
   it("allows submission with client and location captured on site", () => expect(canSubmitSurvey({ client_id: null, site_id: null, scope_summary: "Repair pipe" }, parseSurveyDetails({ clientName: "New prospect", siteName: "Shop 2", address: "Main Street" }))).toBe(true));
   it("does not submit an unidentified site", () => expect(canSubmitSurvey({ client_id: null, site_id: null, scope_summary: "Repair pipe" }, parseSurveyDetails({ clientName: "New prospect", siteName: "Shop 2" }))).toBe(false));
+  it('accepts room findings without a separately written scope', () => {
+    const details = parseSurveyDetails({ observations: [{ id: '1', area: 'Lift pit', trade: 'lifts', notes: 'Replace damaged screen', photos: [] }] });
+    expect(canSubmitSurvey({ client_id: 'client', site_id: 'site', scope_summary: '' }, details)).toBe(true);
+    expect(generatedSurveyScope(details)).toContain('Lift pit (Lifts): Replace damaged screen');
+  });
+  it('accepts added items without a separately written scope', () => {
+    const survey = { client_id: 'client', site_id: 'site', scope_summary: '', materials: [{ label: 'Cw screen bespoke', qty: 1 }] };
+    expect(canSubmitSurvey(survey, parseSurveyDetails({}))).toBe(true);
+    expect(resolvedSurveyScope(survey, parseSurveyDetails({}))).toBe('Materials & equipment\nCw screen bespoke × 1');
+  });
+  it('combines findings and both item lists', () => {
+    const details = parseSurveyDetails({ observations: [{ id: '1', area: 'Room 101', trade: '', notes: 'Repair leak', photos: [] }] });
+    expect(generatedSurveyScope(details, [{ label: 'Tap', qty: 1 }], [{ label: 'Seal', qty: 2 }])).toBe('Observations / work needed\nRoom 101: Repair leak\n\nMaterials & equipment\nTap × 1\nSeal × 2');
+  });
+  it('preserves a tenant-written summary instead of overwriting it', () => expect(resolvedSurveyScope({ scope_summary: 'Agreed repairs', materials: [{ label: 'Seal' }] }, parseSurveyDetails({}))).toBe('Agreed repairs'));
+  it('does not treat empty observations or area names as described work', () => expect(canSubmitSurvey({ client_id: 'client', site_id: 'site', scope_summary: '', materials: [{ label: ' ' }] }, parseSurveyDetails({ observations: [{ id: '1', area: 'Lift pit', notes: '', trade: '', photos: [] }] }))).toBe(false));
 });
 import { surveyItemsPending } from "./survey-details";
 describe("materials completion", () => {
