@@ -85,5 +85,5 @@
 - Appearance: HQ per-edition product_appearances → hex-validated edition-scoped CSS; safe no-code styling.
 - Credits: platform-credit.ts.
 
-- Tours yield to dialogs; prompts are sequential.
+- Tours yield; prompts are sequential.
 - QR: tap-load, RLS reads, no arbitrary redirects.
