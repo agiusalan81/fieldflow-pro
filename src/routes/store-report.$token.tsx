@@ -44,7 +44,7 @@ function StoreReport() {
   const send = async () => {
     if (busy || !category || !target.data) return; setBusy(true); setError("");
     try {
-      const fields={reporter_type:"visitor",name:f.name.trim(),category,location:f.location.trim()||target.data.store,problem:composeProblem({category,symptom,note:f.note})};
+      const fields={reporter_type:"visitor" as const,name:f.name.trim(),category,location:f.location.trim()||target.data.store,problem:composeProblem({category,symptom,note:f.note})};
       if(photo){const result=await submitPhotoReport({data:{token,kind:"store",photo,fields}});if("error" in result)throw new Error(result.error);}
       else{const r=await supabase.rpc("submit_store_problem",{_token:token,_reporter_type:fields.reporter_type,_name:fields.name,_category:category,_location:fields.location,_problem:fields.problem});if(r.error)throw new Error(r.error.message);}
       setDone(true);
