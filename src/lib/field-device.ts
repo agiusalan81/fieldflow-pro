@@ -20,12 +20,16 @@ export async function confirmFieldLocation(userId: string): Promise<GeoStatus> {
       if (settled) return;
       settled = true; clearTimeout(timer);
       if (status === 'granted') {
-        localStorage.setItem(`location-consent:${userId}`, 'yes');
-        window.dispatchEvent(new Event('location-consent'));
+        try {
+          localStorage.setItem(`location-consent:${userId}`, 'yes');
+          window.dispatchEvent(new Event('location-consent'));
+        } catch { resolve('unavailable'); return; }
       }
       resolve(status);
     };
     const timer = setTimeout(() => finish('unavailable'), 12000);
-    navigator.geolocation.getCurrentPosition(() => finish('granted'), e => finish(e.code === 1 ? 'denied' : 'unavailable'), { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 });
+    try {
+      navigator.geolocation.getCurrentPosition(() => finish('granted'), e => finish(e.code === 1 ? 'denied' : 'unavailable'), { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 });
+    } catch { finish('unavailable'); }
   });
 }
