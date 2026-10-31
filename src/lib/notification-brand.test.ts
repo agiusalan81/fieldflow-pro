@@ -1,0 +1,3 @@
+import {expect,it} from 'vitest';
+import {brandedPushPayload} from './notification-brand';
+it('each edition uses its own notification logo',()=>{const a={title:'Reply',body:'Message',url:'/messages?thread=user:1',tag:'user:1'};expect(brandedPushPayload(a,'retail').icon).toBe('/app-icon-retail-192.png');expect(brandedPushPayload(a,'hotel').icon).toBe('/app-icon-hotels-192.png');expect(brandedPushPayload(a,'contractor').icon).toBe('/app-icon-192.png');expect(brandedPushPayload(a,'retail').data.url).toBe(a.url);});

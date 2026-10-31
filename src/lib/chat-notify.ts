@@ -1,5 +1,7 @@
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import {brandForHost} from '@/lib/host-brand';
+import {notificationBrand} from '@/lib/notification-brand';
 
 type Incoming = { channel_id?: string | null; sender_id: string; receiver_id: string | null; job_sheet_id: string | null; message_text: string };
 
@@ -20,7 +22,8 @@ export async function notifyChatMessage(m: Incoming, me: string) {
     return;
   }
   if ("Notification" in window && Notification.permission === "granted") {
-    const n = new Notification(title, { body: preview(m.message_text), icon: "/app-icon-192.png", tag: thread });
+    const host=brandForHost(location.hostname);
+    const n = new Notification(title, { body: preview(m.message_text), icon: notificationBrand(host==='hotels'?'hotel':host).icon, tag: thread });
     n.onclick = () => { window.focus(); location.href = href; n.close(); };
   } else {
     toast(title, { description: preview(m.message_text), action: { label: "View", onClick: () => { location.href = href; } } });

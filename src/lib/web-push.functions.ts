@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import {brandedPushPayload} from '@/lib/notification-brand';
 
 export const getPushPublicKey = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -20,13 +21,7 @@ export const savePushSubscription = createServerFn({ method: "POST" })
 type Alert = { title: string; body: string; url: string; tag: string };
 
 /** Lock-screen-ready payload read by public/push-sw.js. */
-export function pushPayload(a: Alert) {
-  return {
-    title: a.title || "FieldBridge", body: a.body || "You have a new team chat message",
-    icon: "/icon-192x192.png", badge: "/badge-72x72.png", tag: a.tag,
-    data: { url: a.url, chatId: a.tag },
-  };
-}
+export function pushPayload(a: Alert,edition:unknown='contractor') {return brandedPushPayload(a,edition);}
 type Sub = { endpoint: string; p256dh: string; auth: string };
 
 /** Sends sender name + message preview, end-to-end encrypted to each device. */
