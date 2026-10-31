@@ -398,6 +398,7 @@ function SheetForm() {
     setPhotos(next);
   };
   const photoProps = { companyId: profile.company_id, sheetId, photos, readOnly, onChange: savePhotos };
+  const unattended = form.client_full_name === UNATTENDED_SIGNOFF;
   const removeDay = (i: number) => {
     const shifted = photos.filter((p) => !(p.scope === "work" && p.day === i)).map((p) => (p.scope === "work" && p.day != null && p.day > i ? { ...p, day: p.day - 1 } : p));
     if (shifted.length !== photos.length || shifted.some((p, k) => p !== photos[k])) savePhotos(shifted);

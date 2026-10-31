@@ -97,7 +97,7 @@ function PrintSheet() {
           <div><p className="text-xs uppercase text-muted-foreground">Technician</p><p>{s.technician_name}</p>{data.technicianSignature && <img src={data.technicianSignature} alt="Technician signature" className="mt-1 h-20 max-w-full object-contain" />}</div>
           <div>
             <p className="text-xs uppercase text-muted-foreground">{inHouse ? "Sign-off & verification" : "Client sign-off"}{s.signature_data ? " · Signed" : ""}</p>
-            <p>{s.client_full_name} · ID {s.client_id_card_no}</p>
+            {s.client_full_name === "Unattended — photo evidence" ? <p>Work verified unattended · photo evidence on file<br /><span className="text-muted-foreground">{s.client_id_card_no}</span></p> : <p>{s.client_full_name} · ID {s.client_id_card_no}</p>}
             {s.signature_data && <img src={s.signature_data} alt={inHouse ? "Verifier signature" : "Client signature"} className="mt-1 h-20" />}
           </div>
         </footer>
